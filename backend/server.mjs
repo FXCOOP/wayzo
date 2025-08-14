@@ -13,20 +13,20 @@ import PDFDocument from 'pdfkit';
 import { v4 as uuidv4 } from 'uuid';
 
 /* --- Config --- */
-const PORT   = process.env.PORT || 8080;
-const ORIGIN = process.env.ORIGIN || 'http://localhost:8080';
+const PORT = process.env.PORT || 8080;
 const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 
 /* --- App --- */
 const app = express();
+
 app.use(helmet({
   contentSecurityPolicy: {
     useDefaults: true,
     directives: {
       "default-src": ["'self'"],
-      "script-src": ["'self'"],               // external JS only
-      "style-src": ["'self'"],                // external CSS only
+      "script-src": ["'self'"],                 // external JS only
+      "style-src": ["'self'"],                  // external CSS only
       "img-src": ["'self'", "data:", "https:"], // allow Unsplash, etc.
       "font-src": ["'self'", "data:"],
       "connect-src": ["'self'"],
@@ -37,15 +37,17 @@ app.use(helmet({
   },
   crossOriginEmbedderPolicy: false
 }));
-app.use(cors({ origin: ORIGIN, credentials: true }));
+
+// CORS: reflect the request origin (same-origin in our case)
+app.use(cors({ origin: true, credentials: true }));
 app.use(rateLimit({ windowMs: 60_000, max: 60 }));
 app.use(express.json({ limit: '1mb' }));
 
 /* --- Paths --- */
-const __filename  = fileURLToPath(import.meta.url);
-const __dirname   = path.dirname(__filename);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const frontendDir = path.resolve(__dirname, '../frontend');
-const indexFile   = path.join(frontendDir, 'index.backend.html');
+const indexFile = path.join(frontendDir, 'index.backend.html');
 
 /* Root BEFORE static (and no-cache) */
 app.get('/', (_req, res) => {
@@ -60,13 +62,31 @@ app.use(express.static(frontendDir, {
   index: false, etag: false, lastModified: false, cacheControl: false, maxAge: 0
 }));
 
-/* Debug */
+/* Debug helper */
 app.get('/__debug', (_req, res) => {
-  res.json({ frontendDir, serving: indexFile, exists: fs.existsSync(indexFile), files: fs.readdirSync(frontendDir) });
+  res.json({
+    frontendDir,
+    serving: indexFile,
+    exists: fs.existsSync(indexFile),
+    files: fs.readdirSync(frontendDir)
+  });
 });
 
 /* --- DB --- */
-const dbPath = process.env.DB_PATH || path.resolve(__dirname, './wayzo.sqlite');
+// Use /data/wayzo.sqlite if DB_PATH is set (for persistent disks), otherwise local file
+const defaultDb = path.resolve(__dirname, './wayzo.sqlite');
+let dbPath = process.env.DB_PATH || defaultDb;
+
+// Ensure the directory exists; if not, fall back to local file path
+try {
+  fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+} catch (e) {
+  console.warn('DB dir create failed for', path.dirname(dbPath), '-', e.message);
+  dbPath = defaultDb;
+  fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+}
+console.log('Using SQLite DB at:', dbPath);
+
 const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
 db.exec(`
@@ -86,7 +106,9 @@ CREATE TABLE IF NOT EXISTS plans (
 );
 `);
 
+/* --- Helpers --- */
 const daysBetween = (a, b) => Math.max(1, Math.round((new Date(b) - new Date(a)) / 86_400_000) + 1);
+
 const affiliatesFor = (city) => {
   const q = encodeURIComponent(city);
   return {
@@ -125,34 +147,39 @@ const validateBody = (req, res, next) => {
   next();
 };
 
-/* Health */
+/* --- Health --- */
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
+app.get('/healthz',    (_req, res) => res.status(200).send('ok')); // Render default health path
 
-/* Preview */
+/* --- API: Preview --- */
 app.post('/api/preview', validateBody, (req, res) => {
   const { destination, start, end, budget, travelers, level, prefs } = req.body;
   const id = uuidv4();
   const teaser = teaserHTML({ destination, start, end, budget, travelers, level, prefs });
   const aff = affiliatesFor(destination);
+
   db.prepare(`INSERT INTO plans
     (id, created_at, destination, start_date, end_date, budget, travelers, level, prefs, teaser_html, affiliate_json)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(
-    id, new Date().toISOString(), destination, start, end,
-    Number(budget), Number(travelers), level, prefs || null, teaser, JSON.stringify(aff)
-  );
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+    .run(
+      id, new Date().toISOString(), destination, start, end,
+      Number(budget), Number(travelers), level, prefs || null, teaser, JSON.stringify(aff)
+    );
+
   res.json({ id, teaser_html: teaser, affiliates: aff });
 });
 
-/* Full plan */
+/* --- API: Full plan (OpenAI) --- */
 app.post('/api/plan', validateBody, async (req, res) => {
   try {
     if (!openai) return res.status(503).json({ error: 'OPENAI_API_KEY missing on server' });
+
     const { destination, start, end, budget, travelers, level, prefs } = req.body;
     const id = uuidv4();
     const aff = affiliatesFor(destination);
 
     const systemPrompt = `You are Wayzo, an expert travel planner. Create a detailed, realistic itinerary under budget with ${level} style. Include: Introduction; Day-by-Day (times, neighborhoods, must-sees); Dining; Transport tips; Cost breakdown (stay/food/attractions/transport); Safety & visa tips. Insert placeholders [FLIGHTS] [HOTELS] [ACTIVITIES] [CARS] [INSURANCE] where links should go. Use markdown tables when appropriate.`;
+
     const userPrompt = `Destination: ${destination}
 Dates: ${start} to ${end} (${daysBetween(start,end)} days)
 Travelers: ${travelers}
@@ -162,25 +189,29 @@ Preferences: ${prefs || 'not specified'}
 Constraints: Keep totals under budget and provide sensible daily pacing.`;
 
     const completion = await openai.chat.completions.create({
-      model: OPENAI_MODEL, temperature: 0.6,
-      messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }]
+      model: OPENAI_MODEL,
+      temperature: 0.6,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ]
     });
 
     let md = completion.choices?.[0]?.message?.content || '# Trip Plan';
     md = md
-      .replaceAll('[FLIGHTS]',   aff.flights)
-      .replaceAll('[HOTELS]',    aff.hotels)
-      .replaceAll('[ACTIVITIES]',aff.activities)
-      .replaceAll('[CARS]',      aff.cars)
-      .replaceAll('[INSURANCE]', aff.insurance);
+      .replaceAll('[FLIGHTS]',    aff.flights)
+      .replaceAll('[HOTELS]',     aff.hotels)
+      .replaceAll('[ACTIVITIES]', aff.activities)
+      .replaceAll('[CARS]',       aff.cars)
+      .replaceAll('[INSURANCE]',  aff.insurance);
 
     db.prepare(`INSERT INTO plans
       (id, created_at, destination, start_date, end_date, budget, travelers, level, prefs, full_markdown, affiliate_json)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    ).run(
-      id, new Date().toISOString(), destination, start, end,
-      Number(budget), Number(travelers), level, prefs || null, md, JSON.stringify(aff)
-    );
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .run(
+        id, new Date().toISOString(), destination, start, end,
+        Number(budget), Number(travelers), level, prefs || null, md, JSON.stringify(aff)
+      );
 
     res.json({ id, markdown: md, affiliates: aff });
   } catch (e) {
@@ -189,7 +220,7 @@ Constraints: Keep totals under budget and provide sensible daily pacing.`;
   }
 });
 
-/* Get plan */
+/* --- API: Get plan --- */
 app.get('/api/plan/:id', (req, res) => {
   const row = db.prepare('SELECT * FROM plans WHERE id = ?').get(req.params.id);
   if (!row) return res.status(404).json({ error: 'Not found' });
@@ -208,7 +239,7 @@ app.get('/api/plan/:id', (req, res) => {
   });
 });
 
-/* PDF */
+/* --- API: PDF --- */
 app.get('/api/plan/:id/pdf', (req, res) => {
   const row = db.prepare('SELECT * FROM plans WHERE id = ?').get(req.params.id);
   if (!row) return res.status(404).json({ error: 'Not found' });
@@ -229,7 +260,7 @@ app.get('/api/plan/:id/pdf', (req, res) => {
   doc.end();
 });
 
-/* Start */
+/* --- Start --- */
 app.listen(PORT, () => {
   console.log(`Wayzo backend running on :${PORT}`);
   console.log('Serving frontend from:', frontendDir);
