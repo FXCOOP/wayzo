@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Wayzo — AI Trip Planner</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <!-- Top bar -->
+  <div class="bar">
+    <div class="wrap barin">
+      <div class="brand"><div class="logo">WZ</div> Wayzo</div>
+      <a href="#planner" class="btn primary">Start planning</a>
+    </div>
+  </div>
+
+  <!-- HERO (road background + side image) -->
+  <section id="hero" class="hero">
+    <div id="heroBg" class="hero-bg"></div>
+    <div class="wrap hero-inner">
+      <div class="hero-grid">
+        <!-- Left: glass card -->
+        <div class="glass hero-card">
+          <h1 class="headline">Plan unforgettable trips in minutes — <span class="nowrap">AI-powered</span></h1>
+          <p class="sub">Personalized itineraries by budget and style. Book flights, stays, and activities with a click.</p>
+          <div class="cta-row">
+            <a href="#planner" class="btn primary">Build my plan</a>
+            <a href="#planner" class="btn">See demo</a>
+          </div>
+          <p class="muted mt-2">No app required · Mobile-first · PDF export</p>
+        </div>
+
+        <!-- Right: big figure -->
+        <figure class="hero-figure">
+          <img id="heroFigureImg" src="" alt="Travel inspiration" loading="lazy" decoding="async" />
+          <figcaption class="figcap">Wayzo — inspiration for your next trip</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- Planner + Output -->
+  <div class="wrap grid cols-2" id="planner">
+    <!-- Form -->
+    <section class="card pad">
+      <h2>Trip details</h2>
+      <p class="muted">We’ll tailor routes, hotels, activities, and meals—then generate your full AI plan.</p>
+
+      <form id="tripForm" class="mt-2">
+        <div class="row full">
+          <div class="field">
+            <label>Destination</label>
+            <input class="input" name="destination" placeholder="e.g., Paris, Tokyo, Bali" required />
+          </div>
+        </div>
+        <div class="row mt-1">
+          <div class="field">
+            <label>Start date</label>
+            <input class="input" type="date" name="start" required />
+          </div>
+          <div class="field">
+            <label>End date</label>
+            <input class="input" type="date" name="end" required />
+          </div>
+        </div>
+        <div class="row mt-1">
+          <div class="field">
+            <label>Budget (USD)</label>
+            <input class="input" type="number" min="100" step="50" name="budget" placeholder="1500" required />
+          </div>
+          <div class="field">
+            <label>Travelers</label>
+            <input class="input" type="number" min="1" step="1" name="travelers" value="2" required />
+          </div>
+        </div>
+        <div class="row full mt-1">
+          <div class="field">
+            <label>Style</label>
+            <div class="choices">
+              <label class="radio"><input type="radio" name="level" value="budget" checked /> Budget</label>
+              <label class="radio"><input type="radio" name="level" value="mid" /> Mid-range</label>
+              <label class="radio"><input type="radio" name="level" value="luxury" /> Luxury</label>
+            </div>
+          </div>
+        </div>
+        <div class="row full mt-1">
+          <div class="field">
+            <label>Preferences</label>
+            <input class="input" name="prefs" placeholder="e.g., museums, beaches, hiking, kid-friendly" />
+          </div>
+        </div>
+
+        <div class="toolbar mt-2">
+          <button class="btn primary" type="submit">Generate preview</button>
+          <button class="btn" type="button" id="buyBtn">Generate full plan (AI)</button>
+          <button class="btn" type="button" id="saveBtn">Save preview</button>
+        </div>
+        <p class="muted mt-1">By continuing you agree to our Terms and Privacy.</p>
+      </form>
+    </section>
+
+    <!-- Output -->
+    <section class="card pad">
+      <div class="section-title">
+        <h2>Your itinerary</h2>
+        <span class="badge">AI powered</span>
+      </div>
+
+      <div id="preview" class="mt-1">
+        <p class="muted">Fill the form and click <b>Generate preview</b>. Then use <b>Generate full plan (AI)</b>.</p>
+      </div>
+
+      <div id="loading" class="hidden mt-1">
+        <div class="skeleton"></div>
+        <div class="skeleton w70"></div>
+      </div>
+
+      <div class="toolbar mt-2">
+        <a id="pdfBtn" class="btn hidden" href="#" target="_blank">⬇️ Download PDF</a>
+        <a id="linkFlights" class="btn" target="_blank" href="https://www.kayak.com/flights?aff=YOUR_AFF_ID">✈️ Flights</a>
+        <a id="linkHotels" class="btn" target="_blank" href="https://www.booking.com/?aid=YOUR_AFF_ID">🏨 Hotels</a>
+      </div>
+      <div class="links mt-1">
+        <a id="linkActivities" class="alink" target="_blank" href="https://www.getyourguide.com/?partner_id=YOUR_PARTNER_ID">🎟️ Activities</a>
+        <a id="linkCars" class="alink" target="_blank" href="https://www.rentalcars.com/?affiliateCode=YOUR_AFF_ID">🚗 Cars</a>
+        <a id="linkInsurance" class="alink" target="_blank" href="https://www.worldnomads.com/?aff=YOUR_AFF_ID">🛡️ Insurance</a>
+        <a id="linkReviews" class="alink" target="_blank" href="https://www.tripadvisor.com/">⭐ Reviews</a>
+      </div>
+    </section>
+  </div>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>
