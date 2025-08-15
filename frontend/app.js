@@ -1,142 +1,93 @@
-const API = window.location.origin;
+/* Wayzo front-end: preview, plan, save, and Google Map plotting */
 const $ = (s)=>document.querySelector(s);
 const byName = (n)=>document.querySelector(`[name="${n}"]`);
 
-/* ---------- Dynamic side image (with fallback) ---------- */
-function updateSideImage(city){
-  const q = (city && city.trim()) ? encodeURIComponent(city) : 'travel';
-  const fig = document.getElementById('heroFigureImg');
-  if(!fig) return;
+let CONFIG = { googleMapsKey: null };
+let GMAPS_LOADED = false;
+let MAP, GEOCODER;
 
-  const src = `https://source.unsplash.com/1200x720/?${q},scenic,landmark`;
-
-  // inline SVG fallback (always allowed by CSP via data:)
-  const FALLBACK_SVG =
-    "data:image/svg+xml;utf8," +
-    encodeURIComponent(
-      `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 720'>
-         <defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>
-           <stop offset='0' stop-color='#10b981'/><stop offset='1' stop-color='#2563eb'/>
-         </linearGradient></defs>
-         <rect width='1200' height='720' fill='url(#g)' opacity='.4'/>
-         <text x='50%' y='55%' text-anchor='middle' font-size='56' font-family='Segoe UI, Roboto, Arial' fill='#fff' opacity='.95'>
-           Wayzo — ${city ? city : 'Travel'}
-         </text>
-       </svg>`
-    );
-
-  const onErr = () => { fig.src = FALLBACK_SVG; fig.removeEventListener('error', onErr); };
-  fig.addEventListener('error', onErr, { once: true });
-
-  fig.src = src;
-  fig.alt = city ? `Travel inspiration: ${city}` : 'Travel inspiration';
-}
-
-// init + debounce typing
-(function(){
-  updateSideImage('');
-  const dest = byName('destination');
-  if(dest && dest.value) updateSideImage(dest.value);
-  let t;
-  dest && dest.addEventListener('input', (e)=>{ clearTimeout(t); t = setTimeout(()=> updateSideImage(e.target.value), 400); });
-})();
-
-/* ---------- Minimal markdown -> HTML (with tables + linkify) ---------- */
+/* ---- utils ---- */
 function simpleMarkdown(md){
-  if(!md) return '';
-
-  // GitHub-style table (header | sep | rows)
-  md = md.replace(
-    /(?:^|\n)\|([^\n]+)\|\n\|[ :\-|]+\|\n((?:\|[^\n]+\|\n?)+)/g,
-    (_m, header, body) => {
-      const th = header.split('|').map(h => `<th>${h.trim()}</th>`).join('');
-      const rows = body.trim().split('\n').map(r => {
-        const cells = r.replace(/^\|/,'').replace(/\|$/,'').split('|').map(c=>`<td>${c.trim()}</td>`).join('');
-        return `<tr>${cells}</tr>`;
-      }).join('');
-      return `\n<table class="md"><thead><tr>${th}</tr></thead><tbody>${rows}</tbody></table>\n`;
-    }
-  );
-
-  // Headings, lists, bold, markdown links
   md = md.replace(/^### (.*)$/gm,'<h3>$1</h3>')
          .replace(/^## (.*)$/gm,'<h2>$1</h2>')
          .replace(/^# (.*)$/gm,'<h1>$1</h1>')
          .replace(/^\- (.*)$/gm,'<li>$1</li>')
          .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
          .replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
-
-  // Linkify bare URLs
-  md = md.replace(/(^|\s)(https?:\/\/[^\s<>()]+)(?=$|\s)/g, (m, pre, url) => `${pre}<a href="${url}" target="_blank" rel="noopener">${url}</a>`);
-
-  // Wrap list items with <ul>
   md = md.replace(/(<li>.*<\/li>)(\n(?!<li>))/g,'<ul>$1</ul>\n');
-
-  // Paragraphs
   md = md.split(/\n{2,}/).map(b=>{
-    const t = b.trim();
-    if(!t) return '';
-    if(/^<h\d|<ul>|<li>|<table/.test(t)) return t;
-    return '<p>'+t.replace(/\n/g,'<br>')+'</p>';
+    if(/^<h\d|<ul>|<li>/.test(b.trim())) return b;
+    return '<p>'+b.replace(/\n/g,'<br>')+'</p>';
   }).join('\n');
-
   return `<div class="md">${md}</div>`;
 }
 
-/* ---------- Helpers ---------- */
 function setLinks(aff){
   if(!aff) return;
-  $('#linkFlights').href   = aff.flights;
-  $('#linkHotels').href    = aff.hotels;
-  $('#linkActivities').href= aff.activities;
-  $('#linkCars').href      = aff.cars;
-  $('#linkInsurance').href = aff.insurance;
-  $('#linkReviews').href   = aff.reviews;
-}
-function showLoading(on){ $('#loading').classList.toggle('hidden', !on); }
-
-/* ---------- API calls ---------- */
-async function callJSON(url, body){
-  const r = await fetch(url, { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify(body) });
-  let payload = {}; try { payload = await r.json(); } catch {}
-  if(!r.ok){ const msg = payload && (payload.error || JSON.stringify(payload)); throw new Error(`${r.status} ${r.statusText}: ${msg || 'Unknown error'}`); }
-  return payload;
+  $('#linkFlights')?.setAttribute('href', aff.flights);
+  $('#linkHotels')?.setAttribute('href', aff.hotels);
+  $('#linkActivities')?.setAttribute('href', aff.activities);
+  $('#linkCars')?.setAttribute('href', aff.cars);
+  $('#linkInsurance')?.setAttribute('href', aff.insurance);
+  $('#linkReviews')?.setAttribute('href', aff.reviews);
 }
 
-async function handleGenerate(e){
+function showLoading(on){ $('#loading')?.classList.toggle('hidden', !on); }
+
+/* ---- form collection ---- */
+function collect(form) {
+  const data = Object.fromEntries(new FormData(form).entries());
+  data.budget    = Number(data.budget||0);
+  data.travelers = Number(data.travelers||1);
+  // kids toggle (if present)
+  const kidsToggle = $('#withKids');
+  if (kidsToggle && kidsToggle.checked) {
+    data.children = Number(data.children||0);
+    data.childrenAges = (data.childrenAges||'')
+      .split(',').map(s=>s.trim()).filter(Boolean);
+    data.adults = Math.max(0, data.travelers - data.children);
+  }
+  return data;
+}
+
+/* ---- preview ---- */
+function handleGenerate(e){
   e.preventDefault();
-  const data = Object.fromEntries(new FormData(e.target).entries());
-  const body = {
-    destination: data.destination, start: data.start, end: data.end,
-    budget: Number(data.budget||0), travelers: Number(data.travelers||1),
-    level: data.level, prefs: data.prefs || ''
-  };
+  const data = collect(e.target);
   showLoading(true);
-  try{
-    const j = await callJSON(`${API}/api/preview`, body);
+  fetch('/api/preview', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(data)
+  }).then(r=>r.json()).then(j=>{
+    showLoading(false);
     window.__PLAN_ID__ = j.id;
     $('#preview').innerHTML = j.teaser_html || 'Preview unavailable';
     setLinks(j.affiliates);
-    localStorage.setItem('tm_last', JSON.stringify(body));
-  }catch(err){ console.error(err); alert('Preview failed: ' + err.message); }
-  finally{ showLoading(false); }
+    localStorage.setItem('tm_last', JSON.stringify(data));
+  }).catch(err=>{ showLoading(false); console.error(err); alert('Preview failed.'); });
 }
 
-async function handleFull(){
-  const last = JSON.parse(localStorage.getItem('tm_last') || 'null');
+/* ---- full plan ---- */
+function handleFull(){
+  const last = JSON.parse(localStorage.getItem('tm_last')||'null');
   if(!last){ alert('Generate a preview first.'); return; }
   showLoading(true);
-  try{
-    const j = await callJSON(`${API}/api/plan`, last);
+  fetch('/api/plan', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(last)
+  }).then(r=>r.json()).then(j=>{
+    showLoading(false);
     window.__PLAN_ID__ = j.id;
-    $('#preview').innerHTML = simpleMarkdown(j.markdown || '# Plan unavailable');
-    $('#pdfBtn').classList.remove('hidden');
-    $('#pdfBtn').href = `/api/plan/${j.id}/pdf`;
+    const html = simpleMarkdown(j.markdown || '# Plan unavailable');
+    $('#preview').innerHTML = html;
+    $('#pdfBtn')?.classList.remove('hidden');
+    $('#pdfBtn').setAttribute('href', `/api/plan/${j.id}/pdf`);
     setLinks(j.affiliates);
-  }catch(err){ console.error(err); alert('Full plan failed: ' + err.message + '\nTip: check OPENAI_API_KEY in backend/.env'); }
-  finally{ showLoading(false); }
+    $('#mapNotice').textContent = 'Click “Plot on Map” to see all places on a map.';
+  }).catch(err=>{ showLoading(false); console.error(err); alert('Full plan failed. Check OPENAI_API_KEY.'); });
 }
 
+/* ---- save ---- */
 function handleSave(){
   const plans = JSON.parse(localStorage.getItem('tm_saved')||'[]');
   plans.push({ id: crypto.randomUUID(), at: new Date().toISOString(), html: $('#preview').innerHTML });
@@ -144,16 +95,93 @@ function handleSave(){
   alert('Saved locally.');
 }
 
-/* ---------- Bind + hydrate ---------- */
-(function hydrate(){
-  const last = JSON.parse(localStorage.getItem('tm_last')||'null'); if(!last) return;
-  for(const [k,v] of Object.entries(last)){
-    const el = byName(k); if(!el) continue;
-    if(el.type==='radio'){ const r=document.querySelector(`input[name="level"][value="${last.level}"]`); r && (r.checked=true); }
-    else el.value = v;
-  }
-})();
+/* ---- config ---- */
+async function loadConfig(){
+  try{
+    const j = await fetch('/api/config').then(r=>r.json());
+    CONFIG = j || {};
+    if(!CONFIG.googleMapsKey){
+      $('#mapNotice').textContent = 'To enable the live map, add GOOGLE_MAPS_API_KEY on the server and restrict it to your domain.';
+    }
+  }catch{ /* ignore */ }
+}
 
-document.getElementById('tripForm').addEventListener('submit', handleGenerate);
-document.getElementById('buyBtn').addEventListener('click', handleFull);
-document.getElementById('saveBtn').addEventListener('click', handleSave);
+/* ---- Google Maps ---- */
+function loadGoogleMaps(key){
+  return new Promise((resolve, reject)=>{
+    if (GMAPS_LOADED && window.google) return resolve();
+    const s = document.createElement('script');
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&libraries=places`;
+    s.async = true;
+    s.onload = ()=> { GMAPS_LOADED = true; resolve(); };
+    s.onerror = ()=> reject(new Error('Failed to load Google Maps'));
+    document.head.appendChild(s);
+  });
+}
+
+async function plotOnMap(){
+  if(!window.__PLAN_ID__) return alert('Generate a full plan first.');
+  try{
+    const ptsResp = await fetch(`/api/plan/${window.__PLAN_ID__}/points`).then(r=>r.json());
+    const { destination, points } = ptsResp;
+    if(!points || !points.length) return alert('No mappable places found in the plan yet.');
+
+    if(!CONFIG.googleMapsKey) return alert('Server has no GOOGLE_MAPS_API_KEY. Add it to enable the map.');
+
+    await loadGoogleMaps(CONFIG.googleMapsKey);
+    GEOCODER = GEOCODER || new google.maps.Geocoder();
+    if(!MAP){
+      MAP = new google.maps.Map(document.getElementById('itineraryMap'), {
+        zoom: 13,
+        center: { lat: 52.52, lng: 13.405 } // Berlin fallback
+      });
+    }
+    const bounds = new google.maps.LatLngBounds();
+    let idx = 0;
+
+    const geocodeNext = ()=>{
+      if(idx >= points.length){ MAP.fitBounds(bounds); return; }
+      const p = points[idx++];
+
+      GEOCODER.geocode({ address: `${p.query}, ${destination}` }, (res, status)=>{
+        if(status === 'OK' && res && res[0]){
+          const loc = res[0].geometry.location;
+          const marker = new google.maps.Marker({
+            map: MAP,
+            position: loc,
+            title: p.name
+          });
+          const info = new google.maps.InfoWindow({ content: `<strong>${p.name}</strong><br><a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.query)}">Open in Maps</a>` });
+          marker.addListener('click', ()=> info.open({ map: MAP, anchor: marker }));
+          bounds.extend(loc);
+        }
+        setTimeout(geocodeNext, 250); // simple throttle
+      });
+    };
+    geocodeNext();
+  }catch(e){
+    console.error(e);
+    alert('Could not plot the map. Check console.');
+  }
+}
+
+/* ---- bind ---- */
+function bind(){
+  $('#tripForm')?.addEventListener('submit', handleGenerate);
+  $('#buyBtn')?.addEventListener('click', handleFull);
+  $('#saveBtn')?.addEventListener('click', handleSave);
+  $('#plotBtn')?.addEventListener('click', plotOnMap);
+
+  // kids toggle show/hide (if present)
+  const kidsToggle = $('#withKids');
+  const kidsFields = $('#kidsFields');
+  if (kidsToggle && kidsFields){
+    kidsToggle.addEventListener('change', (e)=>{
+      const on = e.target.checked;
+      kidsFields.style.display = on ? 'grid' : 'none';
+      if (!on){ byName('children').value='0'; byName('childrenAges').value=''; }
+    });
+  }
+}
+
+loadConfig().then(bind);
