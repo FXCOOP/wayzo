@@ -20,10 +20,10 @@ const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPE
 /* --- App --- */
 const app = express();
 
-/* ✅ Trust exactly ONE proxy hop (Render’s) — not all */
-app.set('trust proxy', 1); // replaces app.enable('trust proxy')
+/* Trust Render’s single proxy hop */
+app.set('trust proxy', 1);
 
-/* ---------- HEALTH FIRST (no middleware) ---------- */
+/* ---------- HEALTH FIRST ---------- */
 app.get('/api/health', (_req, res) => res.status(200).json({ ok: true }));
 app.get('/healthz', (_req, res) => res.status(200).send('ok'));
 app.head('/api/health', (_req, res) => res.sendStatus(200));
@@ -35,8 +35,8 @@ app.use(helmet({
     useDefaults: true,
     directives: {
       "default-src": ["'self'"],
-      "script-src": ["'self'"],
-      "style-src": ["'self'"],
+      "script-src": ["'self'"],                       // scripts must be external (no inline JS)
+      "style-src": ["'self'", "'unsafe-inline'"],     // <-- allow inline CSS so your page styles apply
       "img-src": ["'self'", "data:", "https:"],
       "font-src": ["'self'", "data:"],
       "connect-src": ["'self'"],
@@ -50,13 +50,13 @@ app.use(helmet({
 
 app.use(cors({ origin: true, credentials: true }));
 
-/* ✅ Rate limit that understands the proxy & never blocks health */
+/* Rate limit (skip health checks) */
 const limiter = rateLimit({
   windowMs: 60_000,
   max: 300,
   standardHeaders: true,
   legacyHeaders: false,
-  trustProxy: true, // we set app.set('trust proxy', 1) above
+  trustProxy: true,
 });
 app.use((req, res, next) => {
   if (req.path === '/api/health' || req.path === '/healthz') return next();
@@ -71,7 +71,7 @@ const __dirname = path.dirname(__filename);
 const frontendDir = path.resolve(__dirname, '../frontend');
 const indexFile = path.join(frontendDir, 'index.backend.html');
 
-/* Root BEFORE static (and no-cache) */
+/* Root BEFORE static (no cache) */
 app.get('/', (_req, res) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.set('Pragma', 'no-cache');
@@ -79,12 +79,12 @@ app.get('/', (_req, res) => {
   res.sendFile(indexFile);
 });
 
-/* Static files (no index + no cache) */
+/* Static files (no index) */
 app.use(express.static(frontendDir, {
   index: false, etag: false, lastModified: false, cacheControl: false, maxAge: 0
 }));
 
-/* Debug helper */
+/* Debug */
 app.get('/__debug', (_req, res) => {
   res.json({
     frontendDir,
@@ -95,11 +95,8 @@ app.get('/__debug', (_req, res) => {
 });
 
 /* --- DB --- */
-// Free tier: keep DB local in app dir unless DB_PATH provided
 const defaultDb = path.resolve(__dirname, './wayzo.sqlite');
 let dbPath = process.env.DB_PATH || defaultDb;
-
-// Ensure directory exists; fall back to local if needed
 try {
   fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 } catch (e) {
@@ -130,7 +127,6 @@ CREATE TABLE IF NOT EXISTS plans (
 
 /* --- Helpers --- */
 const daysBetween = (a, b) => Math.max(1, Math.round((new Date(b) - new Date(a)) / 86_400_000) + 1);
-
 const affiliatesFor = (city) => {
   const q = encodeURIComponent(city);
   return {
@@ -142,7 +138,6 @@ const affiliatesFor = (city) => {
     reviews:   `https://www.tripadvisor.com/Search?q=${q}`
   };
 };
-
 const teaserHTML = ({ destination, start, end, budget, travelers, level, prefs }) => {
   const days = daysBetween(start, end);
   const perPerson = Number(budget) / Math.max(1, Number(travelers));
@@ -160,7 +155,6 @@ const teaserHTML = ({ destination, start, end, budget, travelers, level, prefs }
     </div>
   `;
 };
-
 const validateBody = (req, res, next) => {
   const { destination, start, end, budget, travelers, level } = req.body || {};
   if (!destination || !start || !end || !budget || !travelers || !level) {
@@ -197,7 +191,6 @@ app.post('/api/plan', validateBody, async (req, res) => {
     const aff = affiliatesFor(destination);
 
     const systemPrompt = `You are Wayzo, an expert travel planner. Create a detailed, realistic itinerary under budget with ${level} style. Include: Introduction; Day-by-Day (times, neighborhoods, must-sees); Dining; Transport tips; Cost breakdown (stay/food/attractions/transport); Safety & visa tips. Insert placeholders [FLIGHTS] [HOTELS] [ACTIVITIES] [CARS] [INSURANCE] where links should go. Use markdown tables when appropriate.`;
-
     const userPrompt = `Destination: ${destination}
 Dates: ${start} to ${end} (${daysBetween(start,end)} days)
 Travelers: ${travelers}
