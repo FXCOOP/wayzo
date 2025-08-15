@@ -19,7 +19,9 @@ const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPE
 
 /* --- App --- */
 const app = express();
-app.enable('trust proxy'); // good behind Render/NGINX
+
+/* ✅ Trust exactly ONE proxy hop (Render’s) — not all */
+app.set('trust proxy', 1); // replaces app.enable('trust proxy')
 
 /* ---------- HEALTH FIRST (no middleware) ---------- */
 app.get('/api/health', (_req, res) => res.status(200).json({ ok: true }));
@@ -45,13 +47,22 @@ app.use(helmet({
   },
   crossOriginEmbedderPolicy: false
 }));
+
 app.use(cors({ origin: true, credentials: true }));
-const limiter = rateLimit({ windowMs: 60_000, max: 300 });
+
+/* ✅ Rate limit that understands the proxy & never blocks health */
+const limiter = rateLimit({
+  windowMs: 60_000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  trustProxy: true, // we set app.set('trust proxy', 1) above
+});
 app.use((req, res, next) => {
-  // never rate-limit health checks
   if (req.path === '/api/health' || req.path === '/healthz') return next();
   return limiter(req, res, next);
 });
+
 app.use(express.json({ limit: '1mb' }));
 
 /* --- Paths --- */
