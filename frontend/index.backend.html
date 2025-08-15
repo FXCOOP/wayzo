@@ -1,25 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Wayzo · Plan unforgettable trips in minutes</title>
-  <link rel="icon" href="/frontend/favicon.svg">
-  <link rel="stylesheet" href="/frontend/style.css">
-  <script defer src="/frontend/app.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wayzo — Plan unforgettable trips in minutes</title>
+
+  <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
+  <link rel="stylesheet" href="/style.css?v=8" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+  <!-- Allow external images (Unsplash) -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self';
+                 script-src 'self';
+                 style-src 'self';
+                 img-src 'self' data: https:;
+                 connect-src 'self';
+                 frame-ancestors 'none'">
 </head>
 <body>
   <header class="topbar">
     <div class="container barin">
-      <div class="brand">
-        <div class="logo">WZ</div>
-        <div class="brand-text">Wayzo</div>
-      </div>
-      <a class="btn primary" href="#planner">Start planning</a>
+      <div class="brand"><div class="logo">WZ</div><div class="brand-text">Wayzo</div></div>
+      <a href="#planner" class="btn primary sm">Start planning</a>
     </div>
   </header>
 
-  <!-- HERO -->
   <section class="hero">
     <div class="container hero-grid">
       <div class="hero-card">
@@ -29,46 +35,32 @@
           <a class="btn primary" href="#planner">Build my plan</a>
           <a class="btn" href="#planner">See demo</a>
         </div>
-        <div class="tiny">No app required · Mobile-first · PDF export</div>
+        <div class="tiny" style="margin-top:8px">No app required · Mobile-first · PDF export</div>
       </div>
 
-      <!-- Inspiration photo (self-hosted). It will never overflow now. -->
-      <figure class="hero-photo" aria-label="Travel inspiration">
-        <img src="/docs/hero-road.jpg" alt="Open road into mountains">
-        <figcaption>Wayzo — inspiration for your next trip</figcaption>
+      <figure class="hero-photo">
+        <img src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1600&auto=format&fit=crop"
+             alt="Travel inspiration: open road" />
+        <figcaption class="tiny">Wayzo — inspiration for your next trip</figcaption>
       </figure>
     </div>
   </section>
 
-  <!-- MAIN -->
   <main id="planner" class="container main-grid">
-    <!-- FORM -->
-    <section class="card pad" id="formCard">
+    <section class="card pad">
       <h2>Trip details</h2>
-      <p class="muted">We’ll tailor routes, hotels, activities, and meals—then generate your full AI plan.</p>
+      <p class="tiny">We’ll tailor routes, hotels, activities, and meals—then generate your full AI plan.</p>
 
       <form id="tripForm" class="form-grid">
-        <label>Destination
-          <input class="input" name="destination" placeholder="e.g., Berlin" required>
+        <label class="full">Destination
+          <input class="input" name="destination" placeholder="e.g., Berlin" required />
         </label>
+        <label>Start date <input class="input" type="date" name="start" required /></label>
+        <label>End date <input class="input" type="date" name="end" required /></label>
+        <label>Budget (USD) <input class="input" type="number" min="100" step="50" name="budget" placeholder="1500" required /></label>
+        <label>Travelers <input class="input" type="number" min="1" step="1" name="travelers" value="2" required /></label>
 
-        <label>Start date
-          <input class="input" type="date" name="start" required>
-        </label>
-
-        <label>End date
-          <input class="input" type="date" name="end" required>
-        </label>
-
-        <label>Budget (USD)
-          <input class="input" type="number" min="100" step="50" name="budget" placeholder="1500" required>
-        </label>
-
-        <label>Travelers
-          <input class="input" type="number" min="1" step="1" name="travelers" value="2" required>
-        </label>
-
-        <fieldset class="inline">
+        <fieldset class="inline full">
           <legend>Style</legend>
           <label><input type="radio" name="level" value="budget" checked> Budget</label>
           <label><input type="radio" name="level" value="mid"> Mid-range</label>
@@ -76,7 +68,7 @@
         </fieldset>
 
         <label class="full">Preferences
-          <input class="input" name="prefs" placeholder="e.g., museums, nature, kid-friendly">
+          <input class="input" name="prefs" placeholder="e.g., museums, nature, kid-friendly" />
         </label>
 
         <div class="actions full">
@@ -84,13 +76,11 @@
           <button class="btn" type="button" id="buyBtn">Generate full plan (AI)</button>
           <button class="btn" type="button" id="saveBtn">Save preview</button>
         </div>
-
-        <p class="tiny full">By continuing you agree to our Terms and Privacy.</p>
+        <div class="tiny full">By continuing you agree to our Terms and Privacy.</div>
       </form>
     </section>
 
-    <!-- OUTPUT -->
-    <section class="card pad" id="outputCard">
+    <section class="card pad">
       <div class="section-head">
         <h2>Your itinerary</h2>
         <span class="badge">AI powered</span>
@@ -102,38 +92,26 @@
 
       <div class="shortcut-grid">
         <a id="pdfBtn" class="btn hidden" target="_blank" href="#">⬇️ Download PDF</a>
-        <a id="linkFlights" class="btn" target="_blank" href="https://www.kayak.com/flights?aff=YOUR_AFF_ID">✈️ Flights</a>
-        <a id="linkHotels" class="btn" target="_blank" href="https://www.booking.com/?aid=YOUR_AFF_ID">🏨 Hotels</a>
-        <a id="linkActivities" class="btn" target="_blank" href="https://www.getyourguide.com/?partner_id=YOUR_PARTNER_ID">🎟️ Activities</a>
-        <a id="linkCars" class="btn" target="_blank" href="https://www.rentalcars.com/?affiliateCode=YOUR_AFF_ID">🚗 Cars</a>
-        <a id="linkInsurance" class="btn" target="_blank" href="https://www.worldnomads.com/?aff=YOUR_AFF_ID">🛡️ Insurance</a>
-        <a id="linkReviews" class="btn" target="_blank" href="https://www.tripadvisor.com/">⭐ Reviews</a>
+        <a id="linkFlights"   class="btn" target="_blank" href="https://www.kayak.com/flights?aff=YOUR_AFF">✈️ Flights</a>
+        <a id="linkHotels"    class="btn" target="_blank" href="https://www.booking.com/?aid=YOUR_AID">🏨 Hotels</a>
+        <a id="linkActivities"class="btn" target="_blank" href="https://www.getyourguide.com/?partner_id=YOUR_PARTNER">🎟️ Activities</a>
+        <a id="linkCars"      class="btn" target="_blank" href="https://www.rentalcars.com/?affiliateCode=YOUR_AFF">🚗 Cars</a>
+        <a id="linkInsurance" class="btn" target="_blank" href="https://www.worldnomads.com/?aff=YOUR_AFF">🛡️ Insurance</a>
+        <a id="linkReviews"   class="btn" target="_blank" href="https://www.tripadvisor.com/">⭐ Reviews</a>
       </div>
     </section>
   </main>
 
-  <!-- MAP (hidden until full plan) -->
   <section id="mapSection" class="container card pad hidden">
     <div class="section-head">
       <h3>Map</h3>
-      <button id="plotBtn" class="btn sm">Plot on Map</button>
+      <a class="btn sm" id="plotBtn">Plot on Map</a>
     </div>
-    <p class="tiny">Click “Plot on Map” to see all places in Google Maps (opens in a new tab).</p>
-    <div id="mapPlaceholder" class="map-box">
-      <!-- We keep a placeholder due to strict CSP; maps open in a new tab. -->
-    </div>
+    <div class="map-box" id="mapBox">Click “Plot on Map” to see all places on a map.</div>
   </section>
 
-  <!-- LOADING OVERLAY -->
-  <div id="loading" class="loading hidden" aria-live="polite">
-    <div class="loader">
-      <div class="plane">✈️</div>
-      <div class="msg">Crafting your adventure…</div>
-    </div>
-  </div>
+  <footer class="footer tiny">© Wayzo. All rights reserved.</footer>
 
-  <footer class="footer">
-    <div class="container tiny">© <span id="year"></span> Wayzo. All rights reserved.</div>
-  </footer>
+  <script src="/app.js?v=8" defer></script>
 </body>
 </html>
