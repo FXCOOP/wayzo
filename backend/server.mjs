@@ -1,4 +1,4 @@
-/* Wayzo – backend (serves index + API, CSP-safe) */
+/* Wayzo – backend (serves index + API, CSP tuned for inline CSS/JS) */
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
@@ -20,7 +20,7 @@ const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPE
 /* --- App --- */
 const app = express();
 
-/* Trust Render’s single proxy hop */
+/* Trust Render’s proxy */
 app.set('trust proxy', 1);
 
 /* ---------- HEALTH FIRST ---------- */
@@ -30,15 +30,25 @@ app.head('/api/health', (_req, res) => res.sendStatus(200));
 app.head('/healthz', (_req, res) => res.sendStatus(200));
 
 /* ---------- Security & core middleware ---------- */
+/* NOTE: we allow inline CSS and inline JS so your single-file HTML styles/scripts work.
+   Later we can tighten this with nonces and external files. */
 app.use(helmet({
   contentSecurityPolicy: {
     useDefaults: true,
     directives: {
       "default-src": ["'self'"],
-      "script-src": ["'self'"],                       // scripts must be external (no inline JS)
-      "style-src": ["'self'", "'unsafe-inline'"],     // <-- allow inline CSS so your page styles apply
+      /* allow inline JS (for your <script> block) */
+      "script-src": ["'self'", "'unsafe-inline'"],
+      "script-src-elem": ["'self'", "'unsafe-inline'"],
+      "script-src-attr": ["'self'", "'unsafe-inline'"],
+      /* allow inline CSS (for your <style> block and style attributes) */
+      "style-src": ["'self'", "'unsafe-inline'"],
+      "style-src-elem": ["'self'", "'unsafe-inline'"],
+      "style-src-attr": ["'self'", "'unsafe-inline'"],
+      /* images/fonts */
       "img-src": ["'self'", "data:", "https:"],
       "font-src": ["'self'", "data:"],
+      /* AJAX/fetch to same origin */
       "connect-src": ["'self'"],
       "object-src": ["'none'"],
       "base-uri": ["'self'"],
@@ -56,7 +66,7 @@ const limiter = rateLimit({
   max: 300,
   standardHeaders: true,
   legacyHeaders: false,
-  trustProxy: true,
+  trustProxy: true
 });
 app.use((req, res, next) => {
   if (req.path === '/api/health' || req.path === '/healthz') return next();
@@ -79,22 +89,22 @@ app.get('/', (_req, res) => {
   res.sendFile(indexFile);
 });
 
-/* Static files (no index) */
+/* Static (no index) */
 app.use(express.static(frontendDir, {
   index: false, etag: false, lastModified: false, cacheControl: false, maxAge: 0
 }));
 
-/* Debug */
+/* Debug info */
 app.get('/__debug', (_req, res) => {
   res.json({
     frontendDir,
-    serving: indexFile,
+    indexFile,
     exists: fs.existsSync(indexFile),
     files: fs.readdirSync(frontendDir)
   });
 });
 
-/* --- DB --- */
+/* --- DB (SQLite) --- */
 const defaultDb = path.resolve(__dirname, './wayzo.sqlite');
 let dbPath = process.env.DB_PATH || defaultDb;
 try {
