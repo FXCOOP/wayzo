@@ -19,15 +19,23 @@ const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPE
 
 /* --- App --- */
 const app = express();
+app.enable('trust proxy'); // good behind Render/NGINX
 
+/* ---------- HEALTH FIRST (no middleware) ---------- */
+app.get('/api/health', (_req, res) => res.status(200).json({ ok: true }));
+app.get('/healthz', (_req, res) => res.status(200).send('ok'));
+app.head('/api/health', (_req, res) => res.sendStatus(200));
+app.head('/healthz', (_req, res) => res.sendStatus(200));
+
+/* ---------- Security & core middleware ---------- */
 app.use(helmet({
   contentSecurityPolicy: {
     useDefaults: true,
     directives: {
       "default-src": ["'self'"],
-      "script-src": ["'self'"],                 // external JS only
-      "style-src": ["'self'"],                  // external CSS only
-      "img-src": ["'self'", "data:", "https:"], // allow Unsplash, etc.
+      "script-src": ["'self'"],
+      "style-src": ["'self'"],
+      "img-src": ["'self'", "data:", "https:"],
       "font-src": ["'self'", "data:"],
       "connect-src": ["'self'"],
       "object-src": ["'none'"],
@@ -37,10 +45,13 @@ app.use(helmet({
   },
   crossOriginEmbedderPolicy: false
 }));
-
-// CORS: reflect the request origin (same-origin in our case)
 app.use(cors({ origin: true, credentials: true }));
-app.use(rateLimit({ windowMs: 60_000, max: 60 }));
+const limiter = rateLimit({ windowMs: 60_000, max: 300 });
+app.use((req, res, next) => {
+  // never rate-limit health checks
+  if (req.path === '/api/health' || req.path === '/healthz') return next();
+  return limiter(req, res, next);
+});
 app.use(express.json({ limit: '1mb' }));
 
 /* --- Paths --- */
@@ -73,11 +84,11 @@ app.get('/__debug', (_req, res) => {
 });
 
 /* --- DB --- */
-// Use /data/wayzo.sqlite if DB_PATH is set (for persistent disks), otherwise local file
+// Free tier: keep DB local in app dir unless DB_PATH provided
 const defaultDb = path.resolve(__dirname, './wayzo.sqlite');
 let dbPath = process.env.DB_PATH || defaultDb;
 
-// Ensure the directory exists; if not, fall back to local file path
+// Ensure directory exists; fall back to local if needed
 try {
   fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 } catch (e) {
@@ -146,10 +157,6 @@ const validateBody = (req, res, next) => {
   }
   next();
 };
-
-/* --- Health --- */
-app.get('/api/health', (_req, res) => res.json({ ok: true }));
-app.get('/healthz',    (_req, res) => res.status(200).send('ok')); // Render default health path
 
 /* --- API: Preview --- */
 app.post('/api/preview', validateBody, (req, res) => {
