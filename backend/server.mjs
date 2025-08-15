@@ -1,4 +1,4 @@
-/* Wayzo – backend (serves index + API, CSP tuned for inline CSS/JS) */
+/* Wayzo – backend (CSP disabled so inline CSS/JS render) */
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
@@ -12,61 +12,36 @@ import Database from 'better-sqlite3';
 import PDFDocument from 'pdfkit';
 import { v4 as uuidv4 } from 'uuid';
 
-/* --- Config --- */
 const PORT = process.env.PORT || 8080;
 const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 
-/* --- App --- */
 const app = express();
-
-/* Trust Render’s proxy */
 app.set('trust proxy', 1);
 
-/* ---------- HEALTH FIRST ---------- */
+/* Health first */
 app.get('/api/health', (_req, res) => res.status(200).json({ ok: true }));
 app.get('/healthz', (_req, res) => res.status(200).send('ok'));
 app.head('/api/health', (_req, res) => res.sendStatus(200));
 app.head('/healthz', (_req, res) => res.sendStatus(200));
 
-/* ---------- Security & core middleware ---------- */
-/* NOTE: we allow inline CSS and inline JS so your single-file HTML styles/scripts work.
-   Later we can tighten this with nonces and external files. */
-app.use(helmet({
-  contentSecurityPolicy: {
-    useDefaults: true,
-    directives: {
-      "default-src": ["'self'"],
-      /* allow inline JS (for your <script> block) */
-      "script-src": ["'self'", "'unsafe-inline'"],
-      "script-src-elem": ["'self'", "'unsafe-inline'"],
-      "script-src-attr": ["'self'", "'unsafe-inline'"],
-      /* allow inline CSS (for your <style> block and style attributes) */
-      "style-src": ["'self'", "'unsafe-inline'"],
-      "style-src-elem": ["'self'", "'unsafe-inline'"],
-      "style-src-attr": ["'self'", "'unsafe-inline'"],
-      /* images/fonts */
-      "img-src": ["'self'", "data:", "https:"],
-      "font-src": ["'self'", "data:"],
-      /* AJAX/fetch to same origin */
-      "connect-src": ["'self'"],
-      "object-src": ["'none'"],
-      "base-uri": ["'self'"],
-      "frame-ancestors": ["'self'"]
-    }
-  },
-  crossOriginEmbedderPolicy: false
-}));
+/* Security headers (CSP OFF so inline <style>/<script> work) */
+app.use(
+  helmet({
+    contentSecurityPolicy: false,      //  <-- turn off CSP for now
+    crossOriginEmbedderPolicy: false,
+  })
+);
 
 app.use(cors({ origin: true, credentials: true }));
 
-/* Rate limit (skip health checks) */
+/* Rate limit (skip health) */
 const limiter = rateLimit({
   windowMs: 60_000,
   max: 300,
   standardHeaders: true,
   legacyHeaders: false,
-  trustProxy: true
+  trustProxy: true,
 });
 app.use((req, res, next) => {
   if (req.path === '/api/health' || req.path === '/healthz') return next();
@@ -75,7 +50,7 @@ app.use((req, res, next) => {
 
 app.use(express.json({ limit: '1mb' }));
 
-/* --- Paths --- */
+/* Paths */
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const frontendDir = path.resolve(__dirname, '../frontend');
@@ -90,17 +65,23 @@ app.get('/', (_req, res) => {
 });
 
 /* Static (no index) */
-app.use(express.static(frontendDir, {
-  index: false, etag: false, lastModified: false, cacheControl: false, maxAge: 0
-}));
+app.use(
+  express.static(frontendDir, {
+    index: false,
+    etag: false,
+    lastModified: false,
+    cacheControl: false,
+    maxAge: 0,
+  })
+);
 
-/* Debug info */
+/* Debug */
 app.get('/__debug', (_req, res) => {
   res.json({
     frontendDir,
     indexFile,
     exists: fs.existsSync(indexFile),
-    files: fs.readdirSync(frontendDir)
+    files: fs.readdirSync(frontendDir),
   });
 });
 
@@ -132,10 +113,9 @@ CREATE TABLE IF NOT EXISTS plans (
   teaser_html TEXT,
   full_markdown TEXT,
   affiliate_json TEXT
-);
-`);
+);`);
 
-/* --- Helpers --- */
+/* Helpers */
 const daysBetween = (a, b) => Math.max(1, Math.round((new Date(b) - new Date(a)) / 86_400_000) + 1);
 const affiliatesFor = (city) => {
   const q = encodeURIComponent(city);
@@ -145,16 +125,17 @@ const affiliatesFor = (city) => {
     activities:`https://www.getyourguide.com/s/?q=${q}&partner_id=${process.env.AFF_GYG_PARTNER || 'PID'}`,
     cars:      `https://www.rentalcars.com/SearchResults.do?destination=${q}&affiliateCode=${process.env.AFF_RENTALCARS_CODE || 'CODE'}`,
     insurance: `https://www.worldnomads.com/?aff=${process.env.AFF_WORLDNOMADS_AFF || 'AFF'}`,
-    reviews:   `https://www.tripadvisor.com/Search?q=${q}`
+    reviews:   `https://www.tripadvisor.com/Search?q=${q}`,
   };
 };
 const teaserHTML = ({ destination, start, end, budget, travelers, level, prefs }) => {
   const days = daysBetween(start, end);
   const perPerson = Number(budget) / Math.max(1, Number(travelers));
   const daily = Number(budget) / days;
-  const vibe = level === 'luxury'
-    ? '5★ comfort, private transfers, and signature dining'
-    : level === 'mid'
+  const vibe =
+    level === 'luxury'
+      ? '5★ comfort, private transfers, and signature dining'
+      : level === 'mid'
       ? '3–4★ hotels, major highlights, and local eats'
       : 'hostels/guesthouses, free sights, and budget-friendly eats';
   return `
@@ -162,8 +143,7 @@ const teaserHTML = ({ destination, start, end, budget, travelers, level, prefs }
       <p><strong>${days}-day plan for ${destination}</strong> for <strong>${travelers}</strong> traveler(s) · <strong>${level}</strong> style.</p>
       <p>Estimated total: $${Math.round(budget)} (~$${Math.round(perPerson)} per person), ≈ $${Math.round(daily)}/day${prefs ? ` · Focus: ${prefs}` : ''}.</p>
       <p>Expect ${vibe}. Generate the full schedule, hotels, restaurants, maps, and a cost table when ready.</p>
-    </div>
-  `;
+    </div>`;
 };
 const validateBody = (req, res, next) => {
   const { destination, start, end, budget, travelers, level } = req.body || {};
@@ -173,25 +153,35 @@ const validateBody = (req, res, next) => {
   next();
 };
 
-/* --- API: Preview --- */
+/* Preview */
 app.post('/api/preview', validateBody, (req, res) => {
   const { destination, start, end, budget, travelers, level, prefs } = req.body;
   const id = uuidv4();
   const teaser = teaserHTML({ destination, start, end, budget, travelers, level, prefs });
   const aff = affiliatesFor(destination);
 
-  db.prepare(`INSERT INTO plans
-    (id, created_at, destination, start_date, end_date, budget, travelers, level, prefs, teaser_html, affiliate_json)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-    .run(
-      id, new Date().toISOString(), destination, start, end,
-      Number(budget), Number(travelers), level, prefs || null, teaser, JSON.stringify(aff)
-    );
+  db.prepare(
+    `INSERT INTO plans
+      (id, created_at, destination, start_date, end_date, budget, travelers, level, prefs, teaser_html, affiliate_json)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(
+    id,
+    new Date().toISOString(),
+    destination,
+    start,
+    end,
+    Number(budget),
+    Number(travelers),
+    level,
+    prefs || null,
+    teaser,
+    JSON.stringify(aff)
+  );
 
   res.json({ id, teaser_html: teaser, affiliates: aff });
 });
 
-/* --- API: Full plan (OpenAI) --- */
+/* Full plan (OpenAI) */
 app.post('/api/plan', validateBody, async (req, res) => {
   try {
     if (!openai) return res.status(503).json({ error: 'OPENAI_API_KEY missing on server' });
@@ -214,25 +204,35 @@ Constraints: Keep totals under budget and provide sensible daily pacing.`;
       temperature: 0.6,
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ]
+        { role: 'user', content: userPrompt },
+      ],
     });
 
     let md = completion.choices?.[0]?.message?.content || '# Trip Plan';
     md = md
-      .replaceAll('[FLIGHTS]',    aff.flights)
-      .replaceAll('[HOTELS]',     aff.hotels)
+      .replaceAll('[FLIGHTS]', affiliatesFor(destination).flights)
+      .replaceAll('[HOTELS]', aff.hotels)
       .replaceAll('[ACTIVITIES]', aff.activities)
-      .replaceAll('[CARS]',       aff.cars)
-      .replaceAll('[INSURANCE]',  aff.insurance);
+      .replaceAll('[CARS]', aff.cars)
+      .replaceAll('[INSURANCE]', aff.insurance);
 
-    db.prepare(`INSERT INTO plans
-      (id, created_at, destination, start_date, end_date, budget, travelers, level, prefs, full_markdown, affiliate_json)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-      .run(
-        id, new Date().toISOString(), destination, start, end,
-        Number(budget), Number(travelers), level, prefs || null, md, JSON.stringify(aff)
-      );
+    db.prepare(
+      `INSERT INTO plans
+        (id, created_at, destination, start_date, end_date, budget, travelers, level, prefs, full_markdown, affiliate_json)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).run(
+      id,
+      new Date().toISOString(),
+      destination,
+      start,
+      end,
+      Number(budget),
+      Number(travelers),
+      level,
+      prefs || null,
+      md,
+      JSON.stringify(aff)
+    );
 
     res.json({ id, markdown: md, affiliates: aff });
   } catch (e) {
@@ -241,7 +241,7 @@ Constraints: Keep totals under budget and provide sensible daily pacing.`;
   }
 });
 
-/* --- API: Get plan --- */
+/* Get plan */
 app.get('/api/plan/:id', (req, res) => {
   const row = db.prepare('SELECT * FROM plans WHERE id = ?').get(req.params.id);
   if (!row) return res.status(404).json({ error: 'Not found' });
@@ -256,11 +256,11 @@ app.get('/api/plan/:id', (req, res) => {
     prefs: row.prefs,
     teaser_html: row.teaser_html,
     markdown: row.full_markdown,
-    affiliates: JSON.parse(row.affiliate_json || '{}')
+    affiliates: JSON.parse(row.affiliate_json || '{}'),
   });
 });
 
-/* --- API: PDF --- */
+/* PDF */
 app.get('/api/plan/:id/pdf', (req, res) => {
   const row = db.prepare('SELECT * FROM plans WHERE id = ?').get(req.params.id);
   if (!row) return res.status(404).json({ error: 'Not found' });
@@ -272,8 +272,9 @@ app.get('/api/plan/:id/pdf', (req, res) => {
   doc.pipe(res);
   doc.fontSize(20).text(`Wayzo – ${row.destination}`);
   doc.moveDown(0.5);
-  doc.fontSize(10).fillColor('#666')
-    .text(`Dates: ${row.start_date} to ${row.end_date} · Travelers: ${row.travelers} · Style: ${row.level}`);
+  doc.fontSize(10).fillColor('#666').text(
+    `Dates: ${row.start_date} to ${row.end_date} · Travelers: ${row.travelers} · Style: ${row.level}`
+  );
   doc.moveDown();
   doc.fillColor('#000').fontSize(12).text('Plan (Markdown):');
   doc.moveDown(0.5);
@@ -281,7 +282,7 @@ app.get('/api/plan/:id/pdf', (req, res) => {
   doc.end();
 });
 
-/* --- Start --- */
+/* Start */
 app.listen(PORT, () => {
   console.log(`Wayzo backend running on :${PORT}`);
   console.log('Serving frontend from:', frontendDir);
