@@ -1,312 +1,297 @@
-// backend/server.mjs
-import express from "express";
-import path from "path";
-import { fileURLToPath } from "url";
-import dotenv from "dotenv";
-import Database from "better-sqlite3";
-import sanitizeHtml from "sanitize-html";
-import { marked } from "marked";
-import puppeteer from "puppeteer";
+/* server.mjs — Wayzo backend (Node 20)
+ * - Serves frontend at site root (/)
+ * - /api/preview  -> quick teaser (no OpenAI)
+ * - /api/plan     -> full plan (uses OpenAI if OPENAI_API_KEY; otherwise offline generator)
+ * - /api/plan/:id/pdf -> branded PDF
+ * - /healthz + /api/health -> Render health checks
+ * - Static: /style.css, /app.js, /favicon.svg directly at /
+ */
 
-dotenv.config();
+import 'dotenv/config';
+import path from 'node:path';
+import fs from 'node:fs';
+import express from 'express';
+import helmet from 'helmet';
+import compression from 'compression';
+import cors from 'cors';
+import rateLimit from 'express-rate-limit';
+import Database from 'better-sqlite3';
+import PDFDocument from 'pdfkit';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const app = express();
-app.use(express.json({ limit: "1mb" }));
-
-// --- Simple CSP that still allows hero images & Google Maps ---
-const CSP = [
-  "default-src 'self'",
-  "img-src 'self' data: https:",
-  "script-src 'self' 'unsafe-inline' https: maps.googleapis.com maps.gstatic.com",
-  "style-src 'self' 'unsafe-inline' https:",
-  "font-src 'self' data: https:",
-  "connect-src 'self' https:",
-  "frame-src https:",
-].join("; ");
-
-app.use((req, res, next) => {
-  res.setHeader("Content-Security-Policy", CSP);
-  next();
-});
-
-// --- DB (auto created) ---
-const db = new Database(path.join(__dirname, "wayzo.sqlite"));
-db.pragma("journal_mode = WAL");
-db.exec(`
-  CREATE TABLE IF NOT EXISTS plans(
-    id TEXT PRIMARY KEY,
-    created_at TEXT,
-    payload_json TEXT,    -- request body
-    teaser_html TEXT,
-    markdown TEXT
-  )
-`);
-
-// --- Helpers ---
-const hasOpenAI = !!process.env.OPENAI_API_KEY;
-const hasMapsKey = !!process.env.GOOGLE_MAPS_API_KEY;
-
-function uid() {
-  return crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
-}
-
-function toTeaserHTML(data) {
-  const { destination, start, end, travelers, level } = data;
-  const dur = start && end ? ` (${start} → ${end})` : "";
-  const style = level === "luxury" ? "luxury" : level === "mid" ? "mid-range" : "budget";
-  return `
-  <div class="teaser">
-    <h3>${destination}${dur}</h3>
-    <p><b>${travelers}</b> travelers • <b>${style}</b> style</p>
-    <ul>
-      <li>Estimated total: ${(data.budget || 0).toLocaleString()} USD</li>
-      <li>Focus: ${data.prefs || "balanced sights & food"}</li>
-    </ul>
-    <small>Generate the full schedule, hotels, restaurants, maps, and a cost table when ready.</small>
-  </div>`;
-}
-
-function naivePOIsFromMarkdown(md, destination) {
-  // Very light heuristic: pick bracket text that looks like a place or bold headings
-  const names = new Set();
-  const linkRe = /\[([^\]]{3,60})\]\((https?:\/\/[^\)]+)\)/g;
-  let m;
-  while ((m = linkRe.exec(md))) {
-    const label = m[1].trim();
-    // Skip generic words
-    if (!/day|lunch|dinner|breakfast|hotel|market|district|pass|card|ticket/i.test(label)) {
-      names.add(label);
-    }
+// Optional OpenAI (fallback generator if key missing)
+let openai = null;
+try {
+  const { OpenAI } = await import('openai');
+  if (process.env.OPENAI_API_KEY) {
+    openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   }
-  // Fallback: try lines like "- Visit X" / "- Explore X"
-  md.split("\n").forEach((line) => {
-    const s = line.trim();
-    if (/^-+\s*(visit|explore|see|walk|head|arrive)/i.test(s)) {
-      const guess = s.replace(/^-\s*(visit|explore|see|walk|head|arrive)\s*/i, "");
-      const clean = guess.replace(/\(.*?\)|\**/g, "").trim();
-      if (clean.split(" ").length <= 8 && clean.length > 3) {
-        names.add(clean);
-      }
-    }
-  });
+} catch { /* optional */ }
 
-  // Build GMaps place queries
-  return Array.from(names).slice(0, 30).map((n) => ({
-    name: n,
-    query: `${n}, ${destination}`,
-  }));
+const app  = express();
+const PORT = process.env.PORT || 10000;
+
+// ---- security & perf
+app.set('trust proxy', 1);
+app.use(compression());
+app.use(cors());
+app.use(helmet({
+  contentSecurityPolicy: false, // keep simple for CDN images
+  crossOriginResourcePolicy: { policy: 'cross-origin' }
+}));
+app.use(express.json({ limit: '1mb' }));
+
+// ---- basic rate limit
+app.use(rateLimit({
+  windowMs: 60_000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: { trustProxy: (v) => v === true || v === 1 } // silence express-rate-limit warning
+}));
+
+// ---- tiny utils
+const uuid = () => crypto.randomUUID();
+const safe = (s) => String(s ?? '').trim();
+
+function affiliateLinks(destination = '') {
+  const q = encodeURIComponent(destination);
+  return {
+    flights    : `https://www.kayak.com/flights?aff=YOUR_AFF_ID&q=${q}`,
+    hotels     : `https://www.booking.com/?aid=YOUR_AFF_ID&ss=${q}`,
+    activities : `https://www.getyourguide.com/s/?partner_id=YOUR_PARTNER_ID&q=${q}`,
+    cars       : `https://www.rentalcars.com/?affiliateCode=YOUR_AFF_ID&city=${q}`,
+    insurance  : `https://www.worldnomads.com/?aff=YOUR_AFF_ID`,
+    reviews    : `https://www.tripadvisor.com/Search?q=${q}`
+  };
 }
 
-// --- AI (fallback text if no key) ---
-async function buildMarkdown(data) {
-  const { destination, start, end, travelers, level, prefs = "", pace = "balanced" } = data;
+// ---- SQLite
+const root = path.resolve(process.cwd());
+const dbPath = path.join(root, 'tripmaster.sqlite');
+const db = new Database(dbPath);
+db.prepare(`CREATE TABLE IF NOT EXISTS plans (
+  id TEXT PRIMARY KEY,
+  created INTEGER,
+  destination TEXT,
+  start TEXT,
+  end TEXT,
+  travelers INTEGER,
+  budget INTEGER,
+  level TEXT,
+  prefs TEXT,
+  markdown TEXT
+)`).run();
 
-  if (!hasOpenAI) {
-    // Plain but tidy fallback
-    const budget = (data.budget || 0).toLocaleString();
-    return `# Trip Summary
-**${destination}** ${start && end ? `(${start} → ${end})` : ""} for **${travelers}** traveler(s), **${level}** style, **${pace}** pace.
-Focus: ${prefs || "sights & food"} • Estimated total budget: **$${budget}**.
-
-## Day-by-day (sample)
-- **Day 1**: Arrival, old town walk, casual dinner.
-- **Day 2**: Highlights & museums, afternoon park, street food.
-- **Day 3**: Local market + neighborhood tour.
-- **Day 4**: Day trip to a nearby highlight if time/budget allow.
-- **Day 5**: Relaxed morning, iconic viewpoint at sunset.
-- **Day 6**: Culture & art cluster, trending bistro dinner.
-- **Day 7**: Leisure + shopping, farewell dinner.
-
-## Booking Shortcuts
-[Flights](https://www.kayak.com/flights?aff=AFF) · [Hotels](https://www.booking.com/?aid=AID) · [Activities](https://www.getyourguide.com/?partner_id=PID) · [Cars](https://www.rentalcars.com/?affiliateCode=CODE) · [Insurance](https://www.worldnomads.com/?aff=AFF)
-`;
-  }
-
-  // If you want to call OpenAI, plug your preferred model here.
-  // Keeping it simple; you already had this wired before.
-  const { OpenAI } = await import("openai");
-  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  const sys = `You are Wayzo Trip Planner. Produce a clear, helpful, copy-edit-ready itinerary in Markdown.
-Include: Trip Summary, Neighborhood/Area guide, Day-by-day with times, Cost breakdown table (rough),
-essentials, checklist & packing list, and inline Google Maps links for key places. Destination: ${destination}.`;
-  const user = JSON.stringify(data);
-
-  const resp = await client.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [{ role: "system", content: sys }, { role: "user", content: user }],
-    temperature: 0.6,
-  });
-
-  const md = resp.choices?.[0]?.message?.content || "Plan unavailable.";
-  return md;
-}
-
-// --- API ---
-app.get("/api/health", (_req, res) => res.json({ ok: true }));
-app.get("/healthz", (_req, res) => res.status(200).send("ok"));
-app.get("/__debug", (_req, res) => res.json({ hasOpenAI, hasMapsKey }));
-
-app.get("/api/config", (_req, res) => {
-  res.json({
-    googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || "",
-  });
-});
-
-app.post("/api/preview", async (req, res) => {
+// ---- PREVIEW (no OpenAI; fast teaser)
+app.post('/api/preview', (req, res) => {
   try {
-    const data = req.body || {};
-    const id = uid();
-    const teaser = toTeaserHTML(data);
+    const { destination, start, end, budget, travelers, level, prefs } = req.body || {};
+    const id = uuid();
 
-    db.prepare(
-      `INSERT INTO plans(id, created_at, payload_json, teaser_html) VALUES(?, datetime('now'), ?, ?)`
-    ).run(id, JSON.stringify(data), teaser);
+    const trip = {
+      id,
+      destination: safe(destination),
+      start: safe(start),
+      end: safe(end),
+      budget: Number(budget || 0),
+      travelers: Number(travelers || 1),
+      level: safe(level || 'budget'),
+      prefs: safe(prefs),
+    };
 
-    // Affiliate set (basic sample)
-    const q = encodeURIComponent(data.destination || "");
+    const teaser_html = `
+      <div class="teaser">
+        <h3>${trip.destination || 'Your destination'}</h3>
+        <p><strong>${trip.start || 'Start'} – ${trip.end || 'End'}</strong> · ${trip.travelers} traveler(s) · <em>${trip.level}</em></p>
+        <p>Budget: $${trip.budget.toLocaleString()}</p>
+        <ul>
+          <li>Top neighborhoods to start: Mitte, Kreuzberg, Prenzlauer Berg.</li>
+          <li>Suggested focus: ${trip.prefs || 'mix of highlights & hidden gems'}.</li>
+          <li>Transport: public transit + walking for central areas.</li>
+        </ul>
+      </div>
+    `;
+
+    const links = affiliateLinks(trip.destination);
+    res.json({ id, teaser_html, affiliates: links, mapSearch: encodeURIComponent(trip.destination) });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Failed to build preview' });
+  }
+});
+
+// ---- PLAN (OpenAI if available, else offline generator)
+app.post('/api/plan', async (req, res) => {
+  try {
+    const { destination, start, end, budget, travelers, level, prefs } = req.body || {};
+    const id = uuid();
+    const trip = {
+      id,
+      destination: safe(destination),
+      start: safe(start),
+      end: safe(end),
+      budget: Number(budget || 0),
+      travelers: Number(travelers || 1),
+      level: safe(level || 'budget'),
+      prefs: safe(prefs),
+    };
+
+    let markdown = '';
+    if (openai) {
+      const prompt = `
+You are a travel planner. Build a concise day-by-day itinerary in Markdown.
+Destination: ${trip.destination}
+Dates: ${trip.start} to ${trip.end}
+Travelers: ${trip.travelers}
+Budget total (USD): ${trip.budget}
+Style: ${trip.level}
+Preferences: ${trip.prefs}
+
+Format:
+# <City> Itinerary (<date range>)
+Brief intro
+---
+## Day 1
+- Morning: ...
+- Afternoon: ...
+- Evening: ...
+(Repeat for each day)
+---
+## Costs (rough)
+- Stay
+- Food
+- Transport
+- Activities
+---
+## Tips
+Short bullets.
+`;
+      const rsp = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.5,
+      });
+      markdown = rsp.choices?.[0]?.message?.content?.trim() || '';
+    }
+
+    if (!markdown) {
+      // Offline fallback
+      markdown = `# ${trip.destination} Itinerary (${trip.start} – ${trip.end})
+Welcome! This plan balances highlights and downtime for ${trip.travelers} traveler(s) on a **${trip.level}** style with a total budget of **$${trip.budget.toLocaleString()}**.
+
+---
+## Day 1
+- Arrival and orientation. Explore the main square, grab a casual dinner near your hotel.
+
+## Day 2
+- Morning: Top museum. Afternoon: Historic quarter walk. Evening: Local street food.
+
+## Day 3
+- Day trip to a nearby landmark or park (budget-friendly transit).
+
+## Day 4
+- Markets + neighborhood stroll. Coffee stops, photo ops.
+
+## Day 5
+- Iconic viewpoints + riverside/green area.
+
+## Day 6
+- Free day for personal interests (museums, galleries, biking).
+
+## Day 7
+- Wrap up, souvenirs, farewell dinner.
+
+---
+## Costs (rough for all travelers)
+- Stay: $${Math.round(trip.budget * 0.35)}
+- Food: $${Math.round(trip.budget * 0.30)}
+- Activities: $${Math.round(trip.budget * 0.20)}
+- Transport: $${Math.round(trip.budget * 0.10)}
+- Misc: $${Math.round(trip.budget * 0.05)}
+
+---
+## Tips
+- Use public transport passes for savings.
+- Book popular tickets online in advance.
+- Pack layers and comfy shoes.
+`;
+    }
+
+    db.prepare(`INSERT INTO plans (id, created, destination, start, end, travelers, budget, level, prefs, markdown)
+      VALUES (@id, @created, @destination, @start, @end, @travelers, @budget, @level, @prefs, @markdown)`)
+      .run({ ...trip, created: Date.now(), markdown });
+
     res.json({
       id,
-      teaser_html: teaser,
-      affiliates: {
-        flights: `https://www.kayak.com/flights?aff=AFF&destination=${q}`,
-        hotels: `https://www.booking.com/searchresults.html?aid=AID&ss=${q}`,
-        activities: `https://www.getyourguide.com/s/?q=${q}&partner_id=PID`,
-        cars: `https://www.rentalcars.com/SearchResults.do?affiliateCode=CODE&destination=${q}`,
-        insurance: `https://www.worldnomads.com/?aff=AFF`,
-        reviews: `https://www.tripadvisor.com/Search?q=${q}`,
-      },
+      markdown,
+      affiliates: affiliateLinks(trip.destination),
+      mapSearch: encodeURIComponent(trip.destination)
     });
   } catch (e) {
     console.error(e);
-    res.status(500).json({ error: "preview_failed" });
+    res.status(500).json({ error: 'Failed to generate plan' });
   }
 });
 
-app.post("/api/plan", async (req, res) => {
-  try {
-    const id = uid();
-    const data = req.body || {};
-    const md = await buildMarkdown(data);
+// ---- PDF (simple, branded)
+app.get('/api/plan/:id/pdf', (req, res) => {
+  const row = db.prepare('SELECT * FROM plans WHERE id = ?').get(req.params.id);
+  if (!row) return res.status(404).send('Not found');
 
-    db.prepare(
-      `INSERT INTO plans(id, created_at, payload_json, markdown) VALUES(?, datetime('now'), ?, ?)`
-    ).run(id, JSON.stringify(data), md);
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `inline; filename="wayzo-${row.destination.replace(/\s+/g,'-').toLowerCase()}.pdf"`);
 
-    res.json({ id, markdown: md });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "plan_failed" });
+  const doc = new PDFDocument({ margin: 40, info: { Title: `Wayzo – ${row.destination} plan` } });
+  doc.pipe(res);
+
+  doc.fontSize(20).text(`Wayzo – ${row.destination} Itinerary`, { align: 'left' });
+  doc.moveDown(0.5);
+  doc.fontSize(10).fillColor('#555').text(`${row.start} – ${row.end} · ${row.travelers} traveler(s) · ${row.level} · budget $${row.budget.toLocaleString()}`);
+  doc.moveDown(1);
+  doc.fillColor('#000');
+
+  const lines = String(row.markdown).split('\n');
+  lines.forEach((ln) => {
+    if (ln.startsWith('# ')) {
+      doc.moveDown(0.6).fontSize(16).text(ln.replace(/^#\s+/, ''));
+    } else if (ln.startsWith('## ')) {
+      doc.moveDown(0.5).fontSize(13).text(ln.replace(/^##\s+/, ''), { underline: true });
+    } else {
+      doc.fontSize(10).text(ln);
+    }
+  });
+
+  doc.moveDown(1.2);
+  doc.fontSize(9).fillColor('#666').text('© Wayzo. Crafted for your adventure.', { align: 'center' });
+
+  doc.end();
+});
+
+// ---- HEALTH
+app.get('/api/health', (_req, res) => res.json({ ok: true }));
+app.get('/healthz', (_req, res) => res.type('text/plain').send('ok'));
+
+// ---- STATIC FRONTEND (serve at site root)
+const frontendDir = path.join(root, 'frontend');
+console.log('Static root:', frontendDir);
+console.log('Index file:', path.join(frontendDir, 'index.backend.html'));
+
+app.use(express.static(frontendDir, {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.css')) res.setHeader('Content-Type', 'text/css; charset=utf-8');
+    if (filePath.endsWith('.js'))  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    if (filePath.endsWith('.svg')) res.setHeader('Content-Type', 'image/svg+xml');
   }
-});
+}));
 
-app.get("/api/plan/:id/points", (req, res) => {
-  const row = db.prepare("SELECT markdown, payload_json FROM plans WHERE id = ?").get(req.params.id);
-  if (!row) return res.status(404).json({ error: "not_found" });
-  const payload = JSON.parse(row.payload_json || "{}");
-  const destination = payload.destination || "";
-  const points = naivePOIsFromMarkdown(row.markdown || "", destination);
-  res.json({ destination, points });
-});
+// Back-compat if any old links used:
+app.use('/frontend', express.static(frontendDir));
 
-app.get("/api/plan/:id/pdf", async (req, res) => {
-  const row = db.prepare("SELECT markdown, payload_json FROM plans WHERE id = ?").get(req.params.id);
-  if (!row) return res.status(404).send("Not found");
+app.get('/', (_req, res) =>
+  res.sendFile(path.join(frontendDir, 'index.backend.html'))
+);
 
-  const payload = JSON.parse(row.payload_json || "{}");
-  const title = `Wayzo – ${payload.destination || "Trip"}`;
-  const html = marked.parse(row.markdown || "No content");
-
-  // A4, header/footer, hero on right
-  const shell = `
-<!doctype html>
-<html>
-<head>
-<meta charset="utf-8"/>
-<title>${title}</title>
-<style>
-  @page { size: A4; margin: 22mm 16mm; }
-  body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, sans-serif; color:#0f172a; }
-  header { position: fixed; top: -14mm; left: 0; right: 0; height: 10mm; font-size: 11px; color:#64748b;
-           display:flex; align-items:center; justify-content:space-between; }
-  header .brand { font-weight: 800; color:#0ea5e9; }
-  footer { position: fixed; bottom: -14mm; left:0; right:0; height:10mm; font-size: 11px; color:#64748b;
-           display:flex; align-items:center; justify-content:space-between; }
-  .pagenum:before { content: counter(page); }
-  h1,h2,h3 { color:#111827; margin: 12px 0 8px; }
-  h1 { font-size: 20px; }
-  h2 { font-size: 16px; }
-  h3 { font-size: 13px; }
-  p, li { font-size: 12px; line-height: 1.45; }
-  .hero { display:flex; gap:18px; margin:8px 0 16px; }
-  .hero .left { flex: 1; }
-  .hero .right { width: 36%; border-radius: 12px; overflow:hidden; }
-  .hero .right img{ width:100%; height:100%; object-fit:cover; }
-  .prose table { width:100%; border-collapse: collapse; margin: 8px 0; }
-  .prose th, .prose td { border:1px solid #e5e7eb; padding:6px 8px; font-size: 12px; }
-  .badge { display:inline-block; border:1px solid #d1fae5; background:#ecfdf5; color:#065f46; border-radius:999px; padding:2px 8px; font-size:11px; }
-</style>
-</head>
-<body>
-<header>
-  <span class="brand">Wayzo</span>
-  <span>${payload.destination || ""} · ${payload.start || ""} → ${payload.end || ""}</span>
-</header>
-<footer>
-  <span>wayzo.online</span>
-  <span>Page <span class="pagenum"></span></span>
-</footer>
-
-<div class="hero">
-  <div class="left">
-    <h1>${payload.destination || "Your trip"}</h1>
-    <p><span class="badge">${(payload.travelers || 1)} traveler(s)</span> 
-       <span class="badge">${payload.level || "budget"}</span>
-       <span class="badge">${payload.pace || "balanced"}</span></p>
-  </div>
-  <div class="right">
-    <img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop" alt="Hero"/>
-  </div>
-</div>
-
-<div class="prose">
-${html}
-</div>
-</body>
-</html>`;
-
-  try {
-    const browser = await puppeteer.launch({
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    });
-    const page = await browser.newPage();
-    await page.setContent(shell, { waitUntil: "networkidle0" });
-    const pdf = await page.pdf({ format: "A4", printBackground: true, margin: { top: "16mm", bottom: "16mm", left: "12mm", right: "12mm" } });
-    await browser.close();
-
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `inline; filename="wayzo-${(payload.destination || "trip").toLowerCase()}.pdf"`);
-    res.send(pdf);
-  } catch (e) {
-    console.error(e);
-    res.status(500).send("pdf_failed");
-  }
-});
-
-// --- Static frontend ---
-const FRONTEND_DIR = path.resolve(__dirname, "../frontend");
-app.use(express.static(FRONTEND_DIR, { extensions: ["html"] }));
-
-app.get("/", (_req, res) => {
-  res.sendFile(path.join(FRONTEND_DIR, "index.backend.html"));
-});
-
-// --- Start ---
-const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`Wayzo backend running on :${PORT}`);
-  console.log(`Serving frontend from: ${FRONTEND_DIR}`);
-  console.log(`Root file: ${path.join(FRONTEND_DIR, "index.backend.html")}`);
+  console.log('Serving frontend from:', frontendDir);
 });

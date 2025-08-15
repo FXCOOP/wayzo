@@ -1,117 +1,134 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Wayzo — Plan unforgettable trips in minutes</title>
-
-  <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
-  <link rel="stylesheet" href="/style.css?v=8" />
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-
-  <!-- Allow external images (Unsplash) -->
-  <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self';
-                 script-src 'self';
-                 style-src 'self';
-                 img-src 'self' data: https:;
-                 connect-src 'self';
-                 frame-ancestors 'none'">
+  <meta name="description" content="Wayzo builds personalized AI itineraries with book-now links and a printable PDF.">
+  <link rel="icon" href="/favicon.svg">
+  <link rel="stylesheet" href="/style.css?v=9">
+  <script defer src="/app.js?v=9"></script>
 </head>
 <body>
   <header class="topbar">
-    <div class="container barin">
-      <div class="brand"><div class="logo">WZ</div><div class="brand-text">Wayzo</div></div>
-      <a href="#planner" class="btn primary sm">Start planning</a>
+    <div class="container">
+      <div class="brand">
+        <div class="logo">WZ</div>
+        <span>Wayzo</span>
+      </div>
+      <a href="#planner" class="btn primary">Start planning</a>
     </div>
   </header>
 
   <section class="hero">
     <div class="container hero-grid">
       <div class="hero-card">
-        <h1>Plan unforgettable trips in minutes — <span class="accent">AI-powered</span></h1>
-        <p class="lead">Personalized itineraries by budget and style. Book flights, stays, and activities with a click.</p>
-        <div class="hero-actions">
+        <h1>Plan unforgettable trips in minutes — <span class="grad">AI-powered</span></h1>
+        <p class="muted">Personalized itineraries by budget and style. Book flights, stays, and activities with a click.</p>
+        <div class="actions">
           <a class="btn primary" href="#planner">Build my plan</a>
           <a class="btn" href="#planner">See demo</a>
         </div>
-        <div class="tiny" style="margin-top:8px">No app required · Mobile-first · PDF export</div>
+        <small class="muted">No app required · Mobile-first · PDF export</small>
       </div>
 
-      <figure class="hero-photo">
-        <img src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1600&auto=format&fit=crop"
-             alt="Travel inspiration: open road" />
-        <figcaption class="tiny">Wayzo — inspiration for your next trip</figcaption>
+      <figure class="hero-image">
+        <img alt="Travel inspiration"
+             src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop">
+        <figcaption>Wayzo — inspiration for your next trip</figcaption>
       </figure>
     </div>
   </section>
 
-  <main id="planner" class="container main-grid">
-    <section class="card pad">
+  <main id="planner" class="container grid-2">
+    <!-- Form -->
+    <section class="card">
       <h2>Trip details</h2>
-      <p class="tiny">We’ll tailor routes, hotels, activities, and meals—then generate your full AI plan.</p>
+      <p class="muted">We’ll tailor routes, hotels, activities, and meals—then generate your full AI plan.</p>
 
-      <form id="tripForm" class="form-grid">
-        <label class="full">Destination
-          <input class="input" name="destination" placeholder="e.g., Berlin" required />
+      <form id="tripForm" class="form">
+        <label>Destination
+          <input name="destination" placeholder="e.g., Berlin" required>
         </label>
-        <label>Start date <input class="input" type="date" name="start" required /></label>
-        <label>End date <input class="input" type="date" name="end" required /></label>
-        <label>Budget (USD) <input class="input" type="number" min="100" step="50" name="budget" placeholder="1500" required /></label>
-        <label>Travelers <input class="input" type="number" min="1" step="1" name="travelers" value="2" required /></label>
 
-        <fieldset class="inline full">
+        <div class="cols">
+          <label>Start date
+            <input type="date" name="start" required>
+          </label>
+          <label>End date
+            <input type="date" name="end" required>
+          </label>
+        </div>
+
+        <div class="cols">
+          <label>Budget (USD)
+            <input type="number" name="budget" min="100" step="50" value="1500" required>
+          </label>
+          <label>Travelers
+            <input type="number" name="travelers" min="1" step="1" value="2" required>
+          </label>
+        </div>
+
+        <fieldset>
           <legend>Style</legend>
           <label><input type="radio" name="level" value="budget" checked> Budget</label>
           <label><input type="radio" name="level" value="mid"> Mid-range</label>
           <label><input type="radio" name="level" value="luxury"> Luxury</label>
         </fieldset>
 
-        <label class="full">Preferences
-          <input class="input" name="prefs" placeholder="e.g., museums, nature, kid-friendly" />
+        <label>Preferences
+          <input name="prefs" placeholder="e.g., museums, nature, kid-friendly">
         </label>
 
-        <div class="actions full">
+        <div class="cols">
           <button class="btn primary" type="submit">Generate preview</button>
           <button class="btn" type="button" id="buyBtn">Generate full plan (AI)</button>
           <button class="btn" type="button" id="saveBtn">Save preview</button>
         </div>
-        <div class="tiny full">By continuing you agree to our Terms and Privacy.</div>
+
+        <p class="muted small">By continuing you agree to our Terms and Privacy.</p>
       </form>
     </section>
 
-    <section class="card pad">
-      <div class="section-head">
+    <!-- Output -->
+    <section class="card">
+      <div class="headerline">
         <h2>Your itinerary</h2>
         <span class="badge">AI powered</span>
       </div>
 
-      <div id="preview" class="prose">
+      <div id="preview" class="preview">
         <p class="muted">Fill the form and click <b>Generate preview</b>. Then use <b>Generate full plan (AI)</b>.</p>
       </div>
 
-      <div class="shortcut-grid">
-        <a id="pdfBtn" class="btn hidden" target="_blank" href="#">⬇️ Download PDF</a>
-        <a id="linkFlights"   class="btn" target="_blank" href="https://www.kayak.com/flights?aff=YOUR_AFF">✈️ Flights</a>
-        <a id="linkHotels"    class="btn" target="_blank" href="https://www.booking.com/?aid=YOUR_AID">🏨 Hotels</a>
-        <a id="linkActivities"class="btn" target="_blank" href="https://www.getyourguide.com/?partner_id=YOUR_PARTNER">🎟️ Activities</a>
-        <a id="linkCars"      class="btn" target="_blank" href="https://www.rentalcars.com/?affiliateCode=YOUR_AFF">🚗 Cars</a>
-        <a id="linkInsurance" class="btn" target="_blank" href="https://www.worldnomads.com/?aff=YOUR_AFF">🛡️ Insurance</a>
-        <a id="linkReviews"   class="btn" target="_blank" href="https://www.tripadvisor.com/">⭐ Reviews</a>
+      <div id="loading" class="loading hidden">
+        <div class="dots"><span></span><span></span><span></span></div>
+        <div class="loading-text">Crafting your adventure…</div>
+      </div>
+
+      <div class="toolbar">
+        <a id="pdfBtn" class="btn hidden" target="_blank">⬇️ Download PDF</a>
+        <a id="linkFlights"   class="btn" target="_blank">✈️ Flights</a>
+        <a id="linkHotels"    class="btn" target="_blank">🏨 Hotels</a>
+        <a id="linkActivities"class="btn" target="_blank">🎟️ Activities</a>
+        <a id="linkCars"      class="btn" target="_blank">🚗 Cars</a>
+        <a id="linkInsurance" class="btn" target="_blank">🛡️ Insurance</a>
+        <a id="linkReviews"   class="btn" target="_blank">⭐ Reviews</a>
       </div>
     </section>
   </main>
 
-  <section id="mapSection" class="container card pad hidden">
-    <div class="section-head">
+  <section id="mapWrap" class="container card hidden">
+    <div class="headerline">
       <h3>Map</h3>
-      <a class="btn sm" id="plotBtn">Plot on Map</a>
+      <button id="plotBtn" class="btn small">Plot on Map</button>
     </div>
-    <div class="map-box" id="mapBox">Click “Plot on Map” to see all places on a map.</div>
+    <p class="muted small">Click “Plot on Map” to see all places in Google Maps (opens in a new tab).</p>
+    <div class="map-placeholder"></div>
   </section>
 
-  <footer class="footer tiny">© Wayzo. All rights reserved.</footer>
-
-  <script src="/app.js?v=8" defer></script>
+  <footer class="footer">
+    <div class="container muted small">© <span id="year"></span> Wayzo. All rights reserved.</div>
+  </footer>
 </body>
 </html>
