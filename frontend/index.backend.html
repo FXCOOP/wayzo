@@ -1,113 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Wayzo — Simple</title>
-<style>
-  :root{
-    --bg:#f7f9fc; --ink:#0f172a; --muted:#475569; --brand:#2563eb; --accent:#10b981;
-    --card:#ffffff; --border:#e5e7eb; --radius:14px;
-  }
-  @media (prefers-color-scheme: dark){
-    :root{ --bg:#0b1220; --ink:#e5e7eb; --muted:#94a3b8; --card:#0f172a; --border:#1f2937; }
-  }
-  html,body{height:100%}
-  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Inter, sans-serif}
-  .wrap{max-width:1100px;margin:0 auto;padding:18px}
-  .bar{position:sticky;top:0;z-index:10;background:#ffffffc0;backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
-  .barin{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0}
-  .brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:-.01em}
-  .logo{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--accent),var(--brand));font-weight:800}
-  .btn{display:inline-flex;justify-content:center;align-items:center;gap:8px;border:1px solid var(--border);background:#fff;
-       padding:12px 16px;border-radius:12px;font-weight:600;color:var(--ink);cursor:pointer;text-decoration:none}
-  .btn:hover{filter:brightness(1.02)}
-  .btn.primary{border-color:transparent;background:linear-gradient(90deg,var(--accent),var(--brand));color:#fff}
-  .btn.ghost{background:transparent}
-  .hero{padding:28px 0 10px}
-  h1{margin:0 0 8px;font-size:clamp(28px,4.8vw,44px);line-height:1.1;font-weight:800;letter-spacing:-.02em}
-  p.lead{color:var(--muted);margin:0 0 14px}
-  .grid{display:grid;gap:18px}
-  @media (min-width: 960px){ .grid.cols-2{grid-template-columns:1fr 1fr} }
-  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 8px 24px rgba(16,24,40,.06)}
-  .pad{padding:18px}
-  h2{margin:0 0 6px;font-size:22px;font-weight:800}
-  small, .muted{color:var(--muted)}
-  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .row.full{grid-template-columns:1fr}
-  .field{display:flex;flex-direction:column;gap:6px}
-  label{font-size:.9rem;font-weight:600}
-  .input{padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:#fff;color:var(--ink);outline:none}
-  .input:focus{border-color:#93c5fd;box-shadow:0 0 0 3px rgba(37,99,235,.18)}
-  .choices{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-  .radio{display:flex;align-items:center;gap:8px;border:1px solid var(--border);padding:10px;border-radius:12px;background:#fff}
-  .section-title{display:flex;align-items:center;justify-content:space-between;gap:10px}
-  .badge{font-size:12px;padding:4px 8px;border-radius:999px;color:#065f46;background:#d1fae5;border:1px solid #a7f3d0}
-  #preview{white-space:normal}
-  .links{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-  .alink{display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:12px;padding:10px;background:#fff;color:inherit;text-decoration:none}
-  .toolbar{display:grid;grid-template-columns: 1fr 1fr 1fr; gap:10px}
-  .hidden{display:none}
-  .md h1,.md h2,.md h3{margin:.5rem 0;font-weight:800}
-  .md h1{font-size:1.4rem}.md h2{font-size:1.2rem}.md h3{font-size:1.05rem}
-  .md p{margin:.5rem 0}.md ul{margin:.5rem 0 .75rem 1.25rem}.md li{margin:.25rem 0}
-
-  /* NEW: A/B customizer */
-  .ab{margin-top:12px}
-  .day{border:1px solid var(--border);border-radius:12px;padding:12px;margin:10px 0;background:#fff}
-  .block{border-top:1px dashed var(--border);padding-top:10px;margin-top:10px}
-  .opt{display:flex;gap:10px;align-items:flex-start;margin:8px 0}
-  .opt img{width:120px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--border)}
-  .opt .why{color:#0b6;font-weight:600}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Wayzo — AI Trip Planner</title>
+  <meta name="description" content="Wayzo creates beautiful, personalized travel plans with one click. Preview for free, then generate your full plan.">
+  <link rel="icon" href="/favicon.svg">
+  <!-- External CSS & JS (no inline to satisfy CSP) -->
+  <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <div class="bar">
+  <!-- Top Bar -->
+  <header class="bar">
     <div class="wrap barin">
-      <div class="brand"><div class="logo">WZ</div> Wayzo</div>
-      <a href="#planner" class="btn primary">Start planning</a>
+      <a class="brand" href="#top" aria-label="Wayzo Home">
+        <div class="logo">WZ</div>
+        <span class="brand-name">Wayzo</span>
+      </a>
+      <nav>
+        <a href="#planner" class="btn primary">Start planning</a>
+      </nav>
     </div>
-  </div>
+  </header>
 
-  <div class="wrap hero">
-    <h1>Plan unforgettable trips in minutes — AI-powered</h1>
-    <p class="lead">Personalized itineraries by budget and style. Book flights, stays, and activities with a click.</p>
-  </div>
+  <!-- Hero with road image -->
+  <section class="hero" id="top" role="img" aria-label="Open road background">
+    <div class="wrap hero-in">
+      <div class="hero-card">
+        <h1>Plan unforgettable trips in minutes — <span class="accent">AI-powered</span></h1>
+        <p class="lead">Personalized itineraries by budget and style. Book flights, stays, and activities with a click.</p>
+        <div class="hero-actions">
+          <a href="#planner" class="btn primary">Build my plan</a>
+          <a href="#inspo" class="btn ghost">See demo</a>
+        </div>
+        <div class="hero-foot">No app required · Mobile-first · PDF export</div>
+      </div>
+    </div>
+    <!-- Decorative bottom curve -->
+    <div class="hero-fade" aria-hidden="true"></div>
+  </section>
 
-  <div class="wrap grid cols-2" id="planner">
+  <!-- Inspiration strip (lightweight) -->
+  <section id="inspo" class="inspo">
+    <div class="wrap">
+      <h3 class="inspo-title">Travel inspiration</h3>
+      <p class="muted">Wayzo — inspiration for your next trip</p>
+      <div class="inspo-row" aria-hidden="true">
+        <div class="pill">City breaks</div>
+        <div class="pill">Beaches</div>
+        <div class="pill">Museums</div>
+        <div class="pill">Food tours</div>
+        <div class="pill">Hiking</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Planner + Output -->
+  <main id="planner" class="wrap grid cols-2">
     <!-- Form -->
     <section class="card pad">
       <h2>Trip details</h2>
       <p class="muted">We’ll tailor routes, hotels, activities, and meals—then generate your full AI plan.</p>
 
-      <form id="tripForm" style="margin-top:12px">
+      <form id="tripForm" class="stack-12">
         <div class="row full">
           <div class="field">
-            <label>Destination</label>
-            <input class="input" name="destination" placeholder="e.g., Berlin, Tokyo" required />
+            <label for="destination">Destination</label>
+            <input class="input" id="destination" name="destination" placeholder="e.g., Berlin, Tokyo, Bali" required />
           </div>
         </div>
-        <div class="row" style="margin-top:10px">
+
+        <div class="row">
           <div class="field">
-            <label>Start date</label>
-            <input class="input" type="date" name="start" required />
+            <label for="start">Start date</label>
+            <input class="input" type="date" id="start" name="start" required />
           </div>
           <div class="field">
-            <label>End date</label>
-            <input class="input" type="date" name="end" required />
-          </div>
-        </div>
-        <div class="row" style="margin-top:10px">
-          <div class="field">
-            <label>Budget (USD)</label>
-            <input class="input" type="number" min="100" step="50" name="budget" placeholder="1500" required />
-          </div>
-          <div class="field">
-            <label>Travelers</label>
-            <input class="input" type="number" min="1" step="1" name="travelers" value="2" required />
+            <label for="end">End date</label>
+            <input class="input" type="date" id="end" name="end" required />
           </div>
         </div>
-        <div class="row full" style="margin-top:10px">
+
+        <div class="row">
+          <div class="field">
+            <label for="budget">Budget (USD)</label>
+            <input class="input" type="number" min="100" step="50" id="budget" name="budget" placeholder="1500" required />
+          </div>
+          <div class="field">
+            <label for="travelers">Travelers</label>
+            <input class="input" type="number" min="1" step="1" id="travelers" name="travelers" value="2" required />
+          </div>
+        </div>
+
+        <div class="row full">
           <div class="field">
             <label>Style</label>
             <div class="choices">
@@ -117,19 +102,20 @@
             </div>
           </div>
         </div>
-        <div class="row full" style="margin-top:10px">
+
+        <div class="row full">
           <div class="field">
-            <label>Preferences</label>
-            <input class="input" name="prefs" placeholder="e.g., museums, food markets, hiking" />
+            <label for="prefs">Preferences</label>
+            <input class="input" id="prefs" name="prefs" placeholder="e.g., museums, beaches, hiking, kid-friendly" />
           </div>
         </div>
 
-        <div class="toolbar" style="margin-top:14px">
+        <div class="toolbar">
           <button class="btn primary" type="submit">Generate preview</button>
           <button class="btn" type="button" id="buyBtn">Generate full plan (AI)</button>
           <button class="btn" type="button" id="saveBtn">Save preview</button>
         </div>
-        <p class="muted" style="margin-top:6px">By continuing you agree to our Terms and Privacy.</p>
+        <p class="muted tiny">By continuing you agree to our Terms and Privacy.</p>
       </form>
     </section>
 
@@ -140,197 +126,36 @@
         <span class="badge">AI powered</span>
       </div>
 
-      <div id="preview" style="margin-top:10px">
+      <div id="preview" class="preview">
         <p class="muted">Fill the form and click <b>Generate preview</b>. Then use <b>Generate full plan (AI)</b>.</p>
       </div>
 
-      <div id="loading" class="hidden" style="margin-top:10px">
-        <div style="height:10px;background:#e2e8f0;border-radius:8px"></div>
-        <div style="height:10px;background:#e2e8f0;border-radius:8px;margin-top:8px;width:70%"></div>
+      <div id="loading" class="hidden skeleton">
+        <div class="sk-line"></div>
+        <div class="sk-line short"></div>
+        <div class="sk-line"></div>
       </div>
 
-      <div class="toolbar" style="margin-top:12px">
-        <a id="pdfBtn" class="btn hidden" href="#" target="_blank">⬇️ Download PDF</a>
-        <a id="icsBtn" class="btn hidden" href="#" target="_blank">📅 Add to Calendar (.ics)</a>
-        <a id="mapBtn" class="btn hidden" href="#" target="_blank">🗺️ Open Map</a>
+      <div class="toolbar mt-12">
+        <a id="pdfBtn" class="btn hidden" href="#" target="_blank" rel="noopener">⬇️ Download PDF</a>
+        <a id="linkFlights" class="btn" target="_blank" rel="noopener" href="https://www.kayak.com/flights?aff=YOUR_AFF_ID">✈️ Flights</a>
+        <a id="linkHotels" class="btn" target="_blank" rel="noopener" href="https://www.booking.com/?aid=YOUR_AFF_ID">🏨 Hotels</a>
       </div>
-      <div class="links" style="margin-top:10px">
-        <a id="linkFlights" class="alink" target="_blank" href="https://www.kayak.com/flights">✈️ Flights</a>
-        <a id="linkHotels" class="alink" target="_blank" href="https://www.booking.com">🏨 Hotels</a>
-        <a id="linkActivities" class="alink" target="_blank" href="https://www.getyourguide.com">🎟️ Activities</a>
-        <a id="linkCars" class="alink" target="_blank" href="https://www.rentalcars.com">🚗 Cars</a>
-        <a id="linkInsurance" class="alink" target="_blank" href="https://www.worldnomads.com">🛡️ Insurance</a>
-        <a id="linkReviews" class="alink" target="_blank" href="https://www.tripadvisor.com">⭐ Reviews</a>
+      <div class="links">
+        <a id="linkActivities" class="alink" target="_blank" rel="noopener" href="https://www.getyourguide.com/?partner_id=YOUR_PARTNER_ID">🎟️ Activities</a>
+        <a id="linkCars" class="alink" target="_blank" rel="noopener" href="https://www.rentalcars.com/?affiliateCode=YOUR_AFF_ID">🚗 Cars</a>
+        <a id="linkInsurance" class="alink" target="_blank" rel="noopener" href="https://www.worldnomads.com/?aff=YOUR_AFF_ID">🛡️ Insurance</a>
+        <a id="linkReviews" class="alink" target="_blank" rel="noopener" href="https://www.tripadvisor.com/">⭐ Reviews</a>
       </div>
     </section>
-  </div>
+  </main>
 
-  <!-- NEW: A/B Customizer (hidden until full plan) -->
-  <div class="wrap hidden" id="customize">
-    <section class="card pad">
-      <h2>Customize your plan (choose A or B per block)</h2>
-      <div id="abRoot" class="ab"></div>
-    </section>
-  </div>
+  <footer class="footer">
+    <div class="wrap">
+      <div>© <span id="year"></span> Wayzo. All rights reserved.</div>
+    </div>
+  </footer>
 
-<script>
-  const $ = (s)=>document.querySelector(s);
-  const byName = (n)=>document.querySelector(\`[name="\${n}"]\`);
-
-  function simpleMarkdown(md){
-    md = md.replace(/^### (.*)$/gm,'<h3>$1</h3>')
-           .replace(/^## (.*)$/gm,'<h2>$1</h2>')
-           .replace(/^# (.*)$/gm,'<h1>$1</h1>')
-           .replace(/^\- (.*)$/gm,'<li>$1</li>')
-           .replace(/\\*\\*(.+?)\\*\\*/g,'<strong>$1</strong>')
-           .replace(/\\[(.+?)\\]\\((https?:\\/\\/[^\\s)]+)\\)/g,'<a href="$2" target="_blank">$1</a>');
-    md = md.replace(/(<li>.*<\\/li>)(\\n(?!<li>))/g,'<ul>$1</ul>\\n');
-    md = md.split(/\\n{2,}/).map(b=>{
-      if(/^<h\\d|<ul>|<li>/.test(b.trim())) return b;
-      return '<p>'+b.replace(/\\n/g,'<br>')+'</p>';
-    }).join('\\n');
-    return \`<div class="md">\${md}</div>\`;
-  }
-
-  function setLinks(aff){
-    if(!aff) return;
-    $('#linkFlights').href   = aff.flights;
-    $('#linkHotels').href    = aff.hotels;
-    $('#linkActivities').href= aff.activities;
-    $('#linkCars').href      = aff.cars;
-    $('#linkInsurance').href = aff.insurance;
-    $('#linkReviews').href   = aff.reviews;
-  }
-
-  function showLoading(on){ $('#loading').classList.toggle('hidden', !on); }
-
-  // --- NEW: render A/B options UI from wayzo JSON ---
-  let latestPlanId = null;
-  let latestWayzo = null;
-  const selections = {}; // keys "d:b" -> "A" | "B"
-
-  function imgOrPlaceholder(list){
-    if(Array.isArray(list) && list.length) return '<img src="'+list[0].url+'" loading="lazy"/>';
-    return '';
-  }
-
-  function renderAB(wayzo){
-    latestWayzo = wayzo;
-    if(!wayzo || !wayzo.days) { $('#customize').classList.add('hidden'); return; }
-    $('#customize').classList.remove('hidden');
-    const root = $('#abRoot');
-    let html = '';
-    for(let d=0; d<wayzo.days.length; d++){
-      const day = wayzo.days[d];
-      html += '<div class="day"><h3>'+(day.label || ('Day '+(d+1)))+'</h3>';
-      for(let b=0; b<(day.blocks||[]).length; b++){
-        const blk = day.blocks[b];
-        html += '<div class="block">';
-        if(blk.options && blk.options.length){
-          const A = blk.options[0];
-          const B = blk.options[1];
-          const key = \`\${d}:\${b}\`;
-          html += \`
-            <label class="opt"><input type="radio" name="opt-\${key}" value="A" checked>
-              <div><div><b>\${A.title || 'Option A'}</b> — <span class="why">\${A.why || ''}</span></div>\${imgOrPlaceholder(A.images)}</div>
-            </label>
-            <label class="opt"><input type="radio" name="opt-\${key}" value="B">
-              <div><div><b>\${B?.title || 'Option B'}</b> — <span class="why">\${B?.why || ''}</span></div>\${imgOrPlaceholder(B?.images||[])}</div>
-            </label>\`;
-          selections[key] = 'A';
-        } else {
-          html += '<p><b>'+(blk.title || 'Activity')+'</b></p>';
-        }
-        html += '</div>';
-      }
-      html += '</div>';
-    }
-    root.innerHTML = html;
-
-    // listen for changes
-    root.querySelectorAll('input[type="radio"]').forEach(r=>{
-      r.addEventListener('change', (e)=>{
-        const [_, key] = e.target.name.split('opt-');
-        selections[key] = e.target.value;
-      });
-    });
-
-    // show top buttons
-    $('#pdfBtn').classList.remove('hidden');
-    $('#icsBtn').classList.remove('hidden');
-    $('#mapBtn').classList.remove('hidden');
-  }
-
-  // Preview
-  function handleGenerate(e){
-    e.preventDefault();
-    const data = Object.fromEntries(new FormData(e.target).entries());
-    data.budget = Number(data.budget||0);
-    data.travelers = Number(data.travelers||1);
-    showLoading(true);
-    fetch('/api/preview', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ destination:data.destination, start:data.start, end:data.end,
-        budget:data.budget, travelers:data.travelers, level:data.level, prefs:data.prefs||'' })
-    }).then(r=>r.json()).then(j=>{
-      showLoading(false);
-      latestPlanId = j.id;
-      $('#preview').innerHTML = j.teaser_html || 'Preview unavailable';
-      setLinks(j.affiliates);
-      localStorage.setItem('tm_last', JSON.stringify(data));
-    }).catch(err=>{ showLoading(false); console.error(err); alert('Preview failed. Is backend on :8080?'); });
-  }
-
-  // Full plan (AI)
-  function handleFull(){
-    const last = JSON.parse(localStorage.getItem('tm_last')||'null');
-    if(!last){ alert('Generate a preview first.'); return; }
-    showLoading(true);
-    // little confetti / fun screen
-    $('#preview').innerHTML = '<p>✨ Cooking your perfect plan…</p>';
-    fetch('/api/plan', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ destination:last.destination, start:last.start, end:last.end,
-        budget:Number(last.budget||0), travelers:Number(last.travelers||1),
-        level:last.level, prefs:last.prefs||'' })
-    }).then(r=>r.json()).then(j=>{
-      showLoading(false);
-      latestPlanId = j.id;
-      const html = simpleMarkdown(j.markdown || '# Plan unavailable');
-      $('#preview').innerHTML = html;
-      setLinks(j.affiliates);
-      renderAB(j.wayzo); // show A/B if present
-
-      // wire top buttons
-      const b64 = ()=> btoa(JSON.stringify(selections));
-      $('#pdfBtn').href = \`/api/plan/\${j.id}/pdf?choices=\${b64()}\`;
-      $('#icsBtn').href = \`/api/plan/\${j.id}/ics?choices=\${b64()}\`;
-      $('#mapBtn').href = \`/plan/\${j.id}/map\`;
-      $('#pdfBtn').classList.remove('hidden');
-    }).catch(err=>{ showLoading(false); console.error(err); alert('Full plan failed. Check OPENAI_API_KEY.'); });
-  }
-
-  // Save
-  function handleSave(){
-    const plans = JSON.parse(localStorage.getItem('tm_saved')||'[]');
-    plans.push({ id: crypto.randomUUID(), at: new Date().toISOString(), html: $('#preview').innerHTML });
-    localStorage.setItem('tm_saved', JSON.stringify(plans));
-    alert('Saved locally.');
-  }
-
-  // Hydrate last form state
-  (function hydrate(){
-    const last = JSON.parse(localStorage.getItem('tm_last')||'null'); if(!last) return;
-    for(const [k,v] of Object.entries(last)){
-      const el = byName(k); if(!el) continue;
-      if(el.type==='radio'){ const r=document.querySelector(\`input[name="level"][value="\${last.level}"]\`); r && (r.checked=true); }
-      else el.value = v;
-    }
-  })();
-
-  document.getElementById('tripForm').addEventListener('submit', handleGenerate);
-  document.getElementById('buyBtn').addEventListener('click', handleFull);
-  document.getElementById('saveBtn').addEventListener('click', handleSave);
-</script>
+  <script src="/app.js" defer></script>
 </body>
 </html>
