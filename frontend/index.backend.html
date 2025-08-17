@@ -2,170 +2,159 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Wayzo — Plan unforgettable trips in minutes</title>
-  <link rel="icon" href="/frontend/favicon.svg" />
-  <link rel="stylesheet" href="/frontend/style.css" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
+  <title>Wayzo — Plan unforgettable trips in minutes — AI-powered</title>
+
+  <!-- Favicon + App assets -->
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+  <link rel="stylesheet" href="/assets/style.css" />
+  <script src="/assets/app.js" defer></script>
 </head>
 <body>
-  <!-- Topbar -->
+  <!-- Top bar -->
   <header class="topbar">
-    <div class="container topbar-inner">
+    <div class="container flex">
       <a class="brand" href="/">
-        <span class="brand-badge">WZ</span>
-        <span class="brand-name">Wayzo</span>
+        <span class="logo">WZ</span>
+        <span class="name">Wayzo</span>
       </a>
-      <a class="btn btn-primary btn-ghost" href="#trip">Start planning</a>
+      <a class="btn primary" href="#planner">Start planning</a>
     </div>
   </header>
 
-  <!-- Hero -->
-  <section class="hero" aria-label="Intro">
+  <!-- HERO
+       Set the large background image via CSS variable. -->
+  <section class="hero" style="--hero-img: url('/assets/hero-bg.jpg')">
     <div class="container hero-grid">
-      <!-- Left hero copy -->
-      <div class="card hero-left">
-        <h1 class="headline">
-          Plan unforgettable trips in minutes — <span class="accent">AI-powered</span>
-        </h1>
-        <p class="subhead">
-          Personalized itineraries by budget and style. Book flights, stays, and
-          activities with a click.
+      <!-- Left: headline card -->
+      <div class="hero-copy card pad">
+        <h1>Plan unforgettable trips in minutes — <span class="em">AI-powered</span></h1>
+        <p class="lead">
+          Personalized itineraries by budget and style.
+          Book flights, stays, and activities—ready to book.
         </p>
-
-        <div class="hero-ctas">
-          <a class="btn btn-primary" href="#trip">Build my plan</a>
-          <a class="btn btn-light" href="#trip">See demo</a>
+        <div class="row gap">
+          <a class="btn primary" href="#planner">Build my plan</a>
+          <a class="btn" href="#planner">See demo</a>
         </div>
-
-        <p class="hero-meta">No app required · Mobile-first · PDF export</p>
+        <p class="muted tiny">No app required · Mobile-first · PDF export</p>
       </div>
 
-      <!-- Right hero image -->
-      <figure class="card hero-card" role="group" aria-label="Inspiration image">
-        <div class="media">
-          <img
-            class="hero-img"
-            src="/docs/hero.jpg"
-            alt="Wayzo — inspiration for your next trip"
-            width="1200" height="900"
-            loading="eager" decoding="async"
-          />
-        </div>
-        <figcaption class="caption">Wayzo — inspiration for your next trip</figcaption>
+      <!-- Right: inspiration image card (small) -->
+      <figure class="hero-card card pad">
+        <img
+          src="/assets/hero.jpg"
+          alt="Travel inspiration"
+          onerror="this.closest('figure').classList.add('noimg'); this.remove();"
+        />
+        <figcaption class="muted tiny">Wayzo — inspiration for your next trip</figcaption>
       </figure>
     </div>
   </section>
 
-  <!-- Main: form + output -->
-  <main id="trip" class="container main-grid">
-    <!-- LEFT: Trip form -->
-    <section class="card form-card">
-      <h2 class="h2">Trip details</h2>
+  <!-- MAIN: Planner -->
+  <main id="planner" class="container grid cols-2">
+    <!-- Form -->
+    <section class="card pad">
+      <h2>Trip details</h2>
       <p class="muted">
         We’ll tailor routes, hotels, activities, and meals—then generate your full AI plan.
       </p>
 
-      <!-- IMPORTANT: IDs restored for app.js -->
-      <form id="trip-form" class="trip-form" novalidate>
-        <label for="destination">Destination
-          <input id="destination" name="destination" type="text" placeholder="e.g., Berlin" />
-        </label>
-
-        <div class="grid-2">
-          <label for="startDate">Start date
-            <input id="startDate" name="startDate" type="date" />
-          </label>
-          <label for="endDate">End date
-            <input id="endDate" name="endDate" type="date" />
-          </label>
+      <form id="tripForm" style="margin-top:12px">
+        <div class="row full">
+          <div class="field">
+            <label for="dest">Destination</label>
+            <input id="dest" class="input" name="destination" placeholder="e.g., Paris, Tokyo, Bali" required />
+          </div>
         </div>
 
-        <div class="grid-2">
-          <label for="budget">Budget (USD)
-            <input id="budget" name="budget" type="number" min="0" value="1500" />
-          </label>
-          <label for="travelers">Travelers
-            <input id="travelers" name="travelers" type="number" min="1" value="2" />
-          </label>
+        <div class="row" style="margin-top:10px">
+          <div class="field">
+            <label for="start">Start date</label>
+            <input id="start" class="input" type="date" name="start" required />
+          </div>
+          <div class="field">
+            <label for="end">End date</label>
+            <input id="end" class="input" type="date" name="end" required />
+          </div>
         </div>
 
-        <fieldset class="style-field">
-          <legend>Style</legend>
-          <label><input type="radio" name="style" value="budget" checked /> Budget</label>
-          <label><input type="radio" name="style" value="mid" /> Mid-range</label>
-          <label><input type="radio" name="style" value="luxury" /> Luxury</label>
-        </fieldset>
-
-        <label for="prefs">Preferences
-          <input id="prefs" name="prefs" type="text" placeholder="e.g., museums, nature, kid-friendly" />
-        </label>
-
-        <div class="form-actions">
-          <button id="btnPreview" class="btn btn-primary" type="button">Generate preview</button>
-          <button id="btnFull" class="btn btn-dark" type="button">Generate full plan (AI)</button>
-          <button id="btnSave" class="btn btn-light" type="button">Save preview</button>
+        <div class="row" style="margin-top:10px">
+          <div class="field">
+            <label for="budget">Budget (USD)</label>
+            <input id="budget" class="input" type="number" min="100" step="50" name="budget" placeholder="1500" required />
+          </div>
+          <div class="field">
+            <label for="travelers">Travelers</label>
+            <input id="travelers" class="input" type="number" min="1" step="1" name="travelers" value="2" required />
+          </div>
         </div>
 
-        <p class="tos">
-          By continuing you agree to our <a href="#" rel="nofollow">Terms</a> and
-          <a href="#" rel="nofollow">Privacy</a>.
-        </p>
+        <div class="row full" style="margin-top:10px">
+          <div class="field">
+            <label>Style</label>
+            <div class="choices">
+              <label class="radio"><input type="radio" name="level" value="budget" checked /> Budget</label>
+              <label class="radio"><input type="radio" name="level" value="mid" /> Mid-range</label>
+              <label class="radio"><input type="radio" name="level" value="luxury" /> Luxury</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="row full" style="margin-top:10px">
+          <div class="field">
+            <label for="prefs">Preferences</label>
+            <input id="prefs" class="input" name="prefs" placeholder="e.g., museums, beaches, hiking, kid-friendly" />
+          </div>
+        </div>
+
+        <div class="toolbar" style="margin-top:14px">
+          <button class="btn primary" type="submit">Generate preview</button>
+          <button class="btn" type="button" id="buyBtn">Generate full plan (AI)</button>
+          <button class="btn" type="button" id="saveBtn">Save preview</button>
+        </div>
+        <p class="muted tiny" style="margin-top:6px">By continuing you agree to our Terms and Privacy.</p>
       </form>
     </section>
 
-    <!-- RIGHT: Output -->
-    <aside class="card output-card">
-      <div class="output-header">
-        <h2 class="h2">Your itinerary</h2>
-        <span class="chip chip-green">AI powered</span>
+    <!-- Output -->
+    <section class="card pad">
+      <div class="section-title">
+        <h2>Your itinerary</h2>
+        <span class="badge">AI powered</span>
       </div>
 
-      <p class="muted">
-        Fill the form and click <strong>Generate preview</strong>.
-        Then use <strong>Generate full plan (AI)</strong>.
-      </p>
-
-      <!-- app.js writes here -->
-      <div id="itinerary"></div>
-
-      <div class="quick-links">
-        <a class="ql btn-chip" href="#" id="ql-flights">✈️ Flights</a>
-        <a class="ql btn-chip" href="#" id="ql-hotels">🏨 Hotels</a>
-        <a class="ql btn-chip" href="#" id="ql-activities">🎟️ Activities</a>
-        <a class="ql btn-chip" href="#" id="ql-cars">🚗 Cars</a>
-        <a class="ql btn-chip" href="#" id="ql-ins">🛡️ Insurance</a>
-        <a class="ql btn-chip" href="#" id="ql-reviews">⭐ Reviews</a>
+      <div id="preview" style="margin-top:10px">
+        <p class="muted">
+          Fill the form and click <b>Generate preview</b>. Then use <b>Generate full plan (AI)</b>.
+        </p>
       </div>
-    </aside>
+
+      <div id="loading" class="hidden" style="margin-top:10px">
+        <div style="height:10px;background:#e2e8f0;border-radius:8px"></div>
+        <div style="height:10px;background:#e2e8f0;border-radius:8px;margin-top:8px;width:70%"></div>
+      </div>
+
+      <div class="toolbar" style="margin-top:12px">
+        <a id="pdfBtn" class="btn hidden" href="#" target="_blank">⬇️ Download PDF</a>
+        <a id="linkFlights" class="btn" target="_blank" href="https://www.kayak.com/flights?aff=YOUR_AFF_ID">✈️ Flights</a>
+        <a id="linkHotels" class="btn" target="_blank" href="https://www.booking.com/?aid=YOUR_AFF_ID">🏨 Hotels</a>
+      </div>
+      <div class="links" style="margin-top:10px">
+        <a id="linkActivities" class="alink" target="_blank" href="https://www.getyourguide.com/?partner_id=YOUR_PARTNER_ID">🎟️ Activities</a>
+        <a id="linkCars" class="alink" target="_blank" href="https://www.rentalcars.com/?affiliateCode=YOUR_AFF_ID">🚗 Cars</a>
+        <a id="linkInsurance" class="alink" target="_blank" href="https://www.worldnomads.com/?aff=YOUR_AFF_ID">🛡️ Insurance</a>
+        <a id="linkReviews" class="alink" target="_blank" href="https://www.tripadvisor.com/">⭐ Reviews</a>
+      </div>
+    </section>
   </main>
 
-  <!-- OPTIONAL: tiny shim if your app.js used different legacy IDs.
-       If needed, UNCOMMENT this script block (leave it ABOVE app.js). -->
-  <!--
-  <script>
-  window.addEventListener('DOMContentLoaded', () => {
-    const alias = (want, candidates) => {
-      if (document.getElementById(want)) return;
-      for (const c of candidates) {
-        const el = document.querySelector(c);
-        if (el) { el.id = want; break; }
-      }
-    };
-    alias('btnPreview', ['#btn-preview', '#generate-preview', '#btnGeneratePreview']);
-    alias('btnFull',    ['#btn-full', '#generate-full', '#btnGenerateFull']);
-    alias('btnSave',    ['#btn-save', '#save-preview', '#btnSavePreview']);
-
-    const fieldAlias = (want, candidates) => alias(want, candidates);
-    fieldAlias('destination', ['#dest', '#destination']);
-    fieldAlias('startDate',   ['#start', '#startDate']);
-    fieldAlias('endDate',     ['#end', '#endDate']);
-    fieldAlias('budget',      ['#budget', '#budgetUSD']);
-    fieldAlias('travelers',   ['#people', '#travelers']);
-    fieldAlias('prefs',       ['#prefs', '#preferences']);
-  });
-  </script>
-  -->
-
-  <script src="/frontend/app.js" defer></script>
+  <footer class="container tiny muted" style="padding:28px 0 40px">
+    © Wayzo. All rights reserved.
+  </footer>
 </body>
 </html>
