@@ -3,296 +3,174 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<meta name="theme-color" content="#0f172a" />
-<title>Wayzo — AI Trip Planner</title>
-
-<!-- ====== Inline, robust styles (no external CSS) ====== -->
+<title>Wayzo — Simple</title>
 <style>
   :root{
-    --bg:#0b1220; --ink:#0f172a; --ink-contrast:#e5e7eb; --muted:#94a3b8;
-    --brand:#2563eb; --accent:#10b981;
-    --card:#0f172a; --card-light:#ffffff; --border:#1f2937;
-    --radius:16px; --glow:0 12px 40px rgba(37,99,235,.28);
+    --bg:#f7f9fc; --ink:#0f172a; --muted:#475569; --brand:#2563eb; --accent:#10b981;
+    --card:#ffffff; --border:#e5e7eb; --radius:14px;
   }
-  @media (prefers-color-scheme: light){
-    :root{ --bg:#f7f9fc; --ink:#0f172a; --ink-contrast:#0f172a; --muted:#475569; --card:#ffffff; --border:#e5e7eb; }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0b1220; --ink:#e5e7eb; --muted:#94a3b8; --card:#0f172a; --border:#1f2937; }
   }
-  * { box-sizing: border-box; }
-  html, body { height: 100%; }
-  body {
-    margin:0; background:var(--bg); color:var(--ink-contrast);
-    font:16px/1.55 system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
-  }
-  a { color: inherit; }
-
-  /* Top bar */
-  .bar { position:sticky; top:0; z-index:50;
-    background: color-mix(in oklab, var(--bg) 65%, transparent);
-    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-    border-bottom:1px solid color-mix(in oklab, var(--border) 70%, transparent);
-  }
-  .wrap { max-width:1160px; margin:0 auto; padding:18px; }
-  .barin { display:flex; align-items:center; justify-content:space-between; gap:12px; }
-  .brand { display:flex; align-items:center; gap:12px; font-weight:900; letter-spacing:-.01em; }
-  .logo  { width:38px; height:38px; border-radius:12px; display:grid; place-items:center; color:#fff;
-           background:linear-gradient(135deg,var(--accent),var(--brand)); font-weight:900; }
-  .btn { display:inline-flex; justify-content:center; align-items:center; gap:8px; cursor:pointer;
-         border:1px solid color-mix(in oklab, var(--border) 90%, transparent);
-         background: #fff; color:#0f172a; text-decoration:none;
-         padding:12px 16px; border-radius:14px; font-weight:700; }
-  .btn:hover { filter: brightness(1.03); }
-  .btn.primary { border-color:transparent; background:linear-gradient(90deg,var(--accent),var(--brand)); color:#fff; box-shadow: var(--glow); }
-  .btn.ghost { background:transparent; color:var(--ink-contrast); }
-
-  /* Hero with road image */
-  .hero {
-    position:relative; min-height: 56vh; display:grid; place-items:center; overflow:hidden;
-  }
-  .hero::before{
-    content:""; position:absolute; inset:0;
-    background:
-      radial-gradient(1200px 500px at 15% 0%, rgba(16,185,129,.25), transparent 50%),
-      radial-gradient(1000px 400px at 95% 0%, rgba(37,99,235,.25), transparent 50%),
-      linear-gradient(to bottom, rgba(0,0,0,.55), rgba(0,0,0,.55));
-    z-index:1;
-  }
-  .hero img.bg {
-    position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
-    filter: saturate(1.1) contrast(1.05) brightness(.95);
-  }
-  .hero .content { position:relative; z-index:2; text-align:center; padding:24px; }
-  .hero h1 { margin:0 0 10px; font-size: clamp(28px, 5.6vw, 56px); line-height:1.04; letter-spacing:-.02em; font-weight:900; }
-  .hero p.lead { margin:0 0 18px; color:#d1d5db; font-size:clamp(15px,2.4vw,18px); }
-  .hero .cta { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
-  .hero .note { margin-top:10px; color:#cbd5e1; font-size:12px; }
-
-  /* Section: inspiration (optional visuals) */
-  .inspo { margin-top:16px; }
-  .scroller { display:grid; grid-auto-flow:column; gap:14px; overflow:auto; padding-bottom:6px; }
-  .pill {
-    min-width:200px; border-radius:14px; border:1px solid color-mix(in oklab, var(--border) 80%, transparent);
-    background: color-mix(in oklab, var(--card) 88%, transparent);
-    overflow:hidden;
-  }
-  .pill img { width:100%; height:120px; object-fit:cover; display:block; }
-  .pill .p { padding:12px; font-weight:700; }
-
-  /* Main grid */
-  .grid { display:grid; gap:18px; align-items:start; }
-  @media (min-width: 980px){ .grid.cols-2 { grid-template-columns: 1fr 1fr; } }
-  .card {
-    background: color-mix(in oklab, var(--card) 96%, transparent);
-    border:1px solid color-mix(in oklab, var(--border) 88%, transparent);
-    border-radius: var(--radius);
-    box-shadow: 0 10px 36px rgba(0,0,0,.25);
-  }
-  .pad { padding:18px; }
-  h2 { margin:0 0 6px; font-size:22px; font-weight:900; }
-  .muted { color:#94a3b8; }
-
-  /* Form */
-  .row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-  .row.full { grid-template-columns:1fr; }
-  .field { display:flex; flex-direction:column; gap:6px; }
-  label { font-size:.9rem; font-weight:700; color:#e2e8f0; }
-  .input {
-    padding:12px 14px; border-radius:12px;
-    border:1px solid color-mix(in oklab, var(--border) 88%, transparent);
-    background: #0b1226; color:#e5e7eb; outline:none;
-  }
-  .input:focus { border-color:#93c5fd; box-shadow:0 0 0 3px rgba(37,99,235,.25); }
-  .choices { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
-  .radio {
-    display:flex; align-items:center; gap:8px; border:1px solid color-mix(in oklab, var(--border) 88%, transparent);
-    padding:10px; border-radius:12px; background:#0b1226; color:#e5e7eb;
-  }
-
-  /* Output */
-  .section-title { display:flex; align-items:center; justify-content:space-between; gap:10px; }
-  .badge { font-size:12px; padding:4px 8px; border-radius:999px; color:#065f46; background:#d1fae5; border:1px solid #a7f3d0; }
-  #preview { white-space:normal; }
-  .links { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
-  .alink {
-    display:flex; align-items:center; justify-content:center; text-decoration:none;
-    border:1px solid color-mix(in oklab, var(--border) 88%, transparent);
-    border-radius:12px; padding:10px; background:#0b1226; color:#e5e7eb;
-  }
-  .toolbar { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
-  .hidden { display:none; }
-
-  /* Simple markdown prettify */
-  .md h1,.md h2,.md h3{margin:.6rem 0;font-weight:900}
-  .md h1{font-size:1.45rem}.md h2{font-size:1.2rem}.md h3{font-size:1.05rem}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Inter, sans-serif}
+  .wrap{max-width:1100px;margin:0 auto;padding:18px}
+  .bar{position:sticky;top:0;z-index:10;background:#ffffffc0;backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+  .barin{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:-.01em}
+  .logo{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--accent),var(--brand));font-weight:800}
+  .btn{display:inline-flex;justify-content:center;align-items:center;gap:8px;border:1px solid var(--border);background:#fff;
+       padding:12px 16px;border-radius:12px;font-weight:600;color:var(--ink);cursor:pointer;text-decoration:none}
+  .btn:hover{filter:brightness(1.02)}
+  .btn.primary{border-color:transparent;background:linear-gradient(90deg,var(--accent),var(--brand));color:#fff}
+  .hero{padding:28px 0 10px}
+  h1{margin:0 0 8px;font-size:clamp(28px,4.8vw,44px);line-height:1.1;font-weight:800;letter-spacing:-.02em}
+  p.lead{color:var(--muted);margin:0 0 14px}
+  .grid{display:grid;gap:18px}
+  @media (min-width: 960px){ .grid.cols-2{grid-template-columns:1fr 1fr} }
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 8px 24px rgba(16,24,40,.06)}
+  .pad{padding:18px}
+  h2{margin:0 0 6px;font-size:22px;font-weight:800}
+  small, .muted{color:var(--muted)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .row.full{grid-template-columns:1fr}
+  .field{display:flex;flex-direction:column;gap:6px}
+  label{font-size:.9rem;font-weight:600}
+  .input{padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:#fff;color:var(--ink);outline:none}
+  .input:focus{border-color:#93c5fd;box-shadow:0 0 0 3px rgba(37,99,235,.18)}
+  .choices{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .radio{display:flex;align-items:center;gap:8px;border:1px solid var(--border);padding:10px;border-radius:12px;background:#fff}
+  .section-title{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .badge{font-size:12px;padding:4px 8px;border-radius:999px;color:#065f46;background:#d1fae5;border:1px solid #a7f3d0}
+  #preview{white-space:normal}
+  .links{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .alink{display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:12px;padding:10px;background:#fff;color:inherit;text-decoration:none}
+  .toolbar{display:grid;grid-template-columns: 1fr 1fr 1fr; gap:10px}
+  .hidden{display:none}
+  .md h1,.md h2,.md h3{margin:.5rem 0;font-weight:800}
+  .md h1{font-size:1.4rem}.md h2{font-size:1.2rem}.md h3{font-size:1.05rem}
   .md p{margin:.5rem 0}.md ul{margin:.5rem 0 .75rem 1.25rem}.md li{margin:.25rem 0}
-  .md a{color:#60a5fa; text-decoration:none}
-
-  /* Fun loading overlay */
-  .loading-overlay{
-    position: fixed; inset:0; background:rgba(2,6,23,.6);
-    display:none; align-items:center; justify-content:center; z-index:70;
-  }
-  .loading-card{
-    background:#0b1226; border:1px solid color-mix(in oklab, var(--border) 88%, transparent);
-    border-radius:16px; padding:22px; width:min(92vw,420px); text-align:center;
-    box-shadow: var(--glow);
-  }
-  .plane { font-size:42px; animation: float 1.4s ease-in-out infinite; display:inline-block; }
-  @keyframes float { 0%,100%{ transform: translateY(0)} 50%{ transform: translateY(-8px) } }
 </style>
 </head>
 <body>
-
-<!-- Top bar -->
-<div class="bar">
-  <div class="wrap barin">
-    <div class="brand"><div class="logo">WZ</div> Wayzo</div>
-    <a href="#planner" class="btn primary">Start planning</a>
-  </div>
-</div>
-
-<!-- Hero with ROAD background (remote, reliable Unsplash photo) -->
-<section class="hero">
-  <img class="bg" alt="Open road through mountains" src="https://images.unsplash.com/photo-1477414348463-c0eb7f1359b6?auto=format&fit=crop&w=1800&q=80" />
-  <div class="content">
-    <h1>Plan unforgettable trips in minutes — AI-powered</h1>
-    <p class="lead">Personalized itineraries by budget and style. Book flights, stays, and activities with a click.</p>
-    <div class="cta">
-      <a href="#planner" class="btn primary">Build my plan</a>
-      <a href="#inspo" class="btn ghost">See demo</a>
+  <div class="bar">
+    <div class="wrap barin">
+      <div class="brand"><div class="logo">WZ</div> Wayzo</div>
+      <a href="#planner" class="btn primary">Start planning</a>
     </div>
-    <div class="note">No app required · Mobile-first · PDF export</div>
   </div>
-</section>
 
-<!-- Inspiration pills (purely visual, remote images) -->
-<div class="wrap inspo" id="inspo">
-  <div class="scroller">
-    <div class="pill"><img src="https://images.unsplash.com/photo-1543340713-8b1f6de0bb68?auto=format&fit=crop&w=800&q=60" alt=""><div class="p">Old towns & cafés</div></div>
-    <div class="pill"><img src="https://images.unsplash.com/photo-1505764706515-aa95265c5abc?auto=format&fit=crop&w=800&q=60" alt=""><div class="p">Beaches & sunsets</div></div>
-    <div class="pill"><img src="https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=800&q=60" alt=""><div class="p">Museums & galleries</div></div>
-    <div class="pill"><img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=800&q=60" alt=""><div class="p">Hidden gems</div></div>
+  <div class="wrap hero">
+    <h1>Plan unforgettable trips in minutes — AI-powered</h1>
+    <p class="lead">Personalized itineraries by budget and style. Flights, stays, and activities—ready to book.</p>
   </div>
-</div>
 
-<!-- Main planner -->
-<div class="wrap grid cols-2" id="planner" style="margin-top:16px">
-  <!-- Form -->
-  <section class="card pad">
-    <h2>Trip details</h2>
-    <p class="muted">We’ll tailor routes, hotels, activities, and meals—then generate your full plan.</p>
+  <div class="wrap grid cols-2" id="planner">
+    <!-- Form -->
+    <section class="card pad">
+      <h2>Trip details</h2>
+      <p class="muted">We’ll tailor routes, hotels, activities, and meals—then generate your full AI plan.</p>
 
-    <form id="tripForm" style="margin-top:12px">
-      <div class="row full">
-        <div class="field">
-          <label>Destination</label>
-          <input class="input" name="destination" placeholder="e.g., Berlin, Tokyo, Bali" required />
-        </div>
-      </div>
-      <div class="row" style="margin-top:10px">
-        <div class="field">
-          <label>Start date</label>
-          <input class="input" type="date" name="start" required />
-        </div>
-        <div class="field">
-          <label>End date</label>
-          <input class="input" type="date" name="end" required />
-        </div>
-      </div>
-      <div class="row" style="margin-top:10px">
-        <div class="field">
-          <label>Budget (USD)</label>
-          <input class="input" type="number" min="100" step="50" name="budget" placeholder="1500" required />
-        </div>
-        <div class="field">
-          <label>Travelers</label>
-          <input class="input" type="number" min="1" step="1" name="travelers" value="2" required />
-        </div>
-      </div>
-      <div class="row full" style="margin-top:10px">
-        <div class="field">
-          <label>Style</label>
-          <div class="choices">
-            <label class="radio"><input type="radio" name="level" value="budget" checked /> Budget</label>
-            <label class="radio"><input type="radio" name="level" value="mid" /> Mid-range</label>
-            <label class="radio"><input type="radio" name="level" value="luxury" /> Luxury</label>
+      <form id="tripForm" style="margin-top:12px">
+        <div class="row full">
+          <div class="field">
+            <label>Destination</label>
+            <input class="input" name="destination" placeholder="e.g., Berlin, Tokyo, Bali" required />
           </div>
         </div>
-      </div>
-      <div class="row full" style="margin-top:10px">
-        <div class="field">
-          <label>Preferences</label>
-          <input class="input" name="prefs" placeholder="e.g., museums, beaches, hiking, kid-friendly" />
+        <div class="row" style="margin-top:10px">
+          <div class="field">
+            <label>Start date</label>
+            <input class="input" type="date" name="start" required />
+          </div>
+          <div class="field">
+            <label>End date</label>
+            <input class="input" type="date" name="end" required />
+          </div>
         </div>
+        <div class="row" style="margin-top:10px">
+          <div class="field">
+            <label>Budget (USD)</label>
+            <input class="input" type="number" min="100" step="50" name="budget" placeholder="1500" required />
+          </div>
+          <div class="field">
+            <label>Travelers</label>
+            <input class="input" type="number" min="1" step="1" name="travelers" value="2" required />
+          </div>
+        </div>
+        <div class="row full" style="margin-top:10px">
+          <div class="field">
+            <label>Style</label>
+            <div class="choices">
+              <label class="radio"><input type="radio" name="level" value="budget" checked /> Budget</label>
+              <label class="radio"><input type="radio" name="level" value="mid" /> Mid-range</label>
+              <label class="radio"><input type="radio" name="level" value="luxury" /> Luxury</label>
+            </div>
+          </div>
+        </div>
+        <div class="row full" style="margin-top:10px">
+          <div class="field">
+            <label>Preferences</label>
+            <input class="input" name="prefs" placeholder="e.g., museums, beaches, hiking, kid-friendly" />
+          </div>
+        </div>
+
+        <div class="toolbar" style="margin-top:14px">
+          <button class="btn primary" type="submit">Generate preview</button>
+          <button class="btn" type="button" id="buyBtn">Generate full plan (AI)</button>
+          <button class="btn" type="button" id="saveBtn">Save preview</button>
+        </div>
+        <p class="muted" style="margin-top:6px">By continuing you agree to our Terms and Privacy.</p>
+      </form>
+    </section>
+
+    <!-- Output -->
+    <section class="card pad">
+      <div class="section-title">
+        <h2>Your itinerary</h2>
+        <span class="badge">AI powered</span>
       </div>
 
-      <div class="toolbar" style="margin-top:14px">
-        <button class="btn primary" type="submit">Generate preview</button>
-        <button class="btn" type="button" id="buyBtn">Generate full plan (AI)</button>
-        <button class="btn" type="button" id="saveBtn">Save preview</button>
+      <div id="preview" style="margin-top:10px">
+        <p class="muted">Fill the form and click <b>Generate preview</b>. Then use <b>Generate full plan (AI)</b>.</p>
       </div>
-      <p class="muted" style="margin-top:6px">By continuing you agree to our Terms and Privacy.</p>
-    </form>
-  </section>
 
-  <!-- Output -->
-  <section class="card pad">
-    <div class="section-title">
-      <h2>Your itinerary</h2>
-      <span class="badge">AI powered</span>
-    </div>
-
-    <div id="preview" style="margin-top:10px">
-      <p class="muted">Fill the form and click <b>Generate preview</b>. Then use <b>Generate full plan (AI)</b>.</p>
-    </div>
-
-    <div id="loadingBar" class="" style="margin-top:10px; display:none">
-      <div style="height:10px;background:#1f2937;border-radius:8px; overflow:hidden">
-        <div id="bar" style="height:10px; width:15%; background:linear-gradient(90deg,var(--accent),var(--brand)); border-radius:8px; animation: grow 1.6s ease-in-out infinite;"></div>
+      <div id="loading" class="hidden" style="margin-top:10px">
+        <div style="height:10px;background:#e2e8f0;border-radius:8px"></div>
+        <div style="height:10px;background:#e2e8f0;border-radius:8px;margin-top:8px;width:70%"></div>
       </div>
-      <style>@keyframes grow{0%{width:10%}50%{width:85%}100%{width:10%}}</style>
-    </div>
 
-    <div class="toolbar" style="margin-top:12px">
-      <a id="pdfBtn" class="btn hidden" href="#" target="_blank">⬇️ Download PDF</a>
-      <a id="linkFlights" class="btn" target="_blank" href="https://www.kayak.com/flights?aff=YOUR_AFF_ID">✈️ Flights</a>
-      <a id="linkHotels" class="btn" target="_blank" href="https://www.booking.com/?aid=YOUR_AFF_ID">🏨 Hotels</a>
-    </div>
-    <div class="links" style="margin-top:10px">
-      <a id="linkActivities" class="alink" target="_blank" href="https://www.getyourguide.com/?partner_id=YOUR_PARTNER_ID">🎟️ Activities</a>
-      <a id="linkCars" class="alink" target="_blank" href="https://www.rentalcars.com/?affiliateCode=YOUR_AFF_ID">🚗 Cars</a>
-      <a id="linkInsurance" class="alink" target="_blank" href="https://www.worldnomads.com/?aff=YOUR_AFF_ID">🛡️ Insurance</a>
-      <a id="linkReviews" class="alink" target="_blank" href="https://www.tripadvisor.com/">⭐ Reviews</a>
-    </div>
-  </section>
-</div>
-
-<!-- Fun loading overlay -->
-<div id="loadingOverlay" class="loading-overlay" aria-hidden="true">
-  <div class="loading-card">
-    <div class="plane">✈️</div>
-    <div style="margin-top:8px; font-weight:800">Generating your Wayzo plan…</div>
-    <div style="font-size:13px; color:#9ca3af; margin-top:6px">Searching routes, sights, eats & hidden gems</div>
+      <div class="toolbar" style="margin-top:12px">
+        <a id="pdfBtn" class="btn hidden" href="#" target="_blank">⬇️ Download PDF</a>
+        <a id="linkFlights" class="btn" target="_blank" href="https://www.kayak.com/flights?aff=YOUR_AFF_ID">✈️ Flights</a>
+        <a id="linkHotels" class="btn" target="_blank" href="https://www.booking.com/?aid=YOUR_AFF_ID">🏨 Hotels</a>
+      </div>
+      <div class="links" style="margin-top:10px">
+        <a id="linkActivities" class="alink" target="_blank" href="https://www.getyourguide.com/?partner_id=YOUR_PARTNER_ID">🎟️ Activities</a>
+        <a id="linkCars" class="alink" target="_blank" href="https://www.rentalcars.com/?affiliateCode=YOUR_AFF_ID">🚗 Cars</a>
+        <a id="linkInsurance" class="alink" target="_blank" href="https://www.worldnomads.com/?aff=YOUR_AFF_ID">🛡️ Insurance</a>
+        <a id="linkReviews" class="alink" target="_blank" href="https://www.tripadvisor.com/">⭐ Reviews</a>
+      </div>
+    </section>
   </div>
-</div>
 
-<!-- ====== Inline JS (no external JS) ====== -->
 <script>
   const $ = (s)=>document.querySelector(s);
-  const byName = (n)=>document.querySelector(\`[name="\${n}"]\`);
+  const byName = (n)=>document.querySelector(`[name="${n}"]`);
 
   function simpleMarkdown(md){
     md = md.replace(/^### (.*)$/gm,'<h3>$1</h3>')
            .replace(/^## (.*)$/gm,'<h2>$1</h2>')
            .replace(/^# (.*)$/gm,'<h1>$1</h1>')
-           .replace(/^- (.*)$/gm,'<li>$1</li>')
-           .replace(/\\*\\*(.+?)\\*\\*/g,'<strong>$1</strong>')
-           .replace(/\\[(.+?)\\]\\((https?:\\/\\/[^\\s)]+)\\)/g,'<a href="$2" target="_blank">$1</a>');
-    md = md.replace(/(<li>.*<\\/li>)(\\n(?!<li>))/g,'<ul>$1</ul>\\n');
-    md = md.split(/\\n{2,}/).map(b=>{
-      if(/^<h\\d|<ul>|<li>/.test(b.trim())) return b;
-      return '<p>'+b.replace(/\\n/g,'<br>')+'</p>';
-    }).join('\\n');
-    return \`<div class="md">\${md}</div>\`;
+           .replace(/^\- (.*)$/gm,'<li>$1</li>')
+           .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+           .replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank">$1</a>');
+    md = md.replace(/(<li>.*<\/li>)(\n(?!<li>))/g,'<ul>$1</ul>\n');
+    md = md.split(/\n{2,}/).map(b=>{
+      if(/^<h\d|<ul>|<li>/.test(b.trim())) return b;
+      return '<p>'+b.replace(/\n/g,'<br>')+'</p>';
+    }).join('\n');
+    return `<div class="md">${md}</div>`;
   }
 
   function setLinks(aff){
@@ -305,8 +183,7 @@
     $('#linkReviews').href   = aff.reviews;
   }
 
-  function showInlineBar(on){ $('#loadingBar').style.display = on ? 'block' : 'none'; }
-  function showOverlay(on){ $('#loadingOverlay').style.display = on ? 'flex' : 'none'; }
+  function showLoading(on){ $('#loading').classList.toggle('hidden', !on); }
 
   // Preview
   function handleGenerate(e){
@@ -314,55 +191,42 @@
     const data = Object.fromEntries(new FormData(e.target).entries());
     data.budget = Number(data.budget||0);
     data.travelers = Number(data.travelers||1);
-    showInlineBar(true);
+    showLoading(true);
     fetch('/api/preview', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        destination:data.destination, start:data.start, end:data.end,
-        budget:data.budget, travelers:data.travelers, level:data.level, prefs:data.prefs||''
-      })
+      body: JSON.stringify({ destination:data.destination, start:data.start, end:data.end,
+        budget:data.budget, travelers:data.travelers, level:data.level, prefs:data.prefs||'' })
     }).then(r=>r.json()).then(j=>{
-      showInlineBar(false);
+      showLoading(false);
       window.__PLAN_ID__ = j.id;
       $('#preview').innerHTML = j.teaser_html || 'Preview unavailable';
       setLinks(j.affiliates);
       localStorage.setItem('tm_last', JSON.stringify(data));
-      // Small wink after preview
-      $('#loadingOverlay').querySelector('.plane').textContent = '🧭';
-      setTimeout(()=>$('#loadingOverlay').querySelector('.plane').textContent='✈️',800);
-    }).catch(err=>{
-      showInlineBar(false); console.error(err);
-      alert('Preview failed. Is backend running?');
-    });
+    }).catch(err=>{ showLoading(false); console.error(err); alert('Preview failed. Is backend running?'); });
   }
 
   // Full plan
   function handleFull(){
     const last = JSON.parse(localStorage.getItem('tm_last')||'null');
     if(!last){ alert('Generate a preview first.'); return; }
-    showOverlay(true);
+    showLoading(true);
     fetch('/api/plan', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        destination:last.destination, start:last.start, end:last.end,
+      body: JSON.stringify({ destination:last.destination, start:last.start, end:last.end,
         budget:Number(last.budget||0), travelers:Number(last.travelers||1),
-        level:last.level, prefs:last.prefs||''
-      })
+        level:last.level, prefs:last.prefs||'' })
     }).then(r=>r.json()).then(j=>{
-      showOverlay(false);
+      showLoading(false);
       window.__PLAN_ID__ = j.id;
       const html = simpleMarkdown(j.markdown || '# Plan unavailable');
       $('#preview').innerHTML = html;
       $('#pdfBtn').classList.remove('hidden');
-      $('#pdfBtn').href = \`/api/plan/\${j.id}/pdf\`;
+      $('#pdfBtn').href = `/api/plan/${j.id}/pdf`;
       setLinks(j.affiliates);
-    }).catch(err=>{
-      showOverlay(false); console.error(err);
-      alert('Full plan failed.');
-    });
+    }).catch(err=>{ showLoading(false); console.error(err); alert('Full plan failed. Check OPENAI_API_KEY.'); });
   }
 
-  // Save locally
+  // Save
   function handleSave(){
     const plans = JSON.parse(localStorage.getItem('tm_saved')||'[]');
     plans.push({ id: crypto.randomUUID(), at: new Date().toISOString(), html: $('#preview').innerHTML });
@@ -375,13 +239,11 @@
     const last = JSON.parse(localStorage.getItem('tm_last')||'null'); if(!last) return;
     for(const [k,v] of Object.entries(last)){
       const el = byName(k); if(!el) continue;
-      if(el.type==='radio'){
-        const r=document.querySelector(\`input[name="level"][value="\${last.level}"]\`); r && (r.checked=true);
-      } else { el.value = v; }
+      if(el.type==='radio'){ const r=document.querySelector(`input[name="level"][value="${last.level}"]`); r && (r.checked=true); }
+      else el.value = v;
     }
   })();
 
-  // Bind
   document.getElementById('tripForm').addEventListener('submit', handleGenerate);
   document.getElementById('buyBtn').addEventListener('click', handleFull);
   document.getElementById('saveBtn').addEventListener('click', handleSave);

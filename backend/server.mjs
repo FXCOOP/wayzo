@@ -5,47 +5,59 @@ import cors from 'cors';
 import compression from 'compression';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import rateLimit from 'express-rate-limit';
 import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import Database from 'better-sqlite3';
 import { marked } from 'marked';
+import OpenAI from 'openai';
 
-/* ---------------- Paths (Render Root Directory is 'backend') ---------------- */
+/** ---------- Paths (Render Root Directory = backend) ---------- */
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
-const repoRoot   = path.resolve(__dirname, '..');          // repo root
-const frontendDir = path.join(repoRoot, 'frontend');        // ../frontend
-const docsDir     = fs.existsSync(path.join(repoRoot,'docs')) ? path.join(repoRoot,'docs') : frontendDir;
-
-// prefer index.backend.html, fall back to index.html if needed
+const repoRoot   = path.resolve(__dirname, '..');          // -> /opt/render/project/src
+const frontendDir = path.join(repoRoot, 'frontend');       // -> /opt/render/project/src/frontend
 let indexFile = path.join(frontendDir, 'index.backend.html');
 if (!fs.existsSync(indexFile)) {
   const alt = path.join(frontendDir, 'index.html');
   if (fs.existsSync(alt)) indexFile = alt;
 }
 
-console.log('Wayzo backend starting…');
-console.log('Static root:', frontendDir);
-console.log('Index file:', indexFile);
+const docsDir = fs.existsSync(path.join(repoRoot, 'docs'))
+  ? path.join(repoRoot, 'docs')
+  : frontendDir;
 
-/* -------------------------------- App ------------------------------------- */
-const app = express();
-const PORT = Number(process.env.PORT || 10000);
+console.log('Serving frontend from:', frontendDir);
+console.log('Root file:', indexFile);
 
-// Render is behind a proxy; trust the first proxy
+/** ---------- App ---------- */
+const app  = express();
+const PORT = Number(process.env.PORT || 8080);
 app.set('trust proxy', 1);
 
-// Keep security headers but relax CSP so inline CSS/JS in your HTML works
-app.use(helmet({ contentSecurityPolicy: false }));
+// Relax CSP so inline <script> in the simple HTML works
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' }
+}));
+
 app.use(compression());
 app.use(morgan('tiny'));
 app.use(express.json({ limit: '1mb' }));
 app.use(cors());
 
-/* -------------------------------- DB -------------------------------------- */
+// Rate limit (safe with proxy on Render)
+app.use(rateLimit({
+  windowMs: 60_000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: { trustProxy: true }
+}));
+
+/** ---------- DB (ephemeral OK on Render Free) ---------- */
 const dbPath = path.join(repoRoot, 'wayzo.sqlite');
-if (!fs.existsSync(path.dirname(dbPath))) fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 const db = new Database(dbPath);
 db.exec(`
   CREATE TABLE IF NOT EXISTS plans (
@@ -57,10 +69,10 @@ db.exec(`
 const savePlan = db.prepare('INSERT OR REPLACE INTO plans (id, created_at, payload) VALUES (?, ?, ?)');
 const getPlan  = db.prepare('SELECT payload FROM plans WHERE id = ?');
 
-/* ------------------------------- Helpers ---------------------------------- */
 const nowIso = () => new Date().toISOString();
 const uid = () => (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
 
+/** ---------- Helpers ---------- */
 function affiliatesFor(dest = '') {
   const q = encodeURIComponent(dest || '');
   return {
@@ -94,7 +106,7 @@ function localPlanMarkdown(input) {
   } = input || {};
   return `# ${destination} Itinerary (${start} → ${end})
 
-**Party:** ${travelers} traveler(s) • **Style:** ${level} • **Budget:** $${budget}
+**Party:** ${travelers} traveler(s)  •  **Style:** ${level}  •  **Budget:** $${budget}
 
 **Preferences:** ${prefs || '—'}
 
@@ -127,14 +139,56 @@ function localPlanMarkdown(input) {
 Happy travels!`;
 }
 
-/* -------------------------------- API ------------------------------------ */
-app.get('/api/health', (_req, res) => res.json({ ok: true }));
-app.get('/healthz', (_req, res) => res.status(200).send('ok'));
-app.get('/__debug', (_req, res) => {
-  res.json({ now: nowIso(), node: process.version, paths:{ repoRoot, frontendDir, indexFile, dbPath }});
-});
+/** ---------- OpenAI (optional; off if no key) ---------- */
+const openaiEnabled = !!process.env.OPENAI_API_KEY;
+const openai = openaiEnabled ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 
-// Preview: save teaser and affiliates
+async function maybeAI(markdownFallback, payload) {
+  if (!openaiEnabled) return markdownFallback;
+
+  const prompt = `You are an expert travel planner. Create a clear, friendly **Markdown** itinerary with:
+- Title including destination and dates
+- Day-by-day sections with morning/afternoon/evening
+- Practical tips and rough costs that fit the budget
+- Keep it concise and readable
+
+INPUT:
+Destination: ${payload.destination}
+Dates: ${payload.start} to ${payload.end}
+Travelers: ${payload.travelers}
+Style: ${payload.level}
+Budget: $${payload.budget}
+Preferences: ${payload.prefs || 'none'}
+
+Return only Markdown.`;
+
+  try {
+    const r = await openai.chat.completions.create({
+      model: process.env.WAYZO_MODEL || 'gpt-4o-mini',
+      temperature: 0.6,
+      messages: [
+        { role: 'system', content: 'You write clean Markdown itineraries. No code fences.' },
+        { role: 'user', content: prompt }
+      ]
+    });
+    const text = r.choices?.[0]?.message?.content?.trim();
+    return text || markdownFallback;
+  } catch (e) {
+    console.error('OpenAI error → using local plan:', e.message);
+    return markdownFallback;
+  }
+}
+
+/** ---------- API ---------- */
+app.get('/api/health', (_req, res) => res.json({ ok: true }));
+app.get('/healthz',    (_req, res) => res.status(200).send('ok'));
+app.get('/__debug',    (_req, res) => res.json({
+  now: nowIso(), node: process.version,
+  paths: { repoRoot, frontendDir, indexFile, docsDir, dbPath },
+  openaiEnabled
+}));
+
+// Preview (teaser only)
 app.post('/api/preview', (req, res) => {
   const payload = req.body || {};
   const id = uid();
@@ -144,17 +198,20 @@ app.post('/api/preview', (req, res) => {
   res.json({ id, teaser_html: teaser, affiliates: aff });
 });
 
-// Full plan: generate local markdown (no OpenAI to keep this rollback rock-solid)
+// Full plan (AI if key; else local)
 app.post('/api/plan', async (req, res) => {
   const payload = req.body || {};
   const id = uid();
-  const markdown = localPlanMarkdown(payload);
+
+  const localMd = localPlanMarkdown(payload);
+  const markdown = await maybeAI(localMd, payload);
   const aff = affiliatesFor(payload.destination);
-  savePlan.run(id, nowIso(), JSON.stringify({ id, type:'plan', data:payload, markdown, wayzo:null, affiliates:aff }));
-  res.json({ id, markdown, wayzo:null, affiliates: aff });
+
+  savePlan.run(id, nowIso(), JSON.stringify({ id, type:'plan', data:payload, markdown, affiliates:aff }));
+  res.json({ id, markdown, affiliates: aff });
 });
 
-// PDF view (HTML you can print/save as PDF)
+// Simple HTML-for-PDF view
 app.get('/api/plan/:id/pdf', (req, res) => {
   const row = getPlan.get(req.params.id);
   if (!row) return res.status(404).send('Plan not found');
@@ -164,9 +221,8 @@ app.get('/api/plan/:id/pdf', (req, res) => {
     <meta charset="utf-8"/>
     <title>Wayzo Plan</title>
     <style>
-      body{font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; line-height: 1.55; margin: 24px;}
-      h1,h2,h3{margin:.6em 0}
-      ul{margin:.4em 0 .6em 1.2em}
+      body{font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; line-height: 1.55; margin: 28px; color:#0f172a;}
+      h1,h2,h3{margin:.6em 0} ul{margin:.4em 0 .6em 1.2em}
       .footer{margin-top:2rem; font-size:12px; color:#475569}
       a{color:#2563eb; text-decoration:none}
     </style>
@@ -179,11 +235,10 @@ app.get('/api/plan/:id/pdf', (req, res) => {
   res.send(html);
 });
 
-/* ------------------------------ Static files ----------------------------- */
-// Serve /docs if you add images later
-app.use('/docs', express.static(docsDir, { setHeaders: (res)=>res.setHeader('Cache-Control','public,max-age=604800') }));
-
-// Serve frontend with correct MIME types
+/** ---------- Static ---------- */
+app.use('/docs', express.static(docsDir, {
+  setHeaders: (res) => res.setHeader('Cache-Control','public,max-age=604800')
+}));
 app.use(express.static(frontendDir, {
   setHeaders: (res, filePath) => {
     if (/\.(css)$/i.test(filePath)) res.setHeader('Content-Type','text/css; charset=utf-8');
@@ -193,12 +248,10 @@ app.use(express.static(frontendDir, {
     }
   }
 }));
-
-// Catch-all AFTER static, to serve the SPA
 app.get('/', (_req, res) => fs.existsSync(indexFile) ? res.sendFile(indexFile) : res.status(500).send('index file missing'));
 app.get(/^\/(?!api\/).*/, (_req, res) => fs.existsSync(indexFile) ? res.sendFile(indexFile) : res.status(500).send('index file missing'));
 
-/* -------------------------------- Start ---------------------------------- */
+/** ---------- Start ---------- */
 app.listen(PORT, () => {
   console.log(`Wayzo backend running on :${PORT}`);
   console.log(`Serving frontend from: ${frontendDir}`);
