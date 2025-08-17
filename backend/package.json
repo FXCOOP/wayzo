@@ -1,6 +1,6 @@
 {
   "name": "wayzo-backend",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
   "private": true,
   "scripts": {
@@ -16,6 +16,7 @@
     "express-rate-limit": "^7.4.0",
     "helmet": "^7.1.0",
     "marked": "^12.0.2",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "openai": "^4.55.0"
   }
 }
