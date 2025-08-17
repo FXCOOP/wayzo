@@ -1,297 +1,259 @@
-/* server.mjs — Wayzo backend (Node 20)
- * - Serves frontend at site root (/)
- * - /api/preview  -> quick teaser (no OpenAI)
- * - /api/plan     -> full plan (uses OpenAI if OPENAI_API_KEY; otherwise offline generator)
- * - /api/plan/:id/pdf -> branded PDF
- * - /healthz + /api/health -> Render health checks
- * - Static: /style.css, /app.js, /favicon.svg directly at /
+/* eslint-disable no-console */
+/**
+ * Wayzo backend — stable, map-free baseline.
+ * - Serves /frontend (repo root) correctly on Render (Root Directory = backend).
+ * - Also serves /docs for images, PDFs, etc.
+ * - Keeps preview/plan/PDF endpoints.
  */
 
 import 'dotenv/config';
+import express from 'express';
+import cors from 'cors';
+import compression from 'compression';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import rateLimit from 'express-rate-limit';
 import path from 'node:path';
 import fs from 'node:fs';
-import express from 'express';
-import helmet from 'helmet';
-import compression from 'compression';
-import cors from 'cors';
-import rateLimit from 'express-rate-limit';
+import { fileURLToPath } from 'node:url';
 import Database from 'better-sqlite3';
-import PDFDocument from 'pdfkit';
+import { marked } from 'marked';
 
-// Optional OpenAI (fallback generator if key missing)
-let openai = null;
-try {
-  const { OpenAI } = await import('openai');
-  if (process.env.OPENAI_API_KEY) {
-    openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  }
-} catch { /* optional */ }
+// ---------- Resolve paths robustly ----------
+const __filename = fileURLToPath(import.meta.url);
+const __dirname  = path.dirname(__filename);
 
-const app  = express();
-const PORT = process.env.PORT || 10000;
+// repo root is parent of /backend
+const repoRoot = path.resolve(__dirname, '..');
 
-// ---- security & perf
+// Prefer ../frontend (repo root). Fallbacks in case structure changes.
+const FRONTEND_CANDIDATES = [
+  path.join(repoRoot, 'frontend'),
+  path.join(__dirname, 'frontend'),
+  path.resolve(process.cwd(), 'frontend')
+];
+
+let frontendDir = FRONTEND_CANDIDATES.find(p => fs.existsSync(p)) || FRONTEND_CANDIDATES[0];
+const docsDir = fs.existsSync(path.join(repoRoot, 'docs'))
+  ? path.join(repoRoot, 'docs')
+  : path.join(frontendDir); // fallback so /docs/* doesn’t 404 if you store images in frontend
+
+// index file: use index.backend.html if present, else index.html
+let indexFile = path.join(frontendDir, 'index.backend.html');
+if (!fs.existsSync(indexFile)) {
+  const alt = path.join(frontendDir, 'index.html');
+  if (fs.existsSync(alt)) indexFile = alt;
+}
+
+console.log('Static root:', frontendDir);
+console.log('Index file:', indexFile);
+console.log('Docs dir:', docsDir);
+
+// ---------- App ----------
+const app = express();
+const PORT = Number(process.env.PORT || 8080);
+
+// Render/proxy aware (1 proxy = Render)
 app.set('trust proxy', 1);
-app.use(compression());
-app.use(cors());
-app.use(helmet({
-  contentSecurityPolicy: false, // keep simple for CDN images
-  crossOriginResourcePolicy: { policy: 'cross-origin' }
-}));
-app.use(express.json({ limit: '1mb' }));
 
-// ---- basic rate limit
+// Security (relaxed CSP to avoid blocking your inline/on-page code)
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' }
+}));
+
+app.use(compression());
+app.use(morgan('tiny'));
+app.use(express.json({ limit: '1mb' }));
+app.use(cors());
+
+// Rate limit (safe with trustProxy = 1)
 app.use(rateLimit({
-  windowMs: 60_000,
+  windowMs: 60 * 1000,
   max: 120,
   standardHeaders: true,
   legacyHeaders: false,
-  validate: { trustProxy: (v) => v === true || v === 1 } // silence express-rate-limit warning
+  validate: { trustProxy: true }
 }));
 
-// ---- tiny utils
-const uuid = () => crypto.randomUUID();
-const safe = (s) => String(s ?? '').trim();
+// ---------- SQLite (repo root) ----------
+const dbPath = path.join(repoRoot, 'wayzo.sqlite');
+const dbDir  = path.dirname(dbPath);
+if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
 
-function affiliateLinks(destination = '') {
-  const q = encodeURIComponent(destination);
+const db = new Database(dbPath);
+db.exec(`
+  CREATE TABLE IF NOT EXISTS plans (
+    id TEXT PRIMARY KEY,
+    created_at TEXT NOT NULL,
+    payload TEXT NOT NULL
+  );
+`);
+const savePlan = db.prepare('INSERT OR REPLACE INTO plans (id, created_at, payload) VALUES (?, ?, ?)');
+const getPlan  = db.prepare('SELECT payload FROM plans WHERE id = ?');
+
+const nowIso = () => new Date().toISOString();
+const uid = () => (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
+
+// ---------- Affiliates / Teaser / Markdown (local, no LLM) ----------
+function affiliatesFor(dest = '') {
+  const q = encodeURIComponent(dest || '');
   return {
-    flights    : `https://www.kayak.com/flights?aff=YOUR_AFF_ID&q=${q}`,
-    hotels     : `https://www.booking.com/?aid=YOUR_AFF_ID&ss=${q}`,
-    activities : `https://www.getyourguide.com/s/?partner_id=YOUR_PARTNER_ID&q=${q}`,
-    cars       : `https://www.rentalcars.com/?affiliateCode=YOUR_AFF_ID&city=${q}`,
-    insurance  : `https://www.worldnomads.com/?aff=YOUR_AFF_ID`,
-    reviews    : `https://www.tripadvisor.com/Search?q=${q}`
+    flights:    `https://www.kayak.com/flights?aff=YOUR_AFF_ID&query=${q}`,
+    hotels:     `https://www.booking.com/searchresults.html?aid=YOUR_AFF_ID&ss=${q}`,
+    activities: `https://www.getyourguide.com/s/?q=${q}&partner_id=YOUR_PARTNER_ID`,
+    cars:       `https://www.rentalcars.com/SearchResults.do?affiliateCode=YOUR_AFF_ID&destination=${q}`,
+    insurance:  `https://www.worldnomads.com/?aff=YOUR_AFF_ID`,
+    reviews:    `https://www.tripadvisor.com/Search?q=${q}`
   };
 }
 
-// ---- SQLite
-const root = path.resolve(process.cwd());
-const dbPath = path.join(root, 'tripmaster.sqlite');
-const db = new Database(dbPath);
-db.prepare(`CREATE TABLE IF NOT EXISTS plans (
-  id TEXT PRIMARY KEY,
-  created INTEGER,
-  destination TEXT,
-  start TEXT,
-  end TEXT,
-  travelers INTEGER,
-  budget INTEGER,
-  level TEXT,
-  prefs TEXT,
-  markdown TEXT
-)`).run();
+function teaserHTML(input) {
+  const { destination, start, end, level = 'budget', travelers = 2 } = input || {};
+  return `
+  <div class="teaser">
+    <h3>${destination || 'Your destination'} — ${level} style</h3>
+    <p><b>${travelers}</b> traveler(s) · ${start || 'start'} → ${end || 'end'}</p>
+    <ul>
+      <li>Top sights, food & neighborhoods personalized to your inputs.</li>
+      <li>Morning / Afternoon / Evening blocks to fit your pace.</li>
+      <li>Click <b>Generate full plan (AI)</b> for a complete day-by-day schedule & cost table.</li>
+    </ul>
+  </div>`;
+}
 
-// ---- PREVIEW (no OpenAI; fast teaser)
-app.post('/api/preview', (req, res) => {
-  try {
-    const { destination, start, end, budget, travelers, level, prefs } = req.body || {};
-    const id = uuid();
+function planMarkdown(input) {
+  const {
+    destination='Your destination', start='start', end='end',
+    budget=1500, travelers=2, level='budget', prefs=''
+  } = input || {};
 
-    const trip = {
-      id,
-      destination: safe(destination),
-      start: safe(start),
-      end: safe(end),
-      budget: Number(budget || 0),
-      travelers: Number(travelers || 1),
-      level: safe(level || 'budget'),
-      prefs: safe(prefs),
-    };
+  return `# ${destination} Itinerary (${start} → ${end})
 
-    const teaser_html = `
-      <div class="teaser">
-        <h3>${trip.destination || 'Your destination'}</h3>
-        <p><strong>${trip.start || 'Start'} – ${trip.end || 'End'}</strong> · ${trip.travelers} traveler(s) · <em>${trip.level}</em></p>
-        <p>Budget: $${trip.budget.toLocaleString()}</p>
-        <ul>
-          <li>Top neighborhoods to start: Mitte, Kreuzberg, Prenzlauer Berg.</li>
-          <li>Suggested focus: ${trip.prefs || 'mix of highlights & hidden gems'}.</li>
-          <li>Transport: public transit + walking for central areas.</li>
-        </ul>
-      </div>
-    `;
+**Party:** ${travelers} traveler(s)  •  **Style:** ${level}  •  **Budget:** $${budget}
 
-    const links = affiliateLinks(trip.destination);
-    res.json({ id, teaser_html, affiliates: links, mapSearch: encodeURIComponent(trip.destination) });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: 'Failed to build preview' });
-  }
-});
-
-// ---- PLAN (OpenAI if available, else offline generator)
-app.post('/api/plan', async (req, res) => {
-  try {
-    const { destination, start, end, budget, travelers, level, prefs } = req.body || {};
-    const id = uuid();
-    const trip = {
-      id,
-      destination: safe(destination),
-      start: safe(start),
-      end: safe(end),
-      budget: Number(budget || 0),
-      travelers: Number(travelers || 1),
-      level: safe(level || 'budget'),
-      prefs: safe(prefs),
-    };
-
-    let markdown = '';
-    if (openai) {
-      const prompt = `
-You are a travel planner. Build a concise day-by-day itinerary in Markdown.
-Destination: ${trip.destination}
-Dates: ${trip.start} to ${trip.end}
-Travelers: ${trip.travelers}
-Budget total (USD): ${trip.budget}
-Style: ${trip.level}
-Preferences: ${trip.prefs}
-
-Format:
-# <City> Itinerary (<date range>)
-Brief intro
----
-## Day 1
-- Morning: ...
-- Afternoon: ...
-- Evening: ...
-(Repeat for each day)
----
-## Costs (rough)
-- Stay
-- Food
-- Transport
-- Activities
----
-## Tips
-Short bullets.
-`;
-      const rsp = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.5,
-      });
-      markdown = rsp.choices?.[0]?.message?.content?.trim() || '';
-    }
-
-    if (!markdown) {
-      // Offline fallback
-      markdown = `# ${trip.destination} Itinerary (${trip.start} – ${trip.end})
-Welcome! This plan balances highlights and downtime for ${trip.travelers} traveler(s) on a **${trip.level}** style with a total budget of **$${trip.budget.toLocaleString()}**.
+**Preferences:** ${prefs || '—'}
 
 ---
-## Day 1
-- Arrival and orientation. Explore the main square, grab a casual dinner near your hotel.
 
-## Day 2
-- Morning: Top museum. Afternoon: Historic quarter walk. Evening: Local street food.
+## Trip Summary
+- Balanced mix of must-sees and local gems in ${destination}.
+- Morning: headline highlight. Afternoon: neighborhood walk/major site. Evening: local dining.
+- Booking shortcuts adapt to **${destination}**.
 
-## Day 3
-- Day trip to a nearby landmark or park (budget-friendly transit).
+## Day by Day (sample)
+### Day 1
+- **Morning**: Historic center & a key museum  
+- **Afternoon**: Market + street food  
+- **Evening**: Neighborhood bistro
 
-## Day 4
-- Markets + neighborhood stroll. Coffee stops, photo ops.
+### Day 2
+- **Morning**: Big-ticket sight  
+- **Afternoon**: Park/river loop  
+- **Evening**: Food hall + dessert
 
-## Day 5
-- Iconic viewpoints + riverside/green area.
-
-## Day 6
-- Free day for personal interests (museums, galleries, biking).
-
-## Day 7
-- Wrap up, souvenirs, farewell dinner.
+*(Generate more days similarly…)*
 
 ---
-## Costs (rough for all travelers)
-- Stay: $${Math.round(trip.budget * 0.35)}
-- Food: $${Math.round(trip.budget * 0.30)}
-- Activities: $${Math.round(trip.budget * 0.20)}
-- Transport: $${Math.round(trip.budget * 0.10)}
-- Misc: $${Math.round(trip.budget * 0.05)}
 
----
-## Tips
-- Use public transport passes for savings.
-- Book popular tickets online in advance.
-- Pack layers and comfy shoes.
-`;
-    }
+## Cost Overview (rough)
+- **Accommodation**: varies by style
+- **Food**: $20–$40 pp/day
+- **Activities**: museums $10–$25
+- **Transport**: day passes are best value
 
-    db.prepare(`INSERT INTO plans (id, created, destination, start, end, travelers, budget, level, prefs, markdown)
-      VALUES (@id, @created, @destination, @start, @end, @travelers, @budget, @level, @prefs, @markdown)`)
-      .run({ ...trip, created: Date.now(), markdown });
+Happy travels!`;
+}
 
-    res.json({
-      id,
-      markdown,
-      affiliates: affiliateLinks(trip.destination),
-      mapSearch: encodeURIComponent(trip.destination)
-    });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: 'Failed to generate plan' });
-  }
-});
-
-// ---- PDF (simple, branded)
-app.get('/api/plan/:id/pdf', (req, res) => {
-  const row = db.prepare('SELECT * FROM plans WHERE id = ?').get(req.params.id);
-  if (!row) return res.status(404).send('Not found');
-
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `inline; filename="wayzo-${row.destination.replace(/\s+/g,'-').toLowerCase()}.pdf"`);
-
-  const doc = new PDFDocument({ margin: 40, info: { Title: `Wayzo – ${row.destination} plan` } });
-  doc.pipe(res);
-
-  doc.fontSize(20).text(`Wayzo – ${row.destination} Itinerary`, { align: 'left' });
-  doc.moveDown(0.5);
-  doc.fontSize(10).fillColor('#555').text(`${row.start} – ${row.end} · ${row.travelers} traveler(s) · ${row.level} · budget $${row.budget.toLocaleString()}`);
-  doc.moveDown(1);
-  doc.fillColor('#000');
-
-  const lines = String(row.markdown).split('\n');
-  lines.forEach((ln) => {
-    if (ln.startsWith('# ')) {
-      doc.moveDown(0.6).fontSize(16).text(ln.replace(/^#\s+/, ''));
-    } else if (ln.startsWith('## ')) {
-      doc.moveDown(0.5).fontSize(13).text(ln.replace(/^##\s+/, ''), { underline: true });
-    } else {
-      doc.fontSize(10).text(ln);
-    }
-  });
-
-  doc.moveDown(1.2);
-  doc.fontSize(9).fillColor('#666').text('© Wayzo. Crafted for your adventure.', { align: 'center' });
-
-  doc.end();
-});
-
-// ---- HEALTH
+// ---------- API ----------
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
-app.get('/healthz', (_req, res) => res.type('text/plain').send('ok'));
+app.get('/healthz', (_req, res) => res.status(200).send('ok'));
 
-// ---- STATIC FRONTEND (serve at site root)
-const frontendDir = path.join(root, 'frontend');
-console.log('Static root:', frontendDir);
-console.log('Index file:', path.join(frontendDir, 'index.backend.html'));
+app.get('/__debug', (_req, res) => {
+  res.json({
+    now: nowIso(),
+    node: process.version,
+    paths: { repoRoot, frontendDir, indexFile, docsDir, dbPath }
+  });
+});
 
-app.use(express.static(frontendDir, {
-  setHeaders: (res, filePath) => {
-    if (filePath.endsWith('.css')) res.setHeader('Content-Type', 'text/css; charset=utf-8');
-    if (filePath.endsWith('.js'))  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-    if (filePath.endsWith('.svg')) res.setHeader('Content-Type', 'image/svg+xml');
-  }
+app.post('/api/preview', (req, res) => {
+  const payload = req.body || {};
+  const id = uid();
+  const teaser = teaserHTML(payload);
+  const aff = affiliatesFor(payload.destination);
+  savePlan.run(id, nowIso(), JSON.stringify({ id, type:'preview', data:payload, teaser_html:teaser, affiliates:aff }));
+  res.json({ id, teaser_html: teaser, affiliates: aff });
+});
+
+app.post('/api/plan', (req, res) => {
+  const payload = req.body || {};
+  const id = uid();
+  const md = planMarkdown(payload);
+  const aff = affiliatesFor(payload.destination);
+  savePlan.run(id, nowIso(), JSON.stringify({ id, type:'plan', data:payload, markdown:md, affiliates:aff }));
+  res.json({ id, markdown: md, affiliates: aff });
+});
+
+app.get('/api/plan/:id/pdf', (req, res) => {
+  const row = getPlan.get(req.params.id);
+  if (!row) return res.status(404).send('Plan not found');
+  const { markdown } = JSON.parse(row.payload || '{}');
+  const html = `<!doctype html>
+  <html><head>
+    <meta charset="utf-8"/>
+    <title>Wayzo Plan</title>
+    <style>
+      body{font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; line-height: 1.55; margin: 24px;}
+      h1,h2,h3{margin:.6em 0}
+      ul{margin:.4em 0 .6em 1.2em}
+      .footer{margin-top:2rem; font-size:12px; color:#475569}
+    </style>
+  </head>
+  <body>
+    <div class="content">${marked.parse(markdown || '# Plan')}</div>
+    <div class="footer">Generated by Wayzo — wayzo.online</div>
+  </body></html>`;
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(html);
+});
+
+// ---------- Static files ----------
+// Serve /docs (images, etc.)
+app.use('/docs', express.static(docsDir, {
+  setHeaders: (res) => res.setHeader('Cache-Control', 'public, max-age=604800')
 }));
 
-// Back-compat if any old links used:
-app.use('/frontend', express.static(frontendDir));
+// Serve frontend two ways so both "/style.css" and "/assets/style.css" work
+app.use(express.static(frontendDir, {
+  setHeaders: (res, filePath) => {
+    if (/\.(css)$/i.test(filePath)) res.setHeader('Content-Type', 'text/css; charset=utf-8');
+    if (/\.(js)$/i.test(filePath))  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    if (/\.(css|js|svg|png|jpg|jpeg|webp|ico)$/i.test(filePath)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    }
+  }
+}));
+app.use('/assets', express.static(frontendDir)); // optional alias
 
-app.get('/', (_req, res) =>
-  res.sendFile(path.join(frontendDir, 'index.backend.html'))
-);
+// Root → index file
+app.get('/', (_req, res) => {
+  if (!fs.existsSync(indexFile)) {
+    return res.status(500).send('index file not found in frontend directory');
+  }
+  res.sendFile(indexFile);
+});
 
+// SPA fallback for non-API routes
+app.get(/^\/(?!api\/).*/, (_req, res) => {
+  if (!fs.existsSync(indexFile)) {
+    return res.status(500).send('index file not found in frontend directory');
+  }
+  res.sendFile(indexFile);
+});
+
+// ---------- Start ----------
 app.listen(PORT, () => {
   console.log(`Wayzo backend running on :${PORT}`);
-  console.log('Serving frontend from:', frontendDir);
+  console.log(`Serving frontend from: ${frontendDir}`);
 });
