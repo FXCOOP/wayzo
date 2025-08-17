@@ -1,51 +1,121 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Wayzo — Plan unforgettable trips in minutes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Wayzo — Plan unforgettable trips in minutes — AI-powered</title>
 
-  <!-- local assets (no external CDNs) -->
-  <link rel="icon" href="/assets/favicon.svg">
-  <link rel="stylesheet" href="/assets/style.css">
-  <script defer src="/assets/app.js"></script>
+  <!-- Keep your app assets exactly as before -->
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+  <link rel="stylesheet" href="/assets/style.css" />
+  <script src="/assets/app.js" defer></script>
+
+  <!-- Minimal, scoped polish so the hero looks great (doesn't touch the rest) -->
+  <style>
+    /* Layout helpers used only here */
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+    .flex { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .grid { display: grid; gap: 28px; }
+    .cols-2 { grid-template-columns: 1fr 1fr; }
+    .card { background: #fff; border-radius: 16px; box-shadow: 0 10px 30px rgba(16,24,40,.08); }
+    .pad { padding: 22px 24px; }
+    .btn { display:inline-flex; align-items:center; gap:8px; padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,.08); background:#fff; color:#111; text-decoration:none; font-weight:600; }
+    .btn.primary { background: linear-gradient(90deg,#3b82f6,#22c55e); color:#fff; border:0; }
+    .muted { color:#64748b; }
+    .tiny { font-size: 12px; }
+
+    /* Topbar stays clean */
+    .topbar { position: sticky; top:0; z-index:20; background:#fff; border-bottom:1px solid #eef2f7; }
+
+    /* ---------- HERO ---------- */
+    .hero {
+      position: relative;
+      padding: 64px 0 56px;
+      background:
+        radial-gradient(1200px 600px at 50% -20%, rgba(255,255,255,.65), rgba(255,255,255,.75) 35%, rgba(255,255,255,.9) 55%, rgba(255,255,255,1) 70%),
+        linear-gradient(180deg, rgba(2,6,23,.18), rgba(2,6,23,.22)),
+        var(--hero-img, url('/assets/hero-bg.jpg'));
+      background-size: cover;
+      background-position: center;
+      overflow: hidden;
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.2fr .9fr;
+      gap: 28px;
+      align-items: stretch;
+    }
+    .hero-copy { backdrop-filter: blur(6px); background: rgba(255,255,255,.88); }
+    .hero-copy h1 {
+      font-size: clamp(28px, 3.2vw, 40px);
+      line-height: 1.1;
+      margin: 0 0 10px;
+      color: #0f172a;
+    }
+    .hero-copy .lead { margin: 4px 0 16px; color: #334155; }
+    .hero-copy .row.gap { display:flex; gap:10px; margin-top:6px; }
+    .hero-card { background: rgba(255,255,255,.85); }
+    .hero-card img {
+      width: 100%; height: 260px; object-fit: cover; border-radius: 12px;
+      display: block;
+    }
+    .hero-card.noimg { display:none; }
+    @media (max-width: 900px){
+      .hero-grid { grid-template-columns: 1fr; }
+      .hero-card img { height: 220px; }
+    }
+
+    /* “AI powered” pill */
+    .badge {
+      background:#ecfdf5; color:#047857; border:1px solid #a7f3d0;
+      padding:4px 8px; border-radius: 999px; font-weight:600; font-size:12px;
+    }
+    .section-title { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  </style>
 </head>
 <body>
   <!-- Top bar -->
-  <div class="bar">
-    <div class="wrap barin">
-      <div class="brand">
-        <div class="logo">WZ</div>
-        <span>Wayzo</span>
-      </div>
-      <a href="#planner" class="btn primary">Start planning</a>
+  <header class="topbar">
+    <div class="container flex">
+      <a class="brand" href="/" style="display:flex;align-items:center;gap:10px;text-decoration:none">
+        <span class="logo" style="background:#0ea5e9;color:#fff;border-radius:10px;padding:6px 8px;font-weight:800">WZ</span>
+        <span class="name" style="font-weight:800;color:#0f172a">Wayzo</span>
+      </a>
+      <a class="btn primary" href="#planner">Start planning</a>
     </div>
-  </div>
+  </header>
 
-  <!-- Hero -->
-  <section class="hero">
-    <div class="wrap hero-grid">
-      <div class="hero-card card pad">
-        <h1>Plan unforgettable trips in minutes — AI-powered</h1>
-        <p class="lead">Personalized itineraries by budget and style. Book flights, stays, and activities with a click.</p>
-        <div class="hero-actions">
-          <a href="#planner" class="btn primary">Build my plan</a>
-          <a href="#planner" class="btn">See demo</a>
+  <!-- HERO with big background -->
+  <section class="hero" style="--hero-img: url('/assets/hero-bg.jpg')">
+    <div class="container hero-grid">
+      <!-- Headline card -->
+      <div class="hero-copy card pad">
+        <h1>Plan unforgettable trips in minutes — <span class="em">AI-powered</span></h1>
+        <p class="lead">
+          Personalized itineraries by budget and style. Book flights, stays, and activities—ready to book.
+        </p>
+        <div class="row gap">
+          <a class="btn primary" href="#planner">Build my plan</a>
+          <a class="btn" href="#planner">See demo</a>
         </div>
-        <p class="muted small">No app required · Mobile-first · PDF export</p>
+        <p class="muted tiny" style="margin-top:10px">No app required · Mobile-first · PDF export</p>
       </div>
 
-      <!-- Optional image card (uses /assets/hero.jpg if present, otherwise just shows a soft panel) -->
-      <figure class="hero-image card pad">
-        <img src="/assets/hero.jpg" alt="Travel inspiration" onerror="this.closest('figure').classList.add('noimg'); this.remove();">
-        <figcaption class="muted small">Wayzo — inspiration for your next trip</figcaption>
+      <!-- Right inspiration card -->
+      <figure class="hero-card card pad">
+        <img
+          src="/assets/hero.jpg"
+          alt="Travel inspiration"
+          onerror="this.closest('figure').classList.add('noimg'); this.remove();"
+        />
+        <figcaption class="muted tiny">Wayzo — inspiration for your next trip</figcaption>
       </figure>
     </div>
   </section>
 
-  <!-- Planner / Output -->
-  <div class="wrap grid cols-2" id="planner">
-    <!-- Form -->
+  <!-- MAIN: planner (kept intact so app.js continues to work) -->
+  <main id="planner" class="container grid cols-2" style="margin-top:26px">
+    <!-- Trip form -->
     <section class="card pad">
       <h2>Trip details</h2>
       <p class="muted">We’ll tailor routes, hotels, activities, and meals—then generate your full AI plan.</p>
@@ -53,30 +123,30 @@
       <form id="tripForm" style="margin-top:12px">
         <div class="row full">
           <div class="field">
-            <label>Destination</label>
-            <input class="input" name="destination" placeholder="e.g., Berlin" required />
+            <label for="dest">Destination</label>
+            <input id="dest" class="input" name="destination" placeholder="e.g., Berlin" required />
           </div>
         </div>
 
         <div class="row" style="margin-top:10px">
           <div class="field">
-            <label>Start date</label>
-            <input class="input" type="date" name="start" required />
+            <label for="start">Start date</label>
+            <input id="start" class="input" type="date" name="start" required />
           </div>
           <div class="field">
-            <label>End date</label>
-            <input class="input" type="date" name="end" required />
+            <label for="end">End date</label>
+            <input id="end" class="input" type="date" name="end" required />
           </div>
         </div>
 
         <div class="row" style="margin-top:10px">
           <div class="field">
-            <label>Budget (USD)</label>
-            <input class="input" type="number" min="100" step="50" name="budget" placeholder="1500" required />
+            <label for="budget">Budget (USD)</label>
+            <input id="budget" class="input" type="number" min="100" step="50" name="budget" placeholder="1500" required />
           </div>
           <div class="field">
-            <label>Travelers</label>
-            <input class="input" type="number" min="1" step="1" name="travelers" value="2" required />
+            <label for="travelers">Travelers</label>
+            <input id="travelers" class="input" type="number" min="1" step="1" name="travelers" value="2" required />
           </div>
         </div>
 
@@ -93,8 +163,8 @@
 
         <div class="row full" style="margin-top:10px">
           <div class="field">
-            <label>Preferences</label>
-            <input class="input" name="prefs" placeholder="e.g., museums, nature, kid-friendly" />
+            <label for="prefs">Preferences</label>
+            <input id="prefs" class="input" name="prefs" placeholder="e.g., museums, nature, kid-friendly" />
           </div>
         </div>
 
@@ -103,11 +173,11 @@
           <button class="btn" type="button" id="buyBtn">Generate full plan (AI)</button>
           <button class="btn" type="button" id="saveBtn">Save preview</button>
         </div>
-        <p class="muted small" style="margin-top:6px">By continuing you agree to our Terms and Privacy.</p>
+        <p class="muted tiny" style="margin-top:6px">By continuing you agree to our Terms and Privacy.</p>
       </form>
     </section>
 
-    <!-- Output -->
+    <!-- Itinerary output -->
     <section class="card pad">
       <div class="section-title">
         <h2>Your itinerary</h2>
@@ -115,12 +185,14 @@
       </div>
 
       <div id="preview" style="margin-top:10px">
-        <p class="muted">Fill the form and click <b>Generate preview</b>. Then use <b>Generate full plan (AI)</b>.</p>
+        <p class="muted">
+          Fill the form and click <b>Generate preview</b>. Then use <b>Generate full plan (AI)</b>.
+        </p>
       </div>
 
       <div id="loading" class="hidden" style="margin-top:10px">
-        <div class="skeleton"></div>
-        <div class="skeleton" style="width:70%"></div>
+        <div style="height:10px;background:#e2e8f0;border-radius:8px"></div>
+        <div style="height:10px;background:#e2e8f0;border-radius:8px;margin-top:8px;width:70%"></div>
       </div>
 
       <div class="toolbar" style="margin-top:12px">
@@ -135,11 +207,10 @@
         <a id="linkReviews" class="alink" target="_blank" href="https://www.tripadvisor.com/">⭐ Reviews</a>
       </div>
     </section>
-  </div>
+  </main>
 
-  <!-- footer -->
-  <footer class="wrap muted small" style="margin:28px auto 40px">
-    <div>© Wayzo. All rights reserved.</div>
+  <footer class="container tiny muted" style="padding:28px 0 40px">
+    © Wayzo. All rights reserved.
   </footer>
 </body>
 </html>
