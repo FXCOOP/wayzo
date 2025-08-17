@@ -17,7 +17,6 @@
 
   const readForm = () => {
     const data = Object.fromEntries(new FormData(form).entries());
-    // Normalize types
     data.travelers = Number(data.travelers || 2);
     data.budget    = Number(data.budget || 0);
     data.level     = data.level || 'budget';
@@ -34,7 +33,7 @@
     set('#linkReviews',   `https://www.tripadvisor.com/Search?q=${q}`);
   };
 
-  // ---------- Preview ----------
+  // Preview
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const payload = readForm();
@@ -52,14 +51,13 @@
       const out = await res.json();
       previewEl.innerHTML = out.teaser_html || '<p>Preview created.</p>';
     } catch (err) {
-      console.error(err);
       previewEl.innerHTML = '<p class="muted">Preview failed. Please try again.</p>';
     } finally {
       hide(loadingEl);
     }
   });
 
-  // ---------- Full plan (AI / fallback) ----------
+  // Full plan
   buyBtn?.addEventListener('click', async () => {
     const payload = readForm();
     setAffiliates(payload.destination);
@@ -73,8 +71,6 @@
         body: JSON.stringify(payload),
       });
       const out = await res.json();
-
-      // Render markdown in a very simple way (server already returns good Markdown)
       const md = (out.markdown || '').trim();
       previewEl.innerHTML = md
         ? `<div class="markdown" style="white-space:pre-wrap">${md}</div>`
@@ -84,15 +80,14 @@
         pdfBtn.href = `/api/plan/${out.id}/pdf`;
         show(pdfBtn);
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
       previewEl.innerHTML = '<p class="muted">Plan failed. Please try again.</p>';
     } finally {
       hide(loadingEl);
     }
   });
 
-  // ---------- Save preview (local only) ----------
+  // Save preview (local)
   saveBtn?.addEventListener('click', () => {
     try {
       const html = previewEl.innerHTML || '';
@@ -101,7 +96,7 @@
     } catch {}
   });
 
-  // Restore last preview if any
+  // Restore last preview
   const last = localStorage.getItem('wayzo_preview');
   if (last) previewEl.innerHTML = last;
 })();

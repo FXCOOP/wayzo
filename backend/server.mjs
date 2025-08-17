@@ -147,21 +147,21 @@ function localPlanMarkdown(input) {
 - Group sights by neighborhoods to minimize transit.
 
 ## Day 1
-- **Morning:** Historic center  
-- **Afternoon:** Market & park  
-- **Evening:** Local bistro
+- **Morning:** Historic center
+- **Afternoon:** Market & park
+- **Evening:** Classic local dinner
 
 ## Day 2
-- **Morning:** Headliner museum  
-- **Afternoon:** River walk  
+- **Morning:** Headliner museum
+- **Afternoon:** River walk
 - **Evening:** Food hall + dessert
 
 ---
 
 ## Rough Costs
-- **Accommodation:** varies by style  
-- **Food:** $25–$45 pp/day  
-- **Activities:** $10–$25 / museum  
+- **Accommodation:** varies by style
+- **Food:** $25–$45 pp/day
+- **Activities:** $10–$25 / museum
 - **Transit:** day passes best value
 `;
 }
@@ -171,14 +171,14 @@ const openaiEnabled = !!process.env.OPENAI_API_KEY;
 const openai = openaiEnabled ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 
 async function generateWithOpenAI(payload) {
-  const sys = `You produce concise, realistic travel itineraries in Markdown. Keep tone clear, helpful, and formatted with headings and bullet lists.`;
+  const sys = `You produce concise, realistic travel itineraries with concrete logistics, time checks, and restaurant picks. Output strictly in Markdown (no HTML), with short sections and bullet lists. Keep it clear, helpful, and formatted with headings and bullet lists.`;
   const user = `Destination: ${payload.destination}
 Dates: ${payload.start} → ${payload.end}
 Travelers: ${payload.travelers}
 Style: ${payload.level}
 Budget(USD): ${payload.budget}
 Prefs: ${payload.prefs || '-'}
-
+  
 Return an elegant Markdown itinerary.`;
 
   const resp = await openai.chat.completions.create({
@@ -241,11 +241,15 @@ app.post('/api/plan', async (req, res) => {
   }
 });
 
+// NOTE: simple HTML “PDF view” (works on Render without headless Chrome).
+// If you want a binary PDF later, we can swap in pdf-lib. Frontend already links to this.
 app.get('/api/plan/:id/pdf', (req, res) => {
-  const row = getPlan.get(req.params.id);
-  if (!row) return res.status(404).send('Plan not found');
+  const { id } = req.params;
+  const row = getPlan.get(id);
+  if (!row) return res.status(404).json({ error: 'not found' });
   const saved = JSON.parse(row.payload || '{}');
-  const html = `<!doctype html>
+
+  const html = `
   <html><head><meta charset="utf-8"/>
   <title>Wayzo PDF</title>
   <style>
