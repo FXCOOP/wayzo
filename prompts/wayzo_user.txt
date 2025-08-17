@@ -1,0 +1,28 @@
+Please plan a trip with the following inputs:
+
+Destination: {{destination}}
+Dates: {{start}} to {{end}} (flexible: {{flex_enabled}}, ±{{flex_days}} days)
+Party: {{adults}} adults{{children_suffix}}
+Style: {{style}} Pace: {{pace}} Daily start: {{daily_start}}
+Budget: {{currency}} {{budget_total}} (includes flights: {{includes_flights}})
+Dietary: {{dietary}}
+Lodging preference: {{lodging_type}}
+Purpose: {{purpose_list}}
+Preferences: {{prefs}}
+
+Constraints:
+
+Max single drive: {{max_drive_minutes}} minutes
+
+Accessibility: {{access_needs}}
+
+Nap windows: {{nap_windows}}
+
+Weather notes: {{weather_notes}}
+
+Deliver:
+
+Elegant Markdown itinerary.
+
+A single fenced JSON block named wayzo that matches the Wayzo schema exactly (see system message).
+Include Google Maps search URLs for every place.
