@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Wayzo — Plan unforgettable trips in minutes — AI-powered</title>
 
-  <!-- Use RELATIVE paths so this works whether or not /assets is mounted -->
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="stylesheet" href="style.css" />
   <script src="app.js" defer></script>
@@ -22,15 +21,15 @@
     </div>
   </header>
 
-  <!-- HERO (set background with the variable your CSS expects: --hero-bg) -->
+  <!-- HERO -->
+  <!-- Background comes from CSS var --hero-bg; keep the file at hero-bg.jpg -->
   <section class="hero" style="--hero-bg: url('hero-bg.jpg')">
     <div class="container hero-grid">
       <!-- Left: headline card -->
       <div class="hero-card hero-left">
         <h1>Plan unforgettable trips in minutes — <span class="hl">AI-powered</span></h1>
         <p class="lede">
-          Personalized itineraries by budget and style. Book flights, stays, and activities
-          — ready to book.
+          Personalized itineraries by budget and style. Book flights, stays, and activities — ready to book.
         </p>
         <div class="hero-actions">
           <a class="btn btn-primary" href="#planner">Build my plan</a>
@@ -39,15 +38,15 @@
         <p class="muted small">No app required · Mobile-first · PDF export</p>
       </div>
 
-      <!-- Right: inspiration image card (small) -->
+      <!-- Right: inspiration image card -->
       <figure class="hero-card hero-right">
-        <img src="hero.jpg" alt="Wayzo — inspiration for your next trip" />
+        <img src="hero-card.jpg" loading="eager" alt="Wayzo — inspiration for your next trip" />
         <figcaption>Wayzo — inspiration for your next trip</figcaption>
       </figure>
     </div>
   </section>
 
-  <!-- MAIN: Planner -->
+  <!-- MAIN -->
   <main id="planner" class="main">
     <div class="container grid-2">
       <!-- Form -->
@@ -98,7 +97,7 @@
           </div>
 
           <div class="actions">
-            <button class="btn btn-primary" type="submit">Generate preview</button>
+            <button class="btn btn-primary" type="submit" id="previewBtn">Generate preview</button>
             <button class="btn btn-ghost" type="button" id="buyBtn">Generate full plan (AI)</button>
             <button class="btn" type="button" id="saveBtn">Save preview</button>
           </div>
@@ -119,22 +118,22 @@
           </p>
         </div>
 
-        <div id="loading" class="hidden">
+        <div id="loading" class="hidden" aria-live="polite">
           <div style="height:10px;background:#e2e8f0;border-radius:8px"></div>
           <div style="height:10px;background:#e2e8f0;border-radius:8px;margin-top:8px;width:70%"></div>
         </div>
 
         <div class="actions" style="margin-top:10px">
-          <a id="pdfBtn" class="btn hidden" href="#" target="_blank">⬇️ Download PDF</a>
-          <a id="linkFlights" class="btn" target="_blank" href="https://www.kayak.com/flights?aff=YOUR_AFF_ID">✈️ Flights</a>
-          <a id="linkHotels" class="btn" target="_blank" href="https://www.booking.com/?aid=YOUR_AFF_ID">🏨 Hotels</a>
+          <a id="pdfBtn" class="btn hidden" href="#" target="_blank" rel="noopener">⬇️ Download PDF</a>
+          <a id="linkFlights" class="btn" target="_blank" rel="noopener" href="https://www.kayak.com/flights">✈️ Flights</a>
+          <a id="linkHotels" class="btn" target="_blank" rel="noopener" href="https://www.booking.com/">🏨 Hotels</a>
         </div>
 
         <div class="quick-links">
-          <a id="linkActivities" class="ql" target="_blank" href="https://www.getyourguide.com/?partner_id=YOUR_PARTNER_ID">🎟️ Activities</a>
-          <a id="linkCars" class="ql" target="_blank" href="https://www.rentalcars.com/?affiliateCode=YOUR_AFF_ID">🚗 Cars</a>
-          <a id="linkInsurance" class="ql" target="_blank" href="https://www.worldnomads.com/?aff=YOUR_AFF_ID">🛡️ Insurance</a>
-          <a id="linkReviews" class="ql" target="_blank" href="https://www.tripadvisor.com/">⭐ Reviews</a>
+          <a id="linkActivities" class="ql" target="_blank" rel="noopener" href="https://www.getyourguide.com/">🎟️ Activities</a>
+          <a id="linkCars" class="ql" target="_blank" rel="noopener" href="https://www.rentalcars.com/">🚗 Cars</a>
+          <a id="linkInsurance" class="ql" target="_blank" rel="noopener" href="https://www.worldnomads.com/">🛡️ Insurance</a>
+          <a id="linkReviews" class="ql" target="_blank" rel="noopener" href="https://www.tripadvisor.com/">⭐ Reviews</a>
         </div>
       </section>
     </div>

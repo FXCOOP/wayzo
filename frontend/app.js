@@ -1,94 +1,107 @@
-// Helpers
-const $ = (s)=>document.querySelector(s);
-const byName = (n)=>document.querySelector(`[name="${n}"]`);
+// app.js  — resilient bindings + preview/plan flows
 
-function simpleMarkdown(md){
-  md = md.replace(/^### (.*)$/gm,'<h3>$1</h3>')
-         .replace(/^## (.*)$/gm,'<h2>$1</h2>')
-         .replace(/^# (.*)$/gm,'<h1>$1</h1>')
-         .replace(/^\- (.*)$/gm,'<li>$1</li>')
-         .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
-         .replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank">$1</a>');
-  md = md.replace(/(<li>.*<\/li>)(\n(?!<li>))/g,'<ul>$1</ul>\n');
-  md = md.split(/\n{2,}/).map(b=>{
-    if(/^<h\d|<ul>|<li>/.test(b.trim())) return b;
-    return '<p>'+b.replace(/\n/g,'<br>')+'</p>';
-  }).join('\n');
-  return `<div class="md">${md}</div>`;
-}
+(function () {
+  const $ = (sel) => document.querySelector(sel);
 
-function setLinks(aff){
-  if(!aff) return;
-  $('#linkFlights').href   = aff.flights || $('#linkFlights').href;
-  $('#linkHotels').href    = aff.hotels || $('#linkHotels').href;
-  $('#linkActivities').href= aff.activities || $('#linkActivities').href;
-  $('#linkCars').href      = aff.cars || $('#linkCars').href;
-  $('#linkInsurance').href = aff.insurance || $('#linkInsurance').href;
-  $('#linkReviews').href   = aff.reviews || $('#linkReviews').href;
-}
+  const form       = $('#tripForm');
+  const previewEl  = $('#preview');
+  const loadingEl  = $('#loading');
+  const pdfBtn     = $('#pdfBtn');
+  const buyBtn     = $('#buyBtn');
+  const saveBtn    = $('#saveBtn');
 
-function showLoading(on){ $('#loading').classList.toggle('hidden', !on); }
+  if (!form || !previewEl) return; // nothing to wire up
 
-// Preview
-function handleGenerate(e){
-  e.preventDefault();
-  const data = Object.fromEntries(new FormData(e.target).entries());
-  data.budget = Number(data.budget||0);
-  data.travelers = Number(data.travelers||1);
-  showLoading(true);
-  fetch('/api/preview', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ destination:data.destination, start:data.start, end:data.end,
-      budget:data.budget, travelers:data.travelers, level:data.level, prefs:data.prefs||'' })
-  }).then(r=>r.json()).then(j=>{
-    showLoading(false);
-    window.__PLAN_ID__ = j.id;
-    $('#preview').innerHTML = j.teaser_html || 'Preview unavailable';
-    setLinks(j.affiliates);
-    localStorage.setItem('tm_last', JSON.stringify(data));
-  }).catch(err=>{ showLoading(false); console.error(err); alert('Preview failed. Is backend on :8080?'); });
-}
+  const show = (el) => el && el.classList.remove('hidden');
+  const hide = (el) => el && el.classList.add('hidden');
 
-// Full plan
-function handleFull(){
-  const last = JSON.parse(localStorage.getItem('tm_last')||'null');
-  if(!last){ alert('Generate a preview first.'); return; }
-  showLoading(true);
-  fetch('/api/plan', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ destination:last.destination, start:last.start, end:last.end,
-      budget:Number(last.budget||0), travelers:Number(last.travelers||1),
-      level:last.level, prefs:last.prefs||'' })
-  }).then(r=>r.json()).then(j=>{
-    showLoading(false);
-    window.__PLAN_ID__ = j.id;
-    const html = simpleMarkdown(j.markdown || '# Plan unavailable');
-    $('#preview').innerHTML = html;
-    $('#pdfBtn').classList.remove('hidden');
-    $('#pdfBtn').href = `/api/plan/${j.id}/pdf`;
-    setLinks(j.affiliates);
-  }).catch(err=>{ showLoading(false); console.error(err); alert('Full plan failed. Check OPENAI_API_KEY.'); });
-}
+  const readForm = () => {
+    const data = Object.fromEntries(new FormData(form).entries());
+    // Normalize types
+    data.travelers = Number(data.travelers || 2);
+    data.budget    = Number(data.budget || 0);
+    data.level     = data.level || 'budget';
+    return data;
+  };
 
-// Save
-function handleSave(){
-  const plans = JSON.parse(localStorage.getItem('tm_saved')||'[]');
-  plans.push({ id: crypto.randomUUID(), at: new Date().toISOString(), html: $('#preview').innerHTML });
-  localStorage.setItem('tm_saved', JSON.stringify(plans));
-  alert('Saved locally.');
-}
+  const setAffiliates = (dest) => {
+    const q = encodeURIComponent(dest || '');
+    const set = (id, url) => { const a = $(id); if (a) a.href = url; };
+    set('#linkFlights',   `https://www.kayak.com/flights?search=${q}`);
+    set('#linkHotels',    `https://www.booking.com/searchresults.html?ss=${q}`);
+    set('#linkActivities',`https://www.getyourguide.com/s/?q=${q}`);
+    set('#linkCars',      `https://www.rentalcars.com/SearchResults.do?destination=${q}`);
+    set('#linkReviews',   `https://www.tripadvisor.com/Search?q=${q}`);
+  };
 
-// Hydrate last form state
-(function hydrate(){
-  const last = JSON.parse(localStorage.getItem('tm_last')||'null'); if(!last) return;
-  for(const [k,v] of Object.entries(last)){
-    const el = byName(k); if(!el) continue;
-    if(el.type==='radio'){ const r=document.querySelector(`input[name="level"][value="${last.level}"]`); r && (r.checked=true); }
-    else el.value = v;
-  }
+  // ---------- Preview ----------
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const payload = readForm();
+    setAffiliates(payload.destination);
+    hide(pdfBtn);
+    hide(loadingEl);
+    show(loadingEl);
+
+    try {
+      const res = await fetch('/api/preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const out = await res.json();
+      previewEl.innerHTML = out.teaser_html || '<p>Preview created.</p>';
+    } catch (err) {
+      console.error(err);
+      previewEl.innerHTML = '<p class="muted">Preview failed. Please try again.</p>';
+    } finally {
+      hide(loadingEl);
+    }
+  });
+
+  // ---------- Full plan (AI / fallback) ----------
+  buyBtn?.addEventListener('click', async () => {
+    const payload = readForm();
+    setAffiliates(payload.destination);
+    hide(pdfBtn);
+    show(loadingEl);
+
+    try {
+      const res = await fetch('/api/plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const out = await res.json();
+
+      // Render markdown in a very simple way (server already returns good Markdown)
+      const md = (out.markdown || '').trim();
+      previewEl.innerHTML = md
+        ? `<div class="markdown" style="white-space:pre-wrap">${md}</div>`
+        : '<p>Plan generated.</p>';
+
+      if (out.id) {
+        pdfBtn.href = `/api/plan/${out.id}/pdf`;
+        show(pdfBtn);
+      }
+    } catch (err) {
+      console.error(err);
+      previewEl.innerHTML = '<p class="muted">Plan failed. Please try again.</p>';
+    } finally {
+      hide(loadingEl);
+    }
+  });
+
+  // ---------- Save preview (local only) ----------
+  saveBtn?.addEventListener('click', () => {
+    try {
+      const html = previewEl.innerHTML || '';
+      localStorage.setItem('wayzo_preview', html);
+      alert('Preview saved on this device.');
+    } catch {}
+  });
+
+  // Restore last preview if any
+  const last = localStorage.getItem('wayzo_preview');
+  if (last) previewEl.innerHTML = last;
 })();
-
-// Bind
-document.getElementById('tripForm').addEventListener('submit', handleGenerate);
-document.getElementById('buyBtn').addEventListener('click', handleFull);
-document.getElementById('saveBtn').addEventListener('click', handleSave);
