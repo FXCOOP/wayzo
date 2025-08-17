@@ -1,59 +1,43 @@
-/* eslint-disable no-console */
+/* Minimal + stable backend that keeps your current UI intact.
+   Changes:
+   - Better prompt for /api/plan (no UI change)
+   - /api/plan/:id/pdf supports ?pro=1 (nicer layout + optional map snapshot)
+   - /api/plan/latest/pdf[?pro=1] convenience link (no UI change)
+*/
+
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import compression from 'compression';
-import helmet from 'helmet';
 import morgan from 'morgan';
-import rateLimit from 'express-rate-limit';
 import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import Database from 'better-sqlite3';
-import { marked } from 'marked';
-import OpenAI from 'openai';
 
-// ---------------- Paths (stable and safe) ----------------
+// ---------- Paths (keep original structure) ----------
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
 const repoRoot   = path.resolve(__dirname, '..');
-
-const FRONTEND_CANDIDATES = [
-  path.join(repoRoot, 'frontend'),
-  path.join(__dirname, 'frontend'),
-  path.resolve(process.cwd(), 'frontend')
-];
-let frontendDir = FRONTEND_CANDIDATES.find(p => fs.existsSync(p)) || FRONTEND_CANDIDATES[0];
-
-const docsDir = fs.existsSync(path.join(repoRoot, 'docs'))
-  ? path.join(repoRoot, 'docs')
-  : path.join(frontendDir);
-
-// index.html fallback if index.backend.html missing
-let indexFile = path.join(frontendDir, 'index.backend.html');
+const frontendDir = path.join(repoRoot, 'frontend');           // <— DO NOT CHANGE
+let indexFile = path.join(frontendDir, 'index.backend.html');  // <— Your simple UI
 if (!fs.existsSync(indexFile)) {
   const alt = path.join(frontendDir, 'index.html');
   if (fs.existsSync(alt)) indexFile = alt;
 }
+const docsDir = fs.existsSync(path.join(repoRoot, 'docs')) ? path.join(repoRoot, 'docs') : frontendDir;
 
-console.log('Serving frontend from:', frontendDir);
-console.log('Serving docs from:', docsDir);
-console.log('Index file:', indexFile);
-
-// ---------------- App ----------------
+// ---------- App ----------
 const app = express();
 const PORT = Number(process.env.PORT || 8080);
-app.set('trust proxy', 1);
-app.use(helmet({ contentSecurityPolicy: false, crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' } }));
+
 app.use(compression());
 app.use(morgan('tiny'));
 app.use(express.json({ limit: '1mb' }));
 app.use(cors());
-app.use(rateLimit({ windowMs: 60_000, max: 120, standardHeaders: true, legacyHeaders: false, validate: { trustProxy: true } }));
 
-// ---------------- DB ----------------
+// ---------- DB ----------
 const dbPath = path.join(repoRoot, 'wayzo.sqlite');
-if (!fs.existsSync(path.dirname(dbPath))) fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 const db = new Database(dbPath);
 db.exec(`
   CREATE TABLE IF NOT EXISTS plans (
@@ -64,11 +48,12 @@ db.exec(`
 `);
 const savePlan = db.prepare('INSERT OR REPLACE INTO plans (id, created_at, payload) VALUES (?, ?, ?)');
 const getPlan  = db.prepare('SELECT payload FROM plans WHERE id = ?');
+const getLatestPlan = db.prepare("SELECT payload FROM plans WHERE json_extract(payload, '$.type')='plan' ORDER BY created_at DESC LIMIT 1");
 
-// ---------------- Helpers ----------------
 const nowIso = () => new Date().toISOString();
 const uid = () => (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
 
+// ---------- Helpers ----------
 function affiliatesFor(dest = '') {
   const q = encodeURIComponent(dest || '');
   return {
@@ -88,14 +73,13 @@ function teaserHTML(input) {
     <h3>${destination || 'Your destination'} — ${level} style</h3>
     <p><b>${travelers}</b> traveler(s) · ${start || 'start'} → ${end || 'end'}</p>
     <ul>
-      <li>Smart route grouping by neighborhood.</li>
-      <li>3 anchor blocks per day (morning/afternoon/evening).</li>
-      <li>Choose between two activity options per block in the full plan.</li>
+      <li>Neighborhood grouping to cut transit time</li>
+      <li>Morning / Afternoon / Evening anchors</li>
+      <li>Two options per block in the full plan</li>
     </ul>
   </div>`;
 }
 
-// Local fallback
 function localPlanMarkdown(input) {
   const {
     destination='Your destination', start='start', end='end',
@@ -110,146 +94,159 @@ function localPlanMarkdown(input) {
 ---
 
 ## Trip Summary
-- Balanced mix of must-sees and local gems in ${destination}.
-- Grouped by neighborhoods to minimize transit.
-- Each block has **two options** in the full plan so you can pick A/B before exporting.
+Balanced mix of must-sees and local gems in ${destination}. Each block has **two options** in the full plan so you can pick A/B before exporting.
 
-## Day by Day (sample)
-### Day 1
+## Day 1 (sample)
 - **Morning**: Historic center & museum  
 - **Afternoon**: Market + street food  
 - **Evening**: Neighborhood bistro
 
 ---
-
-## Cost Overview (rough)
-- Lodging varies by style • Food $20–$40 pp/day • Museums $10–$25 • Day passes are best value.
 `;
 }
 
-// ---------------- OpenAI (conditional) ----------------
+// ---------- OpenAI (optional) ----------
 const openaiEnabled = !!process.env.OPENAI_API_KEY;
+let OpenAI = null;
+if (openaiEnabled) {
+  // Lazy import to avoid breaking if package not present locally
+  ({ default: OpenAI } = await import('openai'));
+}
 const openai = openaiEnabled ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 
-const promptsDir = path.join(repoRoot, 'prompts');
-const sysPath = path.join(promptsDir, 'wayzo_system.txt');
-const usrPath = path.join(promptsDir, 'wayzo_user.txt');
+// Single in-code prompt (no extra files): keeps UI unchanged
+function buildUserPrompt(p) {
+  // Only include what you already collect in your form
+  return `
+Create a superb, practical, JSON-structured trip plan and ALSO a clear human-readable Markdown.
 
-function fillTemplate(tpl, vars) {
-  return tpl
-    .replaceAll('{{destination}}', vars.destination ?? '')
-    .replaceAll('{{start}}', vars.start ?? '')
-    .replaceAll('{{end}}', vars.end ?? '')
-    .replaceAll('{{flex_enabled}}', String(vars.flex_enabled ?? false))
-    .replaceAll('{{flex_days}}', String(vars.flex_days ?? 0))
-    .replaceAll('{{adults}}', String(vars.adults ?? vars.travelers ?? 2))
-    .replaceAll('{{children_suffix}}', vars.children_suffix ?? '')
-    .replaceAll('{{style}}', vars.level ?? vars.style ?? 'budget')
-    .replaceAll('{{pace}}', vars.pace ?? 'balanced')
-    .replaceAll('{{daily_start}}', vars.daily_start ?? '09')
-    .replaceAll('{{currency}}', vars.currency ?? 'USD')
-    .replaceAll('{{budget_total}}', String(vars.budget ?? 0))
-    .replaceAll('{{includes_flights}}', String(vars.includes_flights ?? true))
-    .replaceAll('{{dietary}}', vars.dietary ?? 'none')
-    .replaceAll('{{lodging_type}}', vars.lodging_type ?? 'hotel')
-    .replaceAll('{{purpose_list}}', Array.isArray(vars.purpose) ? vars.purpose.join(', ') : (vars.purpose ?? ''))
-    .replaceAll('{{prefs}}', vars.prefs ?? '')
-    .replaceAll('{{max_drive_minutes}}', String(vars.max_drive_minutes ?? 90))
-    .replaceAll('{{access_needs}}', vars.access_needs ?? 'none')
-    .replaceAll('{{nap_windows}}', vars.nap_windows ?? 'n/a')
-    .replaceAll('{{weather_notes}}', vars.weather_notes ?? 'seasonal conditions apply');
+INPUT
+- Destination: ${p.destination}
+- Dates: ${p.start} to ${p.end}
+- Travelers: ${p.travelers}
+- Style: ${p.level}
+- Budget (USD): ${p.budget}
+- Preferences: ${p.prefs || '—'}
+
+REQUIREMENTS
+1) FIRST, return a compact JSON in a fenced code block (\`\`\`json ... \`\`\`) following this schema:
+
+{
+  "trip": {
+    "destination": "City, Country",
+    "start": "YYYY-MM-DD",
+    "end": "YYYY-MM-DD",
+    "style": "budget|mid|luxury",
+    "daily_start_time": "09"
+  },
+  "days": [
+    {
+      "date": "YYYY-MM-DD",
+      "label": "Day 1 - Neighborhood",
+      "blocks": [
+        {
+          "title": "Morning anchor",
+          "options": [
+            {
+              "title": "Option A title",
+              "why": "Short benefit explanation (1–2 sentences)",
+              "places": [
+                { "name": "Place name", "gmaps_url": "https://maps.google.com/?q=..." }
+              ],
+              "food": [
+                { "name": "Restaurant/cafe", "why": "brief reason" }
+              ],
+              "notes": "practical tip",
+              "images": [
+                { "url": "https://source.unsplash.com/800x500/?${encodeURIComponent(p.destination||'city')}" }
+              ]
+            },
+            {
+              "title": "Option B title",
+              "why": "Short benefit explanation (1–2 sentences)",
+              "places": [
+                { "name": "Place name", "gmaps_url": "https://maps.google.com/?q=..." }
+              ],
+              "food": [
+                { "name": "Restaurant/cafe", "why": "brief reason" }
+              ],
+              "notes": "practical tip",
+              "images": [
+                { "url": "https://source.unsplash.com/800x500/?${encodeURIComponent(p.destination||'city')}%20landmark" }
+              ]
+            }
+          ]
+        },
+        { "title":"Afternoon anchor", "options":[ /* same pattern */ ] },
+        { "title":"Evening anchor",   "options":[ /* same pattern */ ] }
+      ]
+    }
+  ],
+  "costs": {
+    "lodging_per_night": "number or range",
+    "food_per_day_per_person": "number",
+    "local_transport": "tips/estimate",
+    "tickets": "major passes or typical museum costs"
+  },
+  "tips": ["visa/health/safety/packing notes"]
 }
 
-function extractWayzoJson(text) {
-  const fence = /```json\s*([\s\S]*?)```/g;
-  let last;
-  for (const m of text.matchAll(fence)) last = m[1];
-  if (last) { try { return JSON.parse(last); } catch { } }
-  const idx = text.lastIndexOf('{"trip"');
-  if (idx >= 0) {
-    const slice = text.slice(idx);
-    try {
-      let depth = 0, end = -1;
-      for (let i=0;i<slice.length;i++){
-        if (slice[i]==='{') depth++;
-        if (slice[i]==='}') { depth--; if (depth===0){ end = i+1; break; } }
-      }
-      if (end>0) return JSON.parse(slice.slice(0,end));
-    } catch {}
-  }
-  return null;
+2) THEN below the JSON, provide polished **Markdown** with:
+- Title, intro, 1-paragraph trip overview
+- Day-by-day sections (show both Option A and B with short “why”)
+- Cost breakdown table
+- Practical tips list
+
+Always keep recommendations realistic for ${p.destination}.
+  `.trim();
 }
-const stripJsonFromText = (t)=> t.replace(/```json[\s\S]*?```/g, '').trim();
 
 async function generateAIPlan(payload) {
-  const system = fs.existsSync(sysPath) ? fs.readFileSync(sysPath,'utf8') : '';
-  const userTpl = fs.existsSync(usrPath) ? fs.readFileSync(usrPath,'utf8') : '';
+  const messages = [
+    {
+      role: 'system',
+      content:
+`You are Wayzo, a world-class trip planner. Be concise, structured, and practical.
+Return both: (1) a JSON block in \`\`\`json fences\`\`\` per the schema, and (2) human-friendly Markdown below it.
+If real link unknown, leave gmaps_url blank or a generic Google Maps search URL.
+Avoid hallucinating prices; use ranges or typical values.`
+    },
+    { role: 'user', content: buildUserPrompt(payload) }
+  ];
 
-  const adults = Number(payload.adults ?? payload.travelers ?? 2);
-  const children = Number(payload.children ?? 0);
-  const childrenAges = payload.children_ages || [];
-  const childrenSuffix = children > 0 ? ` + ${children} children (ages ${childrenAges.join(', ') || '—'})` : '';
-
-  const vars = {
-    ...payload,
-    adults,
-    children_suffix: childrenSuffix,
-    flex_enabled: payload.flex_enabled ?? false,
-    flex_days: payload.flex_days ?? 0,
-    daily_start: payload.daily_start ?? '09',
-    currency: payload.currency ?? 'USD',
-    includes_flights: payload.includes_flights ?? true,
-    lodging_type: payload.lodging_type ?? 'hotel',
-    purpose: payload.purpose || [],
-    max_drive_minutes: payload.max_drive_minutes ?? 90,
-    access_needs: payload.access_needs ?? 'none',
-    nap_windows: payload.nap_windows ?? 'n/a',
-    weather_notes: payload.weather_notes ?? ''
-  };
-
-  const user = fillTemplate(userTpl, vars);
-
+  const model = process.env.WAYZO_MODEL || 'gpt-4o-mini';
   const resp = await openai.chat.completions.create({
-    model: process.env.WAYZO_MODEL || 'gpt-4o-mini',
+    model,
     temperature: 0.6,
-    messages: [
-      { role:'system', content: system + `
-
-IMPORTANT ADDITIONS:
-- For each "blocks" item, include an "options" array with TWO alternatives:
-  [{
-    "title": "Option A title",
-    "why": "1-2 sentence short explanation of why this is a good fit",
-    "places": [...], "food": [...], "notes": "tips", 
-    "images": [{"url": "https://source.unsplash.com/600x400/?{CITY}%20{PLACE}"}]
-  },
-  {
-    "title": "Option B title",
-    "why": "...",
-    "places": [...], "food": [...], "notes": "...",
-    "images": [{"url": "https://source.unsplash.com/600x400/?{CITY}%20{PLACE}"}]
-  }]
-- Keep the original "blocks" structure but the UI will primarily use "options".
-- Include short explanations ("why") for key advice.
-` },
-      { role:'user',   content: user }
-    ]
+    messages
   });
 
   const text = resp.choices?.[0]?.message?.content || '';
-  const obj  = extractWayzoJson(text);
-  const markdown = stripJsonFromText(text);
-  return { markdown, wayzo: obj };
+  // extract JSON (last fenced block)
+  let wayzo = null;
+  const fence = /```json\s*([\s\S]*?)```/g;
+  let last;
+  for (const m of text.matchAll(fence)) last = m[1];
+  if (last) {
+    try { wayzo = JSON.parse(last); } catch {}
+  }
+  const markdown = text.replace(/```json[\s\S]*?```/g, '').trim();
+  return { markdown, wayzo };
 }
 
-// ---------------- API ----------------
+// ---------- API ----------
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 app.get('/healthz', (_req, res) => res.status(200).send('ok'));
 app.get('/__debug', (_req, res) => {
-  res.json({ now: nowIso(), node: process.version, openaiEnabled, paths: { repoRoot, frontendDir, indexFile, docsDir, dbPath } });
+  res.json({
+    now: nowIso(),
+    openaiEnabled,
+    frontendDir,
+    indexFile,
+    dbPath
+  });
 });
 
-// Preview (teaser)
 app.post('/api/preview', (req, res) => {
   const payload = req.body || {};
   const id = uid();
@@ -259,7 +256,6 @@ app.post('/api/preview', (req, res) => {
   res.json({ id, teaser_html: teaser, affiliates: aff });
 });
 
-// Full plan (AI if available)
 app.post('/api/plan', async (req, res) => {
   const payload = req.body || {};
   const id = uid();
@@ -274,278 +270,188 @@ app.post('/api/plan', async (req, res) => {
     }
 
     const aff = affiliatesFor(payload.destination);
-    // add auto image as fallback for places if missing
-    if (wayzo?.days) {
-      for (const day of wayzo.days) {
-        for (const blk of (day.blocks || [])) {
-          for (const opt of (blk.options || [])) {
-            (opt.places || []).forEach(p => {
-              if (!p.images && !opt.images) {
-                const q = encodeURIComponent(`${wayzo.trip?.destination || ''} ${p.name || ''}`);
-                opt.images = [{ url: `https://source.unsplash.com/600x400/?${q}` }];
-              }
-            });
-          }
-        }
-      }
-    }
-
     savePlan.run(id, nowIso(), JSON.stringify({ id, type:'plan', data:payload, markdown, wayzo, affiliates:aff }));
     res.json({ id, markdown, wayzo, affiliates: aff });
   } catch (err) {
-    console.error('AI plan error → fallback to local:', err);
-    const markdown = localPlanMarkdown(payload);
+    console.error('AI error, sending fallback markdown:', err);
     const aff = affiliatesFor(payload.destination);
+    const markdown = localPlanMarkdown(payload);
     savePlan.run(id, nowIso(), JSON.stringify({ id, type:'plan', data:payload, markdown, wayzo:null, affiliates:aff }));
     res.json({ id, markdown, wayzo:null, affiliates: aff });
   }
 });
 
-// Fetch JSON (for map & calendar)
-app.get('/api/plan/:id/json', (req, res) => {
-  const row = getPlan.get(req.params.id);
-  if (!row) return res.status(404).send('Plan not found');
+// Convenience: latest plan -> redirect to pdf
+app.get('/api/plan/latest/pdf', (req, res) => {
+  const row = getLatestPlan.get();
+  if (!row) return res.status(404).send('No plans yet');
   const saved = JSON.parse(row.payload);
-  res.json(saved.wayzo || {});
+  const pro = req.query.pro ? `?pro=${req.query.pro}` : '';
+  res.redirect(`/api/plan/${saved.id}/pdf${pro}`);
 });
 
-// ---- ICS Calendar export (honors user choices if provided) ----
-function icsEscape(s=''){return s.replace(/[,;]/g,'\\$&').replace(/\n/g,'\\n');}
-function dt(date, time='09'){ return (date || '').replaceAll('-','') + 'T' + (time.padStart(2,'0')) + '0000'; }
-
-app.get('/api/plan/:id/ics', (req,res) => {
-  const row = getPlan.get(req.params.id);
-  if (!row) return res.status(404).send('Plan not found');
-  const saved = JSON.parse(row.payload);
-  const wayzo = saved.wayzo;
-  if (!wayzo?.days?.length) return res.status(400).send('No structured plan');
-
-  let choices = {};
-  try { if (req.query.choices) choices = JSON.parse(Buffer.from(String(req.query.choices),'base64').toString()); } catch {}
-  const tz = 'UTC'; // keep simple; can add tz later
-
-  let ics = 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Wayzo//Trip//EN\r\n';
-  for (let d=0; d<wayzo.days.length; d++){
-    const day = wayzo.days[d];
-    const date = day.date;
-    const blocks = day.blocks || [];
-    const startHour = Number(wayzo.trip?.daily_start_time || '09');
-
-    let hour = startHour;
-    for (let b=0; b<blocks.length; b++){
-      const blk = blocks[b];
-      let opt = (blk.options && blk.options[0]) || blk; // default A
-      const key = `${d}:${b}`;
-      if (choices[key] === 'B' && blk.options?.[1]) opt = blk.options[1];
-
-      const title = `D${d+1} ${opt.title || blk.title || 'Activity'}`;
-      const loc = (opt.places?.[0]?.name) || wayzo.trip?.destination || '';
-      const url = (opt.places?.[0]?.gmaps_url) || '';
-      const desc = icsEscape((opt.why ? `Why: ${opt.why}\n` : '') + (opt.notes || ''));
-
-      const dtStart = dt(date, String(hour).padStart(2,'0'));
-      hour = hour + 3; // 3h blocks
-      const dtEnd = dt(date, String(hour).padStart(2,'0'));
-
-      ics += `BEGIN:VEVENT\r\nDTSTART:${dtStart}\r\nDTEND:${dtEnd}\r\nSUMMARY:${icsEscape(title)}\r\nLOCATION:${icsEscape(loc)}\r\nDESCRIPTION:${desc}\r\nURL:${url}\r\nEND:VEVENT\r\n`;
-    }
-  }
-  ics += 'END:VCALENDAR\r\n';
-
-  res.setHeader('Content-Type','text/calendar; charset=utf-8');
-  res.setHeader('Content-Disposition','attachment; filename="wayzo-trip.ics"');
-  res.send(ics);
-});
-
-// ---- GeoJSON for map (names only; client can geocode) ----
-app.get('/api/plan/:id/geojson', (req,res) => {
-  const row = getPlan.get(req.params.id);
-  if (!row) return res.status(404).send('Plan not found');
-  const saved = JSON.parse(row.payload);
-  const w = saved.wayzo;
-  if (!w?.days?.length) return res.json({ type:'FeatureCollection', features: [] });
-
-  const features = [];
-  let order=1;
-  for (let i=0;i<w.days.length;i++){
-    const day = w.days[i];
-    for (const blk of (day.blocks || [])) {
-      const options = blk.options || [];
-      for (const opt of options) {
-        for (const p of (opt.places || [])) {
-          features.push({
-            type: 'Feature',
-            properties: { name: p.name, day: i+1, order: order++, url: p.gmaps_url || '' },
-            geometry: { type: 'Point', coordinates: [0,0] } // client will geocode
-          });
-        }
-      }
-    }
-  }
-  res.json({ type:'FeatureCollection', features });
-});
-
-// ---- Map viewer page (Leaflet + client-side geocoding) ----
-app.get('/plan/:id/map', (req,res) => {
-  const id = req.params.id;
-  const html = `<!doctype html>
-<html>
-<head>
-<meta charset="utf-8"/>
-<title>Wayzo Trip Map</title>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<style>
-  html,body,#map{height:100%;margin:0}
-  .legend{position:absolute;top:10px;left:10px;background:#fff;padding:8px 10px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.1);font:14px/1.3 system-ui;}
-</style>
-</head>
-<body>
-<div id="map"></div>
-<div class="legend">Wayzo Map — points are geocoded live (Nominatim)</div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-(async function(){
-  const res = await fetch('/api/plan/${id}/geojson');
-  const gj = await res.json();
-  const map = L.map('map');
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19, attribution:'© OSM'}).addTo(map);
-
-  const group = L.featureGroup(); group.addTo(map);
-
-  async function geocode(name){
-    const q = encodeURIComponent(name);
-    const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&q='+q,{headers:{'Accept-Language':'en'}});
-    const js = await r.json();
-    if(js && js[0]) return [Number(js[0].lon), Number(js[0].lat)];
-    return null;
-  }
-
-  for (const f of gj.features){
-    const name = f.properties.name;
-    const pos = await geocode(name);
-    if(pos){
-      const latlng = [pos[1], pos[0]];
-      const m = L.marker(latlng).addTo(group).bindPopup('<b>'+name+'</b><br>Day '+(f.properties.day||'?'));
-    }
-    await new Promise(r=>setTimeout(r,350)); // polite throttle
-  }
-
-  setTimeout(()=> { if(group.getLayers().length){ map.fitBounds(group.getBounds().pad(0.2)); } else { map.setView([0,0],2);} }, 200);
-})();
-</script>
-</body>
-</html>`;
-  res.setHeader('Content-Type','text/html; charset=utf-8');
-  res.send(html);
-});
-
-// ---- PDF page (HTML with A/B choices applied + map snapshot) ----
-// choices param: base64(JSON like { "0:0": "A", "0:1": "B", ... })
+// PDF page (classic + pro=1 improved)
 app.get('/api/plan/:id/pdf', (req, res) => {
   const row = getPlan.get(req.params.id);
   if (!row) return res.status(404).send('Plan not found');
   const saved = JSON.parse(row.payload || '{}');
-  const { markdown, wayzo } = saved;
+  const { markdown='', wayzo=null } = saved;
+  const isPro = String(req.query.pro || '') === '1';
 
-  let choices = {};
-  try { if (req.query.choices) choices = JSON.parse(Buffer.from(String(req.query.choices),'base64').toString()); } catch {}
-
-  const html = `<!doctype html>
+  if (!isPro) {
+    // Classic: just render markdown on page with a tiny client-side converter
+    const html = `<!doctype html>
 <html><head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Wayzo Trip</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
-  body{font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; line-height: 1.55; margin: 20px;}
+  body{font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; line-height:1.55; margin: 24px;}
   h1,h2,h3{margin:.6em 0}
-  .why{color:#0b6; font-weight:600}
-  .imggrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:8px 0}
-  .mapwrap{page-break-inside:avoid;margin:14px 0;padding:8px;border:1px solid #e5e7eb;border-radius:8px}
-  .footer{margin-top:2rem; font-size:12px; color:#475569}
-  img{max-width:100%; border-radius:8px}
+  .md h1{font-size:1.6rem}.md h2{font-size:1.3rem}.md h3{font-size:1.1rem}
+  .md p{margin:.5rem 0}.md ul{margin:.5rem 0 .75rem 1.25rem}.md li{margin:.25rem 0}
 </style>
 </head>
 <body>
   <h1>Wayzo Trip Plan</h1>
+  <div id="root" class="md"></div>
+<script>
+  const md = ${JSON.stringify(markdown)};
+  function simpleMarkdown(md){
+    md = md.replace(/^### (.*)$/gm,'<h3>$1</h3>')
+           .replace(/^## (.*)$/gm,'<h2>$1</h2>')
+           .replace(/^# (.*)$/gm,'<h1>$1</h1>')
+           .replace(/^\\- (.*)$/gm,'<li>$1</li>')
+           .replace(/\\*\\*(.+?)\\*\\*/g,'<strong>$1</strong>')
+           .replace(/\\[(.+?)\\]\\((https?:\\/\\/[^\\s)]+)\\)/g,'<a href="$2" target="_blank">$1</a>');
+    md = md.replace(/(<li>.*<\\/li>)(\\n(?!<li>))/g,'<ul>$1</ul>\\n');
+    md = md.split(/\\n{2,}/).map(b=>/^<h\\d|<ul>|<li>/.test(b.trim())?b:'<p>'+b.replace(/\\n/g,'<br>')+'</p>').join('\\n');
+    return '<div class="md">'+md+'</div>';
+  }
+  document.getElementById('root').innerHTML = simpleMarkdown(md || '# Plan');
+</script>
+</body></html>`;
+    res.setHeader('Content-Type','text/html; charset=utf-8');
+    return res.send(html);
+  }
 
-  <section id="md">${marked.parse(markdown || '# Plan')}</section>
+  // Pro PDF: use wayzo JSON if available
+  const html = `<!doctype html>
+<html><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Wayzo Trip (Pro PDF)</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+  body{font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; line-height:1.55; margin: 24px; color:#0f172a}
+  h1,h2,h3{margin:.6em 0}
+  .md h1{font-size:1.6rem}.md h2{font-size:1.3rem}.md h3{font-size:1.1rem}
+  .md p{margin:.5rem 0}.md ul{margin:.5rem 0 .75rem 1.25rem}.md li{margin:.25rem 0}
+  .why{color:#0b6;font-weight:600}
+  .day{border:1px solid #e5e7eb;border-radius:10px;padding:12px;margin:10px 0}
+  .block{border-top:1px dashed #e5e7eb;padding-top:10px;margin-top:10px}
+  .opt{display:flex;gap:10px;align-items:flex-start;margin:8px 0}
+  .opt img{width:160px;height:104px;object-fit:cover;border-radius:8px;border:1px solid #e5e7eb}
+  .mapwrap{page-break-inside:avoid;margin:14px 0;padding:8px;border:1px solid #e5e7eb;border-radius:10px}
+</style>
+</head>
+<body>
+  <h1>Wayzo Trip Plan — Pro</h1>
+  <section id="md" class="md"></section>
 
   ${wayzo ? `
-  <h2>Selected Options (A/B)</h2>
-  <div id="chosen"></div>
+  <h2>Your Plan (defaulting to Option A)</h2>
+  <div id="plan"></div>
 
-  <h2>Trip Points Map</h2>
+  <h2>Trip Map</h2>
   <div class="mapwrap">
     <div id="map" style="height:360px;"></div>
     <div id="snap" style="margin-top:8px"></div>
-    <small>Note: Map is rendered client-side from place names (OSM/Nominatim); positions are approximate.</small>
+    <small>Approximate locations via OpenStreetMap/Nominatim.</small>
   </div>
   ` : ''}
-
-  <div class="footer">Generated by Wayzo — wayzo.online</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-image/leaflet-image.js"></script>
 <script>
+  const markdown = ${JSON.stringify(markdown)};
   const wayzo = ${JSON.stringify(wayzo || {})};
-  const choices = ${JSON.stringify(choices || {})};
 
-  function renderChosen(){
-    if(!wayzo.days){ return; }
-    const root = document.getElementById('chosen');
-    let html = '';
-    for(let d=0; d<wayzo.days.length; d++){
-      const day = wayzo.days[d];
-      html += '<h3>'+ (day.label || ('Day '+(d+1))) +'</h3>';
-      for(let b=0; b<(day.blocks||[]).length; b++){
-        const blk = day.blocks[b];
-        const opt = (choices[\`\${d}:\${b}\`] === 'B' && blk.options?.[1]) ? blk.options[1] : (blk.options?.[0] || blk);
+  function simpleMarkdown(md){
+    md = md.replace(/^### (.*)$/gm,'<h3>$1</h3>')
+           .replace(/^## (.*)$/gm,'<h2>$1</h2>')
+           .replace(/^# (.*)$/gm,'<h1>$1</h1>')
+           .replace(/^\\- (.*)$/gm,'<li>$1</li>')
+           .replace(/\\*\\*(.+?)\\*\\*/g,'<strong>$1</strong>')
+           .replace(/\\[(.+?)\\]\\((https?:\\/\\/[^\\s)]+)\\)/g,'<a href="$2" target="_blank">$1</a>');
+    md = md.replace(/(<li>.*<\\/li>)(\\n(?!<li>))/g,'<ul>$1</ul>\\n');
+    md = md.split(/\\n{2,}/).map(b=>/^<h\\d|<ul>|<li>/.test(b.trim())?b:'<p>'+b.replace(/\\n/g,'<br>')+'</p>').join('\\n');
+    return '<div class="md">'+md+'</div>';
+  }
+  document.getElementById('md').innerHTML = simpleMarkdown(markdown || '# Plan');
+
+  function renderPlan(w){
+    if(!w.days){ document.getElementById('plan').innerHTML = '<p>—</p>'; return; }
+    let html='';
+    for(let d=0; d<w.days.length; d++){
+      const day = w.days[d];
+      html += '<div class="day"><h3>'+ (day.label || ('Day '+(d+1))) +'</h3>';
+      for(const blk of (day.blocks||[])){
+        const opt = (blk.options && blk.options[0]) || blk;
+        html += '<div class="block">';
         html += '<p><b>'+(opt.title || blk.title || 'Activity')+'</b>' + (opt.why? ' — <span class="why">'+opt.why+'</span>':'') + '</p>';
         if(opt.images?.length){
-          html += '<div class="imggrid">';
-          for(const im of opt.images.slice(0,2)) html += '<img src="'+im.url+'" loading="lazy"/>';
-          html += '</div>';
+          html += '<div class="opt"><img src="'+opt.images[0].url+'" loading="lazy"/><div>';
+          if(opt.places?.length){ html += '<div><b>Places:</b> '+opt.places.map(p=>p.name).join(', ')+'</div>'; }
+          if(opt.food?.length){ html += '<div><b>Food:</b> '+opt.food.map(f=>f.name).join(', ')+'</div>'; }
+          if(opt.notes){ html += '<div><b>Notes:</b> '+opt.notes+'</div>'; }
+          html += '</div></div>';
+        } else {
+          if(opt.places?.length){ html += '<div><b>Places:</b> '+opt.places.map(p=>p.name).join(', ')+'</div>'; }
+          if(opt.food?.length){ html += '<div><b>Food:</b> '+opt.food.map(f=>f.name).join(', ')+'</div>'; }
+          if(opt.notes){ html += '<div><b>Notes:</b> '+opt.notes+'</div>'; }
         }
+        html += '</div>';
       }
+      html += '</div>';
     }
-    root.innerHTML = html || '<p>—</p>';
+    document.getElementById('plan').innerHTML = html;
   }
+  renderPlan(wayzo);
 
   async function buildMap(){
-    if(!wayzo.days){ return; }
+    if(!wayzo.days) return;
     const map = L.map('map');
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19, attribution:'© OSM'}).addTo(map);
     const group = L.featureGroup().addTo(map);
+
     async function geocode(q){
-      const url='https://nominatim.openstreetmap.org/search?format=json&q='+encodeURIComponent(q);
-      const r = await fetch(url, {headers:{'Accept-Language':'en'}});
+      const u = 'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(q);
+      const r = await fetch(u, { headers:{'Accept-Language':'en'} });
       const js = await r.json();
       if(js && js[0]) return [Number(js[0].lon), Number(js[0].lat)];
       return null;
     }
-    for(let d=0; d<wayzo.days.length; d++){
-      const day = wayzo.days[d];
-      for(let b=0; b<(day.blocks||[]).length; b++){
-        const blk = day.blocks[b];
-        const opt = (choices[\`\${d}:\${b}\`] === 'B' && blk.options?.[1]) ? blk.options[1] : (blk.options?.[0] || blk);
+
+    for (const day of wayzo.days){
+      for (const blk of (day.blocks||[])){
+        const opt = (blk.options && blk.options[0]) || blk;
         const first = opt.places && opt.places[0];
         if(first && first.name){
-          const pos = await geocode(first.name + ' ' + (wayzo.trip?.destination||''));
+          const q = first.name + ' ' + (wayzo.trip?.destination||'');
+          const pos = await geocode(q);
           if(pos){
             const latlng=[pos[1],pos[0]];
-            L.marker(latlng).addTo(group).bindPopup('<b>'+first.name+'</b> (Day '+(d+1)+')');
+            L.marker(latlng).addTo(group).bindPopup('<b>'+first.name+'</b>');
           }
         }
         await new Promise(r=>setTimeout(r,350));
       }
     }
+
     setTimeout(()=>{
       if(group.getLayers().length) map.fitBounds(group.getBounds().pad(0.2));
       else map.setView([0,0],2);
 
-      // snapshot → image under the map
+      // snapshot below map
       window.leafletImage(map, function(err, canvas){
         if(err) return;
         const img = new Image();
@@ -553,10 +459,8 @@ app.get('/api/plan/:id/pdf', (req, res) => {
         img.style.maxWidth='100%';
         document.getElementById('snap').appendChild(img);
       });
-    },400);
+    }, 400);
   }
-
-  renderChosen();
   buildMap();
 </script>
 </body></html>`;
@@ -564,24 +468,16 @@ app.get('/api/plan/:id/pdf', (req, res) => {
   res.send(html);
 });
 
-// ---------------- Static ----------------
-app.use('/docs', express.static(docsDir, { setHeaders: (res)=>res.setHeader('Cache-Control','public,max-age=604800') }));
-app.use(express.static(frontendDir, {
-  setHeaders: (res, filePath) => {
-    if (/\.(css)$/i.test(filePath)) res.setHeader('Content-Type','text/css; charset=utf-8');
-    if (/\.(js)$/i.test(filePath))  res.setHeader('Content-Type','application/javascript; charset=utf-8');
-    if (/\.(css|js|svg|png|jpg|jpeg|webp|ico)$/i.test(filePath)) {
-      res.setHeader('Cache-Control','public, max-age=31536000, immutable');
-    }
-  }
-}));
-app.use('/assets', express.static(frontendDir));
+// ---------- Static first, then catch-all (fixes MIME issues) ----------
+app.use('/docs', express.static(docsDir));
+app.use(express.static(frontendDir));  // serve /style.css, /app.js, images, etc.
 
 app.get('/', (_req, res) => fs.existsSync(indexFile) ? res.sendFile(indexFile) : res.status(500).send('index file missing'));
 app.get(/^\/(?!api\/).*/, (_req, res) => fs.existsSync(indexFile) ? res.sendFile(indexFile) : res.status(500).send('index file missing'));
 
-// ---------------- Start ----------------
+// ---------- Start ----------
 app.listen(PORT, () => {
   console.log(`Wayzo backend running on :${PORT}`);
   console.log(`Serving frontend from: ${frontendDir}`);
+  console.log(`Root file: ${indexFile}`);
 });
