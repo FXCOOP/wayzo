@@ -1,4 +1,4 @@
-// app.js — preview/plan flows (Markdown plan; prefer HTML if provided)
+// app.js  — resilient bindings + preview/plan flows
 
 (function () {
   const $ = (sel) => document.querySelector(sel);
@@ -10,13 +10,14 @@
   const buyBtn     = $('#buyBtn');
   const saveBtn    = $('#saveBtn');
 
-  if (!form || !previewEl) return;
+  if (!form || !previewEl) return; // nothing to wire up
 
   const show = (el) => el && el.classList.remove('hidden');
   const hide = (el) => el && el.classList.add('hidden');
 
   const readForm = () => {
     const data = Object.fromEntries(new FormData(form).entries());
+    // Normalize types
     data.travelers = Number(data.travelers || 2);
     data.budget    = Number(data.budget || 0);
     data.level     = data.level || 'budget';
@@ -33,12 +34,14 @@
     set('#linkReviews',   `https://www.tripadvisor.com/Search?q=${q}`);
   };
 
-  // Preview
+  // ---------- Preview ----------
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const payload = readForm();
     setAffiliates(payload.destination);
-    hide(pdfBtn); show(loadingEl);
+    hide(pdfBtn);
+    hide(loadingEl);
+    show(loadingEl);
 
     try {
       const res = await fetch('/api/preview', {
@@ -48,18 +51,20 @@
       });
       const out = await res.json();
       previewEl.innerHTML = out.teaser_html || '<p>Preview created.</p>';
-    } catch {
+    } catch (err) {
+      console.error(err);
       previewEl.innerHTML = '<p class="muted">Preview failed. Please try again.</p>';
     } finally {
       hide(loadingEl);
     }
   });
 
-  // Full plan
+  // ---------- Full plan (AI / fallback) ----------
   buyBtn?.addEventListener('click', async () => {
     const payload = readForm();
     setAffiliates(payload.destination);
-    hide(pdfBtn); show(loadingEl);
+    hide(pdfBtn);
+    show(loadingEl);
 
     try {
       const res = await fetch('/api/plan', {
@@ -69,31 +74,34 @@
       });
       const out = await res.json();
 
-      if (out.html) {
-        // Prefer HTML so links are clickable
-        previewEl.innerHTML = out.html;
-      } else {
-        const md = (out.markdown || '').trim();
-        previewEl.innerHTML = md
-          ? `<div class="markdown" style="white-space:pre-wrap">${md}</div>`
-          : '<p>Plan generated.</p>';
-      }
+      // Render markdown in a very simple way (server already returns good Markdown)
+      const md = (out.markdown || '').trim();
+      previewEl.innerHTML = md
+        ? `<div class="markdown" style="white-space:pre-wrap">${md}</div>`
+        : '<p>Plan generated.</p>';
 
       if (out.id) {
         pdfBtn.href = `/api/plan/${out.id}/pdf`;
         show(pdfBtn);
       }
-    } catch {
+    } catch (err) {
+      console.error(err);
       previewEl.innerHTML = '<p class="muted">Plan failed. Please try again.</p>';
     } finally {
       hide(loadingEl);
     }
   });
 
-  // Save/restore preview (local)
+  // ---------- Save preview (local only) ----------
   saveBtn?.addEventListener('click', () => {
-    try { localStorage.setItem('wayzo_preview', previewEl.innerHTML || ''); alert('Saved.'); } catch {}
+    try {
+      const html = previewEl.innerHTML || '';
+      localStorage.setItem('wayzo_preview', html);
+      alert('Preview saved on this device.');
+    } catch {}
   });
+
+  // Restore last preview if any
   const last = localStorage.getItem('wayzo_preview');
   if (last) previewEl.innerHTML = last;
 })();
