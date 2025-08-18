@@ -1,6 +1,6 @@
 {
   "name": "wayzo-backend",
-  "version": "1.2.1",
+  "version": "1.2.0",
   "private": true,
   "type": "module",
   "main": "server.mjs",
@@ -8,7 +8,7 @@
     "start": "node server.mjs",
     "dev": "node server.mjs"
   },
-  "engines": { "node": "20.x" },
+  "engines": { "node": ">=20" },
   "dependencies": {
     "better-sqlite3": "^11.10.0",
     "cheerio": "^1.0.0-rc.12",
