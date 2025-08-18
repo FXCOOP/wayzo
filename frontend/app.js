@@ -1,4 +1,4 @@
-// app.js  — resilient bindings + preview/plan flows
+// app.js — preview/plan flows (Markdown plan; prefer HTML if provided)
 
 (function () {
   const $ = (sel) => document.querySelector(sel);
@@ -10,7 +10,7 @@
   const buyBtn     = $('#buyBtn');
   const saveBtn    = $('#saveBtn');
 
-  if (!form || !previewEl) return; // nothing to wire up
+  if (!form || !previewEl) return;
 
   const show = (el) => el && el.classList.remove('hidden');
   const hide = (el) => el && el.classList.add('hidden');
@@ -38,9 +38,7 @@
     e.preventDefault();
     const payload = readForm();
     setAffiliates(payload.destination);
-    hide(pdfBtn);
-    hide(loadingEl);
-    show(loadingEl);
+    hide(pdfBtn); show(loadingEl);
 
     try {
       const res = await fetch('/api/preview', {
@@ -50,7 +48,7 @@
       });
       const out = await res.json();
       previewEl.innerHTML = out.teaser_html || '<p>Preview created.</p>';
-    } catch (err) {
+    } catch {
       previewEl.innerHTML = '<p class="muted">Preview failed. Please try again.</p>';
     } finally {
       hide(loadingEl);
@@ -61,8 +59,7 @@
   buyBtn?.addEventListener('click', async () => {
     const payload = readForm();
     setAffiliates(payload.destination);
-    hide(pdfBtn);
-    show(loadingEl);
+    hide(pdfBtn); show(loadingEl);
 
     try {
       const res = await fetch('/api/plan', {
@@ -71,10 +68,16 @@
         body: JSON.stringify(payload),
       });
       const out = await res.json();
-      const md = (out.markdown || '').trim();
-      previewEl.innerHTML = md
-        ? `<div class="markdown" style="white-space:pre-wrap">${md}</div>`
-        : '<p>Plan generated.</p>';
+
+      if (out.html) {
+        // Prefer HTML so links are clickable
+        previewEl.innerHTML = out.html;
+      } else {
+        const md = (out.markdown || '').trim();
+        previewEl.innerHTML = md
+          ? `<div class="markdown" style="white-space:pre-wrap">${md}</div>`
+          : '<p>Plan generated.</p>';
+      }
 
       if (out.id) {
         pdfBtn.href = `/api/plan/${out.id}/pdf`;
@@ -87,16 +90,10 @@
     }
   });
 
-  // Save preview (local)
+  // Save/restore preview (local)
   saveBtn?.addEventListener('click', () => {
-    try {
-      const html = previewEl.innerHTML || '';
-      localStorage.setItem('wayzo_preview', html);
-      alert('Preview saved on this device.');
-    } catch {}
+    try { localStorage.setItem('wayzo_preview', previewEl.innerHTML || ''); alert('Saved.'); } catch {}
   });
-
-  // Restore last preview
   const last = localStorage.getItem('wayzo_preview');
   if (last) previewEl.innerHTML = last;
 })();
