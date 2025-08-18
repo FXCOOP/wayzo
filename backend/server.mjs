@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 import Database from 'better-sqlite3';
 import { marked } from 'marked';
 import OpenAI from 'openai';
-import cheerio from 'cheerio';
+import { load as cheerioLoad } from 'cheerio';   // <-- ESM import
 
 // ---------- paths ----------
 const __filename = fileURLToPath(import.meta.url);
@@ -119,15 +119,14 @@ function forceNewTabTargets($) {
   });
 }
 
-// add “Book/Tickets/Reviews” affiliate link + ensure Open in Maps exists
+// add affiliate + ensure “Open in Maps”; keep your text intact
 function enrichHtmlWithAffiliates(html, destination) {
-  const $ = cheerio.load(html);
-
+  const $ = cheerioLoad(html);   // <-- use cheerioLoad
   $('li').each((_, li) => {
     const item = $(li);
     const text = item.text().toLowerCase();
 
-    // detect kind (section + keywords)
+    // detect kind
     let kind = 'activity';
     const prevHdr = item.prevAll('h2,h3').first().text().toLowerCase();
     if (prevHdr.includes('stay') || prevHdr.includes('accom')) kind = 'stay';
@@ -138,27 +137,26 @@ function enrichHtmlWithAffiliates(html, destination) {
     // place name heuristic
     let place = item.find('strong').first().text().trim();
     if (!place) {
-      // fallback: text before dash/—/:
       const raw = item.text();
       const m = raw.match(/^([^—\-:]{3,})[—\-:]/);
       if (m) place = m[1].trim();
     }
-    if (!place) return; // nothing to enrich
+    if (!place) return;
 
-    // ensure Maps link exists
+    // ensure Maps link
     const hasMaps = item.find('a').filter((_, a) => $(a).text().toLowerCase().includes('open in maps')).length > 0;
     if (!hasMaps) {
       const a = $('<a/>', { href: mapsLink(place, destination), text: 'Open in Maps', target: '_blank', rel: 'noopener' });
       item.append(' ').append(a);
     }
 
-    // add affiliate link (label based on kind)
-    const hasBook = item.find('a').filter((_, a) => {
+    // add affiliate (Book/Tickets/Reviews)
+    const hasAff = item.find('a').filter((_, a) => {
       const t = $(a).text().toLowerCase();
       return t.includes('book') || t.includes('tickets') || t.includes('reviews');
     }).length > 0;
 
-    if (!hasBook) {
+    if (!hasAff) {
       const url = affiliateLink(place, kind, destination);
       const label = kind === 'stay' ? 'Book' : (kind === 'food' ? 'Reviews' : 'Tickets');
       const a = $('<a/>', { href: url, text: label, target: '_blank', rel: 'noopener' });
@@ -166,12 +164,12 @@ function enrichHtmlWithAffiliates(html, destination) {
     }
   });
 
-  // enforce target="_blank" on all links
   forceNewTabTargets($);
+  // $.root().html() returns the inner HTML only; $.html() returns full doc; both fine here
   return $.html();
 }
 
-// local fallback markdown (already includes sample Maps links)
+// local fallback markdown
 function localPlanMarkdown(p) {
   const {
     destination = 'Your destination',
@@ -253,7 +251,6 @@ Return *Markdown only*. Ensure most bullets look like:
       if (out) markdown = out;
     }
 
-    // Convert to HTML and enrich with affiliate links + target="_blank"
     const baseHtml = marked.parse(markdown || '');
     const html = enrichHtmlWithAffiliates(baseHtml, payload.destination || '');
 
@@ -269,14 +266,16 @@ Return *Markdown only*. Ensure most bullets look like:
   }
 });
 
-// ---------- “PDF” html view (opens links in new tab) ----------
+// ---------- “PDF” html view (links new tab) ----------
 app.get('/api/plan/:id/pdf', (req, res) => {
   const row = getPlan.get(req.params.id);
   if (!row) return res.status(404).send('Not found');
 
   const saved = JSON.parse(row.payload || '{}');
-  // Ensure anchors have target/rel even if saved.html didn't
-  const enriched = enrichHtmlWithAffiliates(saved.html || marked.parse(saved.markdown || ''), (saved.data && saved.data.destination) || '');
+  const enriched = enrichHtmlWithAffiliates(
+    saved.html || marked.parse(saved.markdown || ''),
+    (saved.data && saved.data.destination) || ''
+  );
 
   const html = `
 <!doctype html>
