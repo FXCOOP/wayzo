@@ -1,4 +1,4 @@
-// app.js  — resilient bindings + preview/plan flows
+// app.js — preview + plan flows
 
 (function () {
   const $ = (sel) => document.querySelector(sel);
@@ -33,7 +33,7 @@
     set('#linkReviews',   `https://www.tripadvisor.com/Search?q=${q}`);
   };
 
-  // Preview
+  // Preview (left form submit)
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const payload = readForm();
@@ -55,7 +55,7 @@
     }
   });
 
-  // Full plan
+  // Full plan (Generate full plan)
   buyBtn?.addEventListener('click', async () => {
     const payload = readForm();
     setAffiliates(payload.destination);
@@ -77,6 +77,8 @@
 
       if (out.id) {
         pdfBtn.href = `/api/plan/${out.id}/pdf`;
+        pdfBtn.setAttribute('target', '_blank');
+        pdfBtn.setAttribute('rel', 'noopener');
         show(pdfBtn);
       }
     } catch {
@@ -86,7 +88,7 @@
     }
   });
 
-  // Save/restore preview (local)
+  // Local save/restore of the HTML
   saveBtn?.addEventListener('click', () => {
     try { localStorage.setItem('wayzo_preview', previewEl.innerHTML || ''); alert('Saved.'); } catch {}
   });

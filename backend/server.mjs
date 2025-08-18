@@ -10,9 +10,8 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import Database from 'better-sqlite3';
-import { marked } from 'marked';
+import { load as cheerioLoad } from 'cheerio';
 import OpenAI from 'openai';
-import cheerio from 'cheerio';
 
 // ---------- paths ----------
 const __filename = fileURLToPath(import.meta.url);
@@ -75,28 +74,23 @@ const getPlan  = db.prepare('SELECT payload FROM plans WHERE id = ?');
 const nowIso = () => new Date().toISOString();
 const uid = () => (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
 
-// ---------- openai (optional) ----------
+/* ---------- OpenAI (optional) ---------- */
 const openaiEnabled = !!process.env.OPENAI_API_KEY;
 const openai = openaiEnabled ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 const MODEL = process.env.WAYZO_MODEL || 'gpt-4o-mini';
 
-// ---------- preview ----------
-app.post('/api/preview', async (req, res) => {
-  const { destination = '', start = '', end = '' } = req.body || {};
-  const teaser_html = `
-<section id="preview">
-  <h3>${destination || 'Your trip'} — preview</h3>
-  <ul>
-    <li>Morning / Afternoon / Evening blocks for each day.</li>
-    <li>Neighborhood clustering to reduce transit.</li>
-    <li>Ticket + timing tips for the top sights.</li>
-  </ul>
-  <p class="cta">Generate full plan →</p>
-</section>`.trim();
-  res.json({ teaser_html });
-});
+/* ---------- helpers ---------- */
+const toISO = (s) => (s ? new Date(s).toISOString().slice(0, 10) : '');
+const daysBetween = (a, b) => Math.max(1, Math.round((new Date(b) - new Date(a)) / 86400000));
+const seasonOf = (date, lat = 0) => {
+  const m = new Date(date).getUTCMonth();
+  const north = lat >= 0;
+  const seasons = north
+    ? ['Winter','Winter','Spring','Spring','Spring','Summer','Summer','Summer','Fall','Fall','Fall','Winter']
+    : ['Summer','Summer','Fall','Fall','Fall','Winter','Winter','Winter','Spring','Spring','Spring','Summer'];
+  return seasons[m] || '—';
+};
 
-// ---------- helpers ----------
 function mapsLink(place, city) {
   const q = encodeURIComponent(`${place} ${city}`.trim());
   return `https://www.google.com/maps/search/?api=1&query=${q}`;
@@ -105,13 +99,13 @@ function affiliateLink(place, kind, city) {
   const q = encodeURIComponent(`${place} ${city}`.trim());
   if (kind === 'stay')        return `https://www.booking.com/searchresults.html?ss=${q}`;
   if (kind === 'food')        return `https://www.tripadvisor.com/Search?q=${q}`;
-  /* activity/default */       return `https://www.getyourguide.com/s/?q=${q}`;
+  /* default/activity */       return `https://www.getyourguide.com/s/?q=${q}`;
 }
+
 const HOTEL_RX = /(hotel|hostel|inn|suites?|aparthotel|guesthouse|bnb|lodg)/i;
 const FOOD_RX  = /(restaurant|bistro|cafe|café|bar|pizzeria|brasserie|trattoria|tapas|eatery)/i;
 
-// make every link open in a new tab
-function forceNewTabTargets($) {
+function ensureNewTabTargets($) {
   $('a').each((_, a) => {
     const el = $(a);
     el.attr('target', '_blank');
@@ -119,46 +113,38 @@ function forceNewTabTargets($) {
   });
 }
 
-// add “Book/Tickets/Reviews” affiliate link + ensure Open in Maps exists
-function enrichHtmlWithAffiliates(html, destination) {
-  const $ = cheerio.load(html);
+function enrichHtml(html, destination) {
+  const $ = cheerioLoad(html || '');
 
   $('li').each((_, li) => {
     const item = $(li);
     const text = item.text().toLowerCase();
 
-    // detect kind (section + keywords)
     let kind = 'activity';
     const prevHdr = item.prevAll('h2,h3').first().text().toLowerCase();
-    if (prevHdr.includes('stay') || prevHdr.includes('accom')) kind = 'stay';
-    if (prevHdr.includes('eat') || prevHdr.includes('food') || prevHdr.includes('restaurant')) kind = 'food';
+    if (prevHdr.includes('stay') || prevHdr.includes('lodging') || prevHdr.includes('accom')) kind = 'stay';
+    if (prevHdr.includes('dining') || prevHdr.includes('food')) kind = 'food';
     if (HOTEL_RX.test(text)) kind = 'stay';
     else if (FOOD_RX.test(text)) kind = 'food';
 
-    // place name heuristic
     let place = item.find('strong').first().text().trim();
     if (!place) {
-      // fallback: text before dash/—/:
       const raw = item.text();
       const m = raw.match(/^([^—\-:]{3,})[—\-:]/);
       if (m) place = m[1].trim();
     }
-    if (!place) return; // nothing to enrich
+    if (!place) return;
 
-    // ensure Maps link exists
     const hasMaps = item.find('a').filter((_, a) => $(a).text().toLowerCase().includes('open in maps')).length > 0;
     if (!hasMaps) {
       const a = $('<a/>', { href: mapsLink(place, destination), text: 'Open in Maps', target: '_blank', rel: 'noopener' });
       item.append(' ').append(a);
     }
-
-    // add affiliate link (label based on kind)
-    const hasBook = item.find('a').filter((_, a) => {
+    const hasAff = item.find('a').filter((_, a) => {
       const t = $(a).text().toLowerCase();
       return t.includes('book') || t.includes('tickets') || t.includes('reviews');
     }).length > 0;
-
-    if (!hasBook) {
+    if (!hasAff) {
       const url = affiliateLink(place, kind, destination);
       const label = kind === 'stay' ? 'Book' : (kind === 'food' ? 'Reviews' : 'Tickets');
       const a = $('<a/>', { href: url, text: label, target: '_blank', rel: 'noopener' });
@@ -166,139 +152,233 @@ function enrichHtmlWithAffiliates(html, destination) {
     }
   });
 
-  // enforce target="_blank" on all links
-  forceNewTabTargets($);
-  return $.html();
+  ensureNewTabTargets($);
+  return $.root().html();
 }
 
-// local fallback markdown (already includes sample Maps links)
-function localPlanMarkdown(p) {
+/* ---------- offline full HTML (no API key needed) ---------- */
+function fallbackHTML(p) {
   const {
     destination = 'Your destination',
-    start = 'start',
-    end = 'end',
-    budget = 1500,
+    start = '',
+    end = '',
     travelers = 2,
-    level = 'budget',
-    prefs = '',
+    level = 'mid-range',
+    budget = 1500,
   } = p || {};
-  return `# ${destination} itinerary (${start} → ${end})
+  const days = daysBetween(start, end);
+  const season = seasonOf(start);
+  const hero = `https://source.unsplash.com/1280x720/?${encodeURIComponent(destination)},skyline`;
 
-**Party:** ${travelers} • **Style:** ${level} • **Budget:** $${budget}
+  return `
+<section id="cover">
+  <h1>${destination} itinerary (${toISO(start)} – ${toISO(end)})</h1>
+  <div class="chips">
+    <span class="chip">${travelers} traveler${travelers>1?'s':''}</span>
+    <span class="chip">${level}</span>
+    <span class="chip">Budget: $${budget}</span>
+    <span class="chip">${season}</span>
+  </div>
+  <figure><img loading="lazy" src="${hero}" alt="${destination} hero"></figure>
+  <ul class="facts">
+    <li>Weather: mild</li><li>Currency: local</li><li>Language: local</li>
+    <li>Voltage: check</li><li>Tipping: varies</li>
+  </ul>
+</section>
 
-**Preferences:** ${prefs || '—'}
+<section id="summary">
+  <p>Balanced ${days}-day plan in ${destination}: iconic highlights, neighborhood strolls, and easy transit. Base near the historic center for short walks; families often prefer quieter areas just outside the core.</p>
+  <ul><li><strong>Don’t miss:</strong> Headliner museum at opening.</li><li><strong>Don’t miss:</strong> Sunset viewpoint on day one.</li></ul>
+</section>
 
----
+<section id="lodging">
+  <h2>Where to stay</h2>
+  <ul class="cards">
+    <li><strong>Budget:</strong> City Hostel — central & social. <a href="${affiliateLink('City Hostel', 'stay', destination)}">Book</a> · <a href="${mapsLink('City Hostel', destination)}">Open in Maps</a></li>
+    <li><strong>Mid:</strong> Riverside Hotel — walkable, good transit. <a href="${affiliateLink('Riverside Hotel', 'stay', destination)}">Book</a> · <a href="${mapsLink('Riverside Hotel', destination)}">Open in Maps</a></li>
+    <li><strong>High:</strong> Grand Palace — spa & views. <a href="${affiliateLink('Grand Palace', 'stay', destination)}">Book</a> · <a href="${mapsLink('Grand Palace', destination)}">Open in Maps</a></li>
+  </ul>
+  <p class="muted">Tip: nightlife = central core; families = quieter ring neighborhoods.</p>
+</section>
 
-## Trip Summary
-- Balanced mix of must-sees and local gems in ${destination}.
-- Group sights by neighborhoods to minimize transit.
+<section id="highlights">
+  <h2>Highlights</h2>
+  <ul>
+    <li><strong>Main Cathedral</strong> — landmark architecture. Tip: arrive by 9:00. <a href="${mapsLink('Cathedral', destination)}">Open in Maps</a> · <a href="${affiliateLink('Cathedral', 'activity', destination)}">Tickets</a></li>
+    <li><strong>Old Market</strong> — local snacks and crafts. Tip: best on weekday mornings. <a href="${mapsLink('Market', destination)}">Open in Maps</a> · <a href="${affiliateLink('Market', 'food', destination)}">Reviews</a></li>
+    <li><strong>Riverside Walk</strong> — sunset views. Tip: pack light jacket. <a href="${mapsLink('Riverside', destination)}">Open in Maps</a> · <a href="${affiliateLink('Riverside', 'activity', destination)}">Tickets</a></li>
+  </ul>
+</section>
 
-## Day 1
-- **Historic Center** — classic landmarks and plazas. Tip: arrive before 9:30 to beat lines. [Open in Maps](${mapsLink('Historic Center', destination)})
-- **Central Market** — street food and produce; great lunch stop. [Open in Maps](${mapsLink('Central Market', destination)})
-- **Old Town** — evening stroll and dinner. [Open in Maps](${mapsLink('Old Town', destination)})
+<section id="daily-plan">
+  <h2>Day-by-day</h2>
+  <article class="day">
+    <h3>Day 1 — Historic core</h3>
+    <p class="meta">Walk 30m · Transit 10m</p>
+    <p><strong>Morning:</strong> Old Square — orientation stroll. <a href="${mapsLink('Old Square', destination)}">Open in Maps</a></p>
+    <p><strong>Afternoon:</strong> Main Museum — timed entry. <a href="${affiliateLink('Main Museum', 'activity', destination)}">Tickets</a> · <a href="${mapsLink('Main Museum', destination)}">Open in Maps</a></p>
+    <p><strong>Evening:</strong> City Viewpoint — golden hour. <a href="${mapsLink('City Viewpoint', destination)}">Open in Maps</a></p>
+    <p><em>Meals:</em> Local Bistro (casual). <a href="${affiliateLink('Local Bistro', 'food', destination)}">Reviews</a> · <a href="${mapsLink('Local Bistro', destination)}">Open in Maps</a></p>
+    <details class="alt"><summary>Rainy / with kids</summary><ul><li>Science Center — hands-on exhibits. <a href="${mapsLink('Science Center', destination)}">Open in Maps</a> · <a href="${affiliateLink('Science Center', 'activity', destination)}">Tickets</a></li></ul></details>
+  </article>
+</section>
 
-## Day 2
-- **City Museum** — the headline collection; buy timed tickets. [Open in Maps](${mapsLink('City Museum', destination)})
-- **River Walk** — 2km promenade; sunset views. [Open in Maps](${mapsLink('River Walk', destination)})
-- **Food Hall** — many local vendors under one roof. [Open in Maps](${mapsLink('Food Hall', destination)})
+<section id="transport">
+  <h2>Getting around</h2>
+  <ul>
+    <li>Airport train ~25m · ~$12</li>
+    <li>Day pass ~$8; tap to pay on buses/metro</li>
+    <li>Rideshare at night for convenience</li>
+  </ul>
+</section>
 
----
+<section id="budget">
+  <h2>Budget</h2>
+  <table>
+    <tr><th>Item</th><th>Per day</th><th>Total (${travelers} ppl)</th></tr>
+    <tr><td>Stay</td><td>$250</td><td>$${250*days}</td></tr>
+    <tr><td>Food</td><td>$120</td><td>$${120*days}</td></tr>
+    <tr><td>Activities</td><td>$60</td><td>$${60*days}</td></tr>
+    <tr><td>Transit</td><td>$20</td><td>$${20*days}</td></tr>
+  </table>
+  <p class="muted">Assumes mid-range dining and 1–2 paid sights/day.</p>
+  <p class="cta"><a href="https://www.booking.com/">Book hotels</a> · <a href="https://www.getyourguide.com/">Top activities</a></p>
+</section>
 
-## Rough Costs
-- **Accommodation:** varies by style
-- **Food:** $25–$45 pp/day
-- **Activities:** $10–$25 / museum
-- **Transit:** day passes best value
-`;
+<section id="food">
+  <h2>Dining short-list</h2>
+  <ul>
+    <li><strong>Market Kitchen</strong> — local plates. <a href="${affiliateLink('Market Kitchen', 'food', destination)}">Reviews</a> · <a href="${mapsLink('Market Kitchen', destination)}">Open in Maps</a></li>
+    <li><strong>Old Town Pizzeria</strong> — classic pies. <a href="${affiliateLink('Old Town Pizzeria', 'food', destination)}">Reviews</a> · <a href="${mapsLink('Old Town Pizzeria', destination)}">Open in Maps</a></li>
+  </ul>
+</section>
+
+<section id="packing">
+  <h2>Packing & etiquette</h2>
+  <ul><li>Layers, comfy shoes; bring reusable bottle; basic tipping for table service.</li></ul>
+</section>
+
+<section id="checklist">
+  <h2>Bookings checklist</h2>
+  <ul>
+    <li>Main Museum timed tickets — <a href="${affiliateLink('Main Museum', 'activity', destination)}">Tickets</a></li>
+    <li>Airport train — <a href="https://www.getyourguide.com/">Book</a></li>
+  </ul>
+</section>
+
+<footer id="footer"><p class="muted">Generated by Wayzo • ${nowIso()}</p></footer>
+  `.trim();
 }
 
-// ---------- plan (markdown → html + enrichment) ----------
+function systemPrompt() {
+  return `
+You are a travel planner. Return **valid HTML only** (no <html> or <body>) using these section ids in this exact order:
+cover, summary, lodging, highlights, daily-plan, transport, budget, food, packing, checklist, footer.
+
+Rules:
+- Concise, specific writing; realistic times. Each place: 1–2 sentences (reason + tip).
+- End each place with two compact links: Open in Maps + an affiliate link:
+  - Stays → "Book"
+  - Activities → "Tickets"
+  - Restaurants → "Reviews"
+- All anchors must include target="_blank" and rel="noopener".
+- Keep day pages short (~12 lines/day). Use chips, tables, and lists for clarity.
+- Images optional: <img loading="lazy" src="https://source.unsplash.com/640x400/?{{destination}},{{place}}"> .
+  `;
+}
+
+// ---------- preview ----------
+app.post('/api/preview', async (req, res) => {
+  const { destination = '' } = req.body || {};
+  const teaser_html = `
+<section id="preview">
+  <h3>${destination || 'Your trip'} — preview</h3>
+  <ul>
+    <li>Neighborhood clustering to reduce transit</li>
+    <li>Must-see highlights with timed tickets</li>
+    <li>Meals & alternates per day</li>
+  </ul>
+  <p class="cta">Generate full plan →</p>
+</section>`.trim();
+  res.json({ teaser_html });
+});
+
+// ---------- plan (HTML-first) ----------
 app.post('/api/plan', async (req, res) => {
   const payload = req.body || {};
   const id = uid();
 
   try {
-    let markdown = localPlanMarkdown(payload);
+    const meta = {
+      destination: String(payload.destination || '').trim(),
+      start: toISO(payload.start || payload.startDate),
+      end: toISO(payload.end || payload.endDate),
+      travelers: Number(payload.travelers || 2),
+      level: String(payload.level || 'mid-range'),
+      budget: Number(payload.budget || 1500),
+      prefs: String(payload.prefs || payload.interests || ''),
+    };
+
+    let html;
 
     if (openaiEnabled) {
-      const sys = `You produce concise, realistic travel itineraries.
-Output strictly in **Markdown** (no HTML). Use headings and bullet lists.
-For each recommendation (sight, restaurant, or hotel), write 1–2 sentences:
-- Sentence 1: why it’s great (specific).
-- Sentence 2: a quick tip (best time, reservation, transit, ticket).
-Append a Google Maps link using:
-[Open in Maps](https://www.google.com/maps/search/?api=1&query=<PLACE%20NAME%20CITY>)
-Keep names accurate and include neighborhood/city when helpful.`;
-      const usr = `Destination: ${payload.destination}
-Dates: ${payload.start || payload.startDate} → ${payload.end || payload.endDate}
-Travelers: ${payload.travelers}
-Style: ${payload.level}
-Budget(USD): ${payload.budget}
-Prefs: ${payload.prefs || payload.interests || '-'}
+      const user = `
+Destination: ${meta.destination}
+Dates: ${meta.start} → ${meta.end}
+Travelers: ${meta.travelers}
+Style: ${meta.level}
+Budget per trip (USD): ${meta.budget}
+Preferences: ${meta.prefs || '-'}
 
-Return *Markdown only*. Ensure most bullets look like:
-- **Place Name** — short reason. Tip: short actionable tip. [Open in Maps](...)`;
-
+Produce the full report in the strict order and format specified.`;
       const resp = await openai.chat.completions.create({
         model: MODEL,
         temperature: 0.6,
         messages: [
-          { role: 'system', content: sys },
-          { role: 'user', content: usr },
+          { role: 'system', content: systemPrompt() },
+          { role: 'user', content: user },
         ],
       });
-      const out = resp.choices?.[0]?.message?.content?.trim();
-      if (out) markdown = out;
+      html = resp.choices?.[0]?.message?.content?.trim();
     }
 
-    // Convert to HTML and enrich with affiliate links + target="_blank"
-    const baseHtml = marked.parse(markdown || '');
-    const html = enrichHtmlWithAffiliates(baseHtml, payload.destination || '');
+    if (!html) html = fallbackHTML(meta);
 
-    savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: payload, markdown, html }));
-    res.json({ id, markdown, html });
+    const enriched = enrichHtml(html, meta.destination);
+
+    savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: meta, html: enriched }));
+    res.json({ id, html: enriched, meta });
   } catch (e) {
     console.error('plan error', e);
-    const markdown = localPlanMarkdown(payload);
-    const baseHtml = marked.parse(markdown || '');
-    const html = enrichHtmlWithAffiliates(baseHtml, payload.destination || '');
-    savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: payload, markdown, html }));
-    res.json({ id, markdown, html });
+    const html = fallbackHTML(req.body || {});
+    const enriched = enrichHtml(html, (req.body && req.body.destination) || '');
+    savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: req.body || {}, html: enriched }));
+    res.json({ id, html: enriched, meta: req.body || {} });
   }
 });
 
-// ---------- “PDF” html view (opens links in new tab) ----------
+// ---------- “PDF” html view ----------
 app.get('/api/plan/:id/pdf', (req, res) => {
   const row = getPlan.get(req.params.id);
   if (!row) return res.status(404).send('Not found');
-
   const saved = JSON.parse(row.payload || '{}');
-  // Ensure anchors have target/rel even if saved.html didn't
-  const enriched = enrichHtmlWithAffiliates(saved.html || marked.parse(saved.markdown || ''), (saved.data && saved.data.destination) || '');
-
   const html = `
 <!doctype html>
 <html>
 <head>
   <meta charset="utf-8"/>
   <title>Wayzo Plan</title>
+  <link rel="stylesheet" href="/style.css" />
   <style>
-    body{font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:24px;color:#0f172a}
-    h1,h2,h3{margin:.8rem 0 .4rem}
-    ul{margin:.3rem 0 .6rem 1.2rem}
-    .muted{color:#64748b}
-    a{color:#2563eb;text-decoration:none}
-    figure{margin:.6rem 0}
-    img{max-width:100%;height:auto;border-radius:8px}
-    table{border-collapse:collapse;width:100%}
-    td,th{border:1px solid #e5e7eb;padding:8px;text-align:left}
+    @media print {
+      .card, .cards li, article.day { break-inside: avoid; }
+      a { text-decoration: none; }
+    }
   </style>
 </head>
 <body>
-  ${enriched || '<p>No content.</p>'}
-  <p class="muted">Generated by Wayzo</p>
+  ${saved.html || ''}
+  <p class="muted" style="margin-top:24px">Generated by Wayzo</p>
 </body>
 </html>`;
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
