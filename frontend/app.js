@@ -7,7 +7,7 @@
   const previewEl  = $('#preview');
   const loadingEl  = $('#loading');
   const pdfBtn     = $('#pdfBtn');
-  const buyBtn     = $('#buyBtn');
+  const buyBtn     = $('#buyBtn');        // "Generate full plan (AI)"
   const saveBtn    = $('#saveBtn');
 
   if (!form || !previewEl) return;
@@ -33,7 +33,7 @@
     set('#linkReviews',   `https://www.tripadvisor.com/Search?q=${q}`);
   };
 
-  // Preview (left form submit)
+  // Preview (submit the form)
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const payload = readForm();
@@ -55,7 +55,7 @@
     }
   });
 
-  // Full plan (Generate full plan)
+  // Full plan (does NOT require preview first)
   buyBtn?.addEventListener('click', async () => {
     const payload = readForm();
     setAffiliates(payload.destination);
@@ -69,11 +69,7 @@
       });
       const out = await res.json();
 
-      if (out.html) {
-        previewEl.innerHTML = out.html;
-      } else {
-        previewEl.innerHTML = '<p>Plan generated.</p>';
-      }
+      previewEl.innerHTML = out.html || '<p>Plan generated.</p>';
 
       if (out.id) {
         pdfBtn.href = `/api/plan/${out.id}/pdf`;
@@ -88,7 +84,7 @@
     }
   });
 
-  // Local save/restore of the HTML
+  // Local save/restore
   saveBtn?.addEventListener('click', () => {
     try { localStorage.setItem('wayzo_preview', previewEl.innerHTML || ''); alert('Saved.'); } catch {}
   });
