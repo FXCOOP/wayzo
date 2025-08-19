@@ -11,27 +11,20 @@ import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import Database from 'better-sqlite3';
 import { marked } from 'marked';
-
-// ---- Optional OpenAI (will gracefully fall back if key missing)
 import OpenAI from 'openai';
 
 // ---------- Paths ----------
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const repoRoot = path.resolve(__dirname, '..');
+const REPO_ROOT = path.resolve(__dirname, '..');
 
-const FRONTEND_DIR = path.join(repoRoot, 'frontend');
-const DOCS_DIR = path.join(repoRoot, 'docs');
+const FRONTEND_DIR = path.join(REPO_ROOT, 'frontend');
+const DOCS_DIR = path.join(REPO_ROOT, 'docs');
 let INDEX_FILE = path.join(FRONTEND_DIR, 'index.backend.html');
 if (!fs.existsSync(INDEX_FILE)) {
   const alt = path.join(FRONTEND_DIR, 'index.html');
   if (fs.existsSync(alt)) INDEX_FILE = alt;
-  const PRO_INDEX_FILE = path.join(FRONTEND_DIR, 'pro.html');
 }
-
-console.log('Serving frontend from:', FRONTEND_DIR);
-console.log('Serving docs from:', DOCS_DIR);
-console.log('Index file:', INDEX_FILE);
 
 // ---------- App ----------
 const app = express();
@@ -58,8 +51,37 @@ app.use(
   })
 );
 
+// ---------- Static ----------
+app.use(
+  '/docs',
+  express.static(DOCS_DIR, {
+    setHeaders: (res) => res.setHeader('Cache-Control', 'public, max-age=604800'),
+  })
+);
+app.use(
+  express.static(FRONTEND_DIR, {
+    setHeaders: (res, filePath) => {
+      if (/\.css$/i.test(filePath)) res.setHeader('Content-Type', 'text/css; charset=utf-8');
+      if (/\.js$/i.test(filePath))  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      if (/\.(css|js|svg|png|jpg|jpeg|webp|ico)$/i.test(filePath)) {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      }
+    },
+  })
+);
+
+// Root -> index
+app.get('/', (_req, res) => {
+  if (!fs.existsSync(INDEX_FILE)) return res.status(500).send('index file missing');
+  res.sendFile(INDEX_FILE);
+});
+
+// ---------- Health ----------
+app.get('/api/health', (_req, res) => res.json({ ok: true }));
+app.get('/healthz', (_req, res) => res.status(200).send('ok'));
+
 // ---------- DB ----------
-const dbPath = path.join(repoRoot, 'wayzo.sqlite');
+const dbPath = path.join(REPO_ROOT, 'wayzo.sqlite');
 const db = new Database(dbPath);
 db.exec(`
   CREATE TABLE IF NOT EXISTS plans (
@@ -68,72 +90,33 @@ db.exec(`
     payload TEXT NOT NULL
   );
 `);
-const savePlan = db.prepare(
-  'INSERT OR REPLACE INTO plans (id, created_at, payload) VALUES (?, ?, ?)'
-);
-const getPlan = db.prepare('SELECT payload FROM plans WHERE id = ?');
+const savePlan = db.prepare('INSERT OR REPLACE INTO plans (id, created_at, payload) VALUES (?, ?, ?)');
+const getPlan  = db.prepare('SELECT payload FROM plans WHERE id = ?');
 
 const nowIso = () => new Date().toISOString();
-const uid = () =>
-  (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
-
-// ---------- Static (CRITICAL: before catch-all) ----------
-app.use(
-  '/docs',
-  express.static(DOCS_DIR, {
-    setHeaders: (res) =>
-      res.setHeader('Cache-Control', 'public, max-age=604800'), // 7d
-  })
-);
-
-app.use(
-  express.static(FRONTEND_DIR, {
-    setHeaders: (res, filePath) => {
-      if (/\.css$/i.test(filePath))
-        res.setHeader('Content-Type', 'text/css; charset=utf-8');
-      if (/\.js$/i.test(filePath))
-        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-      if (/\.(css|js|svg|png|jpg|jpeg|webp|ico)$/i.test(filePath)) {
-        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-      }
-    },
-  })
-);
-
-// ---------- Health ----------
-app.get('/api/health', (_req, res) => res.json({ ok: true }));
-app.get('/healthz', (_req, res) => res.status(200).send('ok'));
-app.get('/__debug', (_req, res) => {
-  res.json({
-    now: nowIso(),
-    node: process.version,
-    paths: { repoRoot, FRONTEND_DIR, DOCS_DIR, INDEX_FILE },
-  });
-});
+const uid = () => (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
 
 // ---------- Affiliates ----------
 function affiliatesFor(dest = '') {
   const q = encodeURIComponent(dest || '');
   return {
-    flights: `https://www.kayak.com/flights?query=${q}`,
-    hotels: `https://www.booking.com/searchresults.html?ss=${q}`,
-    activities: `https://www.getyourguide.com/s/?q=${q}`,
-    cars: `https://www.rentalcars.com/SearchResults.do?destination=${q}`,
+    maps:      `https://www.google.com/maps/search/?api=1&query=${q}`,
+    flights:   `https://www.kayak.com/flights?search=${q}`,
+    hotels:    `https://www.booking.com/searchresults.html?ss=${q}`,
+    activities:`https://www.getyourguide.com/s/?q=${q}`,
+    cars:      `https://www.rentalcars.com/SearchResults.do?destination=${q}`,
     insurance: `https://www.worldnomads.com/`,
-    reviews: `https://www.tripadvisor.com/Search?q=${q}`,
+    reviews:   `https://www.tripadvisor.com/Search?q=${q}`,
   };
 }
 
-// ---------- Local content (fallback) ----------
+// ---------- Local fallback content ----------
 function localPlanMarkdown(input) {
   const {
     destination = 'Your destination',
-    start = 'start',
-    end = 'end',
-    budget = 1500,
-    travelers = 2,
-    level = 'budget',
-    prefs = '',
+    start = 'start', end = 'end',
+    budget = 1500, travelers = 2,
+    level = 'budget', prefs = '',
   } = input || {};
   return `# ${destination} itinerary (${start} → ${end})
 
@@ -145,7 +128,7 @@ function localPlanMarkdown(input) {
 
 ## Trip Summary
 - Balanced mix of must-sees and local gems in ${destination}.
-- Group sights by neighborhoods to minimize transit.
+- Cluster sights by neighborhood to minimize transit.
 
 ## Day 1
 - **Morning:** Historic center
@@ -163,7 +146,7 @@ function localPlanMarkdown(input) {
 - **Accommodation:** varies by style
 - **Food:** $25–$45 pp/day
 - **Activities:** $10–$25 / museum
-- **Transit:** day passes best value
+- **Transit:** day passes are best value
 `;
 }
 
@@ -172,25 +155,27 @@ const openaiEnabled = !!process.env.OPENAI_API_KEY;
 const openai = openaiEnabled ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 
 async function generateWithOpenAI(payload) {
-  const sys = `You produce concise, realistic travel itineraries with concrete logistics, time checks, and restaurant picks. Output strictly in Markdown (no HTML), with short sections and bullet lists. Keep it clear, helpful, and formatted with headings and bullet lists.`;
+  // Tighter prompt: time slots, logistics, no raw URLs (we attach affiliates)
+  const sys =
+    'You are a travel planner. Produce a realistic, concise, day-by-day itinerary with time blocks (Morning/Afternoon/Evening), practical logistics (transit modes, durations, neighborhoods), and 2–3 specific food picks per day when appropriate. Output strictly in Markdown (no HTML). Do NOT include any raw URLs. Use short paragraphs and bullet lists.';
+
   const user = `Destination: ${payload.destination}
 Dates: ${payload.start} → ${payload.end}
 Travelers: ${payload.travelers}
 Style: ${payload.level}
 Budget(USD): ${payload.budget}
-Prefs: ${payload.prefs || '-'}
-  
-Return an elegant Markdown itinerary.`;
+Preferences: ${payload.prefs || '-'}
+
+Return an elegant Markdown itinerary only. Avoid URLs; we'll attach maps/booking links.`;
 
   const resp = await openai.chat.completions.create({
     model: process.env.WAYZO_MODEL || 'gpt-4o-mini',
     temperature: 0.6,
     messages: [
       { role: 'system', content: sys },
-      { role: 'user', content: user },
+      { role: 'user',   content: user },
     ],
   });
-
   return resp.choices?.[0]?.message?.content?.trim() || '';
 }
 
@@ -206,17 +191,12 @@ app.post('/api/preview', (req, res) => {
   <ul>
     <li>Morning / Afternoon / Evening blocks</li>
     <li>Neighborhood clustering to reduce transit</li>
-    <li>Use <b>Generate full plan (AI)</b> for a complete day-by-day schedule</li>
+    <li>Use <b>Generate full plan (AI)</b> for a complete schedule</li>
   </ul>
 </div>`.trim();
 
   const aff = affiliatesFor(destination);
-  savePlan.run(
-    id,
-    nowIso(),
-    JSON.stringify({ id, type: 'preview', data: payload, teaser_html: teaser, affiliates: aff })
-  );
-
+  savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'preview', data: payload, teaser_html: teaser, affiliates: aff }));
   res.json({ id, teaser_html: teaser, affiliates: aff });
 });
 
@@ -242,8 +222,7 @@ app.post('/api/plan', async (req, res) => {
   }
 });
 
-// NOTE: simple HTML “PDF view” (works on Render without headless Chrome).
-// If you want a binary PDF later, we can swap in pdf-lib. Frontend already links to this.
+// HTML “PDF view”
 app.get('/api/plan/:id/pdf', (req, res) => {
   const { id } = req.params;
   const row = getPlan.get(id);
@@ -258,6 +237,7 @@ app.get('/api/plan/:id/pdf', (req, res) => {
     h1,h2,h3{margin:.8rem 0 .4rem}
     ul{margin:.3rem 0 .6rem 1.2rem}
     .muted{color:#64748b}
+    @media print { a { color: inherit; text-decoration: none; } }
   </style></head>
   <body>
     ${marked.parse(saved.markdown || '')}
@@ -267,19 +247,15 @@ app.get('/api/plan/:id/pdf', (req, res) => {
   res.send(html);
 });
 
-// Wayzo Pro page
-app.get('/pro', (_req, res) => {
-  if (fs.existsSync(PRO_INDEX_FILE)) return res.sendFile(PRO_INDEX_FILE);
-  return res.status(404).send('Wayzo Pro not found');
-});
-
-// ---------- SPA catch-all (place AFTER static!) ----------
+// SPA catch-all
 app.get(/^\/(?!api\/).*/, (_req, res) => {
   if (!fs.existsSync(INDEX_FILE)) return res.status(500).send('index file missing');
   res.sendFile(INDEX_FILE);
 });
 
-// ---------- Start ----------
 app.listen(PORT, () => {
   console.log(`Wayzo backend running on :${PORT}`);
+  console.log('Serving frontend from:', FRONTEND_DIR);
+  console.log('Serving docs from:', DOCS_DIR);
+  console.log('Index file:', INDEX_FILE);
 });
