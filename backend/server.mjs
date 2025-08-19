@@ -11,8 +11,6 @@ import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import Database from 'better-sqlite3';
 import { marked } from 'marked';
-
-// Optional OpenAI (graceful fallback if no key)
 import OpenAI from 'openai';
 
 // ---------- Paths ----------
@@ -53,20 +51,18 @@ app.use(
   })
 );
 
-// ---------- Static (serve from repo root) ----------
+// ---------- Static ----------
 app.use(
   '/docs',
   express.static(DOCS_DIR, {
-    setHeaders: (res) => res.setHeader('Cache-Control', 'public, max-age=604800'), // 7d
+    setHeaders: (res) => res.setHeader('Cache-Control', 'public, max-age=604800'),
   })
 );
 app.use(
   express.static(FRONTEND_DIR, {
     setHeaders: (res, filePath) => {
-      if (/\.css$/i.test(filePath))
-        res.setHeader('Content-Type', 'text/css; charset=utf-8');
-      if (/\.js$/i.test(filePath))
-        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      if (/\.css$/i.test(filePath)) res.setHeader('Content-Type', 'text/css; charset=utf-8');
+      if (/\.js$/i.test(filePath)) res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
       if (/\.(css|js|svg|png|jpg|jpeg|webp|ico)$/i.test(filePath)) {
         res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
       }
@@ -94,16 +90,13 @@ db.exec(`
     payload TEXT NOT NULL
   );
 `);
-const savePlan = db.prepare(
-  'INSERT OR REPLACE INTO plans (id, created_at, payload) VALUES (?, ?, ?)'
-);
+const savePlan = db.prepare('INSERT OR REPLACE INTO plans (id, created_at, payload) VALUES (?, ?, ?)');
 const getPlan = db.prepare('SELECT payload FROM plans WHERE id = ?');
 
 const nowIso = () => new Date().toISOString();
-const uid = () =>
-  (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
+const uid = () => (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
 
-// ---------- Affiliates ----------
+// ---------- Helpers ----------
 function affiliatesFor(dest = '') {
   const q = encodeURIComponent(dest || '');
   return {
@@ -116,7 +109,6 @@ function affiliatesFor(dest = '') {
   };
 }
 
-// ---------- Local fallback content ----------
 function localPlanMarkdown(input) {
   const {
     destination = 'Your destination',
@@ -130,43 +122,31 @@ function localPlanMarkdown(input) {
   return `# ${destination} itinerary (${start} → ${end})
 
 **Party:** ${travelers} • **Style:** ${level} • **Budget:** $${budget}
-
-**Preferences:** ${prefs || '—'}
-
----
-
-## Trip Summary
-- Balanced mix of must-sees and local gems in ${destination}.
-- Cluster sights by neighborhood to minimize transit.
+**Prefs:** ${prefs || '—'}
 
 ## Day 1
-- **Morning:** Historic center
-- **Afternoon:** Market & park
-- **Evening:** Classic local dinner
+- Arrive and check-in
+- Walk the historic center
+- Dinner: local classic
 
 ## Day 2
-- **Morning:** Headliner museum
-- **Afternoon:** River walk
-- **Evening:** Food hall + dessert
+- Morning museum
+- Afternoon river walk
+- Evening food hall
 
----
-
-## Rough Costs
-- **Accommodation:** varies by style
-- **Food:** $25–$45 pp/day
-- **Activities:** $10–$25 / museum
-- **Transit:** day passes are best value
+## Day 3
+- Day trip to nearby highlight
+- Market lunch
+- Final sunset viewpoint
 `;
 }
 
-// ---------- Optional OpenAI ----------
+// ---- Optional OpenAI ----
 const openaiEnabled = !!process.env.OPENAI_API_KEY;
-const openai =
-  openaiEnabled ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
+const openai = openaiEnabled ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 
 async function generateWithOpenAI(payload) {
-  const sys =
-    'You produce concise, realistic travel itineraries with concrete logistics, time checks, and restaurant picks. Output strictly in Markdown (no HTML).';
+  const sys = `You produce concise, realistic travel itineraries with logistics and dining. Output strictly in Markdown (no HTML). Use short bullet points.`;
   const user = `Destination: ${payload.destination}
 Dates: ${payload.start} → ${payload.end}
 Travelers: ${payload.travelers}
@@ -187,6 +167,37 @@ Return an elegant Markdown itinerary.`;
   return resp.choices?.[0]?.message?.content?.trim() || '';
 }
 
+// ---------- Enrichment (Markdown -> nice HTML with links) ----------
+function linkifyLabel(label, destination) {
+  const q = encodeURIComponent(`${label} ${destination || ''}`.trim());
+  const map = `https://www.google.com/maps/search/?api=1&query=${q}`;
+  const book = `https://www.getyourguide.com/s/?q=${q}`;
+  return { map, book };
+}
+
+function renderPlanHTML(markdown, destination) {
+  // Basic markdown -> HTML
+  const raw = marked.parse(markdown || '');
+
+  // Post-process list items to add map/booking links + a hint sentence
+  // Replace each <li>...</li> with a decorated version.
+  const html = raw.replace(/<li>([\s\S]*?)<\/li>/g, (_m, inner) => {
+    const text = inner.replace(/<[^>]+>/g, '').trim();
+    if (!text) return `<li>${inner}</li>`;
+    const { map, book } = linkifyLabel(text, destination);
+    const hint =
+      ` <span class="li-meta"> — <a href="${map}" target="_blank" rel="noopener">Map</a> · <a href="${book}" target="_blank" rel="noopener">Book activity</a><span class="li-hint"> (tap to navigate or reserve)</span></span>`;
+    return `<li>${inner}${hint}</li>`;
+  });
+
+  // Wrap in a nice report container with CSS class hooks
+  return `
+  <article class="report">
+    ${html}
+  </article>
+  `.trim();
+}
+
 // ---------- API ----------
 app.post('/api/preview', (req, res) => {
   const payload = req.body || {};
@@ -199,7 +210,7 @@ app.post('/api/preview', (req, res) => {
   <ul>
     <li>Morning / Afternoon / Evening blocks</li>
     <li>Neighborhood clustering to reduce transit</li>
-    <li>Use <b>Generate full plan (AI)</b> for a complete day-by-day schedule</li>
+    <li>Use <b>Generate full plan (AI)</b> for the full schedule</li>
   </ul>
 </div>`.trim();
 
@@ -209,7 +220,6 @@ app.post('/api/preview', (req, res) => {
     nowIso(),
     JSON.stringify({ id, type: 'preview', data: payload, teaser_html: teaser, affiliates: aff })
   );
-
   res.json({ id, teaser_html: teaser, affiliates: aff });
 });
 
@@ -223,58 +233,81 @@ app.post('/api/plan', async (req, res) => {
       const out = await generateWithOpenAI(payload);
       if (out) markdown = out;
     }
+    const html = renderPlanHTML(markdown, payload.destination);
     const aff = affiliatesFor(payload.destination);
+
     savePlan.run(
       id,
       nowIso(),
-      JSON.stringify({ id, type: 'plan', data: payload, markdown, affiliates: aff })
+      JSON.stringify({ id, type: 'plan', data: payload, markdown, html, affiliates: aff })
     );
-    res.json({ id, markdown, affiliates: aff });
+
+    // keep backwards compat (frontend will prefer 'html' if present)
+    res.json({ id, markdown, html, affiliates: aff });
   } catch (e) {
-    console.error('AI error → fallback to local:', e);
+    console.error('AI error → fallback:', e);
     const markdown = localPlanMarkdown(payload);
+    const html = renderPlanHTML(markdown, payload.destination);
     const aff = affiliatesFor(payload.destination);
+
     savePlan.run(
       id,
       nowIso(),
-      JSON.stringify({ id, type: 'plan', data: payload, markdown, affiliates: aff })
+      JSON.stringify({ id, type: 'plan', data: payload, markdown, html, affiliates: aff })
     );
-    res.json({ id, markdown, affiliates: aff });
+    res.json({ id, markdown, html, affiliates: aff });
   }
 });
 
-// Simple HTML “PDF view” (works reliably on Render). If you want binary PDF, swap to pdf-lib later.
+// Pretty PDF view (prints beautifully in browser or Render HTML → PDF)
 app.get('/api/plan/:id/pdf', (req, res) => {
   const { id } = req.params;
   const row = getPlan.get(id);
   if (!row) return res.status(404).json({ error: 'not found' });
   const saved = JSON.parse(row.payload || '{}');
+  const html = saved.html || renderPlanHTML(saved.markdown || '', saved?.data?.destination || '');
 
-  const html = `
-  <html><head><meta charset="utf-8"/>
-  <title>Wayzo PDF</title>
-  <style>
-    body{font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:24px;color:#0f172a}
-    h1,h2,h3{margin:.8rem 0 .4rem}
-    ul{margin:.3rem 0 .6rem 1.2rem}
-    .muted{color:#64748b}
-    @media print { a { color: inherit; text-decoration: none; } }
-  </style></head>
+  const page = `
+  <!doctype html>
+  <html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>Wayzo — Trip Plan</title>
+    <style>
+      /* Print-friendly theme */
+      @media print { a { color: inherit; text-decoration: none } }
+      body{font:15px/1.55 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;margin:28px;color:#0f172a}
+      h1,h2,h3{margin:.8rem 0 .4rem}
+      .muted{color:#64748b}
+      .report{max-width:900px;margin:0 auto}
+      .report h1{font-size:28px;margin-top:0}
+      .report h2{font-size:20px;border-bottom:1px solid #e5e7eb;padding-bottom:4px;margin-top:18px}
+      .report ul{margin:.3rem 0 .7rem 1.15rem}
+      .report li{margin:.18rem 0}
+      .li-meta{font-size:.9em;color:#475569}
+      .li-hint{color:#94a3b8}
+      .cover{display:flex;gap:16px;align-items:center;margin-bottom:12px}
+      .badge{display:inline-block;background:#eef2ff;color:#3730a3;border-radius:999px;padding:2px 8px;font-size:12px;margin-left:6px}
+    </style>
+  </head>
   <body>
-    ${marked.parse(saved.markdown || '')}
-    <p class="muted">Generated by Wayzo</p>
+    <div class="cover">
+      <h1>Trip Itinerary <span class="badge">Wayzo</span></h1>
+    </div>
+    ${html}
+    <p class="muted">Generated by Wayzo · ${new Date().toLocaleString()}</p>
   </body></html>`;
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.send(html);
+  res.send(page);
 });
 
-// ---------- SPA catch-all ----------
+// Catch-all for SPA
 app.get(/^\/(?!api\/).*/, (_req, res) => {
   if (!fs.existsSync(INDEX_FILE)) return res.status(500).send('index file missing');
   res.sendFile(INDEX_FILE);
 });
 
-// ---------- Start ----------
+// Start
 app.listen(PORT, () => {
   console.log(`Wayzo backend running on :${PORT}`);
   console.log('Serving frontend from:', FRONTEND_DIR);

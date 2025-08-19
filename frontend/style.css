@@ -67,3 +67,13 @@ legend{font-weight:600;margin-bottom:4px}
 .quick-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .ql{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;background:#f1f5f9;text-decoration:none;color:inherit}
 .footer{margin:32px 0 24px}
+
+/* --- Report pretties (non-invasive) --- */
+.report{line-height:1.6}
+.report h1{font-size:28px;margin-top:0}
+.report h2{font-size:20px;border-bottom:1px solid #e5e7eb;padding-bottom:4px;margin-top:18px}
+.report ul{margin:.3rem 0 .7rem 1.15rem}
+.report li{margin:.18rem 0}
+.report .li-meta{font-size:.9em;color:#475569}
+.report .li-hint{color:#94a3b8}
+

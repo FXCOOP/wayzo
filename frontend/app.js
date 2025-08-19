@@ -1,4 +1,4 @@
-// app.js — preview/plan flow (keeps existing wiring)
+// app.js — prefers rich HTML plan when available, falls back to Markdown
 (function () {
   const $ = (sel) => document.querySelector(sel);
 
@@ -56,7 +56,7 @@
     }
   });
 
-  // Full plan
+  // Full plan (prefer HTML)
   buyBtn?.addEventListener('click', async () => {
     const payload = readForm();
     setAffiliates(payload.destination);
@@ -70,11 +70,14 @@
         body: JSON.stringify(payload),
       });
       const out = await res.json();
-      const md = (out.markdown || '').trim();
-      previewEl.innerHTML = md
-        ? `<div class="markdown" style="white-space:pre-wrap">${md}</div>`
-        : '<p>Plan generated.</p>';
-
+      if (out.html) {
+        previewEl.innerHTML = out.html;
+      } else {
+        const md = (out.markdown || '').trim();
+        previewEl.innerHTML = md
+          ? `<div class="markdown" style="white-space:pre-wrap">${md}</div>`
+          : '<p>Plan generated.</p>';
+      }
       if (out.id) {
         pdfBtn.href = `/api/plan/${out.id}/pdf`;
         show(pdfBtn);
@@ -86,7 +89,7 @@
     }
   });
 
-  // Save preview (local)
+  // Save / Restore preview locally
   saveBtn?.addEventListener('click', () => {
     try {
       const html = previewEl.innerHTML || '';
@@ -94,8 +97,6 @@
       alert('Preview saved on this device.');
     } catch {}
   });
-
-  // Restore last preview
   const last = localStorage.getItem('wayzo_preview');
   if (last) previewEl.innerHTML = last;
 })();
