@@ -19,6 +19,7 @@
     </div>
   </header>
 
+  <!-- HERO -->
   <section class="hero" style="--hero-bg: url('/docs/hero-mountains.jpg')">
     <div class="container hero-grid">
       <div class="hero-card hero-left">
@@ -38,67 +39,115 @@
     </div>
   </section>
 
+  <!-- MAIN -->
   <main id="planner" class="main">
     <div class="container grid-2">
-      <!-- FORM -->
+      <!-- ===== FORM (INPUT ONLY CHANGES) ===== -->
       <section class="card" aria-labelledby="trip-details-title">
         <div class="card-header">
           <h2 id="trip-details-title">Trip details</h2>
         </div>
         <p class="muted">We’ll tailor routes, hotels, activities, and meals—then generate your full AI plan.</p>
 
-        <!-- IDs & names unchanged; app.js/back-end keep working -->
-        <form id="tripForm" class="form" style="margin-top:12px" novalidate>
-          <div class="field">
+        <!-- IDs & names unchanged so existing JS/back-end keep working -->
+        <form id="tripForm" class="form form-pro" novalidate>
+
+          <!-- Destination -->
+          <div class="field has-icon">
             <label for="dest"><span>Destination</span></label>
-            <input id="dest" name="destination" type="text" inputmode="text" autocomplete="off"
-                   placeholder="City or region (e.g., Paris · Tokyo · Bali)" required aria-describedby="destHelp" />
-            <div id="destHelp" class="small muted">City, region, or island. Add country for clarity if needed.</div>
+            <div class="control">
+              <svg aria-hidden="true" class="icon"><use href="#i-location"/></svg>
+              <input id="dest" name="destination" type="text" autocomplete="off"
+                     placeholder="City or region (e.g., Paris · Tokyo · Bali)" required aria-describedby="destHelp" />
+            </div>
+            <div id="destHelp" class="hint">City, region, or island. Add country for clarity if needed.</div>
           </div>
 
+          <!-- Dates -->
           <div class="fields-2" role="group" aria-labelledby="datesLegend">
-            <div class="field">
+            <div class="field has-icon">
               <label for="start"><span>Start date</span></label>
-              <input id="start" name="start" type="date" required aria-describedby="dateHelp" />
+              <div class="control">
+                <svg aria-hidden="true" class="icon"><use href="#i-calendar"/></svg>
+                <input id="start" name="start" type="date" required />
+              </div>
             </div>
-            <div class="field">
+            <div class="field has-icon">
               <label for="end"><span>End date</span></label>
-              <input id="end" name="end" type="date" required aria-describedby="dateHelp" />
+              <div class="control">
+                <svg aria-hidden="true" class="icon"><use href="#i-calendar"/></svg>
+                <input id="end" name="end" type="date" required />
+              </div>
             </div>
           </div>
-          <div id="dateHelp" class="small muted">We’ll balance travel time and activities between these dates.</div>
+          <div class="hint">We’ll balance travel time and activities between these dates.</div>
 
-          <div class="fields-2" role="group" aria-labelledby="btLegend" style="margin-top:8px">
-            <div class="field">
+          <!-- Budget / Travelers -->
+          <div class="fields-2">
+            <div class="field has-icon">
               <label for="budget"><span>Budget (USD)</span></label>
-              <input id="budget" name="budget" type="number" inputmode="numeric" min="100" step="50"
-                     placeholder="Total trip budget (e.g., 2000)" required aria-describedby="budgetHelp" />
+              <div class="control">
+                <svg aria-hidden="true" class="icon"><use href="#i-wallet"/></svg>
+                <input id="budget" name="budget" type="number" inputmode="numeric" min="100" step="50"
+                       placeholder="Total trip budget (e.g., 2000)" required />
+              </div>
+              <div class="hint">Total for your party (excluding flights).</div>
             </div>
-            <div class="field">
+            <div class="field has-icon">
               <label for="travelers"><span>Travelers</span></label>
-              <input id="travelers" name="travelers" type="number" inputmode="numeric" min="1" step="1"
-                     value="2" required aria-describedby="travHelp" />
+              <div class="control">
+                <svg aria-hidden="true" class="icon"><use href="#i-users"/></svg>
+                <input id="travelers" name="travelers" type="number" inputmode="numeric" min="1" step="1" value="2" required />
+              </div>
+              <div class="hint">We auto-scale rooms, tables, and tickets.</div>
             </div>
           </div>
-          <div class="small muted" id="budgetHelp">Total for your party (excluding flights).</div>
-          <div class="small muted" id="travHelp">We auto-scale rooms, tables, and tickets.</div>
 
-          <fieldset class="field" style="margin-top:12px">
+          <!-- Style -->
+          <fieldset class="field fieldset-chips">
             <legend>Style</legend>
-            <label class="chip"><input type="radio" name="level" value="budget" checked /> Budget</label>
-            <label class="chip"><input type="radio" name="level" value="mid" /> Mid-range</label>
-            <label class="chip"><input type="radio" name="level" value="luxury" /> Luxury</label>
+            <div class="chips">
+              <label class="chip"><input type="radio" name="level" value="budget" checked /> Budget</label>
+              <label class="chip"><input type="radio" name="level" value="mid" /> Mid-range</label>
+              <label class="chip"><input type="radio" name="level" value="luxury" /> Luxury</label>
+            </div>
           </fieldset>
 
-          <div class="field" style="margin-top:4px">
+          <!-- Preferences (short) -->
+          <div class="field has-icon">
             <label for="prefs"><span>Preferences</span></label>
-            <input id="prefs" name="prefs" type="text" inputmode="text"
-                   placeholder="Interests (e.g., museums, beaches, hiking, kid-friendly)"
-                   aria-describedby="prefsHelp" />
-            <div id="prefsHelp" class="small muted">Comma-separated interests guide neighborhoods, food, and pacing.</div>
+            <div class="control">
+              <svg aria-hidden="true" class="icon"><use href="#i-star"/></svg>
+              <input id="prefs" name="prefs" type="text" inputmode="text"
+                     placeholder="Interests (e.g., museums, beaches, hiking, kid-friendly)" />
+            </div>
+            <div class="hint">Comma-separated interests help with neighborhoods, food, and pacing.</div>
           </div>
 
-          <div class="actions" style="margin-top:10px">
+          <!-- ===== Long Report Input (NEW — requested) ===== -->
+          <div class="field">
+            <label for="longInput"><span>Professional brief (long report)</span>
+              <span class="tag tag-pro">NEW</span>
+            </label>
+            <textarea id="longInput" name="long_input" class="textarea-pro" rows="14"
+              placeholder="Paste or write a detailed brief for a longer, more professional report.
+
+Suggested outline:
+• Goals & vibe
+• Must-see / must-skip
+• Group (ages, mobility, interests)
+• Dining preferences (budget, cuisine, reservations)
+• Pace & time windows (early risers? night life?)
+• Constraints (dietary, sabbath, stroller, luggage)
+• Dates with anchor events (concerts, tours)
+• Rainy-day backups / indoor focus
+• Neighborhoods you prefer or want to avoid">
+            </textarea>
+            <div class="hint"><span id="longInputCount">0 words • 0 chars</span></div>
+          </div>
+
+          <!-- Actions -->
+          <div class="actions sticky-actions">
             <button class="btn btn-primary" type="submit" id="previewBtn" aria-label="Generate itinerary preview">Generate preview</button>
             <button class="btn btn-ghost" type="button" id="buyBtn" aria-label="Generate full AI plan">Generate full plan (AI)</button>
             <button class="btn" type="button" id="saveBtn" aria-label="Save current preview">Save preview</button>
@@ -107,7 +156,7 @@
         </form>
       </section>
 
-      <!-- OUTPUT -->
+      <!-- ===== OUTPUT (unchanged) ===== -->
       <section class="card" aria-labelledby="itinerary-title">
         <div class="card-header">
           <h2 id="itinerary-title" class="section-title">Your itinerary</h2>
@@ -119,11 +168,11 @@
         </div>
 
         <div id="loading" class="hidden" aria-live="polite">
-          <div style="height:10px;background:#e2e8f0;border-radius:8px"></div>
-          <div style="height:10px;background:#e2e8f0;border-radius:8px;margin-top:8px;width:70%"></div>
+          <div class="skel skel-1"></div>
+          <div class="skel skel-2"></div>
         </div>
 
-        <div class="actions" style="margin-top:10px">
+        <div class="actions link-row">
           <a id="pdfBtn" class="btn hidden" href="#" target="_blank" rel="noopener">⬇️ Download PDF</a>
           <a id="linkMaps" class="btn" target="_blank" rel="noopener">🗺️ Maps</a>
           <a id="linkFlights" class="btn" target="_blank" rel="noopener">✈️ Flights</a>
@@ -149,14 +198,42 @@
     (function () {
       const s = document.getElementById('start');
       const e = document.getElementById('end');
-      if (!s || !e) return;
-      s.addEventListener('change', () => {
-        if (s.value) {
-          e.min = s.value;
-          if (e.value && e.value < s.value) e.value = s.value;
-        }
-      });
+      if (s && e) {
+        s.addEventListener('change', () => {
+          if (s.value) {
+            e.min = s.value;
+            if (e.value && e.value < s.value) e.value = s.value;
+          }
+        });
+      }
+
+      // Auto-resize + counter for long report textarea (input-only enhancement)
+      const ta = document.getElementById('longInput');
+      const counter = document.getElementById('longInputCount');
+      function update() {
+        if (!ta) return;
+        ta.style.height = 'auto';
+        ta.style.height = Math.min(480, ta.scrollHeight) + 'px';
+        const text = ta.value.trim();
+        const words = text ? text.split(/\\s+/).length : 0;
+        const chars = text.length;
+        if (counter) counter.textContent = words + ' words • ' + chars + ' chars';
+      }
+      if (ta) {
+        ta.addEventListener('input', update);
+        window.addEventListener('load', update);
+        update();
+      }
     })();
   </script>
+
+  <!-- Icons sprite (inline) -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+    <symbol id="i-location" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5Z"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><path fill="currentColor" d="M7 2h2v2h6V2h2v2h3a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3V2Zm13 8H4v9h16v-9Z"/></symbol>
+    <symbol id="i-wallet" viewBox="0 0 24 24"><path fill="currentColor" d="M3 7a2 2 0 0 1 2-2h12a3 3 0 0 1 3 3v2h-6a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h6v2a3 3 0 0 1-3 3H5a2 2 0 0 1-2-2V7Zm16 6h-5v-2h5v2Z"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><path fill="currentColor" d="M16 11a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm-8 8a5 5 0 0 1 10 0v1H8Zm-1-9a3 3 0 1 0-3-3 3 3 0 0 0 3 3Zm-4 9a4 4 0 0 1 7.2-2.4A6.5 6.5 0 0 0 7 20v1H3Z"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2l2.9 6.2 6.8.6-5.1 4.5 1.6 6.7L12 16l-6.2 4 1.6-6.7L2.4 8.8l6.8-.6L12 2Z"/></symbol>
+  </svg>
 </body>
 </html>
