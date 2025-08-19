@@ -26,6 +26,7 @@ let INDEX_FILE = path.join(FRONTEND_DIR, 'index.backend.html');
 if (!fs.existsSync(INDEX_FILE)) {
   const alt = path.join(FRONTEND_DIR, 'index.html');
   if (fs.existsSync(alt)) INDEX_FILE = alt;
+  const PRO_INDEX_FILE = path.join(FRONTEND_DIR, 'pro.html');
 }
 
 console.log('Serving frontend from:', FRONTEND_DIR);
@@ -264,6 +265,12 @@ app.get('/api/plan/:id/pdf', (req, res) => {
   </body></html>`;
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(html);
+});
+
+// Wayzo Pro page
+app.get('/pro', (_req, res) => {
+  if (fs.existsSync(PRO_INDEX_FILE)) return res.sendFile(PRO_INDEX_FILE);
+  return res.status(404).send('Wayzo Pro not found');
 });
 
 // ---------- SPA catch-all (place AFTER static!) ----------
