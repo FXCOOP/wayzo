@@ -96,18 +96,57 @@ const getPlan  = db.prepare('SELECT payload FROM plans WHERE id = ?');
 const nowIso = () => new Date().toISOString();
 const uid = () => (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
 
-// ---------- Affiliates ----------
+// ---------- Affiliate templates (edit envs to add your IDs) ----------
+const AFF = {
+  bookingAid: process.env.BOOKING_AID || "",   // e.g. "1234567"
+  gygPid:     process.env.GYG_PID || "",       // e.g. "ABCD123"
+  kayakAid:   process.env.KAYAK_AID || "",     // if you use Kayak
+};
+
+// ---------- Top-level quick links (kept) ----------
 function affiliatesFor(dest = '') {
   const q = encodeURIComponent(dest || '');
+  const bookingAidParam = AFF.bookingAid ? `&aid=${AFF.bookingAid}` : '';
+  const gygPidParam     = AFF.gygPid     ? `&partner_id=${AFF.gygPid}` : '';
   return {
     maps:      `https://www.google.com/maps/search/?api=1&query=${q}`,
-    flights:   `https://www.kayak.com/flights?search=${q}`,
-    hotels:    `https://www.booking.com/searchresults.html?ss=${q}`,
-    activities:`https://www.getyourguide.com/s/?q=${q}`,
+    flights:   `https://www.kayak.com/flights?search=${q}${AFF.kayakAid ? `&aid=${AFF.kayakAid}` : ''}`,
+    hotels:    `https://www.booking.com/searchresults.html?ss=${q}${bookingAidParam}`,
+    activities:`https://www.getyourguide.com/s/?q=${q}${gygPidParam}`,
     cars:      `https://www.rentalcars.com/SearchResults.do?destination=${q}`,
     insurance: `https://www.worldnomads.com/`,
     reviews:   `https://www.tripadvisor.com/Search?q=${q}`,
   };
+}
+
+// ---------- Link token → real URL ----------
+function linkFor(kind, place, destination = '') {
+  const q = encodeURIComponent(`${place} ${destination}`.trim());
+  const bookingAidParam = AFF.bookingAid ? `&aid=${AFF.bookingAid}` : '';
+  const gygPidParam     = AFF.gygPid     ? `&partner_id=${AFF.gygPid}` : '';
+
+  switch (kind) {
+    case 'map':     return `https://www.google.com/maps/search/?api=1&query=${q}`;
+    case 'book':    return `https://www.booking.com/searchresults.html?ss=${q}${bookingAidParam}`;
+    case 'tickets': return `https://www.getyourguide.com/s/?q=${q}${gygPidParam}`;
+    case 'reviews': return `https://www.tripadvisor.com/Search?q=${q}`;
+    // Optional: cal could become a deep link to a calendar helper
+    case 'cal':     return `https://calendar.google.com/`; // placeholder
+    default:        return '#';
+  }
+}
+
+function linkifyTokens(markdown, destination = '') {
+  if (!markdown) return markdown;
+  // Matches: [Map](map:Place), [Tickets](tickets:Place), [Book](book:Place), [Reviews](reviews:Place), [Add to Calendar](cal:Title ...)
+  const re = /\[(Map|Tickets|Book|Reviews|Add to Calendar)\]\((map|tickets|book|reviews|cal):([^)]+)\)/gi;
+  return markdown.replace(re, (_m, _label, kind, body) => {
+    const place = String(body || '').replace(/\s+/g, ' ').trim();
+    const url = linkFor(kind.toLowerCase(), place, destination);
+    // Keep the original label so the text shows as "Map | Tickets | Book | Reviews"
+    const label = (_label || '').trim();
+    return `[${label}](${url})`;
+  });
 }
 
 // ---------- Local fallback content ----------
@@ -118,65 +157,156 @@ function localPlanMarkdown(input) {
     budget = 1500, travelers = 2,
     level = 'budget', prefs = '',
   } = input || {};
-  return `# ${destination} itinerary (${start} → ${end})
+  return `# ${destination} Itinerary (${start} → ${end})
 
-**Party:** ${travelers} • **Style:** ${level} • **Budget:** $${budget}
+**Travelers:** ${travelers} | **Style:** ${level} | **Budget:** $${budget}
 
 **Preferences:** ${prefs || '—'}
 
 ---
 
 ## Trip Summary
-- Balanced mix of must-sees and local gems in ${destination}.
-- Cluster sights by neighborhood to minimize transit.
+Balanced mix of must-sees and local gems in ${destination}. Use transit passes to reduce costs.
 
 ## Day 1
-- **Morning:** Historic center
-- **Afternoon:** Market & park
-- **Evening:** Classic local dinner
+- Morning: Historic center — [Map](map:${destination} center)
+- Afternoon: Major museum — [Tickets](tickets:${destination} museum)
+- Evening: Local dinner — [Reviews](reviews:${destination} best dinner)
 
-## Day 2
-- **Morning:** Headliner museum
-- **Afternoon:** River walk
-- **Evening:** Food hall + dessert
+## Getting Around
+- Day pass recommended; taxis for late nights.
 
----
-
-## Rough Costs
-- **Accommodation:** varies by style
-- **Food:** $25–$45 pp/day
-- **Activities:** $10–$25 / museum
-- **Transit:** day passes are best value
+## Budget (rough)
+| Item | Estimate |
+| --- | ---: |
+| Stay | $100–180/night |
+| Food | $25–45 pp/day |
+| Activities | $10–25 each |
+| Transit | $5–15/day |
 `;
 }
 
-// ---------- Optional OpenAI ----------
+// ---------- OpenAI ----------
 const openaiEnabled = !!process.env.OPENAI_API_KEY;
 const openai = openaiEnabled ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 
 async function generateWithOpenAI(payload) {
-  // Tighter prompt: time slots, logistics, no raw URLs (we attach affiliates)
-  const sys =
-    'You are a travel planner. Produce a realistic, concise, day-by-day itinerary with time blocks (Morning/Afternoon/Evening), practical logistics (transit modes, durations, neighborhoods), and 2–3 specific food picks per day when appropriate. Output strictly in Markdown (no HTML). Do NOT include any raw URLs. Use short paragraphs and bullet lists.';
+  const { destination, start, end, travelers, level, budget, prefs, long_input } = payload || {};
 
-  const user = `Destination: ${payload.destination}
-Dates: ${payload.start} → ${payload.end}
-Travelers: ${payload.travelers}
-Style: ${payload.level}
-Budget(USD): ${payload.budget}
-Preferences: ${payload.prefs || '-'}
+  // ===== Wayzo PRO report prompt (tokenized links) =====
+  const sys = [
+    "You are Wayzo, a professional travel planner.",
+    "Return a polished, publication-quality TRIP REPORT in Markdown.",
+    "Include SHORT sentences for each recommendation (what/why/value).",
+    "Include explicit link tokens using this exact format:",
+    "  [Map](map:PLACE), [Tickets](tickets:PLACE), [Book](book:PLACE), [Reviews](reviews:PLACE), [Add to Calendar](cal:TITLE OR SLOT).",
+    "Do NOT use real URLs; only these tokens. No HTML.",
+    "Write for PDF readability: clear headers, bullets, tables.",
+  ].join(" ");
 
-Return an elegant Markdown itinerary only. Avoid URLs; we'll attach maps/booking links.`;
+  const user = [
+    `Destination: ${destination || "-"}`,
+    `Dates: ${start || "-"} → ${end || "-"}`,
+    `Travelers: ${travelers || "-"}`,
+    `Style: ${level || "-"}`,
+    `Budget(USD): ${budget || "-"}`,
+    `Preferences: ${prefs || "-"}`,
+    long_input ? `Extra brief:\n${long_input}` : "",
+    "",
+    "Follow THIS SECTION ORDER exactly:",
+    "",
+    "# <Destination> Itinerary (<Start> – <End>)",
+    "",
+    "**Travelers:** <n> | **Style:** <style> | **Budget:** <budget> | **Season:** <auto>",
+    "",
+    "Actions: Download PDF | Edit Inputs",
+    "",
+    "## Quick Facts",
+    "- Weather (typical for dates, 1 line per day if possible).",
+    "- Currency symbol and common payment notes.",
+    "- Language.",
+    "- Power/plug type; voltage; include note to bring adapter.",
+    "- Tipping norms.",
+    "",
+    `**[View Full Trip Map](map:${destination || "City Center"})**`,
+    "",
+    "## Trip Summary",
+    "- 2–4 bullets: overall approach, neighborhoods, pacing.",
+    "- 1 'Don't Miss' line for a signature moment.",
+    "",
+    "## Where to Stay",
+    "- Budget: <Hotel — 1-sentence why>. [Book](book:<Hotel>) | [Map](map:<Hotel>)",
+    "- Mid: <Hotel — 1-sentence why>. [Book](book:<Hotel>) | [Map](map:<Hotel>)",
+    "- High: <Hotel — 1-sentence why>. [Book](book:<Hotel>) | [Map](map:<Hotel>)",
+    "Add a tip on which area fits which traveler.",
+    "",
+    "## Highlights",
+    "- <Attraction — 1-sentence value>. [Map](map:<Attraction>) | [Tickets](tickets:<Attraction>) | [Reviews](reviews:<Attraction>)",
+    "- Include 6–10 items mixing icons and hidden gems.",
+    "",
+    "## Day-by-Day Plan",
+    "### Day 1 — <Theme>",
+    "- Morning: <Place + short why>. [Map](map:<Place>) | [Tickets](tickets:<Place>) | [Reviews](reviews:<Place>)",
+    "- Afternoon: <Place + short why>. [Map](map:<Place>) | [Reviews](reviews:<Place>)",
+    "- Evening: <Place + short why>. [Map](map:<Place>) | [Tickets](tickets:<Place>)",
+    "- If raining: <Indoor alt>. [Map](map:<Alt>)",
+    "- With kids: <Kid-friendly alt>. [Map](map:<Alt>)",
+    "- Meals: Breakfast <Place — cue>. [Reviews](reviews:<Place>) | [Map](map:<Place>); Lunch <...>; Dinner <...>.",
+    "- Transit total today: ~<mins> walking, ~<mins> metro/taxi.",
+    "",
+    "### Day 2 — <Theme>",
+    "(Repeat same structure.)",
+    "",
+    "### Day 3 — <Theme>",
+    "(Repeat if trip length permits.)",
+    "",
+    "## Getting Around",
+    "- Airport → city options with times/costs.",
+    "- Transit passes and typical ride times.",
+    "- Taxi/rideshare ranges.",
+    "",
+    "## Budget Summary (rough)",
+    "| Category | Per Day | Total | Notes |",
+    "|---|---:|---:|---|",
+    "| Stay | $… | $… | by style |",
+    "| Food | $… | $… | per person/day |",
+    "| Activities | $… | $… | key paid items |",
+    "| Transit | $… | $… | passes/transfers |",
+    "",
+    "## Dining Short-List",
+    "- <Restaurant — cuisine; 1-sentence cue>. [Reviews](reviews:<Restaurant>) | [Map](map:<Restaurant>)",
+    "- 6–10 items mixing budget tiers.",
+    "",
+    "## Packing + Etiquette",
+    "- Packing: 3–5 bullets tailored to dates.",
+    "- Etiquette: 3–5 bullets; scams to avoid.",
+    "",
+    "## Bookings Checklist",
+    "- <Attraction/Experience — timing>. [Tickets](tickets:<Item>) | [Add to Calendar](cal:<Item>)",
+    "- Include 5–8 items.",
+    "",
+    "## Footer",
+    "- Generated by Wayzo, <today local time>. Prices/availability can change.",
+    "",
+    "IMPORTANT:",
+    "- Use the token links exactly as shown (map:, tickets:, book:, reviews:, cal:).",
+    "- Add a short helpful sentence for each recommendation (what/why/value).",
+    "- Keep tone professional and concise."
+  ].join("\n");
 
   const resp = await openai.chat.completions.create({
     model: process.env.WAYZO_MODEL || 'gpt-4o-mini',
-    temperature: 0.6,
+    temperature: 0.5,
     messages: [
       { role: 'system', content: sys },
       { role: 'user',   content: user },
     ],
   });
-  return resp.choices?.[0]?.message?.content?.trim() || '';
+
+  let md = resp.choices?.[0]?.message?.content?.trim() || '';
+  // Convert token links to real affiliate URLs
+  md = linkifyTokens(md, destination || '');
+  return md;
 }
 
 // ---------- API ----------
@@ -236,6 +366,9 @@ app.get('/api/plan/:id/pdf', (req, res) => {
     body{font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:24px;color:#0f172a}
     h1,h2,h3{margin:.8rem 0 .4rem}
     ul{margin:.3rem 0 .6rem 1.2rem}
+    table{border-collapse:collapse;margin:.4rem 0;width:100%}
+    th,td{border:1px solid #e2e8f0;padding:6px 8px;text-align:left}
+    th{text-align:left;background:#f8fafc}
     .muted{color:#64748b}
     @media print { a { color: inherit; text-decoration: none; } }
   </style></head>
