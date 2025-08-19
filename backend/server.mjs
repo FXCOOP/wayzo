@@ -13,7 +13,7 @@ import Database from 'better-sqlite3';
 import { marked } from 'marked';
 import OpenAI from 'openai';
 
-const WAYZO_VERSION = 'pro-report-2025-08-19-v3'; // <-- visible at /api/version
+const WAYZO_VERSION = 'pro-report-2025-08-19-v4';
 
 // ---------- Paths ----------
 const __filename = fileURLToPath(import.meta.url);
@@ -74,12 +74,11 @@ const uid = () => (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(3
 
 // ---------- Affiliates (optional env IDs) ----------
 const AFF = {
-  bookingAid: process.env.BOOKING_AID || "",   // e.g. 1234567
-  gygPid:     process.env.GYG_PID || "",       // e.g. ABCD123
+  bookingAid: process.env.BOOKING_AID || "",
+  gygPid:     process.env.GYG_PID || "",
   kayakAid:   process.env.KAYAK_AID || "",
 };
 
-// Quick links shown on the page (unchanged)
 function affiliatesFor(dest = '') {
   const q = encodeURIComponent(dest || '');
   const bookingAidParam = AFF.bookingAid ? `&aid=${AFF.bookingAid}` : '';
@@ -118,7 +117,7 @@ function linkifyTokens(markdown, destination = '') {
   });
 }
 
-// ---------- Local PRO fallback (so even w/o OpenAI it’s long & professional) ----------
+// ---------- Local PRO fallback ----------
 function localPlanMarkdown(input) {
   const { destination='Your destination', start='start', end='end', budget=1500, travelers=2, level='budget', prefs='' } = input || {};
   const md = `# ${destination} Itinerary (${start} – ${end})
@@ -128,22 +127,22 @@ function localPlanMarkdown(input) {
 Actions: Download PDF | Edit Inputs
 
 ## Quick Facts
-- Weather: seasonal temps; confirm 48h prior.
+- Weather: typical temps near your dates; check 48h before travel.
 - Currency: local; cards widely accepted.
 - Language: English availability varies.
-- Power: bring adapter.
-- Tipping: typical ranges.
+- Power: bring adapter (see plug type).
+- Tipping: common ranges by venue.
 
 **[View Full Trip Map](map:${destination} center)**
 
 ## Trip Summary
-- Cluster by neighborhoods to reduce transit.
-- Mix icons + hidden gems.
+- Cluster by neighborhoods to reduce transit time.
+- Mix icons + hidden gems with timed entries where needed.
 - Don’t Miss: signature viewpoint at sunset.
 
 ## Where to Stay
-- **Budget:** Sample Hotel — central and clean. [Book](book:Sample Hotel ${destination}) | [Map](map:Sample Hotel ${destination})
-- **Mid:** Midtown Boutique — quiet, walkable. [Book](book:Midtown Boutique ${destination}) | [Map](map:Midtown Boutique ${destination})
+- **Budget:** Sample Hotel — central & clean. [Book](book:Sample Hotel ${destination}) | [Map](map:Sample Hotel ${destination})
+- **Mid:** Midtown Boutique — walkable & quiet. [Book](book:Midtown Boutique ${destination}) | [Map](map:Midtown Boutique ${destination})
 - **High:** Grand Palace — top service & views. [Book](book:Grand Palace ${destination}) | [Map](map:Grand Palace ${destination})
 
 ## Highlights
