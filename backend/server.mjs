@@ -13,7 +13,7 @@ import Database from 'better-sqlite3';
 import { marked } from 'marked';
 import OpenAI from 'openai';
 
-const WAYZO_VERSION = 'pro-report-2025-08-19-v4';
+const WAYZO_VERSION = 'pro-report-2025-08-19-v5';
 
 // ---------- Paths ----------
 const __filename = fileURLToPath(import.meta.url);
@@ -41,14 +41,39 @@ app.use(express.json({ limit: '1mb' }));
 app.use(rateLimit({ windowMs: 60_000, max: 200, standardHeaders: true, legacyHeaders: false, validate: { trustProxy: true } }));
 
 // ---------- Static ----------
-app.use('/docs', express.static(DOCS_DIR, { setHeaders: (res) => res.setHeader('Cache-Control', 'public, max-age=604800') }));
-app.use(express.static(FRONTEND_DIR, {
-  setHeaders: (res, filePath) => {
-    if (/\.css$/i.test(filePath)) res.setHeader('Content-Type', 'text/css; charset=utf-8');
-    if (/\.js$/i.test(filePath))  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-    if (/\.(css|js|svg|png|jpg|jpeg|webp|ico)$/i.test(filePath)) res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-  },
-}));
+app.use(
+  '/docs',
+  express.static(DOCS_DIR, {
+    setHeaders: (res) => res.setHeader('Cache-Control', 'public, max-age=604800'),
+  })
+);
+
+// NEW: also mount the frontend at /frontend so /frontend/style.css works
+app.use(
+  '/frontend',
+  express.static(FRONTEND_DIR, {
+    setHeaders: (res, filePath) => {
+      if (/\.css$/i.test(filePath)) res.setHeader('Content-Type', 'text/css; charset=utf-8');
+      if (/\.js$/i.test(filePath))  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      if (/\.(css|js|svg|png|jpg|jpeg|webp|ico)$/i.test(filePath)) {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      }
+    },
+  })
+);
+
+// Keep this so /style.css and /app.js also work
+app.use(
+  express.static(FRONTEND_DIR, {
+    setHeaders: (res, filePath) => {
+      if (/\.css$/i.test(filePath)) res.setHeader('Content-Type', 'text/css; charset=utf-8');
+      if (/\.js$/i.test(filePath))  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      if (/\.(css|js|svg|png|jpg|jpeg|webp|ico)$/i.test(filePath)) {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      }
+    },
+  })
+);
 
 // Root → HTML
 app.get('/', (_req, res) => {
@@ -119,7 +144,7 @@ function linkifyTokens(markdown, destination = '') {
 
 // ---------- Local PRO fallback ----------
 function localPlanMarkdown(input) {
-  const { destination='Your destination', start='start', end='end', budget=1500, travelers=2, level='budget', prefs='' } = input || {};
+  const { destination='Your destination', start='start', end='end', budget=1500, travelers=2, level='budget' } = input || {};
   const md = `# ${destination} Itinerary (${start} – ${end})
 
 **Travelers:** ${travelers} | **Style:** ${level} | **Budget:** $${budget}
@@ -129,7 +154,7 @@ Actions: Download PDF | Edit Inputs
 ## Quick Facts
 - Weather: typical temps near your dates; check 48h before travel.
 - Currency: local; cards widely accepted.
-- Language: English availability varies.
+- Language: spoken languages + English availability.
 - Power: bring adapter (see plug type).
 - Tipping: common ranges by venue.
 
