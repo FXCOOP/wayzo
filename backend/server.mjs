@@ -11,187 +11,313 @@ import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import Database from 'better-sqlite3';
 import { marked } from 'marked';
-
-// ---- Optional OpenAI (will gracefully fall back if key missing)
 import OpenAI from 'openai';
+
+const WAYZO_VERSION = 'staging-v7';
 
 // ---------- Paths ----------
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const repoRoot = path.resolve(__dirname, '..');
+const REPO_ROOT = path.resolve(__dirname, '..');
 
-const FRONTEND_DIR = path.join(repoRoot, 'frontend');
-const DOCS_DIR = path.join(repoRoot, 'docs');
+const FRONTEND_DIR = path.join(REPO_ROOT, 'frontend');
+const DOCS_DIR = path.join(REPO_ROOT, 'docs');
 let INDEX_FILE = path.join(FRONTEND_DIR, 'index.backend.html');
 if (!fs.existsSync(INDEX_FILE)) {
   const alt = path.join(FRONTEND_DIR, 'index.html');
   if (fs.existsSync(alt)) INDEX_FILE = alt;
-  const PRO_INDEX_FILE = path.join(FRONTEND_DIR, 'pro.html');
 }
-
-console.log('Serving frontend from:', FRONTEND_DIR);
-console.log('Serving docs from:', DOCS_DIR);
-console.log('Index file:', INDEX_FILE);
 
 // ---------- App ----------
 const app = express();
 const PORT = Number(process.env.PORT || 10000);
 
 app.set('trust proxy', 1);
-app.use(
-  helmet({
-    contentSecurityPolicy: false,
-    crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
-  })
-);
+app.use(helmet({ contentSecurityPolicy: false, crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' } }));
 app.use(compression());
 app.use(morgan('tiny'));
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
-app.use(
-  rateLimit({
-    windowMs: 60_000,
-    max: 200,
-    standardHeaders: true,
-    legacyHeaders: false,
-    validate: { trustProxy: true },
-  })
-);
+app.use(rateLimit({ windowMs: 60_000, max: 200, standardHeaders: true, legacyHeaders: false, validate: { trustProxy: true } }));
+
+// ---------- Static ----------
+app.use('/docs', express.static(DOCS_DIR, {
+  setHeaders: (res) => res.setHeader('Cache-Control', 'public, max-age=604800'),
+}));
+
+// also mount frontend at /frontend (so /frontend/style.css works)
+app.use('/frontend', express.static(FRONTEND_DIR, {
+  setHeaders: (res, filePath) => {
+    if (/\.css$/i.test(filePath)) res.setHeader('Content-Type', 'text/css; charset=utf-8');
+    if (/\.js$/i.test(filePath))  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    if (/\.(css|js|svg|png|jpg|jpeg|webp|ico)$/i.test(filePath)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    }
+  },
+}));
+
+// and at root
+app.use(express.static(FRONTEND_DIR, {
+  setHeaders: (res, filePath) => {
+    if (/\.css$/i.test(filePath)) res.setHeader('Content-Type', 'text/css; charset=utf-8');
+    if (/\.js$/i.test(filePath))  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    if (/\.(css|js|svg|png|jpg|jpeg|webp|ico)$/i.test(filePath)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    }
+  },
+}));
+
+// ---------- Root / Health / Version ----------
+app.get('/', (_req, res) => {
+  res.setHeader('X-Wayzo-Version', WAYZO_VERSION);
+  if (!fs.existsSync(INDEX_FILE)) return res.status(500).send('index file missing');
+  res.sendFile(INDEX_FILE);
+});
+app.get('/api/health', (_req, res) => res.json({ ok: true, version: WAYZO_VERSION }));
+app.get('/healthz', (_req, res) => res.status(200).send('ok'));
+app.get('/api/version', (_req, res) => res.json({ version: WAYZO_VERSION }));
 
 // ---------- DB ----------
-const dbPath = path.join(repoRoot, 'wayzo.sqlite');
+const dbPath = path.join(REPO_ROOT, 'wayzo.sqlite');
 const db = new Database(dbPath);
-db.exec(`
-  CREATE TABLE IF NOT EXISTS plans (
-    id TEXT PRIMARY KEY,
-    created_at TEXT NOT NULL,
-    payload TEXT NOT NULL
-  );
-`);
-const savePlan = db.prepare(
-  'INSERT OR REPLACE INTO plans (id, created_at, payload) VALUES (?, ?, ?)'
-);
-const getPlan = db.prepare('SELECT payload FROM plans WHERE id = ?');
+db.exec(`CREATE TABLE IF NOT EXISTS plans (id TEXT PRIMARY KEY, created_at TEXT NOT NULL, payload TEXT NOT NULL);`);
+const savePlan = db.prepare('INSERT OR REPLACE INTO plans (id, created_at, payload) VALUES (?, ?, ?)');
+const getPlan  = db.prepare('SELECT payload FROM plans WHERE id = ?');
 
 const nowIso = () => new Date().toISOString();
-const uid = () =>
-  (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
+const uid = () => (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
 
-// ---------- Static (CRITICAL: before catch-all) ----------
-app.use(
-  '/docs',
-  express.static(DOCS_DIR, {
-    setHeaders: (res) =>
-      res.setHeader('Cache-Control', 'public, max-age=604800'), // 7d
-  })
-);
-
-app.use(
-  express.static(FRONTEND_DIR, {
-    setHeaders: (res, filePath) => {
-      if (/\.css$/i.test(filePath))
-        res.setHeader('Content-Type', 'text/css; charset=utf-8');
-      if (/\.js$/i.test(filePath))
-        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-      if (/\.(css|js|svg|png|jpg|jpeg|webp|ico)$/i.test(filePath)) {
-        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-      }
-    },
-  })
-);
-
-// ---------- Health ----------
-app.get('/api/health', (_req, res) => res.json({ ok: true }));
-app.get('/healthz', (_req, res) => res.status(200).send('ok'));
-app.get('/__debug', (_req, res) => {
-  res.json({
-    now: nowIso(),
-    node: process.version,
-    paths: { repoRoot, FRONTEND_DIR, DOCS_DIR, INDEX_FILE },
-  });
-});
-
-// ---------- Affiliates ----------
+// ---------- Affiliates (supports both env styles) ----------
+const AFF = {
+  bookingAid: process.env.BOOKING_AID || process.env.AFF_BOOKING_AID || "",
+  gygPid:     process.env.GYG_PID     || process.env.AFF_GYG_PARTNER || "",
+  kayakAid:   process.env.KAYAK_AID   || process.env.AFF_KAYAK_AFF   || "",
+};
 function affiliatesFor(dest = '') {
   const q = encodeURIComponent(dest || '');
+  const bookingAidParam = AFF.bookingAid ? `&aid=${AFF.bookingAid}` : '';
+  const gygPidParam     = AFF.gygPid     ? `&partner_id=${AFF.gygPid}` : '';
   return {
-    flights: `https://www.kayak.com/flights?query=${q}`,
-    hotels: `https://www.booking.com/searchresults.html?ss=${q}`,
-    activities: `https://www.getyourguide.com/s/?q=${q}`,
-    cars: `https://www.rentalcars.com/SearchResults.do?destination=${q}`,
+    maps:      `https://www.google.com/maps/search/?api=1&query=${q}`,
+    flights:   `https://www.kayak.com/flights?search=${q}${AFF.kayakAid ? `&aid=${AFF.kayakAid}` : ''}`,
+    hotels:    `https://www.booking.com/searchresults.html?ss=${q}${bookingAidParam}`,
+    activities:`https://www.getyourguide.com/s/?q=${q}${gygPidParam}`,
+    cars:      `https://www.rentalcars.com/SearchResults.do?destination=${q}`,
     insurance: `https://www.worldnomads.com/`,
-    reviews: `https://www.tripadvisor.com/Search?q=${q}`,
+    reviews:   `https://www.tripadvisor.com/Search?q=${q}`,
   };
 }
 
-// ---------- Local content (fallback) ----------
-function localPlanMarkdown(input) {
-  const {
-    destination = 'Your destination',
-    start = 'start',
-    end = 'end',
-    budget = 1500,
-    travelers = 2,
-    level = 'budget',
-    prefs = '',
-  } = input || {};
-  return `# ${destination} itinerary (${start} → ${end})
-
-**Party:** ${travelers} • **Style:** ${level} • **Budget:** $${budget}
-
-**Preferences:** ${prefs || '—'}
-
----
-
-## Trip Summary
-- Balanced mix of must-sees and local gems in ${destination}.
-- Group sights by neighborhoods to minimize transit.
-
-## Day 1
-- **Morning:** Historic center
-- **Afternoon:** Market & park
-- **Evening:** Classic local dinner
-
-## Day 2
-- **Morning:** Headliner museum
-- **Afternoon:** River walk
-- **Evening:** Food hall + dessert
-
----
-
-## Rough Costs
-- **Accommodation:** varies by style
-- **Food:** $25–$45 pp/day
-- **Activities:** $10–$25 / museum
-- **Transit:** day passes best value
-`;
+// ---------- Token links → Real URLs ----------
+function linkFor(kind, place, destination = '') {
+  const q = encodeURIComponent(`${place} ${destination}`.trim());
+  const bookingAidParam = AFF.bookingAid ? `&aid=${AFF.bookingAid}` : '';
+  const gygPidParam     = AFF.gygPid     ? `&partner_id=${AFF.gygPid}` : '';
+  switch (kind) {
+    case 'map':     return `https://www.google.com/maps/search/?api=1&query=${q}`;
+    case 'book':    return `https://www.booking.com/searchresults.html?ss=${q}${bookingAidParam}`;
+    case 'tickets': return `https://www.getyourguide.com/s/?q=${q}${gygPidParam}`;
+    case 'reviews': return `https://www.tripadvisor.com/Search?q=${q}`;
+    case 'cal':     return `https://calendar.google.com/`;
+    default:        return '#';
+  }
+}
+function linkifyTokens(markdown, destination = '') {
+  if (!markdown) return markdown;
+  const re = /\[(Map|Tickets|Book|Reviews|Add to Calendar)\]\((map|tickets|book|reviews|cal):([^)]+)\)/gi;
+  return markdown.replace(re, (_m, label, kind, body) => {
+    const place = String(body || '').replace(/\s+/g, ' ').trim();
+    return `[${label}](${linkFor(kind.toLowerCase(), place, destination)})`;
+  });
 }
 
-// ---------- Optional OpenAI ----------
+// ---------- Local PRO fallback ----------
+function localPlanMarkdown(input) {
+  const { destination='Your destination', start='start', end='end', budget=1500, travelers=2, level='budget' } = input || {};
+  const md = `# ${destination} Itinerary (${start} – ${end})
+
+**Travelers:** ${travelers} | **Style:** ${level} | **Budget:** $${budget}
+
+Actions: Download PDF | Edit Inputs
+
+## Quick Facts
+- Weather: typical temps near your dates; check 48h before travel.
+- Currency: local; cards widely accepted.
+- Language: spoken languages + English availability.
+- Power: bring adapter (see plug type).
+- Tipping: common ranges by venue.
+
+**[View Full Trip Map](map:${destination} center)**
+
+## Trip Summary
+- Cluster by neighborhoods to reduce transit time.
+- Mix icons + hidden gems with timed entries where needed.
+- Don’t Miss: signature viewpoint at sunset.
+
+## Where to Stay
+- **Budget:** Sample Hotel — central & clean. [Book](book:Sample Hotel ${destination}) | [Map](map:Sample Hotel ${destination})
+- **Mid:** Midtown Boutique — walkable & quiet. [Book](book:Midtown Boutique ${destination}) | [Map](map:Midtown Boutique ${destination})
+- **High:** Grand Palace — top service & views. [Book](book:Grand Palace ${destination}) | [Map](map:Grand Palace ${destination})
+
+## Highlights
+- Main Museum — prebook to skip lines. [Map](map:${destination} Main Museum) | [Tickets](tickets:${destination} Main Museum) | [Reviews](reviews:${destination} Main Museum)
+- Old Town — cafés & architecture. [Map](map:${destination} Old Town) | [Reviews](reviews:${destination} Old Town)
+- River Cruise — best at dusk. [Map](map:${destination} River Cruise) | [Tickets](tickets:${destination} River Cruise)
+
+## Day-by-Day Plan
+### Day 1 — Historic Core
+- Morning: Main Museum — hit top halls first. [Map](map:${destination} Main Museum) | [Tickets](tickets:${destination} Main Museum)
+- Afternoon: Cathedral & square — short loop. [Map](map:${destination} Cathedral)
+- Evening: River Cruise — city lights. [Map](map:${destination} River Cruise) | [Tickets](tickets:${destination} River Cruise)
+- Meals: Breakfast “Café One”; Lunch “Bistro Two”; Dinner “Brasserie Three”. [Reviews](reviews:${destination} Café One) | [Map](map:${destination} Café One)
+- Transit: ~25m walk + ~15m metro/taxi.
+
+## Getting Around
+- Airport → center options with times & costs.
+- Day passes save money for 3+ rides/day.
+- Taxi/rideshare for late nights.
+
+## Budget Summary (rough)
+| Category | Per Day | Total | Notes |
+|---|---:|---:|---|
+| Stay | $… | $… | by style |
+| Food | $… | $… | per person/day |
+| Activities | $… | $… | key paid items |
+| Transit | $… | $… | passes/transfers |
+
+## Dining Short-List
+- Café One — iconic breakfast. [Reviews](reviews:${destination} Café One) | [Map](map:${destination} Café One)
+- Le Soufflé — classic mains + dessert. [Reviews](reviews:${destination} Le Soufflé) | [Map](map:${destination} Le Soufflé)
+
+## Bookings Checklist
+- Main Museum 9:00 — timed entry. [Tickets](tickets:${destination} Main Museum) | [Add to Calendar](cal:${destination} Main Museum 09:00)
+- River Cruise 19:00 — sunset slot. [Tickets](tickets:${destination} River Cruise) | [Add to Calendar](cal:${destination} River Cruise 19:00)
+
+## Footer
+Generated by Wayzo.`;
+  return linkifyTokens(md, destination);
+}
+
+// ---------- OpenAI ----------
 const openaiEnabled = !!process.env.OPENAI_API_KEY;
 const openai = openaiEnabled ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 
+const REQUIRED_SECTIONS = [
+  '## Quick Facts',
+  '## Trip Summary',
+  '## Where to Stay',
+  '## Highlights',
+  '## Day-by-Day Plan',
+  '## Getting Around',
+  '## Budget Summary',
+  '## Dining Short-List',
+  '## Bookings Checklist',
+  '## Footer'
+];
+function looksComplete(md = '') { return REQUIRED_SECTIONS.every(h => md.includes(h)); }
+
 async function generateWithOpenAI(payload) {
-  const sys = `You produce concise, realistic travel itineraries with concrete logistics, time checks, and restaurant picks. Output strictly in Markdown (no HTML), with short sections and bullet lists. Keep it clear, helpful, and formatted with headings and bullet lists.`;
-  const user = `Destination: ${payload.destination}
-Dates: ${payload.start} → ${payload.end}
-Travelers: ${payload.travelers}
-Style: ${payload.level}
-Budget(USD): ${payload.budget}
-Prefs: ${payload.prefs || '-'}
-  
-Return an elegant Markdown itinerary.`;
+  const { destination, start, end, travelers, level, budget, prefs, long_input } = payload || {};
+  const sys = [
+    'You are Wayzo, a professional travel planner.',
+    'Return a polished, publication-quality TRIP REPORT in Markdown only.',
+    'Every recommendation must include a short what/why/value sentence.',
+    'Use ONLY token links like: [Map](map:PLACE), [Tickets](tickets:PLACE), [Book](book:PLACE), [Reviews](reviews:PLACE), [Add to Calendar](cal:TITLE).',
+    'No real URLs. No HTML. Follow the requested section order exactly.',
+  ].join(' ');
 
-  const resp = await openai.chat.completions.create({
-    model: process.env.WAYZO_MODEL || 'gpt-4o-mini',
-    temperature: 0.6,
-    messages: [
-      { role: 'system', content: sys },
-      { role: 'user', content: user },
-    ],
-  });
+  const user = [
+    `Destination: ${destination || '-'}`,
+    `Dates: ${start || '-'} → ${end || '-'}`,
+    `Travelers: ${travelers || '-'}`,
+    `Style: ${level || '-'}`,
+    `Budget(USD): ${budget || '-'}`,
+    `Preferences: ${prefs || '-'}`,
+    long_input ? `Extra brief:\n${long_input}` : '',
+    '',
+    'SECTION ORDER (exact):',
+    '# <Destination> Itinerary (<Start> – <End>)',
+    '',
+    '**Travelers:** <n> | **Style:** <style> | **Budget:** <budget> | **Season:** <auto>',
+    '',
+    'Actions: Download PDF | Edit Inputs',
+    '',
+    '## Quick Facts',
+    '- Weather (per-day if possible).',
+    '- Currency; payment notes.',
+    '- Language.',
+    '- Power/plug; adapter note.',
+    '- Tipping norms.',
+    '',
+    `**[View Full Trip Map](map:${destination || 'City Center'})**`,
+    '',
+    '## Trip Summary',
+    '- 2–4 bullets: approach, neighborhoods, pacing.',
+    "- Don’t Miss: one signature moment.",
+    '',
+    '## Where to Stay',
+    '- Budget: <Hotel — why>. [Book](book:<Hotel>) | [Map](map:<Hotel>)',
+    '- Mid: <Hotel — why>. [Book](book:<Hotel>) | [Map](map:<Hotel>)',
+    '- High: <Hotel — why>. [Book](book:<Hotel>) | [Map](map:<Hotel>)',
+    'Tip which area fits which traveler.',
+    '',
+    '## Highlights',
+    '- <Attraction — value>. [Map](map:<Attraction>) | [Tickets](tickets:<Attraction>) | [Reviews](reviews:<Attraction>)',
+    'Include 6–10 items.',
+    '',
+    '## Day-by-Day Plan',
+    '### Day 1 — <Theme>',
+    '- Morning: <Place — why>. [Map](map:<Place>) | [Tickets](tickets:<Place>) | [Reviews](reviews:<Place>)',
+    '- Afternoon: <Place — why>. [Map](map:<Place>) | [Reviews](reviews:<Place>)',
+    '- Evening: <Place — why>. [Map](map:<Place>) | [Tickets](tickets:<Place>)',
+    '- If raining: <Indoor alt>. [Map](map:<Alt>)',
+    '- With kids: <Kid alt>. [Map](map:<Alt>)',
+    '- Meals: Breakfast <Place>. [Reviews](reviews:<Place>) | [Map](map:<Place>); Lunch <...>; Dinner <...>.',
+    '- Transit total today: ~<mins> walking, ~<mins> metro/taxi.',
+    '',
+    '### Day 2 — <Theme>',
+    '(Repeat.)',
+    '',
+    '### Day 3 — <Theme>',
+    '(Repeat as needed.)',
+    '',
+    '## Getting Around',
+    '- Airport → city with times/costs.',
+    '- Passes and typical ride times.',
+    '- Taxi/rideshare ranges.',
+    '',
+    '## Budget Summary (rough)',
+    '| Category | Per Day | Total | Notes |',
+    '|---|---:|---:|---|',
+    '| Stay | $… | $… | by style |',
+    '| Food | $… | $… | per person/day |',
+    '| Activities | $… | $… | key paid items |',
+    '| Transit | $… | $… | passes/transfers |',
+    '',
+    '## Dining Short-List',
+    '- <Restaurant — cuisine; cue>. [Reviews](reviews:<Restaurant>) | [Map](map:<Restaurant>)',
+    'Provide 6–10 items.',
+    '',
+    '## Bookings Checklist',
+    '- <Item — timing>. [Tickets](tickets:<Item>) | [Add to Calendar](cal:<Item>)',
+    'Include 5–8 items.',
+    '',
+    '## Footer',
+    '- Generated by Wayzo, <today local time>. Prices/availability can change.'
+  ].join('\n');
 
-  return resp.choices?.[0]?.message?.content?.trim() || '';
+  let md = '';
+  if (openaiEnabled) {
+    const resp = await openai.chat.completions.create({
+      model: process.env.WAYZO_MODEL || 'gpt-4o-mini',
+      temperature: 0.5,
+      max_tokens: Number(process.env.WAYZO_MAX_TOKENS || 2000),
+      messages: [{ role: 'system', content: sys }, { role: 'user', content: user }],
+    });
+    md = resp.choices?.[0]?.message?.content?.trim() || '';
+  }
+  if (!md || !looksComplete(md)) md = localPlanMarkdown(payload);
+  return linkifyTokens(md, destination || '');
 }
 
 // ---------- API ----------
@@ -199,25 +325,18 @@ app.post('/api/preview', (req, res) => {
   const payload = req.body || {};
   const id = uid();
   const { destination = '' } = payload;
-
   const teaser = `
 <div>
   <h3 class="h3">${destination || 'Your destination'} — preview</h3>
   <ul>
     <li>Morning / Afternoon / Evening blocks</li>
     <li>Neighborhood clustering to reduce transit</li>
-    <li>Use <b>Generate full plan (AI)</b> for a complete day-by-day schedule</li>
+    <li>Use <b>Generate full plan (AI)</b> for a complete schedule</li>
   </ul>
 </div>`.trim();
-
   const aff = affiliatesFor(destination);
-  savePlan.run(
-    id,
-    nowIso(),
-    JSON.stringify({ id, type: 'preview', data: payload, teaser_html: teaser, affiliates: aff })
-  );
-
-  res.json({ id, teaser_html: teaser, affiliates: aff });
+  savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'preview', data: payload, teaser_html: teaser, affiliates: aff }));
+  res.json({ id, teaser_html: teaser, affiliates: aff, version: WAYZO_VERSION });
 });
 
 app.post('/api/plan', async (req, res) => {
@@ -225,25 +344,20 @@ app.post('/api/plan', async (req, res) => {
   const id = uid();
 
   try {
-    let markdown = localPlanMarkdown(payload);
-    if (openaiEnabled) {
-      const out = await generateWithOpenAI(payload);
-      if (out) markdown = out;
-    }
+    let markdown = await generateWithOpenAI(payload);
     const aff = affiliatesFor(payload.destination);
     savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: payload, markdown, affiliates: aff }));
-    res.json({ id, markdown, affiliates: aff });
+    res.json({ id, markdown, affiliates: aff, version: WAYZO_VERSION });
   } catch (e) {
-    console.error('AI error → fallback to local:', e);
+    console.error('AI error → fallback:', e);
     const markdown = localPlanMarkdown(payload);
     const aff = affiliatesFor(payload.destination);
     savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: payload, markdown, affiliates: aff }));
-    res.json({ id, markdown, affiliates: aff });
+    res.json({ id, markdown, affiliates: aff, version: WAYZO_VERSION });
   }
 });
 
-// NOTE: simple HTML “PDF view” (works on Render without headless Chrome).
-// If you want a binary PDF later, we can swap in pdf-lib. Frontend already links to this.
+// ---------- PDF ----------
 app.get('/api/plan/:id/pdf', (req, res) => {
   const { id } = req.params;
   const row = getPlan.get(id);
@@ -257,29 +371,32 @@ app.get('/api/plan/:id/pdf', (req, res) => {
     body{font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:24px;color:#0f172a}
     h1,h2,h3{margin:.8rem 0 .4rem}
     ul{margin:.3rem 0 .6rem 1.2rem}
+    table{border-collapse:collapse;margin:.4rem 0;width:100%}
+    th,td{border:1px solid #e2e8f0;padding:6px 8px;text-align:left}
+    th{background:#f8fafc}
     .muted{color:#64748b}
+    @media print { a { color: inherit; text-decoration: none; } }
   </style></head>
   <body>
     ${marked.parse(saved.markdown || '')}
-    <p class="muted">Generated by Wayzo</p>
+    <p class="muted">Generated by Wayzo · ${WAYZO_VERSION}</p>
   </body></html>`;
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('X-Wayzo-Version', WAYZO_VERSION);
   res.send(html);
 });
 
-// Wayzo Pro page
-app.get('/pro', (_req, res) => {
-  if (fs.existsSync(PRO_INDEX_FILE)) return res.sendFile(PRO_INDEX_FILE);
-  return res.status(404).send('Wayzo Pro not found');
-});
-
-// ---------- SPA catch-all (place AFTER static!) ----------
+// ---------- SPA catch-all ----------
 app.get(/^\/(?!api\/).*/, (_req, res) => {
+  res.setHeader('X-Wayzo-Version', WAYZO_VERSION);
   if (!fs.existsSync(INDEX_FILE)) return res.status(500).send('index file missing');
   res.sendFile(INDEX_FILE);
 });
 
-// ---------- Start ----------
 app.listen(PORT, () => {
   console.log(`Wayzo backend running on :${PORT}`);
+  console.log('Version:', WAYZO_VERSION);
+  console.log('Serving frontend from:', FRONTEND_DIR);
+  console.log('Serving docs from:', DOCS_DIR);
+  console.log('Index file:', INDEX_FILE);
 });

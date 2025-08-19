@@ -4,13 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Wayzo — Plan unforgettable trips in minutes — AI-powered</title>
-
-  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-  <link rel="stylesheet" href="style.css" />
-  <script src="app.js" defer></script>
+  <link rel="icon" type="image/svg+xml" href="/docs/favicon.svg" />
+  <link rel="stylesheet" href="/frontend/style.css" />
+  <script src="/frontend/app.js" defer></script>
 </head>
 <body>
-  <!-- Top bar -->
   <header class="topbar">
     <div class="container topbar-inner">
       <a class="brand" href="/">
@@ -21,16 +19,11 @@
     </div>
   </header>
 
-  <!-- HERO -->
-  <!-- Background comes from CSS var --hero-bg; keep the file at hero-bg.jpg -->
-  <section class="hero" style="--hero-bg: url('hero-bg.jpg')">
+  <section class="hero" style="--hero-bg: url('/docs/hero-mountains.jpg')">
     <div class="container hero-grid">
-      <!-- Left: headline card -->
       <div class="hero-card hero-left">
         <h1>Plan unforgettable trips in minutes — <span class="hl">AI-powered</span></h1>
-        <p class="lede">
-          Personalized itineraries by budget and style. Book flights, stays, and activities — ready to book.
-        </p>
+        <p class="lede">Personalized itineraries by budget and style. Day-by-day guidance you can export to PDF.</p>
         <div class="hero-actions">
           <a class="btn btn-primary" href="#planner">Build my plan</a>
           <a class="btn btn-ghost" href="#planner">See demo</a>
@@ -38,65 +31,67 @@
         <p class="muted small">No app required · Mobile-first · PDF export</p>
       </div>
 
-      <!-- Right: inspiration image card -->
       <figure class="hero-card hero-right">
-        <img src="hero-card.jpg" loading="eager" alt="Wayzo — inspiration for your next trip" />
+        <img src="/docs/hero-road.jpg" loading="eager" alt="Wayzo — inspiration for your next trip" />
         <figcaption>Wayzo — inspiration for your next trip</figcaption>
       </figure>
     </div>
   </section>
 
-  <!-- MAIN -->
   <main id="planner" class="main">
     <div class="container grid-2">
-      <!-- Form -->
-      <section class="card">
-        <div class="card-header">
-          <h2>Trip details</h2>
-        </div>
+      <section class="card" aria-labelledby="trip-details-title">
+        <div class="card-header"><h2 id="trip-details-title">Trip details</h2></div>
         <p class="muted">We’ll tailor routes, hotels, activities, and meals—then generate your full AI plan.</p>
 
-        <form id="tripForm" class="form" style="margin-top:12px">
-          <div class="field">
-            <span>Destination</span>
-            <input id="dest" type="text" name="destination" placeholder="e.g., Paris, Tokyo, Bali" required />
+        <form id="tripForm" class="form" novalidate>
+          <div class="field"><label for="dest"><span>Destination</span></label>
+            <input id="dest" name="destination" type="text" placeholder="City or region (e.g., Paris · Tokyo · Bali)" required />
+            <div class="small muted">Add country for clarity if needed.</div>
           </div>
 
           <div class="fields-2">
-            <div class="field">
-              <span>Start date</span>
-              <input id="start" type="date" name="start" required />
+            <div class="field"><label for="start"><span>Start date</span></label>
+              <input id="start" name="start" type="date" required />
             </div>
-            <div class="field">
-              <span>End date</span>
-              <input id="end" type="date" name="end" required />
+            <div class="field"><label for="end"><span>End date</span></label>
+              <input id="end" name="end" type="date" required />
             </div>
           </div>
+          <div class="small muted">We’ll balance travel time and activities between these dates.</div>
 
           <div class="fields-2">
-            <div class="field">
-              <span>Budget (USD)</span>
-              <input id="budget" type="number" min="100" step="50" name="budget" placeholder="1500" required />
+            <div class="field"><label for="budget"><span>Budget (USD)</span></label>
+              <input id="budget" name="budget" type="number" min="100" step="50" placeholder="Total trip budget (e.g., 2000)" required />
+              <div class="small muted">Total for your party (excluding flights).</div>
             </div>
-            <div class="field">
-              <span>Travelers</span>
-              <input id="travelers" type="number" min="1" step="1" name="travelers" value="2" required />
+            <div class="field"><label for="travelers"><span>Travelers</span></label>
+              <input id="travelers" name="travelers" type="number" min="1" step="1" value="2" required />
+              <div class="small muted">We auto-scale rooms, tables, and tickets.</div>
             </div>
           </div>
 
-          <fieldset class="field">
+          <fieldset class="field" style="margin-top:8px">
             <legend>Style</legend>
             <label class="chip"><input type="radio" name="level" value="budget" checked /> Budget</label>
             <label class="chip"><input type="radio" name="level" value="mid" /> Mid-range</label>
             <label class="chip"><input type="radio" name="level" value="luxury" /> Luxury</label>
           </fieldset>
 
-          <div class="field">
-            <span>Preferences</span>
-            <input id="prefs" type="text" name="prefs" placeholder="e.g., museums, beaches, hiking, kid-friendly" />
+          <div class="field"><label for="prefs"><span>Preferences</span></label>
+            <input id="prefs" name="prefs" type="text" placeholder="Interests (e.g., museums, beaches, hiking, kid-friendly)" />
+            <div class="small muted">Comma-separated interests guide neighborhoods, food, and pacing.</div>
           </div>
 
-          <div class="actions">
+          <!-- NEW: long professional brief (sent as long_input) -->
+          <div class="field">
+            <label for="longInput"><span>Professional brief (long report)</span></label>
+            <textarea id="longInput" name="long_input" rows="10"
+              placeholder="Paste/write a detailed brief: must-see/avoid, vibe, group details, dining prefs, time windows, constraints, anchor events, rainy-day backups."></textarea>
+            <div class="small muted"><span id="longInputCount">0 words • 0 chars</span></div>
+          </div>
+
+          <div class="actions" style="margin-top:10px">
             <button class="btn btn-primary" type="submit" id="previewBtn">Generate preview</button>
             <button class="btn btn-ghost" type="button" id="buyBtn">Generate full plan (AI)</button>
             <button class="btn" type="button" id="saveBtn">Save preview</button>
@@ -105,26 +100,18 @@
         </form>
       </section>
 
-      <!-- Output -->
-      <section class="card">
+      <section class="card" aria-labelledby="itinerary-title">
         <div class="card-header">
-          <h2 class="section-title">Your itinerary</h2>
+          <h2 id="itinerary-title" class="section-title">Your itinerary</h2>
           <span class="pill">AI powered</span>
         </div>
 
-        <div id="preview" class="teaser">
-          <p class="muted">
-            Fill the form and click <b>Generate preview</b>. Then use <b>Generate full plan (AI)</b>.
-          </p>
-        </div>
-
-        <div id="loading" class="hidden" aria-live="polite">
-          <div style="height:10px;background:#e2e8f0;border-radius:8px"></div>
-          <div style="height:10px;background:#e2e8f0;border-radius:8px;margin-top:8px;width:70%"></div>
-        </div>
+        <div id="preview" class="teaser"><p class="muted">Fill the form and click <b>Generate preview</b>. Then use <b>Generate full plan (AI)</b>.</p></div>
+        <div id="loading" class="hidden" aria-live="polite"><div style="height:10px;background:#e2e8f0;border-radius:8px"></div><div style="height:10px;background:#e2e8f0;border-radius:8px;margin-top:8px;width:70%"></div></div>
 
         <div class="actions" style="margin-top:10px">
           <a id="pdfBtn" class="btn hidden" href="#" target="_blank" rel="noopener">⬇️ Download PDF</a>
+          <a id="linkMaps" class="btn" target="_blank" rel="noopener">🗺️ Maps</a>
           <a id="linkFlights" class="btn" target="_blank" rel="noopener">✈️ Flights</a>
           <a id="linkHotels" class="btn" target="_blank" rel="noopener">🏨 Hotels</a>
         </div>
@@ -139,8 +126,23 @@
     </div>
   </main>
 
-  <footer class="footer">
-    <div class="container muted small">© Wayzo. All rights reserved.</div>
-  </footer>
+  <footer class="footer"><div class="container muted small">© Wayzo. All rights reserved.</div></footer>
+
+  <script>
+    (function () {
+      const s = document.getElementById('start'), e = document.getElementById('end');
+      if (s && e) s.addEventListener('change', () => { if (s.value) { e.min = s.value; if (e.value && e.value < s.value) e.value = s.value; } });
+
+      const ta = document.getElementById('longInput'), counter = document.getElementById('longInputCount');
+      function update() {
+        if (!ta) return;
+        const text = ta.value.trim();
+        const words = text ? text.split(/\s+/).length : 0;
+        const chars = text.length;
+        if (counter) counter.textContent = words + ' words • ' + chars + ' chars';
+      }
+      if (ta) { ta.addEventListener('input', update); update(); }
+    })();
+  </script>
 </body>
 </html>
