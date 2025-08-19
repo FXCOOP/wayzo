@@ -19,7 +19,6 @@
     </div>
   </header>
 
-  <!-- HERO -->
   <section class="hero" style="--hero-bg: url('/docs/hero-mountains.jpg')">
     <div class="container hero-grid">
       <div class="hero-card hero-left">
@@ -39,20 +38,17 @@
     </div>
   </section>
 
-  <!-- MAIN -->
   <main id="planner" class="main">
     <div class="container grid-2">
-      <!-- ===== FORM (INPUT ONLY CHANGES) ===== -->
+      <!-- FORM -->
       <section class="card" aria-labelledby="trip-details-title">
         <div class="card-header">
           <h2 id="trip-details-title">Trip details</h2>
         </div>
         <p class="muted">We’ll tailor routes, hotels, activities, and meals—then generate your full AI plan.</p>
 
-        <!-- IDs & names unchanged so existing JS/back-end keep working -->
+        <!-- IDs & names kept so JS/back-end keep working -->
         <form id="tripForm" class="form form-pro" novalidate>
-
-          <!-- Destination -->
           <div class="field has-icon">
             <label for="dest"><span>Destination</span></label>
             <div class="control">
@@ -63,8 +59,7 @@
             <div id="destHelp" class="hint">City, region, or island. Add country for clarity if needed.</div>
           </div>
 
-          <!-- Dates -->
-          <div class="fields-2" role="group" aria-labelledby="datesLegend">
+          <div class="fields-2" role="group">
             <div class="field has-icon">
               <label for="start"><span>Start date</span></label>
               <div class="control">
@@ -82,7 +77,6 @@
           </div>
           <div class="hint">We’ll balance travel time and activities between these dates.</div>
 
-          <!-- Budget / Travelers -->
           <div class="fields-2">
             <div class="field has-icon">
               <label for="budget"><span>Budget (USD)</span></label>
@@ -103,7 +97,6 @@
             </div>
           </div>
 
-          <!-- Style -->
           <fieldset class="field fieldset-chips">
             <legend>Style</legend>
             <div class="chips">
@@ -113,7 +106,6 @@
             </div>
           </fieldset>
 
-          <!-- Preferences (short) -->
           <div class="field has-icon">
             <label for="prefs"><span>Preferences</span></label>
             <div class="control">
@@ -124,39 +116,24 @@
             <div class="hint">Comma-separated interests help with neighborhoods, food, and pacing.</div>
           </div>
 
-          <!-- ===== Long Report Input (NEW — requested) ===== -->
+          <!-- Long report input -->
           <div class="field">
-            <label for="longInput"><span>Professional brief (long report)</span>
-              <span class="tag tag-pro">NEW</span>
-            </label>
-            <textarea id="longInput" name="long_input" class="textarea-pro" rows="14"
-              placeholder="Paste or write a detailed brief for a longer, more professional report.
-
-Suggested outline:
-• Goals & vibe
-• Must-see / must-skip
-• Group (ages, mobility, interests)
-• Dining preferences (budget, cuisine, reservations)
-• Pace & time windows (early risers? night life?)
-• Constraints (dietary, sabbath, stroller, luggage)
-• Dates with anchor events (concerts, tours)
-• Rainy-day backups / indoor focus
-• Neighborhoods you prefer or want to avoid">
-            </textarea>
+            <label for="longInput"><span>Professional brief (long report)</span></label>
+            <textarea id="longInput" name="long_input" class="textarea-pro" rows="12"
+              placeholder="Paste or write a detailed brief: goals & vibe, must-see / must-skip, group details, dining preferences, timing windows, constraints, anchor events, rainy-day backups, preferred/avoid neighborhoods."></textarea>
             <div class="hint"><span id="longInputCount">0 words • 0 chars</span></div>
           </div>
 
-          <!-- Actions -->
           <div class="actions sticky-actions">
-            <button class="btn btn-primary" type="submit" id="previewBtn" aria-label="Generate itinerary preview">Generate preview</button>
-            <button class="btn btn-ghost" type="button" id="buyBtn" aria-label="Generate full AI plan">Generate full plan (AI)</button>
-            <button class="btn" type="button" id="saveBtn" aria-label="Save current preview">Save preview</button>
+            <button class="btn btn-primary" type="submit" id="previewBtn">Generate preview</button>
+            <button class="btn btn-ghost" type="button" id="buyBtn">Generate full plan (AI)</button>
+            <button class="btn" type="button" id="saveBtn">Save preview</button>
           </div>
           <p class="muted small">By continuing you agree to our Terms and Privacy.</p>
         </form>
       </section>
 
-      <!-- ===== OUTPUT (unchanged) ===== -->
+      <!-- OUTPUT (unchanged) -->
       <section class="card" aria-labelledby="itinerary-title">
         <div class="card-header">
           <h2 id="itinerary-title" class="section-title">Your itinerary</h2>
@@ -193,7 +170,6 @@ Suggested outline:
     <div class="container muted small">© Wayzo. All rights reserved.</div>
   </footer>
 
-  <!-- keep end ≥ start without touching app.js -->
   <script>
     (function () {
       const s = document.getElementById('start');
@@ -206,8 +182,6 @@ Suggested outline:
           }
         });
       }
-
-      // Auto-resize + counter for long report textarea (input-only enhancement)
       const ta = document.getElementById('longInput');
       const counter = document.getElementById('longInputCount');
       function update() {
@@ -215,19 +189,15 @@ Suggested outline:
         ta.style.height = 'auto';
         ta.style.height = Math.min(480, ta.scrollHeight) + 'px';
         const text = ta.value.trim();
-        const words = text ? text.split(/\\s+/).length : 0;
+        const words = text ? text.split(/\s+/).length : 0;
         const chars = text.length;
         if (counter) counter.textContent = words + ' words • ' + chars + ' chars';
       }
-      if (ta) {
-        ta.addEventListener('input', update);
-        window.addEventListener('load', update);
-        update();
-      }
+      if (ta) { ta.addEventListener('input', update); window.addEventListener('load', update); update(); }
     })();
   </script>
 
-  <!-- Icons sprite (inline) -->
+  <!-- Icons sprite -->
   <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
     <symbol id="i-location" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5Z"/></symbol>
     <symbol id="i-calendar" viewBox="0 0 24 24"><path fill="currentColor" d="M7 2h2v2h6V2h2v2h3a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3V2Zm13 8H4v9h16v-9Z"/></symbol>

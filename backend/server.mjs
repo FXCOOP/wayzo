@@ -13,8 +13,7 @@ import Database from 'better-sqlite3';
 import { marked } from 'marked';
 import OpenAI from 'openai';
 
-// ===== Wayzo version tag (check at /api/version) =====
-const WAYZO_VERSION = 'wayzo-pro-report-2025-08-19-02';
+const WAYZO_VERSION = 'pro-report-2025-08-19';
 
 // ---------- Paths ----------
 const __filename = fileURLToPath(import.meta.url);
@@ -34,53 +33,27 @@ const app = express();
 const PORT = Number(process.env.PORT || 10000);
 
 app.set('trust proxy', 1);
-app.use(
-  helmet({
-    contentSecurityPolicy: false,
-    crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
-  })
-);
+app.use(helmet({ contentSecurityPolicy: false, crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' } }));
 app.use(compression());
 app.use(morgan('tiny'));
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
-app.use(
-  rateLimit({
-    windowMs: 60_000,
-    max: 200,
-    standardHeaders: true,
-    legacyHeaders: false,
-    validate: { trustProxy: true },
-  })
-);
+app.use(rateLimit({ windowMs: 60_000, max: 200, standardHeaders: true, legacyHeaders: false, validate: { trustProxy: true } }));
 
 // ---------- Static ----------
-app.use(
-  '/docs',
-  express.static(DOCS_DIR, {
-    setHeaders: (res) => res.setHeader('Cache-Control', 'public, max-age=604800'),
-  })
-);
-app.use(
-  express.static(FRONTEND_DIR, {
-    setHeaders: (res, filePath) => {
-      if (/\.css$/i.test(filePath)) res.setHeader('Content-Type', 'text/css; charset=utf-8');
-      if (/\.js$/i.test(filePath))  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-      if (/\.(css|js|svg|png|jpg|jpeg|webp|ico)$/i.test(filePath)) {
-        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-      }
-    },
-  })
-);
+app.use('/docs', express.static(DOCS_DIR, { setHeaders: (res) => res.setHeader('Cache-Control', 'public, max-age=604800') }));
+app.use(express.static(FRONTEND_DIR, {
+  setHeaders: (res, filePath) => {
+    if (/\.css$/i.test(filePath)) res.setHeader('Content-Type', 'text/css; charset=utf-8');
+    if (/\.js$/i.test(filePath))  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    if (/\.(css|js|svg|png|jpg|jpeg|webp|ico)$/i.test(filePath)) res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  },
+}));
 
-// Root -> index
-app.get('/', (_req, res) => {
-  if (!fs.existsSync(INDEX_FILE)) return res.status(500).send('index file missing');
-  res.setHeader('X-Wayzo-Version', WAYZO_VERSION);
-  res.sendFile(INDEX_FILE);
-});
+// Root
+app.get('/', (_req, res) => { res.setHeader('X-Wayzo-Version', WAYZO_VERSION); res.sendFile(INDEX_FILE); });
 
-// ---------- Health / Version ----------
+// Health / Version
 app.get('/api/health', (_req, res) => res.json({ ok: true, version: WAYZO_VERSION }));
 app.get('/healthz', (_req, res) => res.status(200).send('ok'));
 app.get('/api/version', (_req, res) => res.json({ version: WAYZO_VERSION }));
@@ -88,27 +61,19 @@ app.get('/api/version', (_req, res) => res.json({ version: WAYZO_VERSION }));
 // ---------- DB ----------
 const dbPath = path.join(REPO_ROOT, 'wayzo.sqlite');
 const db = new Database(dbPath);
-db.exec(`
-  CREATE TABLE IF NOT EXISTS plans (
-    id TEXT PRIMARY KEY,
-    created_at TEXT NOT NULL,
-    payload TEXT NOT NULL
-  );
-`);
+db.exec(`CREATE TABLE IF NOT EXISTS plans (id TEXT PRIMARY KEY, created_at TEXT NOT NULL, payload TEXT NOT NULL);`);
 const savePlan = db.prepare('INSERT OR REPLACE INTO plans (id, created_at, payload) VALUES (?, ?, ?)');
 const getPlan  = db.prepare('SELECT payload FROM plans WHERE id = ?');
 
 const nowIso = () => new Date().toISOString();
 const uid = () => (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
 
-// ---------- Affiliate templates (optional env IDs) ----------
+// ---------- Affiliates ----------
 const AFF = {
-  bookingAid: process.env.BOOKING_AID || "",   // e.g. "1234567"
-  gygPid:     process.env.GYG_PID || "",       // e.g. "ABCD123"
-  kayakAid:   process.env.KAYAK_AID || "",     // if you use Kayak
+  bookingAid: process.env.BOOKING_AID || "",
+  gygPid:     process.env.GYG_PID || "",
+  kayakAid:   process.env.KAYAK_AID || "",
 };
-
-// ---------- Top-level quick links (kept) ----------
 function affiliatesFor(dest = '') {
   const q = encodeURIComponent(dest || '');
   const bookingAidParam = AFF.bookingAid ? `&aid=${AFF.bookingAid}` : '';
@@ -124,70 +89,60 @@ function affiliatesFor(dest = '') {
   };
 }
 
-// ---------- Link token → real affiliate URL ----------
+// ---------- Link token → URL ----------
 function linkFor(kind, place, destination = '') {
   const q = encodeURIComponent(`${place} ${destination}`.trim());
   const bookingAidParam = AFF.bookingAid ? `&aid=${AFF.bookingAid}` : '';
   const gygPidParam     = AFF.gygPid     ? `&partner_id=${AFF.gygPid}` : '';
-
   switch (kind) {
     case 'map':     return `https://www.google.com/maps/search/?api=1&query=${q}`;
     case 'book':    return `https://www.booking.com/searchresults.html?ss=${q}${bookingAidParam}`;
     case 'tickets': return `https://www.getyourguide.com/s/?q=${q}${gygPidParam}`;
     case 'reviews': return `https://www.tripadvisor.com/Search?q=${q}`;
-    case 'cal':     return `https://calendar.google.com/`; // placeholder
+    case 'cal':     return `https://calendar.google.com/`;
     default:        return '#';
   }
 }
-
-// Turn [Map](map:PLACE) style tokens into real links
 function linkifyTokens(markdown, destination = '') {
   if (!markdown) return markdown;
   const re = /\[(Map|Tickets|Book|Reviews|Add to Calendar)\]\((map|tickets|book|reviews|cal):([^)]+)\)/gi;
   return markdown.replace(re, (_m, label, kind, body) => {
     const place = String(body || '').replace(/\s+/g, ' ').trim();
-    const url = linkFor(kind.toLowerCase(), place, destination);
-    return `[${label}](${url})`;
+    return `[${label}](${linkFor(kind.toLowerCase(), place, destination)})`;
   });
 }
 
-// ---------- Local fallback (now "pro" structure so even w/o OpenAI it's good) ----------
+// ---------- Local PRO fallback ----------
 function localPlanMarkdown(input) {
-  const {
-    destination = 'Your destination',
-    start = 'start', end = 'end',
-    budget = 1500, travelers = 2,
-    level = 'budget', prefs = '',
-  } = input || {};
-
-  return `# ${destination} Itinerary (${start} – ${end})
+  const { destination='Your destination', start='start', end='end', budget=1500, travelers=2, level='budget', prefs='' } = input || {};
+  return linkifyTokens(`# ${destination} Itinerary (${start} – ${end})
 
 **Travelers:** ${travelers} | **Style:** ${level} | **Budget:** $${budget}
 
 Actions: Download PDF | Edit Inputs
 
 ## Quick Facts
-- Weather: typical seasonal temps; check 48h before travel.
-- Currency: local currency; cards widely accepted.
-- Language: main + English availability varies.
-- Power: check plug types; bring adapter.
-- Tipping: common ranges by venue.
+- Weather: seasonal temps; confirm 48h prior.
+- Currency: local; cards widely accepted.
+- Language: English availability varies.
+- Power: bring adapter.
+- Tipping: typical ranges.
 
 **[View Full Trip Map](map:${destination} center)**
 
 ## Trip Summary
-- Cluster days by neighborhoods to cut transit time.
-- Mix icons + hidden gems; add reservations for popular spots.
-- Don’t Miss: Signature viewpoint at sunset.
+- Cluster by neighborhoods to reduce transit.
+- Mix icons + hidden gems.
+- Don’t Miss: signature viewpoint at sunset.
 
 ## Where to Stay
-- **Budget:** Sample Hotel — clean & central. [Book](book:Sample Hotel ${destination}) | [Map](map:Sample Hotel ${destination})
-- **Mid:** Midtown Boutique — walkable and quiet. [Book](book:Midtown Boutique ${destination}) | [Map](map:Midtown Boutique ${destination})
+- **Budget:** Sample Hotel — central and clean. [Book](book:Sample Hotel ${destination}) | [Map](map:Sample Hotel ${destination})
+- **Mid:** Midtown Boutique — quiet, walkable. [Book](book:Midtown Boutique ${destination}) | [Map](map:Midtown Boutique ${destination})
 - **High:** Grand Palace — top service & views. [Book](book:Grand Palace ${destination}) | [Map](map:Grand Palace ${destination})
 
 ## Highlights
-- Main Museum — massive collection; prebook. [Map](map:${destination} Main Museum) | [Tickets](tickets:${destination} Main Museum) | [Reviews](reviews:${destination} Main Museum)
-- Old Town — architecture & cafés. [Map](map:${destination} Old Town) | [Reviews](reviews:${destination} Old Town)
+- Main Museum — prebook to skip lines. [Map](map:${destination} Main Museum) | [Tickets](tickets:${destination} Main Museum) | [Reviews](reviews:${destination} Main Museum)
+- Old Town — cafés & architecture. [Map](map:${destination} Old Town) | [Reviews](reviews:${destination} Old Town)
 - River Cruise — best at dusk. [Map](map:${destination} River Cruise) | [Tickets](tickets:${destination} River Cruise)
 
 ## Day-by-Day Plan
@@ -197,11 +152,6 @@ Actions: Download PDF | Edit Inputs
 - Evening: River Cruise — city lights. [Map](map:${destination} River Cruise) | [Tickets](tickets:${destination} River Cruise)
 - Meals: Breakfast “Café One”; Lunch “Bistro Two”; Dinner “Brasserie Three”. [Reviews](reviews:${destination} Café One) | [Map](map:${destination} Café One)
 - Transit: ~25m walk + ~15m metro/taxi.
-
-### Day 2 — Neighborhoods & Views
-- Morning: Hill district walk. [Map](map:${destination} Hill viewpoint) | [Reviews](reviews:${destination} Hill)
-- Afternoon: Market tasting. [Map](map:${destination} Market)
-- Evening: Signature tower at sunset. [Map](map:${destination} Tower) | [Tickets](tickets:${destination} Tower)
 
 ## Getting Around
 - Airport → center options with times & costs.
@@ -225,7 +175,7 @@ Actions: Download PDF | Edit Inputs
 - River Cruise 19:00 — sunset slot. [Tickets](tickets:${destination} River Cruise) | [Add to Calendar](cal:${destination} River Cruise 19:00)
 
 ## Footer
-Generated by Wayzo. Prices/availability may change.`;
+Generated by Wayzo.`);
 }
 
 // ---------- OpenAI ----------
@@ -234,16 +184,13 @@ const openai = openaiEnabled ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }
 
 async function generateWithOpenAI(payload) {
   const { destination, start, end, travelers, level, budget, prefs, long_input } = payload || {};
-
-  // Wayzo PRO report prompt (token links)
   const sys = [
     'You are Wayzo, a professional travel planner.',
-    'Return a polished, publication-quality TRIP REPORT in Markdown.',
-    'For every recommendation add a short sentence (what/why/value).',
+    'Return a polished, publication-quality TRIP REPORT in Markdown only.',
+    'Add a short sentence (what/why/value) to EVERY recommendation.',
     'Use ONLY token links like: [Map](map:PLACE), [Tickets](tickets:PLACE), [Book](book:PLACE), [Reviews](reviews:PLACE), [Add to Calendar](cal:TITLE).',
-    'No real URLs, no HTML. PDF-friendly structure.'
+    'No real URLs. No HTML. PDF-friendly structure.'
   ].join(' ');
-
   const user = [
     `Destination: ${destination || '-'}`,
     `Dates: ${start || '-'} → ${end || '-'}`,
@@ -270,37 +217,37 @@ async function generateWithOpenAI(payload) {
     `**[View Full Trip Map](map:${destination || 'City Center'})**`,
     '',
     '## Trip Summary',
-    '- 2–4 bullets: overall approach, neighborhoods, pacing.',
+    '- 2–4 bullets: approach, neighborhoods, pacing.',
     "- Don't Miss: one signature moment.",
     '',
     '## Where to Stay',
-    '- Budget: <Hotel — 1-sentence why>. [Book](book:<Hotel>) | [Map](map:<Hotel>)',
-    '- Mid: <Hotel — 1-sentence why>. [Book](book:<Hotel>) | [Map](map:<Hotel>)',
-    '- High: <Hotel — 1-sentence why>. [Book](book:<Hotel>) | [Map](map:<Hotel>)',
+    '- Budget: <Hotel — why>. [Book](book:<Hotel>) | [Map](map:<Hotel>)',
+    '- Mid: <Hotel — why>. [Book](book:<Hotel>) | [Map](map:<Hotel>)',
+    '- High: <Hotel — why>. [Book](book:<Hotel>) | [Map](map:<Hotel>)',
     'Tip which area fits which traveler.',
     '',
     '## Highlights',
-    '- <Attraction — 1-sentence value>. [Map](map:<Attraction>) | [Tickets](tickets:<Attraction>) | [Reviews](reviews:<Attraction>)',
+    '- <Attraction — value>. [Map](map:<Attraction>) | [Tickets](tickets:<Attraction>) | [Reviews](reviews:<Attraction>)',
     'Include 6–10 items.',
     '',
     '## Day-by-Day Plan',
     '### Day 1 — <Theme>',
-    '- Morning: <Place + short why>. [Map](map:<Place>) | [Tickets](tickets:<Place>) | [Reviews](reviews:<Place>)',
-    '- Afternoon: <Place + short why>. [Map](map:<Place>) | [Reviews](reviews:<Place>)',
-    '- Evening: <Place + short why>. [Map](map:<Place>) | [Tickets](tickets:<Place>)',
+    '- Morning: <Place — why>. [Map](map:<Place>) | [Tickets](tickets:<Place>) | [Reviews](reviews:<Place>)',
+    '- Afternoon: <Place — why>. [Map](map:<Place>) | [Reviews](reviews:<Place>)',
+    '- Evening: <Place — why>. [Map](map:<Place>) | [Tickets](tickets:<Place>)',
     '- If raining: <Indoor alt>. [Map](map:<Alt>)',
     '- With kids: <Kid alt>. [Map](map:<Alt>)',
     '- Meals: Breakfast <Place — cue>. [Reviews](reviews:<Place>) | [Map](map:<Place>); Lunch <...>; Dinner <...>.',
     '- Transit total today: ~<mins> walking, ~<mins> metro/taxi.',
     '',
     '### Day 2 — <Theme>',
-    '(Repeat structure.)',
+    '(Repeat.)',
     '',
     '### Day 3 — <Theme>',
     '(Repeat as needed.)',
     '',
     '## Getting Around',
-    '- Airport → city options with times/costs.',
+    '- Airport → city with times/costs.',
     '- Passes and typical ride times.',
     '- Taxi/rideshare ranges.',
     '',
@@ -313,8 +260,8 @@ async function generateWithOpenAI(payload) {
     '| Transit | $… | $… | passes/transfers |',
     '',
     '## Dining Short-List',
-    '- <Restaurant — cuisine; 1-sentence cue>. [Reviews](reviews:<Restaurant>) | [Map](map:<Restaurant>)',
-    'Provide 6–10 items across price tiers.',
+    '- <Restaurant — cuisine; cue>. [Reviews](reviews:<Restaurant>) | [Map](map:<Restaurant>)',
+    'Provide 6–10 items.',
     '',
     '## Bookings Checklist',
     '- <Item — timing>. [Tickets](tickets:<Item>) | [Add to Calendar](cal:<Item>)',
@@ -324,18 +271,18 @@ async function generateWithOpenAI(payload) {
     '- Generated by Wayzo, <today local time>. Prices/availability can change.'
   ].join('\n');
 
-  const resp = await openai.chat.completions.create({
-    model: process.env.WAYZO_MODEL || 'gpt-4o-mini',
-    temperature: 0.5,
-    messages: [
-      { role: 'system', content: sys },
-      { role: 'user',   content: user },
-    ],
-  });
-
-  let md = resp.choices?.[0]?.message?.content?.trim() || '';
-  md = linkifyTokens(md, destination || ''); // convert token links to real URLs
-  return md;
+  const client = openai;
+  let md = '';
+  if (client) {
+    const resp = await client.chat.completions.create({
+      model: process.env.WAYZO_MODEL || 'gpt-4o-mini',
+      temperature: 0.5,
+      messages: [{ role: 'system', content: sys }, { role: 'user', content: user }],
+    });
+    md = resp.choices?.[0]?.message?.content?.trim() || '';
+  }
+  if (!md) md = localPlanMarkdown(payload);
+  return linkifyTokens(md, destination || '');
 }
 
 // ---------- API ----------
@@ -364,16 +311,12 @@ app.post('/api/plan', async (req, res) => {
   const id = uid();
 
   try {
-    let markdown = localPlanMarkdown(payload); // good fallback
-    if (process.env.OPENAI_API_KEY) {
-      const out = await generateWithOpenAI(payload);
-      if (out) markdown = out;
-    }
+    let markdown = await generateWithOpenAI(payload);
     const aff = affiliatesFor(payload.destination);
     savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: payload, markdown, affiliates: aff }));
     res.json({ id, markdown, affiliates: aff, version: WAYZO_VERSION });
   } catch (e) {
-    console.error('AI error → fallback to local:', e);
+    console.error('AI error → fallback:', e);
     const markdown = localPlanMarkdown(payload);
     const aff = affiliatesFor(payload.destination);
     savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: payload, markdown, affiliates: aff }));
@@ -381,7 +324,7 @@ app.post('/api/plan', async (req, res) => {
   }
 });
 
-// HTML “PDF view”
+// PDF view
 app.get('/api/plan/:id/pdf', (req, res) => {
   const { id } = req.params;
   const row = getPlan.get(id);
@@ -397,7 +340,7 @@ app.get('/api/plan/:id/pdf', (req, res) => {
     ul{margin:.3rem 0 .6rem 1.2rem}
     table{border-collapse:collapse;margin:.4rem 0;width:100%}
     th,td{border:1px solid #e2e8f0;padding:6px 8px;text-align:left}
-    th{text-align:left;background:#f8fafc}
+    th{background:#f8fafc}
     .muted{color:#64748b}
     @media print { a { color: inherit; text-decoration: none; } }
   </style></head>
@@ -412,7 +355,6 @@ app.get('/api/plan/:id/pdf', (req, res) => {
 
 // SPA catch-all
 app.get(/^\/(?!api\/).*/, (_req, res) => {
-  if (!fs.existsSync(INDEX_FILE)) return res.status(500).send('index file missing');
   res.setHeader('X-Wayzo-Version', WAYZO_VERSION);
   res.sendFile(INDEX_FILE);
 });

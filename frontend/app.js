@@ -1,4 +1,4 @@
-// app.js — preview/plan flow (keeps existing wiring)
+// app.js — preview/plan flow
 (function () {
   const $ = (sel) => document.querySelector(sel);
 
@@ -19,15 +19,12 @@
     data.travelers = Number(data.travelers || 2);
     data.budget    = Number(data.budget || 0);
     data.level     = data.level || 'budget';
-    return data;
+    return data; // includes long_input automatically
   };
 
-  // 🔗 Affiliate + maps links (edit to your partner URLs as needed)
   const setAffiliates = (dest) => {
     const q = encodeURIComponent(dest || '');
     const set = (id, url) => { const a = $(id); if (a) a.href = url; };
-
-    // Example affiliate templates — replace with your tagged URLs
     set('#linkMaps',      `https://www.google.com/maps/search/?api=1&query=${q}`);
     set('#linkFlights',   `https://www.kayak.com/flights?search=${q}`);
     set('#linkHotels',    `https://www.booking.com/searchresults.html?ss=${q}`);
