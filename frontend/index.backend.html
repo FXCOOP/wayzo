@@ -2,12 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
   <title>Wayzo — Plan unforgettable trips in minutes — AI-powered</title>
-
-  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-  <link rel="stylesheet" href="style.css" />
-  <script src="app.js" defer></script>
+  <link rel="icon" type="image/svg+xml" href="/docs/favicon.svg" />
+  <link rel="stylesheet" href="/frontend/style.css" />
+  <script src="/frontend/app.js" defer></script>
 </head>
 <body>
   <!-- Top bar -->
@@ -21,15 +23,14 @@
     </div>
   </header>
 
-  <!-- HERO -->
-  <!-- Background comes from CSS var --hero-bg; keep the file at hero-bg.jpg -->
-  <section class="hero" style="--hero-bg: url('hero-bg.jpg')">
+  <!-- HERO (image must be under /docs; absolute path required) -->
+  <section class="hero" style="--hero-bg: url('/docs/hero-mountains.jpg')">
     <div class="container hero-grid">
       <!-- Left: headline card -->
       <div class="hero-card hero-left">
         <h1>Plan unforgettable trips in minutes — <span class="hl">AI-powered</span></h1>
         <p class="lede">
-          Personalized itineraries by budget and style. Book flights, stays, and activities — ready to book.
+          Personalized itineraries by budget and style. Day-by-day guidance you can export to PDF.
         </p>
         <div class="hero-actions">
           <a class="btn btn-primary" href="#planner">Build my plan</a>
@@ -38,9 +39,9 @@
         <p class="muted small">No app required · Mobile-first · PDF export</p>
       </div>
 
-      <!-- Right: inspiration image card -->
+      <!-- Right: inspiration image card (also under /docs) -->
       <figure class="hero-card hero-right">
-        <img src="hero-card.jpg" loading="eager" alt="Wayzo — inspiration for your next trip" />
+        <img src="/docs/hero-road.jpg" loading="eager" alt="Wayzo inspiration" />
         <figcaption>Wayzo — inspiration for your next trip</figcaption>
       </figure>
     </div>

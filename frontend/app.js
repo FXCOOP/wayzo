@@ -1,14 +1,13 @@
-// app.js — preview + plan flows
-
+// app.js — preview/plan flow (keeps existing wiring)
 (function () {
   const $ = (sel) => document.querySelector(sel);
 
-  const form       = $('#tripForm');
-  const previewEl  = $('#preview');
-  const loadingEl  = $('#loading');
-  const pdfBtn     = $('#pdfBtn');
-  const buyBtn     = $('#buyBtn');        // "Generate full plan (AI)"
-  const saveBtn    = $('#saveBtn');
+  const form      = $('#tripForm');
+  const previewEl = $('#preview');
+  const loadingEl = $('#loading');
+  const pdfBtn    = $('#pdfBtn');
+  const buyBtn    = $('#buyBtn');
+  const saveBtn   = $('#saveBtn');
 
   if (!form || !previewEl) return;
 
@@ -33,12 +32,14 @@
     set('#linkReviews',   `https://www.tripadvisor.com/Search?q=${q}`);
   };
 
-  // Preview (submit the form)
+  // Preview
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const payload = readForm();
     setAffiliates(payload.destination);
-    hide(pdfBtn); show(loadingEl);
+    hide(pdfBtn);
+    hide(loadingEl);
+    show(loadingEl);
 
     try {
       const res = await fetch('/api/preview', {
@@ -55,11 +56,12 @@
     }
   });
 
-  // Full plan (does NOT require preview first)
+  // Full plan
   buyBtn?.addEventListener('click', async () => {
     const payload = readForm();
     setAffiliates(payload.destination);
-    hide(pdfBtn); show(loadingEl);
+    hide(pdfBtn);
+    show(loadingEl);
 
     try {
       const res = await fetch('/api/plan', {
@@ -68,13 +70,13 @@
         body: JSON.stringify(payload),
       });
       const out = await res.json();
-
-      previewEl.innerHTML = out.html || '<p>Plan generated.</p>';
+      const md = (out.markdown || '').trim();
+      previewEl.innerHTML = md
+        ? `<div class="markdown" style="white-space:pre-wrap">${md}</div>`
+        : '<p>Plan generated.</p>';
 
       if (out.id) {
         pdfBtn.href = `/api/plan/${out.id}/pdf`;
-        pdfBtn.setAttribute('target', '_blank');
-        pdfBtn.setAttribute('rel', 'noopener');
         show(pdfBtn);
       }
     } catch {
@@ -84,10 +86,16 @@
     }
   });
 
-  // Local save/restore
+  // Save preview (local)
   saveBtn?.addEventListener('click', () => {
-    try { localStorage.setItem('wayzo_preview', previewEl.innerHTML || ''); alert('Saved.'); } catch {}
+    try {
+      const html = previewEl.innerHTML || '';
+      localStorage.setItem('wayzo_preview', html);
+      alert('Preview saved on this device.');
+    } catch {}
   });
+
+  // Restore last preview
   const last = localStorage.getItem('wayzo_preview');
   if (last) previewEl.innerHTML = last;
 })();

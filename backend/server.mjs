@@ -10,22 +10,25 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import Database from 'better-sqlite3';
-import { load as cheerioLoad } from 'cheerio';
+import { marked } from 'marked';
+
+// Optional OpenAI (graceful fallback if no key)
 import OpenAI from 'openai';
 
-// ---------- paths ----------
+// ---------- Paths ----------
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const ROOT = path.resolve(__dirname, '..');
-const FRONTEND_DIR = path.join(ROOT, 'frontend');
+const REPO_ROOT = path.resolve(__dirname, '..');
 
+const FRONTEND_DIR = path.join(REPO_ROOT, 'frontend');
+const DOCS_DIR = path.join(REPO_ROOT, 'docs');
 let INDEX_FILE = path.join(FRONTEND_DIR, 'index.backend.html');
 if (!fs.existsSync(INDEX_FILE)) {
   const alt = path.join(FRONTEND_DIR, 'index.html');
   if (fs.existsSync(alt)) INDEX_FILE = alt;
 }
 
-// ---------- app ----------
+// ---------- App ----------
 const app = express();
 const PORT = Number(process.env.PORT || 10000);
 
@@ -50,15 +53,40 @@ app.use(
   })
 );
 
-// static
-app.use(express.static(FRONTEND_DIR));
+// ---------- Static (serve from repo root) ----------
+app.use(
+  '/docs',
+  express.static(DOCS_DIR, {
+    setHeaders: (res) => res.setHeader('Cache-Control', 'public, max-age=604800'), // 7d
+  })
+);
+app.use(
+  express.static(FRONTEND_DIR, {
+    setHeaders: (res, filePath) => {
+      if (/\.css$/i.test(filePath))
+        res.setHeader('Content-Type', 'text/css; charset=utf-8');
+      if (/\.js$/i.test(filePath))
+        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      if (/\.(css|js|svg|png|jpg|jpeg|webp|ico)$/i.test(filePath)) {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      }
+    },
+  })
+);
 
-// health
+// Root -> index
+app.get('/', (_req, res) => {
+  if (!fs.existsSync(INDEX_FILE)) return res.status(500).send('index file missing');
+  res.sendFile(INDEX_FILE);
+});
+
+// ---------- Health ----------
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 app.get('/healthz', (_req, res) => res.status(200).send('ok'));
 
-// ---------- db ----------
-const db = new Database(path.join(ROOT, 'wayzo.sqlite'));
+// ---------- DB ----------
+const dbPath = path.join(REPO_ROOT, 'wayzo.sqlite');
+const db = new Database(dbPath);
 db.exec(`
   CREATE TABLE IF NOT EXISTS plans (
     id TEXT PRIMARY KEY,
@@ -66,93 +94,190 @@ db.exec(`
     payload TEXT NOT NULL
   );
 `);
-const savePlan = db.prepare('INSERT OR REPLACE INTO plans (id, created_at, payload) VALUES (?, ?, ?)');
-const getPlan  = db.prepare('SELECT payload FROM plans WHERE id = ?');
+const savePlan = db.prepare(
+  'INSERT OR REPLACE INTO plans (id, created_at, payload) VALUES (?, ?, ?)'
+);
+const getPlan = db.prepare('SELECT payload FROM plans WHERE id = ?');
 
-const uid = () => (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
 const nowIso = () => new Date().toISOString();
+const uid = () =>
+  (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
 
-// ---------- OpenAI (optional) ----------
-const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
-const MODEL   = process.env.WAYZO_MODEL || 'gpt-4o-mini';
-
-// force target="_blank" rel="noopener" on all links we return
-function ensureNewTabTargets($) {
-  $('a').each((_, a) => {
-    const el = $(a);
-    el.attr('target', '_blank');
-    el.attr('rel', 'noopener');
-  });
+// ---------- Affiliates ----------
+function affiliatesFor(dest = '') {
+  const q = encodeURIComponent(dest || '');
+  return {
+    flights: `https://www.kayak.com/flights?search=${q}`,
+    hotels: `https://www.booking.com/searchresults.html?ss=${q}`,
+    activities: `https://www.getyourguide.com/s/?q=${q}`,
+    cars: `https://www.rentalcars.com/SearchResults.do?destination=${q}`,
+    insurance: `https://www.worldnomads.com/`,
+    reviews: `https://www.tripadvisor.com/Search?q=${q}`,
+  };
 }
 
-// ---------- preview ----------
-app.post('/api/preview', async (req, res) => {
-  const { destination = 'Your trip' } = req.body || {};
-  const teaser_html = `
-<section id="preview">
-  <h3>${destination} — preview</h3>
+// ---------- Local fallback content ----------
+function localPlanMarkdown(input) {
+  const {
+    destination = 'Your destination',
+    start = 'start',
+    end = 'end',
+    budget = 1500,
+    travelers = 2,
+    level = 'budget',
+    prefs = '',
+  } = input || {};
+  return `# ${destination} itinerary (${start} → ${end})
+
+**Party:** ${travelers} • **Style:** ${level} • **Budget:** $${budget}
+
+**Preferences:** ${prefs || '—'}
+
+---
+
+## Trip Summary
+- Balanced mix of must-sees and local gems in ${destination}.
+- Cluster sights by neighborhood to minimize transit.
+
+## Day 1
+- **Morning:** Historic center
+- **Afternoon:** Market & park
+- **Evening:** Classic local dinner
+
+## Day 2
+- **Morning:** Headliner museum
+- **Afternoon:** River walk
+- **Evening:** Food hall + dessert
+
+---
+
+## Rough Costs
+- **Accommodation:** varies by style
+- **Food:** $25–$45 pp/day
+- **Activities:** $10–$25 / museum
+- **Transit:** day passes are best value
+`;
+}
+
+// ---------- Optional OpenAI ----------
+const openaiEnabled = !!process.env.OPENAI_API_KEY;
+const openai =
+  openaiEnabled ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
+
+async function generateWithOpenAI(payload) {
+  const sys =
+    'You produce concise, realistic travel itineraries with concrete logistics, time checks, and restaurant picks. Output strictly in Markdown (no HTML).';
+  const user = `Destination: ${payload.destination}
+Dates: ${payload.start} → ${payload.end}
+Travelers: ${payload.travelers}
+Style: ${payload.level}
+Budget(USD): ${payload.budget}
+Prefs: ${payload.prefs || '-'}
+
+Return an elegant Markdown itinerary.`;
+
+  const resp = await openai.chat.completions.create({
+    model: process.env.WAYZO_MODEL || 'gpt-4o-mini',
+    temperature: 0.6,
+    messages: [
+      { role: 'system', content: sys },
+      { role: 'user', content: user },
+    ],
+  });
+  return resp.choices?.[0]?.message?.content?.trim() || '';
+}
+
+// ---------- API ----------
+app.post('/api/preview', (req, res) => {
+  const payload = req.body || {};
+  const id = uid();
+  const { destination = '' } = payload;
+
+  const teaser = `
+<div>
+  <h3 class="h3">${destination || 'Your destination'} — preview</h3>
   <ul>
+    <li>Morning / Afternoon / Evening blocks</li>
     <li>Neighborhood clustering to reduce transit</li>
-    <li>Must-see highlights with timed tickets</li>
-    <li>Meals & alternates per day</li>
+    <li>Use <b>Generate full plan (AI)</b> for a complete day-by-day schedule</li>
   </ul>
-  <p class="cta">Generate full plan →</p>
-</section>`.trim();
-  res.json({ teaser_html });
+</div>`.trim();
+
+  const aff = affiliatesFor(destination);
+  savePlan.run(
+    id,
+    nowIso(),
+    JSON.stringify({ id, type: 'preview', data: payload, teaser_html: teaser, affiliates: aff })
+  );
+
+  res.json({ id, teaser_html: teaser, affiliates: aff });
 });
 
-// ---------- plan (baseline) ----------
 app.post('/api/plan', async (req, res) => {
   const payload = req.body || {};
   const id = uid();
 
   try {
-    let html;
-
-    if (openai) {
-      const msg = [
-        { role: 'system', content: 'You are a travel planner. Return small HTML snippets only (no <html>/<body>).' },
-        { role: 'user', content:
-`Destination: ${payload.destination}
-Dates: ${payload.start} → ${payload.end}
-Travelers: ${payload.travelers}
-Style: ${payload.level}
-Prefs: ${payload.prefs || ''}` }
-      ];
-      const r = await openai.chat.completions.create({ model: MODEL, temperature: 0.6, messages: msg });
-      html = r.choices?.[0]?.message?.content?.trim();
+    let markdown = localPlanMarkdown(payload);
+    if (openaiEnabled) {
+      const out = await generateWithOpenAI(payload);
+      if (out) markdown = out;
     }
-
-    // If no API key or the model didn't return HTML, keep the tiny placeholder
-    if (!html) {
-      html = `<section id="preview"><p>Preview created.</p></section>`;
-    }
-
-    const $ = cheerioLoad(html);
-    ensureNewTabTargets($);
-    const enriched = $.root().html();
-
-    savePlan.run(id, nowIso(), JSON.stringify({ id, data: payload, html: enriched }));
-    res.json({ id, html: enriched, meta: payload });
+    const aff = affiliatesFor(payload.destination);
+    savePlan.run(
+      id,
+      nowIso(),
+      JSON.stringify({ id, type: 'plan', data: payload, markdown, affiliates: aff })
+    );
+    res.json({ id, markdown, affiliates: aff });
   } catch (e) {
-    console.error(e);
-    const html = `<section id="preview"><p>Preview created.</p></section>`;
-    savePlan.run(id, nowIso(), JSON.stringify({ id, data: payload, html }));
-    res.json({ id, html, meta: payload });
+    console.error('AI error → fallback to local:', e);
+    const markdown = localPlanMarkdown(payload);
+    const aff = affiliatesFor(payload.destination);
+    savePlan.run(
+      id,
+      nowIso(),
+      JSON.stringify({ id, type: 'plan', data: payload, markdown, affiliates: aff })
+    );
+    res.json({ id, markdown, affiliates: aff });
   }
 });
 
-// ---------- “PDF” simple html view ----------
+// Simple HTML “PDF view” (works reliably on Render). If you want binary PDF, swap to pdf-lib later.
 app.get('/api/plan/:id/pdf', (req, res) => {
-  const row = getPlan.get(req.params.id);
-  if (!row) return res.status(404).send('Not found');
+  const { id } = req.params;
+  const row = getPlan.get(id);
+  if (!row) return res.status(404).json({ error: 'not found' });
   const saved = JSON.parse(row.payload || '{}');
-  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Wayzo Plan</title><link rel="stylesheet" href="/style.css"></head><body>${saved.html || ''}<p class="muted" style="margin-top:24px">Generated by Wayzo</p></body></html>`;
+
+  const html = `
+  <html><head><meta charset="utf-8"/>
+  <title>Wayzo PDF</title>
+  <style>
+    body{font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:24px;color:#0f172a}
+    h1,h2,h3{margin:.8rem 0 .4rem}
+    ul{margin:.3rem 0 .6rem 1.2rem}
+    .muted{color:#64748b}
+    @media print { a { color: inherit; text-decoration: none; } }
+  </style></head>
+  <body>
+    ${marked.parse(saved.markdown || '')}
+    <p class="muted">Generated by Wayzo</p>
+  </body></html>`;
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(html);
 });
 
-// ---------- catch-all ----------
-app.get(/^\/(?!api\/).*/, (_req, res) => res.sendFile(INDEX_FILE));
+// ---------- SPA catch-all ----------
+app.get(/^\/(?!api\/).*/, (_req, res) => {
+  if (!fs.existsSync(INDEX_FILE)) return res.status(500).send('index file missing');
+  res.sendFile(INDEX_FILE);
+});
 
-app.listen(PORT, () => console.log(`Wayzo backend running on :${PORT}`));
+// ---------- Start ----------
+app.listen(PORT, () => {
+  console.log(`Wayzo backend running on :${PORT}`);
+  console.log('Serving frontend from:', FRONTEND_DIR);
+  console.log('Serving docs from:', DOCS_DIR);
+  console.log('Index file:', INDEX_FILE);
+});
