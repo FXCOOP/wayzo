@@ -4,11 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Wayzo — Plan unforgettable trips in minutes</title>
-
-  <!-- Preload hero assets + cache-bust -->
-  <link rel="preload" as="image" href="/hero-bg.jpg?v=3" />
-  <link rel="preload" as="image" href="/hero-card.jpg?v=3" />
   <link rel="icon" href="/favicon.svg" />
+  <link rel="preload" as="image" href="/hero-bg.jpg?v=11" />
+  <link rel="preload" as="image" href="/hero-card.jpg?v=11" />
   <link rel="stylesheet" href="/style.css?v=11" />
   <script src="/app.js?v=11" defer></script>
 </head>
@@ -18,13 +16,13 @@
       <a class="brand" href="/">
         <span class="brand-badge">WZ</span>
         <span class="brand-name">Wayzo</span>
-        <span class="brand-tagline">Trips that plan themselves.</span>
       </a>
+      <div class="tagline">Trips that plan themselves.</div>
       <a class="btn btn-cta" href="#planner">Start planning</a>
     </div>
   </header>
 
-  <section class="hero" style="--hero-bg: url('/hero-bg.jpg?v=3')">
+  <section class="hero" style="--hero-bg: url('/hero-bg.jpg?v=11')">
     <div class="container hero-grid">
       <div class="hero-card hero-left">
         <h1>Plan unforgettable trips in minutes — <span class="hl">AI-powered</span></h1>
@@ -37,8 +35,8 @@
       </div>
 
       <figure class="hero-card hero-right">
-        <img src="/hero-card.jpg?v=3" loading="eager" alt="Wayzo — inspiration for your next trip" />
-        <figcaption class="muted">Wayzo — inspiration for your next trip</figcaption>
+        <img src="/hero-card.jpg?v=11" loading="eager" alt="Wayzo — inspiration for your next trip" />
+        <figcaption>Wayzo — inspiration for your next trip</figcaption>
       </figure>
     </div>
   </section>
@@ -73,41 +71,33 @@
 
           <div class="fields-2">
             <div class="field">
-              <label for="budget">Budget</label>
-              <div class="row">
-                <input id="budget" name="budget" type="number" min="100" step="50" placeholder="Total trip budget (e.g., 5000)" required />
-                <select id="currency" name="currency" aria-label="Currency">
-                  <option value="USD">USD $</option>
-                  <option value="EUR">EUR €</option>
-                  <option value="GBP">GBP £</option>
-                  <option value="CAD">CAD $</option>
-                  <option value="AUD">AUD $</option>
-                  <option value="JPY">JPY ¥</option>
-                  <option value="CHF">CHF</option>
-                  <option value="CNY">CNY ¥</option>
-                  <option value="INR">INR ₹</option>
-                  <option value="SEK">SEK kr</option>
-                </select>
-              </div>
+              <label>Budget</label>
+              <input id="budget" name="budget" type="number" min="50" step="50" placeholder="Total trip budget (e.g., 5000)" required />
+              <select id="currency" name="currency" class="select-inline">
+                <option>USD $</option><option>EUR €</option><option>GBP £</option><option>CAD $</option>
+                <option>AUD $</option><option>NZD $</option><option>JPY ¥</option><option>CHF ₣</option>
+                <option>ILS ₪</option><option>SGD $</option>
+              </select>
               <div class="small muted">Budget is for your whole party (excluding flights).</div>
             </div>
 
             <div class="field">
               <label>Travelers</label>
-              <div class="row">
-                <input id="adults" name="adults" type="number" min="1" step="1" value="2" aria-label="Adults (+18)" />
-                <input id="kids" name="kids" type="number" min="0" step="1" value="0" aria-label="Children" />
+              <div class="fields-2">
+                <input id="adults"   name="adults"   type="number" min="1" step="1" value="2" />
+                <input id="children" name="children" type="number" min="0" step="1" value="0" />
               </div>
-              <div id="kidsAgesWrap" class="row small muted hidden"></div>
+              <div class="small muted">Adults (+18) &nbsp;&nbsp;|&nbsp;&nbsp; Children</div>
+              <div id="agesRow" class="ages-row hidden"></div>
               <div class="small muted">We auto-scale rooms, tables, and tickets.</div>
             </div>
           </div>
 
           <fieldset class="field">
             <legend>Style</legend>
-            <label class="chip"><input type="radio" name="style" value="budget" /> Budget</label>
-            <label class="chip"><input type="radio" name="style" value="mid" checked /> Mid-range</label>
-            <label class="chip"><input type="radio" name="style" value="luxury" /> Luxury</label>
+            <label class="chip"><input type="radio" name="level" value="budget" /> Budget</label>
+            <label class="chip"><input type="radio" name="level" value="mid" checked /> Mid-range</label>
+            <label class="chip"><input type="radio" name="level" value="luxury" /> Luxury</label>
           </fieldset>
 
           <div class="field">
@@ -123,11 +113,12 @@
           <div class="field">
             <label for="special">Special requests</label>
             <textarea id="special" name="special" rows="4" placeholder="Specific needs, preferences, constraints, anchor events, documents/booking refs, etc."></textarea>
-          </div>
-
-          <div class="field">
-            <label for="todo">Your extra To-Do items</label>
-            <textarea id="todo" name="todo" rows="3" placeholder="Anything you want added to the final report’s checklist. One per line."></textarea>
+            <div class="upload-row">
+              <input id="attachments" type="file" multiple
+                     accept="image/*,.pdf,.doc,.docx,.txt,.rtf"
+                     aria-label="Upload related documents" />
+              <span class="small muted">Attach images or PDFs (optional).</span>
+            </div>
           </div>
 
           <div class="actions">
@@ -177,12 +168,8 @@
   </footer>
 
   <script>
-    // minimal date guard
-    (function(){
-      const s=document.getElementById('start'),e=document.getElementById('end');
-      if(!s||!e) return;
-      s.addEventListener('change',()=>{ if(s.value){ e.min=s.value; if(e.value && e.value<s.value) e.value=s.value; }});
-    })();
+    // min date guard
+    (function(){const s=document.getElementById('start'),e=document.getElementById('end');if(!s||!e)return;s.addEventListener('change',()=>{if(s.value){e.min=s.value;if(e.value&&e.value<s.value)e.value=s.value;}});})();
   </script>
 </body>
 </html>
