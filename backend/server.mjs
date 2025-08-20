@@ -30,12 +30,10 @@ if (!fs.existsSync(INDEX_FILE)) {
 const app = express();
 const PORT = Number(process.env.PORT || 10000);
 
-// NOTE: we keep CSP off because we render external images (Unsplash)
-// and we want links to open without frame issues.
 app.set('trust proxy', 1);
 app.use(
   helmet({
-    contentSecurityPolicy: false,
+    contentSecurityPolicy: false,            // allow external images (Unsplash)
     crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
   })
 );
@@ -72,20 +70,20 @@ app.use(
   })
 );
 
-// Root -> index
+// Root
 app.get('/', (_req, res) => {
   if (!fs.existsSync(INDEX_FILE)) return res.status(500).send('index file missing');
   res.sendFile(INDEX_FILE);
 });
 
 // ---------- Health / Version ----------
-const WAYZO_VERSION = process.env.WAYZO_VERSION || 'staging-v7';
+const WAYZO_VERSION = process.env.WAYZO_VERSION || 'staging-v8';
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 app.get('/healthz', (_req, res) => res.status(200).send('ok'));
 app.get('/api/version', (_req, res) => res.json({ version: WAYZO_VERSION }));
 
 // ---------- DB ----------
-const dbPath = path.join(REPO_ROOT, 'tripmaster.sqlite'); // keep your current file name if different
+const dbPath = path.join(REPO_ROOT, 'tripmaster.sqlite');
 const db = new Database(dbPath);
 db.exec(`
   CREATE TABLE IF NOT EXISTS plans (
@@ -113,10 +111,8 @@ function affiliatesFor(dest = '') {
     reviews:   `https://www.tripadvisor.com/Search?q=${q}`,
   };
 }
-
-// Per-item tokens -> affiliate links
 function linkToken(kind, name, city) {
-  const q = encodeURIComponent(`${name} ${city}`.trim());
+  const q = encodeURIComponent(`${name || ''} ${city || ''}`.trim());
   switch (kind) {
     case 'Map':     return `https://www.google.com/maps/search/?api=1&query=${q}`;
     case 'Tickets': return `https://www.getyourguide.com/s/?q=${q}`;
@@ -125,22 +121,16 @@ function linkToken(kind, name, city) {
     default:        return '#';
   }
 }
-
-// Replace [Map]/[Tickets]/[Book]/[Reviews] with actual links,
-// using the bold place name (**Name**) from the same line if present.
 function tokenLinkify(markdown, city) {
   const lines = (markdown || '').split('\n');
   const out = lines.map((line) => {
-    // Extract a reasonable "name" for the current bullet/line
     let name = city || '';
-    const m1 = line.match(/\*\*([^*]+)\*\*/); // **Name**
+    const m1 = line.match(/\*\*([^*]+)\*\*/);
     if (m1) name = m1[1];
     else {
-      const m2 = line.match(/-+\s*([^—:\[\(]+)(?:[—:\(]|$)/); // - Name — ...
+      const m2 = line.match(/^-+\s*([^—:\[\(]+)(?:[—:\(]|$)/);
       if (m2 && m2[1]) name = m2[1].trim();
     }
-
-    // Replace each token with a markdown link
     return line
       .replace(/\[Map\](?!\()/g,     `[Map](${linkToken('Map', name, city)})`)
       .replace(/\[Tickets\](?!\()/g, `[Tickets](${linkToken('Tickets', name, city)})`)
@@ -149,10 +139,9 @@ function tokenLinkify(markdown, city) {
   });
   return out.join('\n');
 }
-
-// Small image strip at the top (Unsplash featured — no keys needed)
 function imageStripMarkdown(dest = '') {
   const q = encodeURIComponent(dest || 'travel');
+  // three images, safe aspect
   return [
     `![${dest} highlight](https://source.unsplash.com/1200x600/?${q})`,
     `![${dest} city](https://source.unsplash.com/1200x600/?${q}+city)`,
@@ -160,7 +149,7 @@ function imageStripMarkdown(dest = '') {
   ].join('\n');
 }
 
-// Local fallback content
+// ---------- Local fallback ----------
 function localPlanMarkdown(input) {
   const {
     destination = 'Your destination',
@@ -170,15 +159,13 @@ function localPlanMarkdown(input) {
   } = input || {};
   return `# ${destination} itinerary (${start} → ${end})
 
-**Party:** ${travelers} • **Style:** ${level} • **Budget:** $${budget}
-**Preferences:** ${prefs || '—'}
-
-${long_input ? `**Brief:** ${long_input}\n` : ''}
+**Travelers:** ${travelers} • **Style:** ${level} • **Budget:** $${budget}
+**Preferences:** ${prefs || '—'}${long_input ? `\n**Brief:** ${long_input}` : ''}
 
 ---
 
 ## Trip Summary
-Balanced mix of must-sees and local gems in ${destination}. Cluster sights by neighborhood to minimize transit.
+Balanced mix of must-sees and local gems in ${destination}. Cluster by neighborhood to reduce transit.
 
 ## Day 1
 - Morning: Historic center
@@ -190,32 +177,29 @@ Balanced mix of must-sees and local gems in ${destination}. Cluster sights by ne
 `;
 }
 
-// ---------- Optional OpenAI ----------
+// ---------- OpenAI ----------
 const openaiEnabled = !!process.env.OPENAI_API_KEY;
 const openai = openaiEnabled ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 
 async function generateWithOpenAI(payload) {
   const { destination = '', start, end, travelers, level, budget, prefs = '', long_input = '' } = payload || {};
 
-  // PRO long-report prompt: sections + tokens (no raw URLs; we link them)
   const sys = [
-    'You are a senior travel planner who writes premium, practical trip plans.',
-    'Output STRICTLY in GitHub-flavored Markdown.',
-    'Do NOT include raw URLs anywhere. Instead, after each place (hotel/POI/restaurant)',
-    'append token links exactly as: [Map] [Tickets] [Book] [Reviews] (only those that make sense).',
-    'Cover these sections with concise depth:',
-    '1) Actions (Download PDF | Share | Edit Inputs).',
-    '2) Quick Facts (weather by season, currency, language, voltage, tipping).',
-    '3) Trip Summary (neighborhood strategy, pacing, don’t-miss moments).',
-    '4) Where to Stay — Budget / Mid / High (1–2 options each with one-sentence why).',
-    '5) Highlights — 6–10 key spots with 1-line context (each with tokens).',
-    '6) Day-by-Day Plan for the actual dates: Morning / Afternoon / Evening,',
-    '   include compact transit time hints in [brackets] like [Walk 10m] [Metro 12m].',
-    '7) Getting Around (airport to city options + local transit tips).',
-    '8) Budget Summary (simple table: per-day and total; exclude flights).',
-    '9) Dining Short-List (6–10 places with cuisine and vibe; each with tokens).',
-    '10) Bookings Checklist (timed entries with suggested lead times; each with tokens).',
-    'Keep tone professional and specific. Use bold for names **Like This**.',
+    'You are a senior travel planner. Write premium, *practical* itineraries.',
+    'Output MUST be GitHub-flavored Markdown, no HTML, and NEVER paste raw URLs.',
+    'After each place, append tokens exactly like [Map] [Tickets] [Book] [Reviews] (only those that fit).',
+    'Use *real* names of sights, museums, neighborhoods, hotels, and restaurants in the destination—',
+    'avoid placeholders like "Main Museum" or "Sample Hotel".',
+    'Prefer family options if children are mentioned; include short safety/queue tips.',
+    'Structure:',
+    'Actions | Quick Facts | Trip Summary | Where to Stay (Budget/Mid/High, 1–2 real options each + one-line why)',
+    'Highlights (6–10 real POIs with one-line context + tokens)',
+    'Day-by-Day (for the actual dates): each day has Morning/Afternoon/Evening, include compact transit hints [Walk 10m] [Metro 12m], and list 2–3 meal suggestions with cuisine + vibe + tokens)',
+    'Getting Around (airport → city options and local passes)',
+    'Budget Summary (simple table with numeric rough ranges, exclude flights)',
+    'Dining Short-List (6–10 places, cuisine & vibe + tokens)',
+    'Bookings Checklist (timed entries with suggested lead time + tokens).',
+    'Tone: succinct but specific; no fluff.'
   ].join(' ');
 
   const user = [
@@ -225,8 +209,8 @@ async function generateWithOpenAI(payload) {
     `Style: ${level || ''}`,
     `Budget(USD): ${budget || ''}`,
     `Preferences: ${prefs || '-'}`,
-    long_input ? `Professional brief:\n${long_input}` : '',
-    'Remember: add [Map] / [Tickets] / [Book] / [Reviews] tokens after each place; DO NOT paste URLs.',
+    long_input ? `Professional brief: ${long_input}` : '',
+    'Remember: real places only; tokens instead of URLs; numeric price hints when helpful.',
   ].filter(Boolean).join('\n');
 
   const resp = await openai.chat.completions.create({
@@ -246,14 +230,13 @@ app.post('/api/preview', (req, res) => {
   const payload = req.body || {};
   const id = uid();
   const { destination = '' } = payload;
-
   const teaser = `
 <div>
   <h3 class="h3">${destination || 'Your destination'} — preview</h3>
   <ul>
     <li>Morning / Afternoon / Evening blocks</li>
     <li>Neighborhood clustering to reduce transit</li>
-    <li>Use <b>Generate full plan (AI)</b> for a complete schedule</li>
+    <li>Use <b>Generate full plan (AI)</b> for your detailed plan</li>
   </ul>
 </div>`.trim();
 
@@ -268,30 +251,30 @@ app.post('/api/plan', async (req, res) => {
   const city = payload.destination || '';
 
   try {
-    // 1) Generate (or fallback)
     let markdown = localPlanMarkdown(payload);
     if (openaiEnabled) {
       const out = await generateWithOpenAI(payload);
       if (out) markdown = out;
     }
 
-    // 2) Token-linkify + image strip
+    // Convert tokens → affiliate links
     markdown = tokenLinkify(markdown, city);
 
-    // prepend a small image gallery if not already present
-    if (!/!\[.+\]\(https?:\/\/.*\)/i.test(markdown)) {
-      markdown = `${imageStripMarkdown(city)}\n\n${markdown}`;
-    }
+    // ALWAYS prepend a small image strip so web+PDF have visuals
+    markdown = `${imageStripMarkdown(city)}\n\n${markdown}`;
 
     const aff = affiliatesFor(city);
-    savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: payload, markdown, affiliates: aff }));
-    res.json({ id, markdown, affiliates: aff });
+    const html = marked.parse(markdown);
+
+    savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: payload, markdown, html, affiliates: aff }));
+    res.json({ id, markdown, html, affiliates: aff });
   } catch (e) {
     console.error('AI error → fallback to local:', e);
     const markdown = localPlanMarkdown(payload);
+    const html = marked.parse(markdown);
     const aff = affiliatesFor(payload.destination);
-    savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: payload, markdown, affiliates: aff }));
-    res.json({ id, markdown, affiliates: aff });
+    savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: payload, markdown, html, affiliates: aff }));
+    res.json({ id, markdown, html, affiliates: aff });
   }
 });
 
@@ -301,7 +284,7 @@ app.get('/api/plan/:id/pdf', (req, res) => {
   const row = getPlan.get(id);
   if (!row) return res.status(404).json({ error: 'not found' });
   const saved = JSON.parse(row.payload || '{}');
-  const md = saved.markdown || '';
+
   const html = `
   <html><head><meta charset="utf-8"/>
   <title>Wayzo PDF</title>
@@ -310,6 +293,8 @@ app.get('/api/plan/:id/pdf', (req, res) => {
     h1,h2,h3{margin:.8rem 0 .4rem} h1{font-size:28px}
     ul{margin:.3rem 0 .6rem 1.2rem}
     img{max-width:100%;border-radius:10px;margin:.5rem 0}
+    table{border-collapse:collapse;width:100%;margin:.6rem 0}
+    th,td{border:1px solid #e5e7eb;padding:6px 8px;text-align:left}
     .muted{color:#64748b}
     .aff{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
     .aff a{padding:6px 10px;border:1px solid #e5e7eb;border-radius:10px;text-decoration:none;color:#111827}
@@ -317,7 +302,7 @@ app.get('/api/plan/:id/pdf', (req, res) => {
     @media print { a { color: inherit; text-decoration: none; } }
   </style></head>
   <body>
-    ${marked.parse(md)}
+    ${saved.html || marked.parse(saved.markdown || '')}
     <div class="hr"></div>
     <div class="aff">
       <a href="${saved.affiliates?.maps || '#'}">🗺️ Maps</a>

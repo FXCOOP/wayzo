@@ -1,7 +1,6 @@
-// app.js — preview/plan flow (keeps existing wiring)
+// app.js — preview/plan flow
 (function () {
-  const $  = (sel) => document.querySelector(sel);
-  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+  const $ = (sel) => document.querySelector(sel);
 
   const form      = $('#tripForm');
   const previewEl = $('#preview');
@@ -9,17 +8,6 @@
   const pdfBtn    = $('#pdfBtn');
   const buyBtn    = $('#buyBtn');
   const saveBtn   = $('#saveBtn');
-
-  // --- version badge (non-blocking)
-  (async () => {
-    try {
-      const r = await fetch('/api/version', { cache: 'no-store' });
-      if (!r.ok) return;
-      const j = await r.json();
-      const pill = $('#verPill');
-      if (pill && j?.version) pill.textContent = `AI powered · ${j.version}`;
-    } catch {}
-  })();
 
   if (!form || !previewEl) return;
 
@@ -31,14 +19,16 @@
     data.travelers = Number(data.travelers || 2);
     data.budget    = Number(data.budget || 0);
     data.level     = data.level || 'budget';
-    // long_input is just another field; backend already reads it
+    // include long brief if present
+    data.long_input = (data.long_input || '').trim();
     return data;
   };
 
-  // 🔗 Affiliate + maps links (edit these to your partner URLs)
+  // 🔗 Affiliate + maps links (edit to your partner URLs as needed)
   const setAffiliates = (dest) => {
     const q = encodeURIComponent(dest || '');
     const set = (id, url) => { const a = $(id); if (a) a.href = url; };
+
     set('#linkMaps',      `https://www.google.com/maps/search/?api=1&query=${q}`);
     set('#linkFlights',   `https://www.kayak.com/flights?search=${q}`);
     set('#linkHotels',    `https://www.booking.com/searchresults.html?ss=${q}`);
@@ -48,89 +38,17 @@
     set('#linkReviews',   `https://www.tripadvisor.com/Search?q=${q}`);
   };
 
-  // --- PRO BRIEF UI (template, autosize, counter, meter)
-  const brief        = $('#proBrief');
-  const briefBar     = $('#briefBar');
-  const briefCount   = $('#briefCount');
-  const briefChars   = $('#briefChars');
-  const briefClear   = $('#briefClear');
-  const briefTplBtn  = $('#briefTemplate');
-
-  const HARD_CHAR_CAP = 2000;     // tweak if you want
-  const WORD_SOFT_MIN = 150;
-  const WORD_SOFT_MAX = 400;
-
-  const TEMPLATE = `Preferences & vibe:
-- Energetic cultural trip with time to relax in cafés; photo-friendly spots.
-
-Must-see (priority order):
-1) Iconic landmark A
-2) Museum B
-3) Neighborhood C
-Must-skip: Crowded tourist traps unless off-peak.
-
-Group details:
-- 2 adults + 1 teen; good walkers; prefer ≤30 min single transit hops.
-
-Dining:
-- Mid-range; love bakeries & markets; one special dinner; avoid shellfish.
-
-Timing windows:
-- Land 10:30, hotel 14:00 check-in; one early night; sunrise photos one day.
-
-Constraints:
-- Max $300/day for food & activities total; avoid long queues.
-
-Anchor events:
-- Tickets for Evening Show on Day 2 at 19:00.
-
-Neighborhoods:
-- Prefer historic center & riverside; avoid very hilly areas.
-
-Rainy-day backups:
-- Indoor galleries, covered passages, food hall.`;
-
-  const autosize = (ta) => {
-    ta.style.height = 'auto';
-    ta.style.height = Math.min(420, Math.max(160, ta.scrollHeight)) + 'px';
+  const renderPlan = (out) => {
+    // Prefer HTML from server (already parsed Markdown)
+    if (out && out.html) {
+      previewEl.innerHTML = `<div class="markdown">${out.html}</div>`;
+    } else if (out && out.markdown) {
+      // fallback to raw if no html provided
+      previewEl.innerHTML = `<pre class="markdown">${out.markdown}</pre>`;
+    } else {
+      previewEl.innerHTML = '<p>Plan generated.</p>';
+    }
   };
-
-  const countWords = (txt) => (txt.trim() ? txt.trim().split(/\s+/).length : 0);
-
-  const updateBriefMeta = () => {
-    const val   = brief.value || '';
-    const words = countWords(val);
-    const chars = val.length;
-
-    briefCount.textContent = String(words);
-    briefChars.textContent = String(chars);
-
-    const pct = Math.min(100, Math.round((chars / HARD_CHAR_CAP) * 100));
-    briefBar.style.width = pct + '%';
-    briefBar.classList.toggle('ok',  words >= WORD_SOFT_MIN && words <= WORD_SOFT_MAX);
-    briefBar.classList.toggle('warn', words < WORD_SOFT_MIN || words > WORD_SOFT_MAX);
-    briefBar.classList.toggle('cap', chars >= HARD_CHAR_CAP);
-
-    if (chars > HARD_CHAR_CAP) brief.value = val.slice(0, HARD_CHAR_CAP);
-    autosize(brief);
-  };
-
-  if (brief) {
-    brief.addEventListener('input', updateBriefMeta);
-    brief.addEventListener('change', updateBriefMeta);
-    updateBriefMeta();
-
-    briefTplBtn?.addEventListener('click', () => {
-      brief.value = TEMPLATE;
-      updateBriefMeta();
-      brief.focus();
-    });
-    briefClear?.addEventListener('click', () => {
-      brief.value = '';
-      updateBriefMeta();
-      brief.focus();
-    });
-  }
 
   // Preview
   form.addEventListener('submit', async (e) => {
@@ -170,10 +88,7 @@ Rainy-day backups:
         body: JSON.stringify(payload),
       });
       const out = await res.json();
-      const md = (out.markdown || '').trim();
-      previewEl.innerHTML = md
-        ? `<div class="markdown" style="white-space:pre-wrap">${md}</div>`
-        : '<p>Plan generated.</p>';
+      renderPlan(out);
 
       if (out.id) {
         pdfBtn.href = `/api/plan/${out.id}/pdf`;
