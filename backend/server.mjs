@@ -14,22 +14,45 @@ import { marked } from 'marked';
 import OpenAI from 'openai';
 import multer from 'multer';
 
-const WAYZO_VERSION = 'staging-v11';
+// ---- helper libs (yours) ----
+import { normalizeBudget, computeBudget } from './backend/lib/budget.mjs';
+import { ensureDaySections } from './backend/lib/expand-days.mjs';
+import { affiliatesFor, linkifyTokens } from './backend/lib/links.mjs';
+import { buildIcs } from './backend/lib/ics.mjs';
+
+const VERSION = 'staging-v13';
+
+// Force all generated links to new tab
+marked.use({
+  renderer: {
+    link(href, title, text) {
+      const t = title ? ` title="${escapeHtml(title)}"` : "";
+      const safe = escapeAttr(href || "#");
+      return `<a href="${safe}"${t} target="_blank" rel="noopener">${text}</a>`;
+    },
+    image(href, title, text) {
+      const t = title ? ` title="${escapeHtml(title)}"` : "";
+      const safe = escapeAttr(href || "");
+      return `<img src="${safe}" alt="${escapeHtml(text||'')}"${t}/>`;
+    }
+  }
+});
+function escapeHtml(s=""){return String(s).replace(/[&<>"]/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[m]));}
+function escapeAttr(s=""){return String(s).replace(/"/g,"%22");}
 
 // ---------- Paths ----------
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
-const REPO_ROOT  = path.resolve(__dirname, '..');
+const ROOT       = __dirname;                          // repo root
+const STATIC     = ROOT;                               // style.css, app.js, index
+const DOCS       = path.join(ROOT, 'docs');            // optional images
+const UPLOADS    = path.join(ROOT, 'uploads');
+fs.mkdirSync(UPLOADS, { recursive: true });
 
-const FRONTEND_DIR = path.join(REPO_ROOT, 'frontend');
-const DOCS_DIR     = path.join(REPO_ROOT, 'docs');
-const UPLOAD_DIR   = path.join(REPO_ROOT, 'uploads');
-fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-
-let INDEX_FILE = path.join(FRONTEND_DIR, 'index.backend.html');
-if (!fs.existsSync(INDEX_FILE)) {
-  const alt = path.join(FRONTEND_DIR, 'index.html');
-  if (fs.existsSync(alt)) INDEX_FILE = alt;
+let INDEX = path.join(STATIC, 'index.backend.html');
+if (!fs.existsSync(INDEX)) {
+  const alt = path.join(STATIC, 'index.html');
+  if (fs.existsSync(alt)) INDEX = alt;
 }
 
 // ---------- App ----------
@@ -37,24 +60,14 @@ const app = express();
 const PORT = Number(process.env.PORT || 10000);
 
 app.set('trust proxy', 1);
-app.use(helmet({
-  contentSecurityPolicy: false,
-  crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
-}));
+app.use(helmet({ contentSecurityPolicy: false, crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' } }));
 app.use(compression());
 app.use(morgan('tiny'));
 app.use(cors());
+app.use(rateLimit({ windowMs: 60_000, limit: 160 }));
 app.use(express.json({ limit: '2mb' }));
 
-app.use(rateLimit({
-  windowMs: 60_000,
-  max: 200,
-  standardHeaders: true,
-  legacyHeaders: false,
-  validate: { trustProxy: true },
-}));
-
-// ---------- Static ----------
+// Static
 const staticHeaders = {
   setHeaders: (res, filePath) => {
     if (/\.css$/i.test(filePath)) res.setHeader('Content-Type', 'text/css; charset=utf-8');
@@ -64,40 +77,30 @@ const staticHeaders = {
     }
   },
 };
+app.use('/docs',     express.static(DOCS, staticHeaders));
+app.use('/uploads',  express.static(UPLOADS, { setHeaders: (res) => res.setHeader('Cache-Control','public, max-age=1209600') }));
+app.use(express.static(STATIC, staticHeaders));
 
-app.use('/docs',    express.static(DOCS_DIR, staticHeaders));
-app.use('/uploads', express.static(UPLOAD_DIR, { setHeaders: (res)=>res.setHeader('Cache-Control','public, max-age=1209600') }));
-app.use('/frontend', express.static(FRONTEND_DIR, staticHeaders));
-app.use(express.static(FRONTEND_DIR, staticHeaders));
-
-// ---------- Root / Health / Version ----------
+// Root / Health
 app.get('/', (_req, res) => {
-  res.setHeader('X-Wayzo-Version', WAYZO_VERSION);
-  if (!fs.existsSync(INDEX_FILE)) return res.status(500).send('index file missing');
-  res.sendFile(INDEX_FILE);
+  res.setHeader('X-Wayzo-Version', VERSION);
+  if (!fs.existsSync(INDEX)) return res.status(500).send('index file missing');
+  res.sendFile(INDEX);
 });
-app.get('/api/health', (_req, res) => res.json({ ok: true, version: WAYZO_VERSION }));
-app.get('/healthz', (_req, res) => res.status(200).send('ok'));
-app.get('/api/version', (_req, res) => res.json({ version: WAYZO_VERSION }));
+app.get('/healthz', (_req, res) => res.json({ ok: true, version: VERSION }));
+app.get('/version', (_req, res) => res.json({ version: VERSION }));
 
-// ---------- Uploads ----------
-const upload = multer({
-  dest: UPLOAD_DIR,
-  limits: { fileSize: 8 * 1024 * 1024, files: 8 }, // 8MB, 8 files
-});
+// Uploads
+const upload = multer({ dest: UPLOADS, limits: { fileSize: 8 * 1024 * 1024, files: 8 } });
 app.post('/api/upload', upload.array('files', 8), (req, res) => {
   const files = (req.files || []).map(f => ({
-    name: f.originalname,
-    size: f.size,
-    url: `/uploads/${path.basename(f.path)}`,
-    mime: f.mimetype,
+    name: f.originalname, size: f.size, url: `/uploads/${path.basename(f.path)}`, mime: f.mimetype
   }));
   res.json({ files });
 });
 
-// ---------- DB ----------
-const dbPath = path.join(REPO_ROOT, 'wayzo.sqlite');
-const db = new Database(dbPath);
+// DB
+const db = new Database(path.join(ROOT, 'wayzo.sqlite'));
 db.exec(`
   CREATE TABLE IF NOT EXISTS plans (
     id TEXT PRIMARY KEY,
@@ -110,362 +113,290 @@ const getPlan  = db.prepare('SELECT payload FROM plans WHERE id = ?');
 
 const nowIso = () => new Date().toISOString();
 const uid = () => (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
-
-// ---------- Affiliates ----------
-const AFF = {
-  bookingAid: process.env.BOOKING_AID || process.env.AFF_BOOKING_AID || "",
-  gygPid:     process.env.GYG_PID     || process.env.AFF_GYG_PARTNER || "",
-  kayakAid:   process.env.KAYAK_AID   || process.env.AFF_KAYAK_AFF   || "",
-};
-
-function affiliatesFor(dest = '') {
-  const q = encodeURIComponent(dest || '');
-  const bookingAidParam = AFF.bookingAid ? `&aid=${AFF.bookingAid}` : '';
-  const gygPidParam     = AFF.gygPid     ? `&partner_id=${AFF.gygPid}` : '';
-  return {
-    maps:      (term)=>`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(term || dest)}`,
-    flights:   ()=>`https://www.kayak.com/flights?search=${q}${AFF.kayakAid ? `&aid=${AFF.kayakAid}` : ''}`,
-    hotels:    (term)=>`https://www.booking.com/searchresults.html?ss=${encodeURIComponent(term || dest)}${bookingAidParam}`,
-    activities:(term)=>`https://www.getyourguide.com/s/?q=${encodeURIComponent(term || dest)}${gygPidParam}`,
-    cars:      ()=>`https://www.rentalcars.com/SearchResults.do?destination=${q}`,
-    insurance: ()=>`https://www.worldnomads.com/`,
-    reviews:   (term)=>`https://www.tripadvisor.com/Search?q=${encodeURIComponent(term || dest)}`,
-    image:     (term)=>`https://source.unsplash.com/featured/?${encodeURIComponent(term || dest)}`,
-  };
-}
-
-// ---------- Token linkifier (map:/book:/tickets:/reviews:/image:/cal:) ----------
-function linkifyTokens(markdown, dest = '') {
-  if (!markdown) return markdown;
-  const aff = affiliatesFor(dest);
-
-  // [Text](map:QUERY) and friends
-  markdown = markdown.replace(/\]\((map|book|tickets|reviews|cal):\s*([^)]+)\)/gi,
-    (_m, type, term) => {
-      const t = String(term || '').trim();
-      switch (type.toLowerCase()) {
-        case 'map':     return `](${aff.maps(t)})`;
-        case 'book':    return `](${aff.hotels(t)})`;
-        case 'tickets': return `](${aff.activities(t)})`;
-        case 'reviews': return `](${aff.reviews(t)})`;
-        case 'cal':     return `](https://calendar.google.com/)`;
-        default:        return `](#)`;
-      }
-    });
-
-  // ![Alt](image:QUERY)
-  markdown = markdown.replace(/\!\[([^\]]*?)\]\(\s*image:\s*([^)]+)\)/gi,
-    (_m, alt, term) => `![${alt}](${aff.image(String(term || '').trim())})`);
-
-  // bare (map:query) → linkify
-  markdown = markdown.replace(/\(map:([^)]+)\)/gi,
-    (_m, t) => `(${aff.maps(String(t || '').trim())})`);
-
-  return markdown;
-}
-
-// ---------- Helpers ----------
-const daysBetween = (start, end) => {
-  const s = new Date(start), e = new Date(end);
-  if (isNaN(s) || isNaN(e)) return 3;
+function daysBetween(a, b) {
+  if (!a || !b) return 1;
+  const s = new Date(a), e = new Date(b);
+  if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) return 1;
   return Math.max(1, Math.round((e - s) / 86400000) + 1);
-};
-
-function computeBudget(total = 0, days = 1, style = 'mid', travelers = 2) {
-  const t = Math.max(1, Number(total) || 0);
-  const d = Math.max(1, Number(days) || 1);
-  const perDay = t / d;
-
-  // rough split by style
-  const split =
-    style === 'luxury' ? { stay: 0.55, food: 0.22, act: 0.18, transit: 0.05 } :
-    style === 'budget' ? { stay: 0.38, food: 0.27, act: 0.20, transit: 0.15 } :
-                         { stay: 0.47, food: 0.25, act: 0.18, transit: 0.10 };
-
-  const round = (x) => Math.round(x);
-  return {
-    stay:     { perDay: round(perDay * split.stay),     total: round(t * split.stay),     notes: 'by style' },
-    food:     { perDay: round(perDay * split.food / travelers), total: round(t * split.food), notes: 'per person/day' },
-    act:      { perDay: round(perDay * split.act),      total: round(t * split.act),      notes: 'key paid items' },
-    transit:  { perDay: round(perDay * split.transit),  total: round(t * split.transit),  notes: 'passes/transfers' },
-  };
+}
+function seasonFromDate(iso=""){
+  const m = (new Date(iso)).getMonth()+1;
+  if ([12,1,2].includes(m)) return "Winter";
+  if ([3,4,5].includes(m))  return "Spring";
+  if ([6,7,8].includes(m))  return "Summer";
+  return "Autumn";
+}
+function travelerLabel(adults=2, children=0){
+  if (adults===2 && children===0) return "Couple";
+  if (adults===1 && children===0) return "Solo";
+  if (children>0) return `Family (${adults} adult${adults===1?"":"s"} + ${children} kid${children===1?"":"s"})`;
+  return `${adults} adult${adults===1?"":"s"}`;
+}
+function perPersonPerDay(total=0, days=1, travelers=1){
+  const d = Math.max(1, days), t = Math.max(1, travelers);
+  return Math.round((Number(total)||0)/d/t);
 }
 
-function ensureDaySections(md, nDays, start) {
-  // If AI returned too few days, append stubs so PDF has full range.
-  const count = (md.match(/^\s*###\s*Day\s+\d+/gmi) || []).length;
-  if (count >= nDays) return md;
-
-  const parts = [];
-  for (let i = count + 1; i <= nDays; i++) {
-    const date = new Date(start);
-    date.setDate(date.getDate() + (i - 1));
-    const label = date.toISOString().slice(0,10);
-    parts.push(`
-### Day ${i} — Open Exploration (${label})
-- Morning: Choose a neighborhood stroll. [Map](map:${label} walking tour)
-- Afternoon: Local museum or market. [Map](map:${label} market) | [Tickets](tickets:${label} museum)
-- Evening: Signature view or waterfront. [Map](map:${label} viewpoint)
-- Meals: Choose from the Dining list. [Reviews](reviews:${label} best restaurants)
-- Transit today: mix of walking + short metro/taxi.
-`.trim());
-  }
-  return md.trim() + '\n\n' + parts.join('\n\n');
-}
-
-// ---------- Local fallback ----------
+// Local fallback plan (also used when no OPENAI_API_KEY)
 function localPlanMarkdown(input) {
   const {
-    destination='Your destination',
-    start='start', end='end',
-    budget=1500, travelers=2,
-    adults=2, children=0, childAges=[],
-    level='mid', prefs='', diet='', currency='USD $'
+    destination='Your destination', start='start', end='end',
+    budget=1500, travelers=2, adults=2, children=0, level='mid', prefs='', diet='', currency='USD $'
   } = input || {};
 
   const nDays = daysBetween(start, end);
   const b     = computeBudget(budget, nDays, level, Math.max(1, adults + children));
+  const styleLabel = level==="luxury" ? "Luxury" : level==="budget" ? "Budget" : "Mid-range";
+  const pppd = perPersonPerDay(budget, nDays, Math.max(1, adults+children));
 
   return linkifyTokens(`
-# ${destination} itinerary (${start} – ${end})
+# ${destination} — ${start} → ${end}
 
 ![City hero](image:${destination} skyline)
 
-**Travelers:** ${adults} adults${children ? ` + ${children} kids (${childAges.join(', ')})` : ''} • **Style:** ${level} • **Budget:** ${budget} ${currency}
+**Travelers:** ${travelerLabel(adults, children)}  
+**Style:** ${styleLabel}${prefs?` · ${prefs}`:""}  
+**Budget:** ${budget} ${currency} (${pppd}/day/person)  
+**Season:** ${seasonFromDate(start)}
 
-${prefs ? `**Preferences:** ${prefs}\n` : ''}${diet ? `**Dietary needs:** ${diet}\n` : ''}
-
-Actions: Download PDF | Edit Inputs
+---
 
 ## Quick Facts
-- Language: local + English availability.
-- Currency: ${currency.replace('$','USD')}.
-- Power: bring adapter if needed.
-- Tipping: common ranges by venue.
+- **Language:** English (tourism friendly)
+- **Currency:** ${currency}
+- **Voltage:** 230V, Type C/E plugs (adapter may be required)
+- **Tipping:** 5–10% in restaurants (optional)
 
-**[View Full Trip Map](map:${destination} center)**
+---
 
-## Trip Summary
-- Cluster by neighborhoods to reduce transit time.
-- Mix icons + hidden gems with timed entries where needed.
-- Don’t Miss: signature viewpoint at sunset.
+## Budget breakdown (rough)
+- Stay: **${b.stay.total}** (~${b.stay.perDay}/day)
+- Food: **${b.food.total}** (~${b.food.perDay}/person/day)
+- Activities: **${b.act.total}** (~${b.act.perDay}/day)
+- Transit: **${b.transit.total}** (~${b.transit.perDay}/day)
 
-## Where to Stay
-- **Budget:** Friendly Inn — great value near transit. [Book](book:Friendly Inn ${destination}) | [Map](map:Friendly Inn ${destination}) | [Reviews](reviews:Friendly Inn ${destination})
-- **Mid:** Midtown Boutique — walkable & quiet. [Book](book:Midtown Boutique ${destination}) | [Map](map:Midtown Boutique ${destination}) | [Reviews](reviews:Midtown Boutique ${destination})
-- **High:** Grand Palace — views + pool. [Book](book:Grand Palace ${destination}) | [Map](map:Grand Palace ${destination}) | [Reviews](reviews:Grand Palace ${destination})
-
-## Highlights
-- Main Museum — prebook to skip lines. [Map](map:${destination} Main Museum) | [Tickets](tickets:${destination} Main Museum) | [Reviews](reviews:${destination} Main Museum)
-- Old Town — cafés & architecture. [Map](map:${destination} Old Town) | [Reviews](reviews:${destination} Old Town)
-- River Cruise — best at dusk. [Map](map:${destination} River Cruise) | [Tickets](tickets:${destination} River Cruise)
+---
 
 ## Day-by-Day Plan
-### Day 1 — Historic Core
-- Morning: Main Museum (kid-friendly exhibits). [Map](map:${destination} Main Museum) | [Tickets](tickets:${destination} Main Museum)
-- Afternoon: Cathedral & square — short loop. [Map](map:${destination} Cathedral)
-- Evening: River Cruise — city lights. [Map](map:${destination} River Cruise) | [Tickets](tickets:${destination} River Cruise)
-- Meals: Breakfast “Café One”; Lunch “Bistro Two”; Dinner “Brasserie Three”. [Reviews](reviews:${destination} restaurants) | [Map](map:${destination} food)
-- Transit: ~25m walk + ~15m metro/taxi.
 
-### Day 2 — Parks & Views
-- Morning: City Park playgrounds (kids). [Map](map:${destination} City Park)
-- Afternoon: Viewpoint/ropeway. [Map](map:${destination} Viewpoint)
-- Evening: Night market. [Map](map:${destination} Night market) | [Reviews](reviews:${destination} night market)
+### Day 1 — Arrival & Relaxation (${start})
+- **Morning:** Arrive and check-in. [Map](map:${destination} airport to hotel) — shortest route to the hotel.
+- **Afternoon:** Pool or easy walk near hotel. [Reviews](reviews:${destination} family friendly cafe)
+- **Evening:** Dinner close-by. [Book](book:${destination} dinner)
 
-## Getting Around
-- Airport → center options with times & costs.
-- Day passes save money for 3+ rides/day.
-- Taxi/rideshare for late nights.
+### Day 2 — Downtown Exploration
+- **Morning:** Top lookout. [Tickets](tickets:${destination} tower) — pre-book to skip lines.
+- **Afternoon:** Popular museum. [Tickets](tickets:${destination} museum)
+- **Evening:** Waterfront stroll. [Map](map:${destination} waterfront)
 
-## Budget Summary (rough)
-| Category | Per Day | Total | Notes |
-|---|---:|---:|---|
-| Stay | ${b.stay.perDay} | ${b.stay.total} | ${b.stay.notes} |
-| Food | ${b.food.perDay} | ${b.food.total} | ${b.food.notes} |
-| Activities | ${b.act.perDay} | ${b.act.total} | ${b.act.notes} |
-| Transit | ${b.transit.perDay} | ${b.transit.total} | ${b.transit.notes} |
+### Day 3 — Nature & Parks
+- **Morning:** Park or island ferry. [Tickets](tickets:${destination} ferry)
+- **Afternoon:** Picnic + playgrounds. [Map](map:${destination} best picnic spots)
+- **Evening:** Family dinner. [Reviews](reviews:${destination} gluten free dinner)
 
-## Dining Short-List
-- Café One — iconic breakfast. [Reviews](reviews:${destination} breakfast) | [Map](map:${destination} breakfast)
-- Le Soufflé — classic mains + dessert. [Reviews](reviews:${destination} dinner) | [Map](map:${destination} dinner)
-
-## Bookings Checklist
-- Main Museum 09:00 — timed entry. [Tickets](tickets:${destination} Main Museum) | [Add to Calendar](cal:${destination} Main Museum 09:00)
-- River Cruise 19:00 — sunset slot. [Tickets](tickets:${destination} River Cruise) | [Add to Calendar](cal:${destination} River Cruise 19:00)
-
-## Footer
-Generated by Wayzo.
-`, destination);
+`.trim(), destination);
 }
 
-// ---------- OpenAI ----------
-const openaiEnabled = !!process.env.OPENAI_API_KEY;
-const openai = openaiEnabled ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
-
-async function withTimeout(promise, ms = 25000) {
-  const timer = new Promise((_r, rej) => setTimeout(()=>rej(new Error('timeout')), ms));
-  return Promise.race([promise, timer]);
-}
-
-async function generateWithOpenAI(payload) {
-  const {
-    destination, start, end, budget, currency='USD $',
-    travelers=2, adults=2, children=0, childAges=[],
-    level='mid', prefs='', diet='', special='', attachments=[]
-  } = payload || {};
-
+// OpenAI (optional)
+const client = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
+async function generatePlanWithAI(payload) {
+  const { destination='', start='', end='', budget=0, currency='USD $', adults=2, children=0, level='mid', prefs='', diet='' } = payload || {};
   const nDays = daysBetween(start, end);
 
-  const sys =
-`You are Wayzo, a professional travel planner. Return only Markdown.
-Respect this exact section order:
-Title line; "Travelers | Style | Budget"; "Actions"; "Quick Facts"; "Trip Summary";
-"Where to Stay"; "Highlights"; "Day-by-Day Plan"; "Getting Around"; "Budget Summary (rough)";
-"Dining Short-List"; "Bookings Checklist"; "Footer".
+  const sys = `You are Wayzo, a concise travel planner. Return Markdown ONLY.
+Sections:
+- "Quick Facts" (language, currency, voltage, tipping)
+- "Budget breakdown (rough)" list
+- "Day-by-Day Plan" with ### Day X — Title and 3 bullets: Morning, Afternoon, Evening.
+  After each bullet add a short helpful note.
+  Use token links: [Map](map:query) [Tickets](tickets:query) [Book](book:query) [Reviews](reviews:query).`;
 
-Rules:
-- Use token links only: [Map](map:PLACE) [Book](book:PLACE) [Tickets](tickets:PLACE) [Reviews](reviews:PLACE) [Add to Calendar](cal:TEXT).
-- Optionally include 1–3 hero images using: ![Alt](image: QUERY).
-- Fill **every day** from start to end (${nDays} days). Use Morning/Afternoon/Evening + Meals + Transit.
-- Use the provided currency label (${currency}) consistently in budget numbers outside the table.
-- Be concise but specific, family-aware if kids present.
-- No raw URLs.`;
-
-  const user =
-`Destination: ${destination}
-Dates: ${start} → ${end}  (days: ${nDays})
-Travelers: ${adults} adults${children ? ` + ${children} kids (${childAges.join(', ')})` : ''}
-Style: ${level}
+  const user = `Destination: ${destination}
+Dates: ${start} to ${end} (${nDays} days)
+Party: ${adults} adults${children?`, ${children} children`:""}
+Style: ${level}${prefs?` + ${prefs}`:""}
 Budget: ${budget} ${currency}
-Preferences: ${prefs || '-'}
-Dietary: ${diet || '-'}
-Special requests: ${special || '-'}
-Attached docs: ${attachments.map(a=>a.name || a.url).join(', ') || '-'}
+Diet: ${diet}`;
 
-Return polished Markdown only.`;
+  if (!client) {
+    let md = localPlanMarkdown(payload);
+    md = ensureDaySections(md, nDays, start);
+    return md;
+  }
 
-  if (!openaiEnabled) return localPlanMarkdown(payload);
+  const resp = await client.chat.completions.create({
+    model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+    temperature: 0.6,
+    messages: [{ role: "system", content: sys }, { role: "user", content: user }],
+  });
 
-  const resp = await withTimeout(
-    openai.chat.completions.create({
-      model: process.env.WAYZO_MODEL || 'gpt-4o-mini',
-      temperature: 0.5,
-      max_tokens: Number(process.env.WAYZO_MAX_TOKENS || 2200),
-      messages: [
-        { role: 'system', content: sys },
-        { role: 'user',   content: user },
-      ],
-    })
-  );
-
-  let md = resp.choices?.[0]?.message?.content?.trim() || '';
+  let md = resp.choices?.[0]?.message?.content?.trim() || "";
   if (!md) md = localPlanMarkdown(payload);
-  // Ensure we have full range & links & images resolved
   md = linkifyTokens(md, destination);
   md = ensureDaySections(md, nDays, start);
   return md;
 }
 
-// ---------- API ----------
+// API
 app.post('/api/preview', (req, res) => {
   const payload = req.body || {};
-  const id = uid();
-  const { destination = '' } = payload;
+  payload.budget = normalizeBudget(payload.budget, payload.currency);
 
-  const teaser = `
+  const { destination = '' } = payload;
+  const id = uid();
+
+  const teaser_html = `
 <div>
   <h3 class="h3">${destination || 'Your destination'} — preview</h3>
   <ul>
-    <li>Morning / Afternoon / Evening blocks</li>
-    <li>Neighborhood clustering to reduce transit</li>
-    <li>Use <b>Generate full plan (AI)</b> for a complete schedule</li>
+    <li>Neighborhood clustering to minimize transit</li>
+    <li>Tickets/Bookings with direct links</li>
+    <li>Click <b>Generate full plan (AI)</b> for complete schedule</li>
   </ul>
 </div>`.trim();
 
   const aff = affiliatesFor(destination);
-  savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'preview', data: payload, teaser_html: teaser, affiliates: aff }));
-  res.json({ id, teaser_html: teaser, affiliates: aff, version: WAYZO_VERSION });
+  res.json({ id, teaser_html, affiliates: aff, version: VERSION });
 });
 
 app.post('/api/plan', async (req, res) => {
-  const payload = req.body || {};
-  const id = uid();
-
   try {
-    let markdown = await generateWithOpenAI(payload);
+    const payload = req.body || {};
+    payload.budget = normalizeBudget(payload.budget, payload.currency);
+
+    const id = uid();
+    const markdown = await generatePlanWithAI(payload);
     const html = marked.parse(markdown);
     const aff  = affiliatesFor(payload.destination);
+
     savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: payload, markdown }));
-    res.json({ id, markdown, html, affiliates: aff, version: WAYZO_VERSION });
-  } catch (e) {
-    console.error('AI error → fallback:', e.message || e);
-    try {
-      const markdown = localPlanMarkdown(payload);
-      const html = marked.parse(markdown);
-      const aff  = affiliatesFor(payload.destination);
-      savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: payload, markdown }));
-      res.json({ id, markdown, html, affiliates: aff, version: WAYZO_VERSION });
-    } catch (err) {
-      res.status(200).json({ id, markdown: '# Plan unavailable right now.\nPlease try again in a minute.', html: '<p>Plan unavailable right now.</p>', version: WAYZO_VERSION });
-    }
+    res.json({ id, markdown, html, affiliates: aff, version: VERSION });
+  } catch {
+    res.status(200).json({ markdown: '# Plan unavailable\nPlease try again shortly.', version: VERSION });
   }
 });
 
-// ---------- PDF (HTML render) ----------
+// PDF with summary strip + actions + quick facts
 app.get('/api/plan/:id/pdf', (req, res) => {
   const { id } = req.params;
   const row = getPlan.get(id);
   if (!row) return res.status(404).json({ error: 'not found' });
   const saved = JSON.parse(row.payload || '{}');
+  const data  = saved?.data || {};
+  const md    = saved?.markdown || '';
+  const htmlBody = marked.parse(md);
+
+  const styleLabel = data.level==="luxury" ? "Luxury"
+                   : data.level==="budget" ? "Budget" : "Mid-range";
+  const season  = seasonFromDate(data.start);
+  const days    = daysBetween(data.start, data.end);
+  const pppd    = perPersonPerDay(normalizeBudget(data.budget, data.currency), days, Math.max(1, (data.adults||0)+(data.children||0)));
+  const traveler = travelerLabel(data.adults||0, data.children||0);
+
+  const base = `${req.protocol}://${req.get('host')}`;
+  const pdfUrl = `${base}/api/plan/${id}/pdf`;
+  const icsUrl = `${base}/api/plan/${id}/ics`;
+  const shareText = encodeURIComponent(`My ${data.destination} plan by Wayzo`);
+  const shareUrl  = encodeURIComponent(pdfUrl);
+  const shareX    = `https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}`;
 
   const html = `
 <!doctype html><html><head><meta charset="utf-8"/>
 <title>Wayzo Trip Report</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
-  :root{
-    --ink:#0f172a; --muted:#475569; --brand:#6366f1; --bg:#ffffff;
-    --accent:#eef2ff; --border:#e2e8f0;
-  }
+  :root{--ink:#0f172a; --muted:#475569; --brand:#6366f1; --bg:#ffffff; --accent:#eef2ff; --border:#e2e8f0;}
   *{box-sizing:border-box}
-  body{font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--ink);margin:28px;background:var(--bg)}
-  header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid var(--border)}
+  body{font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--ink);margin:24px;background:var(--bg)}
+  header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid var(--border);flex-wrap:wrap}
   .logo{display:flex;gap:10px;align-items:center}
   .badge{width:28px;height:28px;border-radius:8px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:700}
-  .tagline{color:var(--muted);font-size:14px}
-  .pill{background:var(--accent);color:#3730a3;border-radius:999px;padding:3px 8px;font-size:12px}
+  .pill{border:1px solid var(--border);background:var(--accent);padding:.25rem .6rem;border-radius:999px;font-size:12px}
+  .summary{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 10px 0}
+  .summary .chip{border:1px solid var(--border);background:#fff;border-radius:999px;padding:.25rem .6rem;font-size:12px}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 14px}
+  .actions a{color:#0f172a;text-decoration:none;border-bottom:1px dotted rgba(2,6,23,.25)}
+  .facts{background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px;margin:8px 0}
   img{max-width:100%;height:auto;border-radius:10px}
-  table{border-collapse:collapse;width:100%;margin:.75rem 0}
-  th,td{border:1px solid var(--border);padding:.5rem .6rem;text-align:left}
-  thead th{background:#f8fafc}
-  footer{margin-top:24px;color:var(--muted);font-size:13px;border-top:1px solid var(--border);padding-top:10px}
-  @media print { a { color: inherit; text-decoration: none; } }
+  table{border-collapse:collapse;width:100%}
+  th,td{border:1px solid var(--border);padding:.45rem .55rem;text-align:left}
+  thead th{background:var(--accent)}
+  footer{margin-top:24px;color:var(--muted);font-size:12px}
 </style>
 </head>
 <body>
   <header>
     <div class="logo"><div class="badge">WZ</div><div><b>Wayzo</b><div class="tagline">Trips that plan themselves.</div></div></div>
-    <span class="pill">${WAYZO_VERSION}</span>
+    <span class="pill">${VERSION}</span>
   </header>
-  ${marked.parse(saved.markdown || '')}
-  <footer>Generated by Wayzo — ${WAYZO_VERSION}</footer>
+
+  <div class="summary">
+    <span class="chip"><b>Travelers:</b> ${traveler}</span>
+    <span class="chip"><b>Style:</b> ${styleLabel}${data.prefs?` · ${escapeHtml(data.prefs)}`:""}</span>
+    <span class="chip"><b>Budget:</b> ${normalizeBudget(data.budget, data.currency)} ${data.currency} (${pppd}/day/person)</span>
+    <span class="chip"><b>Season:</b> ${season}</span>
+  </div>
+
+  <div class="actions">
+    <a href="${pdfUrl}" target="_blank" rel="noopener">Download PDF</a>
+    <a href="${shareX}" target="_blank" rel="noopener">Share on X</a>
+    <a href="${base}/" target="_blank" rel="noopener">Edit Inputs</a>
+    <a href="${icsUrl}" target="_blank" rel="noopener">Download Trip Journal</a>
+  </div>
+
+  <div class="facts">
+    <b>Quick Facts:</b>
+    <ul>
+      <li>🌡️ <b>Weather:</b> Typical seasonal conditions around ${season}.</li>
+      <li>💱 <b>Currency:</b> ${data.currency}</li>
+      <li>🗣️ <b>Language:</b> English (tourism friendly)</li>
+      <li>🔌 <b>Voltage:</b> 230V, Type C/E plugs (adapter may be required)</li>
+      <li>💁 <b>Tipping:</b> 5–10% in restaurants (optional)</li>
+    </ul>
+  </div>
+
+  ${htmlBody}
+
+  <footer>Generated by Wayzo — ${VERSION}</footer>
 </body></html>`;
+
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(html);
 });
 
-// ---------- SPA catch-all ----------
+// ICS from saved plan
+app.get('/api/plan/:id/ics', (req, res) => {
+  const { id } = req.params;
+  const row = getPlan.get(id);
+  if (!row) return res.status(404).json({ error: 'not found' });
+  const saved = JSON.parse(row.payload || '{}');
+  const md = saved.markdown || '';
+  const dest = saved?.data?.destination || 'Trip';
+
+  const events = [];
+  const rx = /^\s*###\s*Day\s+(\d+)\s*(?:—\s*([^\n(]+))?\s*(?:\((\d{4}-\d{2}-\d{2})\))?/gmi;
+  let m;
+  while ((m = rx.exec(md))) {
+    const title = (m[2] || `Day ${m[1]}`).trim();
+    const date  = m[3] || saved?.data?.start || null;
+    if (date) events.push({ title, date, start: '09:00', end: '11:00' });
+  }
+
+  const ics = buildIcs(id, events, { destination: dest });
+  res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="wayzo-${id}.ics"`);
+  res.send(ics);
+});
+
+// SPA catch-all
 app.get(/^\/(?!api\/).*/, (_req, res) => {
-  res.setHeader('X-Wayzo-Version', WAYZO_VERSION);
-  if (!fs.existsSync(INDEX_FILE)) return res.status(500).send('index file missing');
-  res.sendFile(INDEX_FILE);
+  res.setHeader('X-Wayzo-Version', VERSION);
+  if (!fs.existsSync(INDEX)) return res.status(500).send('index file missing');
+  res.sendFile(INDEX);
 });
 
 app.listen(PORT, () => {
   console.log(`Wayzo backend running on :${PORT}`);
-  console.log('Version:', WAYZO_VERSION);
-  console.log('Serving frontend from:', FRONTEND_DIR);
-  console.log('Uploads at:', UPLOAD_DIR);
-  console.log('Index file:', INDEX_FILE);
+  console.log('Version:', VERSION);
+  console.log('Index file:', INDEX);
 });
