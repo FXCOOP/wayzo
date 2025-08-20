@@ -3,10 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Wayzo — Plan unforgettable trips in minutes — AI-powered</title>
-  <link rel="icon" type="image/svg+xml" href="/docs/favicon.svg" />
-  <link rel="stylesheet" href="/frontend/style.css" />
-  <script src="/frontend/app.js" defer></script>
+  <title>Wayzo — Plan unforgettable trips in minutes</title>
+  <link rel="icon" href="/frontend/favicon.svg" />
+  <!-- bust cache so your stylesheet always loads -->
+  <link rel="stylesheet" href="/frontend/style.css?v=8" />
+  <script src="/frontend/app.js?v=8" defer></script>
 </head>
 <body>
   <header class="topbar">
@@ -19,7 +20,8 @@
     </div>
   </header>
 
-  <section class="hero" style="--hero-bg: url('/docs/hero-mountains.jpg')">
+  <!-- hero uses YOUR images -->
+  <section class="hero" style="--hero-bg: url('/frontend/hero-bg.jpg')">
     <div class="container hero-grid">
       <div class="hero-card hero-left">
         <h1>Plan unforgettable trips in minutes — <span class="hl">AI-powered</span></h1>
@@ -32,7 +34,7 @@
       </div>
 
       <figure class="hero-card hero-right">
-        <img src="/docs/hero-road.jpg" loading="eager" alt="Wayzo — inspiration for your next trip" />
+        <img src="/frontend/hero-card.jpg" loading="eager" alt="Wayzo — inspiration for your next trip" />
         <figcaption>Wayzo — inspiration for your next trip</figcaption>
       </figure>
     </div>
@@ -47,96 +49,70 @@
         </div>
         <p class="muted">We’ll tailor routes, hotels, activities, and meals—then generate your full AI plan.</p>
 
-        <!-- IDs & names unchanged; backend stays happy -->
-        <form id="tripForm" class="form" style="margin-top:12px" novalidate>
+        <form id="tripForm" class="form" novalidate>
           <div class="field">
-            <label for="dest"><span>Destination</span></label>
-            <input id="dest" name="destination" type="text" inputmode="text" autocomplete="off"
-                   placeholder="City or region (e.g., Paris · Tokyo · Bali)" required aria-describedby="destHelp" />
-            <div id="destHelp" class="small muted">City, region, or island. Add country for clarity if needed.</div>
+            <label for="dest">Destination</label>
+            <input id="dest" name="destination" type="text" placeholder="City or region (e.g., Paris · Tokyo · Bali)" required />
+            <div class="small muted">Add country for clarity if needed.</div>
           </div>
 
-          <div class="fields-2" role="group" aria-labelledby="datesLegend">
+          <div class="fields-2">
             <div class="field">
-              <label for="start"><span>Start date</span></label>
-              <input id="start" name="start" type="date" required aria-describedby="dateHelp" />
+              <label for="start">Start date</label>
+              <input id="start" name="start" type="date" required />
             </div>
             <div class="field">
-              <label for="end"><span>End date</span></label>
-              <input id="end" name="end" type="date" required aria-describedby="dateHelp" />
-            </div>
-          </div>
-          <div id="dateHelp" class="small muted">We’ll balance travel time and activities between these dates.</div>
-
-          <div class="fields-2" role="group" aria-labelledby="btLegend" style="margin-top:8px">
-            <div class="field">
-              <label for="budget"><span>Budget (USD)</span></label>
-              <input id="budget" name="budget" type="number" inputmode="numeric" min="100" step="50"
-                     placeholder="Total trip budget (e.g., 2000)" required aria-describedby="budgetHelp" />
-            </div>
-            <div class="field">
-              <label for="travelers"><span>Travelers</span></label>
-              <input id="travelers" name="travelers" type="number" inputmode="numeric" min="1" step="1"
-                     value="2" required aria-describedby="travHelp" />
+              <label for="end">End date</label>
+              <input id="end" name="end" type="date" required />
             </div>
           </div>
-          <div class="small muted" id="budgetHelp">Total for your party (excluding flights).</div>
-          <div class="small muted" id="travHelp">We auto-scale rooms, tables, and tickets.</div>
+          <div class="small muted">We’ll balance travel time and activities between these dates.</div>
 
-          <fieldset class="field" style="margin-top:12px">
+          <div class="fields-2">
+            <div class="field">
+              <label for="budget">Budget (USD)</label>
+              <input id="budget" name="budget" type="number" min="100" step="50" placeholder="Total trip budget (e.g., 2000)" required />
+              <div class="small muted">Total for your party (excluding flights).</div>
+            </div>
+            <div class="field">
+              <label for="travelers">Travelers</label>
+              <input id="travelers" name="travelers" type="number" min="1" step="1" value="2" required />
+              <div class="small muted">We auto-scale rooms, tables, and tickets.</div>
+            </div>
+          </div>
+
+          <fieldset class="field">
             <legend>Style</legend>
             <label class="chip"><input type="radio" name="level" value="budget" /> Budget</label>
             <label class="chip"><input type="radio" name="level" value="mid" checked /> Mid-range</label>
             <label class="chip"><input type="radio" name="level" value="luxury" /> Luxury</label>
           </fieldset>
 
-          <div class="field" style="margin-top:4px">
-            <label for="prefs"><span>Preferences</span></label>
-            <input id="prefs" name="prefs" type="text" inputmode="text"
-                   placeholder="Interests (e.g., museums, beaches, hiking, kid-friendly)"
-                   aria-describedby="prefsHelp" />
-            <div id="prefsHelp" class="small muted">Comma-separated interests help with neighborhoods, food, and pacing.</div>
+          <div class="field">
+            <label for="prefs">Preferences</label>
+            <input id="prefs" name="prefs" type="text" placeholder="e.g., museums, beaches, hiking, kid-friendly" />
+            <div class="small muted">Comma-separated interests guide neighborhoods, food, and pacing.</div>
           </div>
 
-          <!-- ⭐ Professional brief block -->
-          <div class="field pro-brief" style="margin-top:14px">
-            <div class="label-row">
-              <label for="proBrief"><span>Professional brief (long report)</span></label>
-              <div class="brief-tools">
-                <button type="button" class="btn btn-mini" id="briefTemplate">Use template</button>
-                <button type="button" class="btn btn-mini btn-ghost" id="briefClear">Clear</button>
+          <div class="field">
+            <label for="brief">Professional brief (long report)</label>
+            <textarea id="brief" name="brief" rows="5"
+              placeholder="Paste/write a detailed brief: must-see/avoid, vibe, group details, dining prefs, time windows, constraints, anchor events, rainy-day backups."></textarea>
+            <div class="meter">
+              <div class="pillbar">
+                <span class="pill">Quick Facts</span><span class="pill">Where to Stay</span>
+                <span class="pill">Highlights</span><span class="pill">Day-by-Day</span>
+                <span class="pill">Budget</span><span class="pill">Dining</span><span class="pill">Bookings</span>
               </div>
+              <span class="counter" id="briefCount">0 words • 0 chars</span>
             </div>
-
-            <textarea id="proBrief" name="long_input" rows="8"
-              placeholder="Paste or write a detailed brief: goals & vibe; must-see / must-skip; group details; dining preferences; time windows; constraints; anchor events; rainy-day backups; preferred/avoid neighborhoods."
-              aria-describedby="briefHelp briefCountMsg"></textarea>
-
-            <div class="meter" aria-hidden="true"><div class="bar" id="briefBar"></div></div>
-            <div class="small muted" id="briefCountMsg">
-              <span id="briefCount">0</span> words • <span id="briefChars">0</span> chars
-            </div>
-
-            <details class="tips">
-              <summary>What to include</summary>
-              <ul class="small">
-                <li>Trip goals & vibe (relax/active/cultural/kids)</li>
-                <li>Must-see / must-skip (with priorities)</li>
-                <li>Group details (ages, mobility, nap windows)</li>
-                <li>Dining style (budget, cuisines, allergies)</li>
-                <li>Time windows (flights, tours already booked)</li>
-                <li>Constraints (budget caps, walking limits)</li>
-                <li>Preferred / avoid neighborhoods</li>
-                <li>Backups for rain / heat</li>
-              </ul>
-            </details>
-            <div id="briefHelp" class="visually-hidden">Add rich context so AI produces a longer, professional report.</div>
+            <div class="hint">We turn this into a polished long report with live links to Maps / Tickets / Reviews / Book.</div>
           </div>
 
-          <div class="actions" style="margin-top:12px">
-            <button class="btn btn-primary" type="submit" id="previewBtn" aria-label="Generate itinerary preview">Generate preview</button>
-            <button class="btn btn-ghost" type="button" id="buyBtn" aria-label="Generate full AI plan">Generate full plan (AI)</button>
-            <button class="btn" type="button" id="saveBtn" aria-label="Save current preview">Save preview</button>
+          <div class="actions">
+            <button class="btn btn-primary" type="submit" id="previewBtn">Generate preview</button>
+            <button class="btn btn-ghost" type="button" id="buyBtn">Generate full plan (AI)</button>
+            <button class="btn" type="button" id="saveBtn">Save preview</button>
           </div>
           <p class="muted small">By continuing you agree to our Terms and Privacy.</p>
         </form>
@@ -145,8 +121,8 @@
       <!-- OUTPUT -->
       <section class="card" aria-labelledby="itinerary-title">
         <div class="card-header">
-          <h2 id="itinerary-title" class="section-title">Your itinerary</h2>
-          <span class="pill" id="verPill">AI powered</span>
+          <h2 id="itinerary-title">Your itinerary</h2>
+          <span class="pill">AI powered</span>
         </div>
 
         <div id="preview" class="teaser">
@@ -154,11 +130,11 @@
         </div>
 
         <div id="loading" class="hidden" aria-live="polite">
-          <div style="height:10px;background:#e2e8f0;border-radius:8px"></div>
-          <div style="height:10px;background:#e2e8f0;border-radius:8px;margin-top:8px;width:70%"></div>
+          <div class="skel"></div>
+          <div class="skel skel-2"></div>
         </div>
 
-        <div class="actions" style="margin-top:10px">
+        <div class="actions">
           <a id="pdfBtn" class="btn hidden" href="#" target="_blank" rel="noopener">⬇️ Download PDF</a>
           <a id="linkMaps" class="btn" target="_blank" rel="noopener">🗺️ Maps</a>
           <a id="linkFlights" class="btn" target="_blank" rel="noopener">✈️ Flights</a>
@@ -179,18 +155,12 @@
     <div class="container muted small">© Wayzo. All rights reserved.</div>
   </footer>
 
-  <!-- keep end ≥ start without touching app.js -->
+  <!-- keep end ≥ start -->
   <script>
-    (function () {
-      const s = document.getElementById('start');
-      const e = document.getElementById('end');
-      if (!s || !e) return;
-      s.addEventListener('change', () => {
-        if (s.value) {
-          e.min = s.value;
-          if (e.value && e.value < s.value) e.value = s.value;
-        }
-      });
+    (function(){
+      const s=document.getElementById('start'), e=document.getElementById('end');
+      if (!s||!e) return;
+      s.addEventListener('change',()=>{ if(s.value){ e.min=s.value; if(e.value && e.value<s.value) e.value=s.value; }});
     })();
   </script>
 </body>
