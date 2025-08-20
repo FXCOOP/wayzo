@@ -1,16 +1,16 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <!-- Preload hero assets (cache-busted) -->
-  <link rel="preload" as="image" href="/hero-bg.jpg?v=3" />
-  <link rel="preload" as="image" href="/hero-card.jpg?v=3" />
-
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Wayzo — Plan unforgettable trips in minutes</title>
+
+  <!-- Preload hero assets + cache-bust -->
+  <link rel="preload" as="image" href="/hero-bg.jpg?v=3" />
+  <link rel="preload" as="image" href="/hero-card.jpg?v=3" />
   <link rel="icon" href="/favicon.svg" />
-  <link rel="stylesheet" href="/style.css?v=10" />
-  <script src="/app.js?v=10" defer></script>
+  <link rel="stylesheet" href="/style.css?v=11" />
+  <script src="/app.js?v=11" defer></script>
 </head>
 <body>
   <header class="topbar">
@@ -18,6 +18,7 @@
       <a class="brand" href="/">
         <span class="brand-badge">WZ</span>
         <span class="brand-name">Wayzo</span>
+        <span class="brand-tagline">Trips that plan themselves.</span>
       </a>
       <a class="btn btn-cta" href="#planner">Start planning</a>
     </div>
@@ -37,7 +38,7 @@
 
       <figure class="hero-card hero-right">
         <img src="/hero-card.jpg?v=3" loading="eager" alt="Wayzo — inspiration for your next trip" />
-        <figcaption>Wayzo — inspiration for your next trip</figcaption>
+        <figcaption class="muted">Wayzo — inspiration for your next trip</figcaption>
       </figure>
     </div>
   </section>
@@ -73,19 +74,19 @@
           <div class="fields-2">
             <div class="field">
               <label for="budget">Budget</label>
-              <div class="fields-2">
+              <div class="row">
                 <input id="budget" name="budget" type="number" min="100" step="50" placeholder="Total trip budget (e.g., 5000)" required />
-                <select id="currency" name="currency" required>
+                <select id="currency" name="currency" aria-label="Currency">
                   <option value="USD">USD $</option>
                   <option value="EUR">EUR €</option>
                   <option value="GBP">GBP £</option>
                   <option value="CAD">CAD $</option>
                   <option value="AUD">AUD $</option>
                   <option value="JPY">JPY ¥</option>
-                  <option value="CHF">CHF CHF</option>
+                  <option value="CHF">CHF</option>
                   <option value="CNY">CNY ¥</option>
                   <option value="INR">INR ₹</option>
-                  <option value="AED">AED د.إ</option>
+                  <option value="SEK">SEK kr</option>
                 </select>
               </div>
               <div class="small muted">Budget is for your whole party (excluding flights).</div>
@@ -93,20 +94,20 @@
 
             <div class="field">
               <label>Travelers</label>
-              <div class="fields-2">
-                <input id="adults"   name="adults"   type="number" min="1" step="1" value="2" required />
-                <input id="children" name="children" type="number" min="0" step="1" value="0" />
+              <div class="row">
+                <input id="adults" name="adults" type="number" min="1" step="1" value="2" aria-label="Adults (+18)" />
+                <input id="kids" name="kids" type="number" min="0" step="1" value="0" aria-label="Children" />
               </div>
-              <div id="childAgesWrap" class="small muted" style="margin-top:6px"></div>
+              <div id="kidsAgesWrap" class="row small muted hidden"></div>
               <div class="small muted">We auto-scale rooms, tables, and tickets.</div>
             </div>
           </div>
 
           <fieldset class="field">
             <legend>Style</legend>
-            <label class="chip"><input type="radio" name="level" value="budget" /> Budget</label>
-            <label class="chip"><input type="radio" name="level" value="mid" checked /> Mid-range</label>
-            <label class="chip"><input type="radio" name="level" value="luxury" /> Luxury</label>
+            <label class="chip"><input type="radio" name="style" value="budget" /> Budget</label>
+            <label class="chip"><input type="radio" name="style" value="mid" checked /> Mid-range</label>
+            <label class="chip"><input type="radio" name="style" value="luxury" /> Luxury</label>
           </fieldset>
 
           <div class="field">
@@ -121,14 +122,12 @@
 
           <div class="field">
             <label for="special">Special requests</label>
-            <textarea id="special" name="special" rows="4"
-              placeholder="Specific needs, preferences, constraints, anchor events, documents/booking refs, etc."></textarea>
+            <textarea id="special" name="special" rows="4" placeholder="Specific needs, preferences, constraints, anchor events, documents/booking refs, etc."></textarea>
           </div>
 
           <div class="field">
             <label for="todo">Your extra To-Do items</label>
-            <textarea id="todo" name="todo" rows="3"
-              placeholder="Anything you want added to the final report’s checklist."></textarea>
+            <textarea id="todo" name="todo" rows="3" placeholder="Anything you want added to the final report’s checklist. One per line."></textarea>
           </div>
 
           <div class="actions">
@@ -178,8 +177,12 @@
   </footer>
 
   <script>
-    // Bound end >= start
-    (function(){const s=document.getElementById('start'),e=document.getElementById('end');if(!s||!e)return;s.addEventListener('change',()=>{if(s.value){e.min=s.value;if(e.value&&e.value<s.value)e.value=s.value;}});})();
+    // minimal date guard
+    (function(){
+      const s=document.getElementById('start'),e=document.getElementById('end');
+      if(!s||!e) return;
+      s.addEventListener('change',()=>{ if(s.value){ e.min=s.value; if(e.value && e.value<s.value) e.value=s.value; }});
+    })();
   </script>
 </body>
 </html>

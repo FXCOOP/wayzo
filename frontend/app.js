@@ -1,4 +1,4 @@
-// app.js — preview/plan flow + live counters + affiliate anchors + children age UI
+// app.js — form UX + preview/plan flow
 (function () {
   const $ = (sel) => document.querySelector(sel);
 
@@ -9,49 +9,36 @@
   const buyBtn    = $('#buyBtn');
   const saveBtn   = $('#saveBtn');
 
-  // travelers fields
-  const adultsEl   = $('#adults');
-  const childrenEl = $('#children');
-  const agesWrap   = $('#childAgesWrap');
+  // Travelers (adults/kids + dynamic ages)
+  const kidsInput = $('#kids');
+  const kidsAgesWrap = $('#kidsAgesWrap');
 
-  if (!form || !previewEl) return;
+  function renderKidsAges() {
+    const k = Number(kidsInput.value || 0);
+    kidsAgesWrap.innerHTML = '';
+    if (k <= 0) { kidsAgesWrap.classList.add('hidden'); return; }
+    kidsAgesWrap.classList.remove('hidden');
+    kidsAgesWrap.insertAdjacentHTML('beforeend', `<span class="small">Ages:</span>`);
+    for (let i = 0; i < k; i++) {
+      const sel = document.createElement('select');
+      sel.name = 'kids_age_' + i;
+      for (let a = 0; a <= 17; a++) {
+        const opt = document.createElement('option');
+        opt.value = String(a);
+        opt.textContent = a;
+        sel.appendChild(opt);
+      }
+      kidsAgesWrap.appendChild(sel);
+    }
+  }
+  kidsInput?.addEventListener('input', renderKidsAges);
+  renderKidsAges();
 
+  // Show/Hide helpers
   const show = (el) => el && el.classList.remove('hidden');
   const hide = (el) => el && el.classList.add('hidden');
 
-  // dynamic child ages
-  function renderAgeSelects() {
-    const n = Math.max(0, Number(childrenEl.value || 0));
-    if (!agesWrap) return;
-    if (n === 0) { agesWrap.innerHTML = ''; return; }
-    let html = '<div style="display:flex;flex-wrap:wrap;gap:6px"><span style="margin-right:6px">Ages:</span>';
-    for (let i = 0; i < n; i++) {
-      html += `<select class="child-age" aria-label="Child ${i+1} age">
-        ${Array.from({length:18}).map((_,a)=>`<option value="${a}">${a}</option>`).join('')}
-      </select>`;
-    }
-    html += '</div>';
-    agesWrap.innerHTML = html;
-  }
-  childrenEl?.addEventListener('input', renderAgeSelects);
-  renderAgeSelects();
-
-  // collect data
-  function readForm() {
-    const data = Object.fromEntries(new FormData(form).entries());
-    data.adults    = Number(data.adults || 2);
-    data.children  = Number(data.children || 0);
-    data.childAges = Array.from(document.querySelectorAll('.child-age')).map(s => Number(s.value));
-    data.budget    = Number(data.budget || 0);
-    data.level     = data.level || 'mid';
-    data.currency  = data.currency || 'USD';
-    // rename long inputs
-    data.special   = data.special || '';
-    data.todo      = data.todo || '';
-    return data;
-  }
-
-  // affiliate quick links
+  // Affiliate anchors
   const setAffiliates = (dest) => {
     const q = encodeURIComponent(dest || '');
     const set = (id, url) => { const a = $(id); if (a) a.href = url; };
@@ -64,23 +51,49 @@
     set('#linkReviews',   `https://www.tripadvisor.com/Search?q=${q}`);
   };
 
+  // Gather form data
+  function readForm() {
+    const fd = new FormData(form);
+    const data = Object.fromEntries(fd.entries());
+
+    const ages = [];
+    const kids = Number(data.kids || 0);
+    for (let i = 0; i < kids; i++) {
+      const v = fd.get('kids_age_' + i);
+      if (v !== null && v !== undefined) ages.push(Number(v));
+    }
+
+    return {
+      destination: data.destination || '',
+      start: data.start || '',
+      end: data.end || '',
+      budget: Number(data.budget || 0),
+      currency: data.currency || 'USD',
+      adults: Number(data.adults || 2),
+      kids: kids,
+      kids_ages: ages,
+      style: data.style || 'mid',
+      prefs: data.prefs || '',
+      diet: data.diet || '',
+      special: data.special || '',
+      todo: data.todo || '',
+    };
+  }
+
   // Preview
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const payload = readForm();
     setAffiliates(payload.destination);
-    hide(pdfBtn);
-    show(loadingEl);
+    hide(pdfBtn); show(loadingEl);
 
     try {
       const res = await fetch('/api/preview', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
       const out = await res.json();
       previewEl.innerHTML = out.teaser_html || '<p>Preview created.</p>';
-      previewEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch {
       previewEl.innerHTML = '<p class="muted">Preview failed. Please try again.</p>';
     } finally {
@@ -92,13 +105,11 @@
   buyBtn?.addEventListener('click', async () => {
     const payload = readForm();
     setAffiliates(payload.destination);
-    hide(pdfBtn);
-    show(loadingEl);
+    hide(pdfBtn); show(loadingEl);
 
     try {
       const res = await fetch('/api/plan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
       const out = await res.json();
@@ -106,15 +117,9 @@
         previewEl.innerHTML = `<div class="markdown">${out.html}</div>`;
       } else {
         const md = (out.markdown || '').trim();
-        previewEl.innerHTML = md
-          ? `<div class="markdown" style="white-space:pre-wrap">${md}</div>`
-          : '<p>Plan generated.</p>';
+        previewEl.innerHTML = md ? `<div class="markdown" style="white-space:pre-wrap">${md}</div>` : '<p>Plan generated.</p>';
       }
-      if (out.id) {
-        pdfBtn.href = `/api/plan/${out.id}/pdf`;
-        show(pdfBtn);
-      }
-      previewEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (out.id) { pdfBtn.href = `/api/plan/${out.id}/pdf`; show(pdfBtn); }
     } catch {
       previewEl.innerHTML = '<p class="muted">Plan failed. Please try again.</p>';
     } finally {
@@ -122,7 +127,7 @@
     }
   });
 
-  // Save preview locally
+  // Save preview (local)
   saveBtn?.addEventListener('click', () => {
     try {
       const html = previewEl.innerHTML || '';
