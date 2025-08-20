@@ -1,4 +1,4 @@
-// app.js — preview/plan flow
+// app.js — preview/plan flow + live counters + affiliate anchors
 (function () {
   const $ = (sel) => document.querySelector(sel);
 
@@ -8,23 +8,38 @@
   const pdfBtn    = $('#pdfBtn');
   const buyBtn    = $('#buyBtn');
   const saveBtn   = $('#saveBtn');
+  const briefEl   = $('#brief');
+  const countEl   = $('#briefCount');
 
   if (!form || !previewEl) return;
 
   const show = (el) => el && el.classList.remove('hidden');
   const hide = (el) => el && el.classList.add('hidden');
 
+  // word counter for the brief
+  const countBrief = () => {
+    const t = (briefEl?.value || '').trim();
+    const words = t ? t.split(/\s+/).length : 0;
+    const chars = t.length;
+    if (countEl) countEl.textContent = `${words} words • ${chars} chars`;
+  };
+  briefEl?.addEventListener('input', countBrief);
+  countBrief();
+
   const readForm = () => {
     const data = Object.fromEntries(new FormData(form).entries());
     data.travelers = Number(data.travelers || 2);
     data.budget    = Number(data.budget || 0);
     data.level     = data.level || 'budget';
-    return data; // includes long_input automatically
+    data.brief     = data.brief || '';
+    return data;
   };
 
+  // 🔗 Affiliate + maps links
   const setAffiliates = (dest) => {
     const q = encodeURIComponent(dest || '');
     const set = (id, url) => { const a = $(id); if (a) a.href = url; };
+
     set('#linkMaps',      `https://www.google.com/maps/search/?api=1&query=${q}`);
     set('#linkFlights',   `https://www.kayak.com/flights?search=${q}`);
     set('#linkHotels',    `https://www.booking.com/searchresults.html?ss=${q}`);
@@ -40,7 +55,6 @@
     const payload = readForm();
     setAffiliates(payload.destination);
     hide(pdfBtn);
-    hide(loadingEl);
     show(loadingEl);
 
     try {
@@ -72,10 +86,16 @@
         body: JSON.stringify(payload),
       });
       const out = await res.json();
-      const md = (out.markdown || '').trim();
-      previewEl.innerHTML = md
-        ? `<div class="markdown" style="white-space:pre-wrap">${md}</div>`
-        : '<p>Plan generated.</p>';
+
+      // prefer server-rendered HTML; fallback to markdown
+      if (out.html) {
+        previewEl.innerHTML = `<div class="markdown">${out.html}</div>`;
+      } else {
+        const md = (out.markdown || '').trim();
+        previewEl.innerHTML = md
+          ? `<div class="markdown" style="white-space:pre-wrap">${md}</div>`
+          : '<p>Plan generated.</p>';
+      }
 
       if (out.id) {
         pdfBtn.href = `/api/plan/${out.id}/pdf`;
