@@ -1,14 +1,15 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <link rel="preload" as="image" href="/hero-bg.jpg?v=3" />
-  <link rel="preload" as="image" href="/hero-card.jpg?v=3" />
+  <!-- bust caches for hero assets -->
+  <link rel="preload" as="image" href="/hero-bg.jpg?v=10" />
+  <link rel="preload" as="image" href="/hero-card.jpg?v=10" />
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Wayzo — Plan unforgettable trips in minutes</title>
   <link rel="icon" href="/favicon.svg" />
-  <link rel="stylesheet" href="/style.css?v=9" />
-  <script src="/app.js?v=9" defer></script>
+  <link rel="stylesheet" href="/style.css?v=10" />
+  <script src="/app.js?v=10" defer></script>
 </head>
 <body>
   <header class="topbar">
@@ -21,7 +22,7 @@
     </div>
   </header>
 
-  <section class="hero" style="--hero-bg: url('/hero-bg.jpg?v=3')">
+  <section class="hero" style="--hero-bg: url('/hero-bg.jpg?v=10')">
     <div class="container hero-grid">
       <div class="hero-card hero-left">
         <h1>Plan unforgettable trips in minutes — <span class="hl">AI-powered</span></h1>
@@ -34,7 +35,7 @@
       </div>
 
       <figure class="hero-card hero-right">
-        <img src="/hero-card.jpg?v=3" loading="eager" alt="Wayzo — inspiration for your next trip" />
+        <img src="/hero-card.jpg?v=10" loading="eager" alt="Wayzo — inspiration for your next trip" />
         <figcaption>Wayzo — inspiration for your next trip</figcaption>
       </figure>
     </div>
@@ -94,19 +95,23 @@
             <div class="small muted">Comma-separated interests guide neighborhoods, food, and pacing.</div>
           </div>
 
-          <div class="field">
-            <label for="brief">Professional brief (long report)</label>
-            <textarea id="brief" name="brief" rows="5"
-              placeholder="Paste/write a detailed brief: must-see/avoid, vibe, group details, dining prefs, time windows, constraints, anchor events, rainy-day backups."></textarea>
-            <div class="meter">
-              <div class="pillbar">
-                <span class="pill">Quick Facts</span><span class="pill">Where to Stay</span>
-                <span class="pill">Highlights</span><span class="pill">Day-by-Day</span>
-                <span class="pill">Budget</span><span class="pill">Dining</span><span class="pill">Bookings</span>
+          <!-- Advanced brief (collapsed by default) -->
+          <details id="advBrief" class="advanced" aria-label="Advanced brief">
+            <summary>Advanced brief (optional)</summary>
+            <div class="field">
+              <label for="brief">Professional brief (long report)</label>
+              <textarea id="brief" name="brief" rows="5"
+                placeholder="Paste/write a detailed brief: must-see/avoid, vibe, group details, dining prefs, time windows, constraints, anchor events, rainy-day backups."></textarea>
+              <div class="meter">
+                <div class="pillbar">
+                  <span class="pill">Quick Facts</span><span class="pill">Where to Stay</span>
+                  <span class="pill">Highlights</span><span class="pill">Day-by-Day</span>
+                  <span class="pill">Budget</span><span class="pill">Dining</span><span class="pill">Bookings</span>
+                </div>
+                <span class="counter" id="briefCount">0 words • 0 chars</span>
               </div>
-              <span class="counter" id="briefCount">0 words • 0 chars</span>
             </div>
-          </div>
+          </details>
 
           <div class="actions">
             <button class="btn btn-primary" type="submit" id="previewBtn">Generate preview</button>
@@ -155,6 +160,7 @@
   </footer>
 
   <script>
+    // simple end-date guard
     (function(){const s=document.getElementById('start'),e=document.getElementById('end');if(!s||!e)return;s.addEventListener('change',()=>{if(s.value){e.min=s.value;if(e.value&&e.value<s.value)e.value=s.value;}});})();
   </script>
 </body>

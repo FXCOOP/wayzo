@@ -16,7 +16,7 @@
   const show = (el) => el && el.classList.remove('hidden');
   const hide = (el) => el && el.classList.add('hidden');
 
-  // word counter for the brief
+  // word counter for the brief (works even if the details panel is closed)
   const countBrief = () => {
     const t = (briefEl?.value || '').trim();
     const words = t ? t.split(/\s+/).length : 0;
@@ -35,11 +35,10 @@
     return data;
   };
 
-  // 🔗 Affiliate + maps links
+  // Affiliate + maps links
   const setAffiliates = (dest) => {
     const q = encodeURIComponent(dest || '');
     const set = (id, url) => { const a = $(id); if (a) a.href = url; };
-
     set('#linkMaps',      `https://www.google.com/maps/search/?api=1&query=${q}`);
     set('#linkFlights',   `https://www.kayak.com/flights?search=${q}`);
     set('#linkHotels',    `https://www.booking.com/searchresults.html?ss=${q}`);
@@ -87,7 +86,7 @@
       });
       const out = await res.json();
 
-      // prefer server-rendered HTML; fallback to markdown
+      // Prefer server-rendered HTML; fallback to Markdown
       if (out.html) {
         previewEl.innerHTML = `<div class="markdown">${out.html}</div>`;
       } else {
