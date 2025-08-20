@@ -1,14 +1,14 @@
 {
-  "name": "wayzo-backend",
-  "version": "1.0.0",
-  "type": "module",
+  "name": "wayzo",
   "private": true,
+  "type": "module",
+  "engines": { "node": ">=20.0.0" },
   "scripts": {
-    "dev": "node server.mjs",
-    "start": "node server.mjs"
+    "start": "node backend/server.mjs",
+    "dev": "node backend/server.mjs"
   },
   "dependencies": {
-    "better-sqlite3": "^9.4.3",
+    "better-sqlite3": "9.4.0",
     "compression": "^1.7.4",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -17,6 +17,6 @@
     "helmet": "^7.1.0",
     "marked": "^12.0.2",
     "morgan": "^1.10.0",
-    "openai": "^4.57.0"
+    "openai": "^4.55.0"
   }
 }
