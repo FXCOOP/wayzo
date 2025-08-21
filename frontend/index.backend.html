@@ -3,12 +3,13 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="color-scheme" content="light only"/>
   <title>Wayzo — Trips that plan themselves</title>
   <meta name="description" content="Personalized itineraries by budget and style. Day-by-day guidance you can export to PDF.">
-  <link rel="stylesheet" href="/style.css?v=13"/>
-  <script src="/app.js?v=13" defer></script>
+  <link rel="stylesheet" href="/style.css?v=14"/>
+  <script src="/app.js?v=14" defer></script>
 </head>
-<body>
+<body data-theme="light">
   <header class="topbar">
     <div class="container topbar-inner">
       <a class="brand" href="/"><span class="brand-badge">WZ</span><span class="brand-name">Wayzo</span></a>
@@ -38,52 +39,32 @@
       <!-- Form -->
       <section class="card">
         <div class="card-header"><h2 class="section-title">Trip details</h2></div>
+
         <form id="tripForm" class="form" autocomplete="on">
           <div class="field">
             <label for="destination">Destination</label>
-            <input id="destination" name="destination" type="text" placeholder="e.g., Toronto" required/>
+            <input id="destination" name="destination" type="text" placeholder="City or region (e.g., Toronto)" required/>
             <span class="small muted">Add country for clarity if needed.</span>
           </div>
 
           <div class="fields-2">
-            <div class="field">
-              <label for="start">Start date</label>
-              <input id="start" name="start" type="date" required/>
-            </div>
-            <div class="field">
-              <label for="end">End date</label>
-              <input id="end" name="end" type="date" required/>
-              <span class="small muted">We’ll balance travel time and activities.</span>
-            </div>
+            <div class="field"><label for="start">Start date</label><input id="start" name="start" type="date" required/></div>
+            <div class="field"><label for="end">End date</label><input id="end" name="end" type="date" required/><span class="small muted">We’ll balance travel time and activities.</span></div>
           </div>
 
           <div class="fields-2">
-            <div class="field">
-              <label for="budget">Budget (total)</label>
-              <input id="budget" name="budget" type="number" min="0" step="50" placeholder="5000"/>
-            </div>
-            <div class="field">
-              <label for="currency">Currency</label>
+            <div class="field"><label for="budget">Budget (total)</label><input id="budget" name="budget" type="number" min="0" step="50" placeholder="5000"/></div>
+            <div class="field"><label for="currency">Currency</label>
               <select id="currency" name="currency">
-                <option value="USD $" selected>USD $</option>
-                <option value="EUR €">EUR €</option>
-                <option value="ILS ₪">ILS ₪</option>
-                <option value="GBP £">GBP £</option>
-                <option value="CAD $">CAD $</option>
+                <option value="USD $" selected>USD $</option><option value="EUR €">EUR €</option>
+                <option value="ILS ₪">ILS ₪</option><option value="GBP £">GBP £</option><option value="CAD $">CAD $</option>
               </select>
             </div>
           </div>
 
           <div class="fields-2">
-            <div class="field">
-              <label for="adults">Adults (18+)</label>
-              <input id="adults" name="adults" type="number" min="1" step="1" value="2"/>
-            </div>
-            <div class="field">
-              <label for="children">Children</label>
-              <input id="children" name="children" type="number" min="0" step="1" value="0"/>
-              <div id="agesRow" class="ages-row hidden"></div>
-            </div>
+            <div class="field"><label for="adults">Adults (18+)</label><input id="adults" name="adults" type="number" min="1" step="1" value="2"/></div>
+            <div class="field"><label for="children">Children</label><input id="children" name="children" type="number" min="0" step="1" value="0"/><div id="agesRow" class="ages-row hidden"></div></div>
           </div>
 
           <div class="field">
@@ -93,22 +74,10 @@
             <div class="chip"><input type="radio" name="level" value="luxury" id="lvl_lux"><label for="lvl_lux">Luxury</label></div>
           </div>
 
-          <div class="field"><label for="prefs">Preferences</label>
-            <input id="prefs" name="prefs" type="text" placeholder="e.g., attractions and nature, foodie, cultural"/>
-          </div>
-
-          <div class="field"><label for="diet">Dietary needs</label>
-            <input id="diet" name="diet" type="text" placeholder="e.g., gluten free"/>
-          </div>
-
-          <div class="field"><label for="special">Special requests</label>
-            <textarea id="special" name="special" placeholder="e.g., avoid long hikes, need gym access"></textarea>
-          </div>
-
-          <div class="field upload-row">
-            <input id="attachments" name="attachments" type="file" multiple/>
-            <span class="small muted">Attach images or PDFs (optional)</span>
-          </div>
+          <div class="field"><label for="prefs">Preferences</label><input id="prefs" name="prefs" type="text" placeholder="e.g., attractions and nature, foodie, cultural"/></div>
+          <div class="field"><label for="diet">Dietary needs</label><input id="diet" name="diet" type="text" placeholder="e.g., gluten free"/></div>
+          <div class="field"><label for="special">Special requests</label><textarea id="special" name="special" placeholder="e.g., avoid long hikes, need gym access"></textarea></div>
+          <div class="field upload-row"><input id="attachments" name="attachments" type="file" multiple/><span class="small muted">Attach images or PDFs (optional)</span></div>
 
           <div class="actions">
             <button class="btn btn-primary" type="submit">Generate preview</button>
@@ -123,8 +92,11 @@
       <section class="card">
         <div class="card-header">
           <h2 class="section-title">Your itinerary</h2>
-          <span class="small muted" id="buildTag"></span>
+          <span class="small muted" id="buildTag">AI powered</span>
         </div>
+
+        <!-- Live traveler summary -->
+        <div id="summaryChips" class="chips-row small" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;"></div>
 
         <div id="loading" class="hidden"><div class="skel"></div><div class="skel skel-2"></div></div>
         <div id="preview" class="teaser small"></div>

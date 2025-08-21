@@ -10,18 +10,20 @@
   const buyBtn    = $('#buyBtn');
   const saveBtn   = $('#saveBtn');
   const buildTag  = $('#buildTag');
+  const chipsEl   = $('#summaryChips');
 
-  // show backend version
-  fetch('/version').then(r=>r.json()).then(j=>buildTag && (buildTag.textContent = j.version || '')).catch(()=>{});
+  fetch('/version').then(r=>r.json()).then(j=>buildTag && (buildTag.textContent = j.version || 'AI powered')).catch(()=>{});
 
-  // Ages UI
+  /* Ages UI */
+  const adultsEl   = $('#adults');
   const childrenEl = $('#children');
   const agesRow    = $('#agesRow');
+
   function renderAgePickers() {
     const n = Math.max(0, Number(childrenEl?.value || 0));
     if (!agesRow) return;
     agesRow.innerHTML = '';
-    if (n <= 0) { agesRow.classList.add('hidden'); return; }
+    if (n <= 0) { agesRow.classList.add('hidden'); paintSummary(); return; }
     agesRow.classList.remove('hidden');
     for (let i = 0; i < n; i++) {
       const sel = document.createElement('select');
@@ -33,11 +35,36 @@
         opt.textContent = String(a);
         sel.appendChild(opt);
       }
+      sel.addEventListener('change', paintSummary);
       agesRow.appendChild(sel);
     }
+    paintSummary();
   }
   childrenEl?.addEventListener('input', renderAgePickers);
-  renderAgePickers();
+
+  /* Live traveler summary */
+  function paintSummary() {
+    if (!chipsEl) return;
+    const dest = $('#destination')?.value || '';
+    const ad   = Number(adultsEl?.value || 0);
+    const ch   = Number(childrenEl?.value || 0);
+    const ages = Array.from(agesRow?.querySelectorAll('select') || []).map(s => Number(s.value||0));
+    const level= (document.querySelector('input[name="level"]:checked')?.value)||'mid';
+    const style= level==='luxury'?'Luxury':level==='budget'?'Budget':'Mid-range';
+
+    chipsEl.innerHTML = `
+      <span class="chip"><b>Destination:</b> ${dest || '—'}</span>
+      <span class="chip"><b>Travelers:</b> ${ad} adult${ad===1?'':'s'}${ch?` + ${ch} kid${ch===1?'':'s'}`:''}</span>
+      ${ch?`<span class="chip"><b>Ages:</b> ${ages.join(', ') || '—'}</span>`:''}
+      <span class="chip"><b>Style:</b> ${style}</span>
+    `;
+  }
+  ['input','change'].forEach(ev=>{
+    form?.addEventListener(ev,(e)=>{
+      if (e.target && (e.target.id==='destination'||e.target.id==='adults'||e.target.id==='children'||e.target.name==='level')) paintSummary();
+    });
+  });
+  renderAgePickers(); paintSummary();
 
   const setHref = (id, url) => { const a = $(id); if (a) { a.href = url; a.target = "_blank"; a.rel="noopener"; } };
 
