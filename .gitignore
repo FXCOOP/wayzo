@@ -2,3 +2,4 @@ backend/.env
 **/node_modules
 *.sqlite
 *.sqlite-*
+-e '\nnode_modules/\nbackend/node_modules/\n*.sqlite*\n' 
