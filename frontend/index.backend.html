@@ -4,12 +4,30 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <meta name="color-scheme" content="light only"/>
+
   <title>Wayzo — Trips that plan themselves</title>
   <meta name="description" content="Personalized itineraries by budget and style. Day-by-day guidance you can export to PDF.">
-  <link rel="stylesheet" href="/style.css?v=14"/>
-  <script src="/app.js?v=14" defer></script>
+
+  <!-- load CSS first -->
+  <link rel="stylesheet" href="/style.css?v=19">
+
+  <!-- then force light + image frame cleanup (same rules you already have) -->
+  <style id="hard-light">
+    :root{ color-scheme: light !important; --bg:#fff !important; --card:#fff !important; --text:#0f172a !important; --muted:#334155 !important; }
+    html,body{background:#fff !important; color:#0f172a !important;}
+    .topbar,.hero,.main,.card,.footer{background:#fff !important; color:#0f172a !important;}
+    .card{border:1px solid #e5e7eb !important; box-shadow:0 4px 18px rgba(2,6,23,.05) !important;}
+    input,select,textarea{background:#fff !important; color:#0f172a !important; border:1px solid #e2e8f0 !important;}
+    .hero-right{background:transparent !important; box-shadow:none !important; padding:0 !important;}
+    .hero-right img{display:block !important; width:100% !important; height:auto !important; border-radius:16px !important; box-shadow:0 10px 24px rgba(2,6,23,.12) !important;}
+    .hero-right figcaption{color:#475569 !important;}
+    @media (prefers-color-scheme: dark){ :root{ color-scheme: light !important; } }
+  </style>
+
+  <script src="/app.js?v=17" defer></script>
 </head>
-<body data-theme="light">
+
+<body>
   <header class="topbar">
     <div class="container topbar-inner">
       <a class="brand" href="/"><span class="brand-badge">WZ</span><span class="brand-name">Wayzo</span></a>
@@ -95,9 +113,6 @@
           <span class="small muted" id="buildTag">AI powered</span>
         </div>
 
-        <!-- Live traveler summary -->
-        <div id="summaryChips" class="chips-row small" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;"></div>
-
         <div id="loading" class="hidden"><div class="skel"></div><div class="skel skel-2"></div></div>
         <div id="preview" class="teaser small"></div>
 
@@ -120,5 +135,31 @@
   </main>
 
   <footer class="footer"><div class="container muted small">Mobile-first · PDF & ICS export</div></footer>
+
+<style id="bg-hotfix">
+  /* hard-force light everywhere on the page */
+  :root { color-scheme: light !important; }
+  html, body { background:#fff !important; color:#0f172a !important; }
+
+  /* main surfaces */
+  .topbar, .hero, .main, .card, .footer { background:#fff !important; }
+  .card { border:1px solid #e5e7eb !important; box-shadow:0 4px 18px rgba(2,6,23,.05) !important; }
+
+  /* if any “dark mode” class/attr is present, still force light */
+  body.dark, [data-theme="dark"] { background:#fff !important; color:#0f172a !important; }
+  body.dark .topbar, body.dark .hero, body.dark .main, body.dark .card, body.dark .footer,
+  [data-theme="dark"] .topbar, [data-theme="dark"] .hero, [data-theme="dark"] .main,
+  [data-theme="dark"] .card, [data-theme="dark"] .footer { background:#fff !important; }
+
+  /* remove/neutralize any dark hero wash */
+  .hero { position: relative; }
+  .hero::before{
+    content:""; position:absolute; inset:0; z-index:-1;
+    background:
+      linear-gradient(0deg, rgba(255,255,255,.96) 0%, rgba(255,255,255,.96) 100%),
+      var(--hero-bg, url('/docs/hero-mountains.jpg')) center/cover no-repeat !important;
+  }
+</style>
+
 </body>
 </html>
