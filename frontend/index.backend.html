@@ -8,23 +8,27 @@
   <title>Wayzo — Trips that plan themselves</title>
   <meta name="description" content="Personalized itineraries by budget and style. Day-by-day guidance you can export to PDF.">
 
-  <!-- load CSS first -->
-  <link rel="stylesheet" href="/style.css?v=19">
+  <!-- load light-only stylesheet -->
+  <link rel="stylesheet" href="/style.css?v=21">
 
-  <!-- then force light + image frame cleanup (same rules you already have) -->
+  <!-- hard-force light + remove any dark frame on the hero -->
   <style id="hard-light">
-    :root{ color-scheme: light !important; --bg:#fff !important; --card:#fff !important; --text:#0f172a !important; --muted:#334155 !important; }
+    :root{ color-scheme: light !important; }
+    @media (prefers-color-scheme: dark){ :root{ color-scheme: light !important; } }
     html,body{background:#fff !important; color:#0f172a !important;}
-    .topbar,.hero,.main,.card,.footer{background:#fff !important; color:#0f172a !important;}
+    .topbar,.hero,.main,.card,.footer{background:#fff !important;}
     .card{border:1px solid #e5e7eb !important; box-shadow:0 4px 18px rgba(2,6,23,.05) !important;}
     input,select,textarea{background:#fff !important; color:#0f172a !important; border:1px solid #e2e8f0 !important;}
-    .hero-right{background:transparent !important; box-shadow:none !important; padding:0 !important;}
-    .hero-right img{display:block !important; width:100% !important; height:auto !important; border-radius:16px !important; box-shadow:0 10px 24px rgba(2,6,23,.12) !important;}
-    .hero-right figcaption{color:#475569 !important;}
-    @media (prefers-color-scheme: dark){ :root{ color-scheme: light !important; } }
+    .hero{ position:relative; }
+    .hero::before{
+      content:""; position:absolute; inset:0; z-index:-1;
+      background:
+        linear-gradient(0deg, rgba(255,255,255,.96) 0%, rgba(255,255,255,.96) 100%),
+        var(--hero-bg, url('/docs/hero-mountains.jpg')) center/cover no-repeat !important;
+    }
   </style>
 
-  <script src="/app.js?v=17" defer></script>
+  <script defer src="/app.js?v=21"></script>
 </head>
 
 <body>
@@ -38,51 +42,63 @@
   <section class="hero" style="--hero-bg:url('/docs/hero-mountains.jpg')">
     <div class="container hero-grid">
       <div class="hero-left">
-        <h1>Plan unforgettable trips in minutes — <span class="hl">AI-powered</span></h1>
-        <p class="lede">Personalized itineraries by budget and style. Day-by-day guidance you can export to PDF.</p>
-        <div class="hero-actions">
-          <a class="btn btn-primary" href="#trip">Build my plan</a>
-          <a class="btn btn-ghost" href="#demo">See demo</a>
+        <div class="hero-card">
+          <h1>Plan unforgettable trips in minutes — <span class="hl">AI-powered</span></h1>
+          <p class="lede">Personalized itineraries by budget and style. Day-by-day guidance you can export to PDF.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#trip">Build my plan</a>
+            <a class="btn btn-ghost" href="#trip">See demo</a>
+          </div>
+          <p class="muted small">No app required · Mobile-first · PDF export</p>
         </div>
       </div>
-      <figure class="hero-right">
-        <img src="/docs/hero-card.jpg" alt="Wayzo — inspiration for your next trip">
-        <figcaption class="muted small">Wayzo — inspiration for your next trip</figcaption>
+      <figure class="hero-right hero-card">
+        <img src="/docs/hero-road.jpg" alt="Wayzo — inspiration for your next trip" loading="eager"/>
+        <figcaption>Wayzo — inspiration for your next trip</figcaption>
       </figure>
     </div>
   </section>
 
-  <main class="main container" id="trip">
-    <div class="grid-2">
-      <!-- Form -->
+  <main class="main" id="trip">
+    <div class="container grid-2">
       <section class="card">
-        <div class="card-header"><h2 class="section-title">Trip details</h2></div>
+        <div class="card-header"><h2>Trip details</h2></div>
+        <p class="muted">We’ll tailor routes, hotels, activities, and meals—then generate your full AI plan.</p>
 
-        <form id="tripForm" class="form" autocomplete="on">
+        <form id="tripForm" class="form" novalidate>
           <div class="field">
             <label for="destination">Destination</label>
-            <input id="destination" name="destination" type="text" placeholder="City or region (e.g., Toronto)" required/>
-            <span class="small muted">Add country for clarity if needed.</span>
+            <input id="destination" name="destination" type="text" placeholder="City or region (e.g., Toronto · Paris · Tokyo)" aria-describedby="destHelp" required/>
+            <div id="destHelp" class="small muted">Add country for clarity if needed.</div>
           </div>
 
-          <div class="fields-2">
-            <div class="field"><label for="start">Start date</label><input id="start" name="start" type="date" required/></div>
-            <div class="field"><label for="end">End date</label><input id="end" name="end" type="date" required/><span class="small muted">We’ll balance travel time and activities.</span></div>
-          </div>
-
-          <div class="fields-2">
-            <div class="field"><label for="budget">Budget (total)</label><input id="budget" name="budget" type="number" min="0" step="50" placeholder="5000"/></div>
-            <div class="field"><label for="currency">Currency</label>
-              <select id="currency" name="currency">
-                <option value="USD $" selected>USD $</option><option value="EUR €">EUR €</option>
-                <option value="ILS ₪">ILS ₪</option><option value="GBP £">GBP £</option><option value="CAD $">CAD $</option>
-              </select>
+          <div class="fields-2" role="group" aria-label="Dates">
+            <div class="field">
+              <label for="start">Start date</label>
+              <input id="start" name="start" type="date" required/>
+            </div>
+            <div class="field">
+              <label for="end">End date</label>
+              <input id="end" name="end" type="date" required/>
             </div>
           </div>
+          <div class="small muted">We’ll balance travel time and activities between these dates.</div>
 
-          <div class="fields-2">
-            <div class="field"><label for="adults">Adults (18+)</label><input id="adults" name="adults" type="number" min="1" step="1" value="2"/></div>
-            <div class="field"><label for="children">Children</label><input id="children" name="children" type="number" min="0" step="1" value="0"/><div id="agesRow" class="ages-row hidden"></div></div>
+          <div class="fields-2" role="group" aria-label="Budget and travelers">
+            <div class="field">
+              <label for="budget">Budget</label>
+              <input id="budget" name="budget" type="number" inputmode="numeric" min="100" step="50" placeholder="Total trip budget (e.g., 500)"/>
+              <select id="currency" name="currency" aria-label="Currency">
+                <option value="USD $">USD $</option><option value="EUR €">EUR €</option><option value="ILS ₪">ILS ₪</option>
+                <option value="GBP £">GBP £</option><option value="CAD $">CAD $</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="adults">Travelers</label>
+              <input id="adults" name="adults" type="number" min="1" step="1" value="2"/>
+              <input id="children" name="children" type="number" min="0" step="1" value="0"/>
+              <div id="agesRow" class="ages-row hidden"></div>
+            </div>
           </div>
 
           <div class="field">
@@ -92,74 +108,60 @@
             <div class="chip"><input type="radio" name="level" value="luxury" id="lvl_lux"><label for="lvl_lux">Luxury</label></div>
           </div>
 
-          <div class="field"><label for="prefs">Preferences</label><input id="prefs" name="prefs" type="text" placeholder="e.g., attractions and nature, foodie, cultural"/></div>
-          <div class="field"><label for="diet">Dietary needs</label><input id="diet" name="diet" type="text" placeholder="e.g., gluten free"/></div>
-          <div class="field"><label for="special">Special requests</label><textarea id="special" name="special" placeholder="e.g., avoid long hikes, need gym access"></textarea></div>
-          <div class="field upload-row"><input id="attachments" name="attachments" type="file" multiple/><span class="small muted">Attach images or PDFs (optional)</span></div>
-
-          <div class="actions">
-            <button class="btn btn-primary" type="submit">Generate preview</button>
-            <a id="buyBtn" class="btn btn-cta" role="button">Generate full plan (AI)</a>
-            <a id="saveBtn" class="btn" role="button">Save preview</a>
-            <a id="pdfBtn" class="btn" href="#" target="_blank" rel="noopener" style="display:none;">Download PDF</a>
+          <div class="field">
+            <label for="prefs">Preferences</label>
+            <input id="prefs" name="prefs" type="text" placeholder="e.g., museums, hiking, beaches, kid-friendly"/>
           </div>
+
+          <div class="field">
+            <label for="diet">Dietary needs</label>
+            <input id="diet" name="diet" type="text" placeholder="e.g., kosher, vegetarian, gluten-free"/>
+          </div>
+
+          <div class="field">
+            <label for="special">Special requests</label>
+            <textarea id="special" name="special" placeholder="Specific needs, preferences, constraints, anchor events, documents/booking refs, etc."></textarea>
+          </div>
+
+          <div class="field">
+            <label for="photo">Attach image or PDF (optional)</label>
+            <input type="file" id="photo" name="photo" accept=".jpg,.jpeg,.png,.webp,.pdf"/>
+          </div>
+
+          <div class="buttons">
+            <button class="btn btn-primary" type="submit">Generate preview</button>
+            <a id="buyBtn" class="btn" href="javascript:void(0)">Generate full plan (AI)</a>
+            <a id="saveBtn" class="btn" href="javascript:void(0)">Save preview</a>
+            <a id="pdfBtn" class="btn" href="#" target="_blank" rel="noopener" style="display:none">Download PDF</a>
+          </div>
+
+          <div id="loading" class="muted small hidden">Working…</div>
         </form>
       </section>
 
-      <!-- Output -->
-      <section class="card">
+      <aside class="card">
         <div class="card-header">
-          <h2 class="section-title">Your itinerary</h2>
-          <span class="small muted" id="buildTag">AI powered</span>
+          <h2>Your itinerary</h2>
+          <span id="buildTag" class="muted small" title="Build version"></span>
         </div>
 
-        <div id="loading" class="hidden"><div class="skel"></div><div class="skel skel-2"></div></div>
-        <div id="preview" class="teaser small"></div>
+        <nav class="quicklinks">
+          <a id="linkFlights" class="btn" href="#" target="_blank" rel="noopener">✈ Flights</a>
+          <a id="linkHotels" class="btn" href="#" target="_blank" rel="noopener">🏨 Hotels</a>
+          <a id="linkActivities" class="btn" href="#" target="_blank" rel="noopener">🎟 Activities</a>
+          <a id="linkCars" class="btn" href="#" target="_blank" rel="noopener">🚗 Cars</a>
+          <a id="linkInsurance" class="btn" href="#" target="_blank" rel="noopener">🛡 Insurance</a>
+          <a id="linkReviews" class="btn" href="#" target="_blank" rel="noopener">⭐ Reviews</a>
+          <a id="linkMaps" class="btn" href="#" target="_blank" rel="noopener">🗺 Maps</a>
+        </nav>
 
-        <div class="quick-links" id="quickLinks">
-          <a id="linkMaps" class="ql" target="_blank" rel="noopener">Map</a>
-          <a id="linkFlights" class="ql" target="_blank" rel="noopener">Flights</a>
-          <a id="linkHotels" class="ql" target="_blank" rel="noopener">Hotels</a>
-          <a id="linkActivities" class="ql" target="_blank" rel="noopener">Activities</a>
-          <a id="linkCars" class="ql" target="_blank" rel="noopener">Cars</a>
-          <a id="linkInsurance" class="ql" target="_blank" rel="noopener">Insurance</a>
-          <a id="linkReviews" class="ql" target="_blank" rel="noopener">Reviews</a>
-        </div>
-      </section>
+        <div id="preview" class="markdown" style="min-height:240px"></div>
+      </aside>
     </div>
-
-    <section id="demo" class="card" style="margin-top:18px;">
-      <h3 class="section-title">See demo</h3>
-      <p class="muted">Use the inputs above → <em>Generate preview</em> then <em>Generate full plan</em>.</p>
-    </section>
   </main>
 
-  <footer class="footer"><div class="container muted small">Mobile-first · PDF & ICS export</div></footer>
-
-<style id="bg-hotfix">
-  /* hard-force light everywhere on the page */
-  :root { color-scheme: light !important; }
-  html, body { background:#fff !important; color:#0f172a !important; }
-
-  /* main surfaces */
-  .topbar, .hero, .main, .card, .footer { background:#fff !important; }
-  .card { border:1px solid #e5e7eb !important; box-shadow:0 4px 18px rgba(2,6,23,.05) !important; }
-
-  /* if any “dark mode” class/attr is present, still force light */
-  body.dark, [data-theme="dark"] { background:#fff !important; color:#0f172a !important; }
-  body.dark .topbar, body.dark .hero, body.dark .main, body.dark .card, body.dark .footer,
-  [data-theme="dark"] .topbar, [data-theme="dark"] .hero, [data-theme="dark"] .main,
-  [data-theme="dark"] .card, [data-theme="dark"] .footer { background:#fff !important; }
-
-  /* remove/neutralize any dark hero wash */
-  .hero { position: relative; }
-  .hero::before{
-    content:""; position:absolute; inset:0; z-index:-1;
-    background:
-      linear-gradient(0deg, rgba(255,255,255,.96) 0%, rgba(255,255,255,.96) 100%),
-      var(--hero-bg, url('/docs/hero-mountains.jpg')) center/cover no-repeat !important;
-  }
-</style>
-
+  <footer class="footer">
+    <div class="container small muted">© Wayzo. All rights reserved.</div>
+  </footer>
 </body>
 </html>

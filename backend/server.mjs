@@ -19,7 +19,7 @@ import { ensureDaySections } from './backend/lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './backend/lib/links.mjs';
 import { buildIcs } from './backend/lib/ics.mjs';
 
-const VERSION = 'staging-v16';
+const VERSION = 'staging-v17';
 
 // GET '/'
 app.get('/', (_req, res) => {
