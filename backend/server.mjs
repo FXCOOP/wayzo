@@ -19,7 +19,28 @@ import { ensureDaySections } from './backend/lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './backend/lib/links.mjs';
 import { buildIcs } from './backend/lib/ics.mjs';
 
-const VERSION = 'staging-v14';
+const VERSION = 'staging-v16';
+
+// GET '/'
+app.get('/', (_req, res) => {
+  res.setHeader('X-Wayzo-Version', VERSION);
+  // prevent CDN/browser from caching HTML
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Surrogate-Control', 'no-store');
+  if (!fs.existsSync(INDEX)) return res.status(500).send('index file missing');
+  res.sendFile(INDEX);
+});
+
+// SPA catch-all (same no-cache headers)
+app.get(/^\/(?!api\/).*/, (_req, res) => {
+  res.setHeader('X-Wayzo-Version', VERSION);
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Surrogate-Control', 'no-store');
+  if (!fs.existsSync(INDEX)) return res.status(500).send('index file missing');
+  res.sendFile(INDEX);
+});
 
 /* Force Markdown links/images to open in a new tab */
 marked.use({
