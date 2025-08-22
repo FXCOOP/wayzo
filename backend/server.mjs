@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import 'dotenv/config';
+
 import express from 'express';
 import compression from 'compression';
 import helmet from 'helmet';
@@ -20,6 +20,14 @@ import { affiliatesFor, linkifyTokens } from './backend/lib/links.mjs';
 import { buildIcs } from './backend/lib/ics.mjs';
 
 const VERSION = 'staging-v17';
+
+// Load .env locally only; on Render we rely on real env vars.
+if (process.env.NODE_ENV !== 'production') {
+  try {
+    const { config } = await import('dotenv');
+    config();
+  } catch {}
+}
 
 // GET '/'
 app.get('/', (_req, res) => {
