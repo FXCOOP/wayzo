@@ -33,7 +33,7 @@ if (process.env.NODE_ENV !== 'production') {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
 const ROOT       = __dirname;
-const FRONTEND   = path.join(ROOT, 'frontend');   // serve frontend folder
+const FRONTEND = path.join(__dirname, "..", "frontend");
 const DOCS       = path.join(ROOT, 'docs');
 const UPLOADS    = path.join(ROOT, 'uploads');
 fs.mkdirSync(UPLOADS, { recursive: true });
@@ -337,4 +337,11 @@ app.listen(PORT, () => {
 });
 
 // tiny escape helpers used by PDF html
-function escapeHtml(s=""){return String(s).replace(/[&<>"]/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[m]));}
+function escapeHtml(s = "") {
+  return String(s).replace(/[&<>"]/g, m => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;"
+  }[m]));
+} // Add this closing brace
