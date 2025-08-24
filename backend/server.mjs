@@ -29,27 +29,6 @@ if (process.env.NODE_ENV !== 'production') {
   } catch {}
 }
 
-// GET '/'
-app.get('/', (_req, res) => {
-  res.setHeader('X-Wayzo-Version', VERSION);
-  // prevent CDN/browser from caching HTML
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Surrogate-Control', 'no-store');
-  if (!fs.existsSync(INDEX)) return res.status(500).send('index file missing');
-  res.sendFile(INDEX);
-});
-
-// SPA catch-all (same no-cache headers)
-app.get(/^\/(?!api\/).*/, (_req, res) => {
-  res.setHeader('X-Wayzo-Version', VERSION);
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Surrogate-Control', 'no-store');
-  if (!fs.existsSync(INDEX)) return res.status(500).send('index file missing');
-  res.sendFile(INDEX);
-});
-
 /* Force Markdown links/images to open in a new tab */
 marked.use({
   renderer: {
@@ -91,7 +70,7 @@ app.set('trust proxy', 1);
 app.use(helmet({ contentSecurityPolicy: false, crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' } }));
 app.use(compression());
 app.use(morgan('tiny'));
-app.use(cors());
+app.use(cors()));
 app.use(rateLimit({ windowMs: 60_000, limit: 160 }));
 app.use(express.json({ limit: '2mb' }));
 
@@ -365,7 +344,7 @@ app.get('/api/plan/:id/ics', (req, res) => {
   res.send(ics);
 });
 
-/* SPA catch-all */
+/* SPA catch-all (non-API) */
 app.get(/^\/(?!api\/).*/, (_req, res) => {
   res.setHeader('X-Wayzo-Version', VERSION);
   if (!fs.existsSync(INDEX)) return res.status(500).send('index file missing');
