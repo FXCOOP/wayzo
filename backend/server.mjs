@@ -19,7 +19,7 @@ import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
 
-const VERSION = 'staging-v21';
+const VERSION = 'staging-v22';
 
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
@@ -52,12 +52,13 @@ app.use(compression());
 app.use(morgan('combined')); // Detailed logging
 app.use(cors());
 app.use(rateLimit({ windowMs: 60_000, limit: 160 }));
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '5mb' })); // Increased limit for potential large payloads
 
 /* Static Serving with Proper Headers */
 app.use('/frontend', express.static(FRONTEND, {
   setHeaders: (res, filePath) => {
     console.log('Serving static file:', filePath); // Debug
+    if (!fs.existsSync(filePath)) console.error('File not found:', filePath);
     if (/\.(css|js)$/i.test(filePath)) {
       res.setHeader('Cache-Control', 'no-cache, must-revalidate');
     } else if (/\.(svg|png|jpg|jpeg|webp|ico)$/i.test(filePath)) {
@@ -81,7 +82,7 @@ app.get('/', (_req, res) => {
   res.setHeader('X-Wayzo-Version', VERSION);
   if (!fs.existsSync(INDEX)) {
     console.error('Index file missing:', INDEX);
-    return res.status(500).send('index file missing');
+    return res.status(500).send('Index file missing. Check server logs.');
   }
   res.sendFile(INDEX);
 });
@@ -89,8 +90,9 @@ app.get('/healthz', (_req, res) => res.json({ ok: true, version: VERSION }));
 app.get('/version', (_req, res) => res.json({ version: VERSION }));
 
 /* Uploads */
-const multerUpload = multer({ dest: UPLOADS, limits: { fileSize: 8 * 1024 * 1024, files: 8 } });
-app.post('/api/upload', multerUpload.array('files', 8), (req, res) => {
+const multerUpload = multer({ dest: UPLOADS, limits: { fileSize: 10 * 1024 * 1024, files: 10 } }); // Increased limits
+app.post('/api/upload', multerUpload.array('files', 10), (req, res) => {
+  console.log('Upload request received:', req.files);
   const files = (req.files || []).map(f => ({
     name: f.originalname, size: f.size, url: `/uploads/${path.basename(f.path)}`, mime: f.mimetype
   }));
@@ -186,6 +188,7 @@ Budget: ${budget} ${currency}
 Diet: ${diet}`;
 
   if (!client) {
+    console.warn('OpenAI API key not set, using local fallback');
     let md = localPlanMarkdown(payload);
     md = ensureDaySections(md, nDays, start);
     return md;
@@ -197,7 +200,10 @@ Diet: ${diet}`;
       messages: [{ role: "system", content: sys }, { role: "user", content: user }],
     });
     let md = resp.choices?.[0]?.message?.content?.trim() || "";
-    if (!md) md = localPlanMarkdown(payload);
+    if (!md) {
+      console.warn('OpenAI response empty, using fallback');
+      md = localPlanMarkdown(payload);
+    }
     md = linkifyTokens(md, destination);
     md = ensureDaySections(md, nDays, start);
     return md;
@@ -246,7 +252,7 @@ app.post('/api/plan', async (req, res) => {
 app.get('/api/plan/:id/pdf', (req, res) => {
   const { id } = req.params;
   const row = getPlan.get(id);
-  if (!row) return res.status(404).json({ error: 'not found' });
+  if (!row) return res.status(404).json({ error: 'Plan not found' });
   const saved = JSON.parse(row.payload || '{}');
   const d = saved?.data || {};
   const md = saved?.markdown || '';
@@ -319,7 +325,7 @@ ${htmlBody}
 app.get('/api/plan/:id/ics', (req, res) => {
   const { id } = req.params;
   const row = getPlan.get(id);
-  if (!row) return res.status(404).json({ error: 'not found' });
+  if (!row) return res.status(404).json({ error: 'Plan not found' });
   const saved = JSON.parse(row.payload || '{}');
   const md = saved.markdown || '';
   const dest = saved?.data?.destination || 'Trip';
@@ -342,7 +348,7 @@ app.get(/^\/(?!api\/).*/, (_req, res) => {
   res.setHeader('X-Wayzo-Version', VERSION);
   if (!fs.existsSync(INDEX)) {
     console.error('Index file missing:', INDEX);
-    return res.status(500).send('index file missing');
+    return res.status(500).send('Index file missing. Check server logs.');
   }
   res.sendFile(INDEX);
 });
@@ -351,7 +357,7 @@ app.listen(PORT, () => {
   console.log(`Wayzo backend running on :${PORT}`);
   console.log('Version:', VERSION);
   console.log('Index file:', INDEX);
-  console.log('Frontend path:', FRONTEND); // Debug path
+  console.log('Frontend path:', FRONTEND);
 });
 
 // Escape HTML helper

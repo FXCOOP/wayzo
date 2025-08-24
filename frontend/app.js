@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-/* Wayzo app.js - Enhanced UI/UX - 2025-08-24 16:39 IDT */
+/* Wayzo app.js - Enhanced UI/UX - 2025-08-24 21:55 IDT */
 
 "use strict";
 
@@ -37,8 +37,8 @@ const buyBtn = $('#buyBtn');
 const saveBtn = $('#saveBtn');
 const pdfBtn = $('#pdfBtn');
 const icsBtn = $('#icsBtn');
-const buildPlanBtn = $('#buildPlanBtn'); // Synced with HTML
-const demoBtn = $('#demoBtn'); // Synced with HTML
+const buildPlanBtn = $('#buildPlanBtn');
+const demoBtn = $('#demoBtn');
 
 // Output
 const previewBox = $('#preview');
@@ -179,7 +179,7 @@ async function doFullPlan() {
       });
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
-      setPreviewHTML(data.html);
+      setPreviewHTML(data.html || '<div class="muted">No plan generated.</div>');
       if (data.id) {
         const base = location.origin;
         if (pdfBtn) { pdfBtn.style.display = 'inline-block'; pdfBtn.href = `${base}/api/plan/${data.id}/pdf`; }
@@ -266,3 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   console.log('Map initialized');
 });
+
+// Check if all elements are loaded
+console.log('Buttons loaded:', { submitBtn, buyBtn, saveBtn, buildPlanBtn, demoBtn });
+console.log('Form inputs loaded:', { destination, start, end, totalBudget, currency, adults, children, diet, prefs });

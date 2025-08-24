@@ -9,7 +9,7 @@
 
 html, body {
   height: 100%;
-  font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif; /* Modern font stack */
+  font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
   color: #1e293b;
   background: #ffffff !important;
   -webkit-font-smoothing: antialiased;
@@ -216,13 +216,13 @@ body {
   top: 55%; /* Fine-tuned placement */
   left: 50%;
   transform: translateX(-50%);
-  width: 180px; /* Adjusted for better look */
-  height: 180px;
+  width: 200px; /* Adjusted for better size */
+  height: 200px;
   object-fit: cover;
   border-radius: 15px;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
   z-index: 1;
-  border: 4px solid #ffffff; /* White border for pop */
+  border: 5px solid #ffffff; /* White border for pop */
 }
 
 /* Main Content */
