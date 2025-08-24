@@ -50,16 +50,21 @@ function escapeAttr(s=""){return String(s).replace(/"/g,"%22");}
 /* Paths */
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
-const ROOT       = __dirname;
-const STATIC     = ROOT;
-const DOCS       = path.join(ROOT, 'docs');
-const UPLOADS    = path.join(ROOT, 'uploads');
+const REPO    = path.resolve(__dirname, '..');
+const STATIC  = path.join(REPO, 'frontend'); // serve files from /frontend
+const DOCS    = path.join(REPO, 'docs');     // docs at repo root
+const UPLOADS = path.join(__dirname, 'uploads');
 fs.mkdirSync(UPLOADS, { recursive: true });
+
+fs.mkdirSync(UPLOADS, { recursive: true });
+
 
 let INDEX = path.join(STATIC, 'index.backend.html');
 if (!fs.existsSync(INDEX)) {
-  const alt = path.join(STATIC, 'index.html');
-  if (fs.existsSync(alt)) INDEX = alt;
+  const alt1 = path.join(STATIC, 'index.html');
+  const alt2 = path.join(STATIC, 'pro.html');
+  if (fs.existsSync(alt1)) INDEX = alt1;
+  else if (fs.existsSync(alt2)) INDEX = alt2;
 }
 
 /* App */
