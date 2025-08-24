@@ -14,10 +14,10 @@ import { marked } from 'marked';
 import OpenAI from 'openai';
 import multer from 'multer';
 
-import { normalizeBudget, computeBudget } from './backend/lib/budget.mjs';
-import { ensureDaySections } from './backend/lib/expand-days.mjs';
-import { affiliatesFor, linkifyTokens } from './backend/lib/links.mjs';
-import { buildIcs } from './backend/lib/ics.mjs';
+import { normalizeBudget, computeBudget } from './lib/budget.mjs';
+import { ensureDaySections } from './lib/expand-days.mjs';
+import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
+import { buildIcs } from './lib/ics.mjs';
 
 const VERSION = 'staging-v17';
 
