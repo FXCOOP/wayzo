@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-/* Wayzo app.js - Enhanced UI/UX - 2025-08-24 15:46 IDT */
+/* Wayzo app.js - Enhanced UI/UX - 2025-08-24 15:59 IDT */
 
 "use strict";
 
@@ -151,6 +151,7 @@ async function doPreview() {
     setPreviewHTML(data.teaser_html || '<div class="muted">No preview available.</div>');
   } catch (e) {
     setPreviewHTML('<div class="muted">Preview failed. Try again. Error: ' + (e.name === 'AbortError' ? 'Timeout' : e.message) + '</div>');
+    console.error('Preview error:', e); // Debug
   } finally {
     showLoading(false);
   }
@@ -185,6 +186,7 @@ async function doFullPlan() {
       if (attempts === maxAttempts) {
         setPreviewHTML('<div class="muted">Plan failed after retries. Try again. Error: ' + e.message + '</div>');
       }
+      console.error('Full plan error:', e); // Debug
     }
   }
   showLoading(false);
@@ -200,7 +202,9 @@ async function savePreview() {
     } else {
       alert('Local storage not available. Preview not saved.');
     }
-  } catch {}
+  } catch (e) {
+    console.error('Save preview error:', e); // Debug
+  }
 }
 
 // Debouncing for button clicks
@@ -212,7 +216,7 @@ const debounce = (callback, delay) => {
   };
 };
 
-// Wire up events
+// Wire up events with error handling
 form?.addEventListener('submit', (e) => e.preventDefault());
 submitBtn?.addEventListener('click', debounce((e) => { e.preventDefault(); doPreview(); }, 300));
 buyBtn?.addEventListener('click', debounce((e) => { e.preventDefault(); doFullPlan(); }, 300));
@@ -220,7 +224,7 @@ saveBtn?.addEventListener('click', debounce((e) => { e.preventDefault(); savePre
 
 // Upload and drag-and-drop
 filesEl?.addEventListener('change', async () => {
-  try { await uploadFiles(); } catch {}
+  try { await uploadFiles(); } catch (e) { console.error('Upload error:', e); }
 });
 filesEl?.addEventListener('dragover', (e) => e.preventDefault());
 filesEl?.addEventListener('drop', (e) => {
@@ -232,4 +236,15 @@ filesEl?.addEventListener('drop', (e) => {
     filesEl.files = new FileList(files);
     uploadFiles();
   }
+});
+
+// Initialize Map
+document.addEventListener('DOMContentLoaded', () => {
+  mapboxgl.accessToken = 'your_mapbox_key'; // Replace with your Mapbox key
+  const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v11',
+    center: [2.3522, 48.8566], // Paris default
+    zoom: 10
+  });
 });

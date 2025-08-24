@@ -19,7 +19,7 @@ import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
 
-const VERSION = 'staging-v18';
+const VERSION = 'staging-v19';
 
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
@@ -56,9 +56,9 @@ app.use(express.json({ limit: '2mb' }));
 app.use('/frontend', express.static(FRONTEND, {
   setHeaders: (res, filePath) => {
     if (/\.(css|js)$/i.test(filePath)) {
-      res.setHeader('Cache-Control', 'no-cache, must-revalidate'); // Staging-friendly
+      res.setHeader('Cache-Control', 'no-cache, must-revalidate');
     } else if (/\.(svg|png|jpg|jpeg|webp|ico)$/i.test(filePath)) {
-      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'); // Cache images
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     }
     if (/\.css$/i.test(filePath)) res.setHeader('Content-Type', 'text/css; charset=utf-8');
     if (/\.js$/i.test(filePath)) res.setHeader('Content-Type', 'application/javascript; charset=utf-8');

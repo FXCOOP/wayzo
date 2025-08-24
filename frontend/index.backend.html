@@ -23,8 +23,8 @@
         <h1 class="section-title">Plan Unforgettable Trips in Minutes — AI-Powered</h1>
         <p>Personalized itineraries by budget and style. Day-by-day guidance you can export to PDF.</p>
         <div class="hero-cta">
-          <button class="btn btn-primary">Build My Plan</button>
-          <button class="btn btn-ghost">See Demo</button>
+          <button class="btn btn-primary" id="buildPlanBtn">Build My Plan</button>
+          <button class="btn btn-ghost" id="demoBtn">See Demo</button>
         </div>
         <p class="hero-note small muted">No app required · Mobile-first · PDF export</p>
       </div>
@@ -129,12 +129,14 @@
   </footer>
   <script src="/frontend/app.js"></script>
   <script>
-    mapboxgl.accessToken = 'your_mapbox_key'; // Replace with your Mapbox key
-    const map = new mapboxgl.Map({
-      container: 'map',
-      style: 'mapbox://styles/mapbox/streets-v11',
-      center: [2.3522, 48.8566], // Paris default
-      zoom: 10
+    document.addEventListener('DOMContentLoaded', () => {
+      mapboxgl.accessToken = 'your_mapbox_key'; // Replace with your Mapbox key
+      const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/streets-v11',
+        center: [2.3522, 48.8566], // Paris default
+        zoom: 10
+      });
     });
   </script>
 </body>
