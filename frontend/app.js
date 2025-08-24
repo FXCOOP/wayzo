@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-/* Wayzo app.js - Enhanced UI/UX - 2025-08-24 16:25 IDT */
+/* Wayzo app.js - Enhanced UI/UX - 2025-08-24 16:39 IDT */
 
 "use strict";
 
@@ -37,8 +37,8 @@ const buyBtn = $('#buyBtn');
 const saveBtn = $('#saveBtn');
 const pdfBtn = $('#pdfBtn');
 const icsBtn = $('#icsBtn');
-const buildPlanBtn = $('#buildPlanBtn');
-const demoBtn = $('#demoBtn');
+const buildPlanBtn = $('#buildPlanBtn'); // Synced with HTML
+const demoBtn = $('#demoBtn'); // Synced with HTML
 
 // Output
 const previewBox = $('#preview');
@@ -66,7 +66,7 @@ function validateForm(payload) {
   if (!payload.destination) errors.push('Please enter a destination.');
   if (!payload.start || !payload.end) errors.push('Please select start and end dates.');
   if (errors.length > 0) {
-    alert(errors.join('\n'));
+    alert('Validation Errors:\n' + errors.join('\n'));
     return false;
   }
   return true;
@@ -100,7 +100,7 @@ function showLoading(show = true) {
 // Preview innerHTML with enhanced rendering
 function setPreviewHTML(html = '') {
   if (previewBox) {
-    previewBox.innerHTML = html;
+    previewBox.innerHTML = html || '<div class="muted">No content available.</div>';
     const imgs = previewBox.querySelectorAll('img[src^="https://unsplash.com"]');
     imgs.forEach(img => {
       img.loading = 'lazy';
@@ -141,7 +141,7 @@ async function doPreview() {
   }
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // Increased timeout
     const res = await fetch('/api/preview', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -151,9 +151,10 @@ async function doPreview() {
     clearTimeout(timeoutId);
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     const data = await res.json();
-    setPreviewHTML(data.teaser_html || '<div class="muted">No preview available.</div>');
+    setPreviewHTML(data.teaser_html);
+    console.log('Preview response:', data); // Debug
   } catch (e) {
-    setPreviewHTML('<div class="muted">Preview failed. Try again. Error: ' + e.message + '</div>');
+    setPreviewHTML('<div class="muted">Preview failed. Error: ' + e.message + '</div>');
     console.error('Preview error:', e);
   } finally {
     showLoading(false);
@@ -168,7 +169,7 @@ async function doFullPlan() {
     showLoading(false);
     return;
   }
-  let attempts = 0, maxAttempts = 3; // Increased attempts
+  let attempts = 0, maxAttempts = 3;
   while (attempts < maxAttempts) {
     try {
       const res = await fetch('/api/plan', {
@@ -178,17 +179,18 @@ async function doFullPlan() {
       });
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
-      setPreviewHTML(data.html || '<div class="muted">No plan generated.</div>');
+      setPreviewHTML(data.html);
       if (data.id) {
         const base = location.origin;
         if (pdfBtn) { pdfBtn.style.display = 'inline-block'; pdfBtn.href = `${base}/api/plan/${data.id}/pdf`; }
         if (icsBtn) { icsBtn.style.display = 'inline-block'; icsBtn.href = `${base}/api/plan/${data.id}/ics`; }
       }
+      console.log('Full plan response:', data); // Debug
       break;
     } catch (e) {
       attempts++;
       if (attempts === maxAttempts) {
-        setPreviewHTML('<div class="muted">Plan failed after retries. Try again. Error: ' + e.message + '</div>');
+        setPreviewHTML('<div class="muted">Plan failed after retries. Error: ' + e.message + '</div>');
       }
       console.error('Full plan error:', e);
     }
@@ -230,7 +232,7 @@ form?.addEventListener('submit', (e) => e.preventDefault());
 submitBtn?.addEventListener('click', debounce((e) => { e.preventDefault(); doPreview(); }, 300));
 buyBtn?.addEventListener('click', debounce((e) => { e.preventDefault(); doFullPlan(); }, 300));
 saveBtn?.addEventListener('click', debounce((e) => { e.preventDefault(); savePreview(); }, 300));
-buildPlanBtn?.addEventListener('click', debounce((e) => { e.preventDefault(); doPreview(); }, 300)); // Synced with submit
+buildPlanBtn?.addEventListener('click', debounce((e) => { e.preventDefault(); doPreview(); }, 300)); // Synced action
 demoBtn?.addEventListener('click', debounce((e) => { e.preventDefault(); showDemo(); }, 300));
 
 // Upload and drag-and-drop
@@ -251,6 +253,10 @@ filesEl?.addEventListener('drop', (e) => {
 
 // Initialize Map
 document.addEventListener('DOMContentLoaded', () => {
+  if (!mapboxgl) {
+    console.error('Mapbox GL JS not loaded');
+    return;
+  }
   mapboxgl.accessToken = 'your_mapbox_key'; // Replace with your Mapbox key
   const map = new mapboxgl.Map({
     container: 'map',
@@ -258,4 +264,5 @@ document.addEventListener('DOMContentLoaded', () => {
     center: [2.3522, 48.8566], // Paris default
     zoom: 10
   });
+  console.log('Map initialized');
 });

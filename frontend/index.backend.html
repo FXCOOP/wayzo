@@ -132,6 +132,10 @@
   <script src="/frontend/app.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      if (!mapboxgl) {
+        console.error('Mapbox GL JS not loaded');
+        return;
+      }
       mapboxgl.accessToken = 'your_mapbox_key'; // Replace with your Mapbox key
       const map = new mapboxgl.Map({
         container: 'map',
@@ -139,6 +143,7 @@
         center: [2.3522, 48.8566], // Paris default
         zoom: 10
       });
+      console.log('Map initialized');
     });
   </script>
 </body>

@@ -19,14 +19,16 @@ import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
 
-const VERSION = 'staging-v20';
+const VERSION = 'staging-v21';
 
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
   try {
     const { config } = await import('dotenv');
     config();
-  } catch {}
+  } catch (e) {
+    console.error('Failed to load .env:', e);
+  }
 }
 
 /* Paths */
@@ -47,7 +49,7 @@ const PORT = Number(process.env.PORT || 10000);
 app.set('trust proxy', 1);
 app.use(helmet({ contentSecurityPolicy: false, crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' } }));
 app.use(compression());
-app.use(morgan('combined')); // Detailed logging for debugging
+app.use(morgan('combined')); // Detailed logging
 app.use(cors());
 app.use(rateLimit({ windowMs: 60_000, limit: 160 }));
 app.use(express.json({ limit: '2mb' }));
@@ -55,6 +57,7 @@ app.use(express.json({ limit: '2mb' }));
 /* Static Serving with Proper Headers */
 app.use('/frontend', express.static(FRONTEND, {
   setHeaders: (res, filePath) => {
+    console.log('Serving static file:', filePath); // Debug
     if (/\.(css|js)$/i.test(filePath)) {
       res.setHeader('Cache-Control', 'no-cache, must-revalidate');
     } else if (/\.(svg|png|jpg|jpeg|webp|ico)$/i.test(filePath)) {
@@ -76,7 +79,10 @@ app.use('/uploads', express.static(UPLOADS, { setHeaders: (res) => res.setHeader
 /* Root / Health */
 app.get('/', (_req, res) => {
   res.setHeader('X-Wayzo-Version', VERSION);
-  if (!fs.existsSync(INDEX)) return res.status(500).send('index file missing');
+  if (!fs.existsSync(INDEX)) {
+    console.error('Index file missing:', INDEX);
+    return res.status(500).send('index file missing');
+  }
   res.sendFile(INDEX);
 });
 app.get('/healthz', (_req, res) => res.json({ ok: true, version: VERSION }));
@@ -184,20 +190,26 @@ Diet: ${diet}`;
     md = ensureDaySections(md, nDays, start);
     return md;
   }
-  const resp = await client.chat.completions.create({
-    model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-    temperature: 0.6,
-    messages: [{ role: "system", content: sys }, { role: "user", content: user }],
-  });
-  let md = resp.choices?.[0]?.message?.content?.trim() || "";
-  if (!md) md = localPlanMarkdown(payload);
-  md = linkifyTokens(md, destination);
-  md = ensureDaySections(md, nDays, start);
-  return md;
+  try {
+    const resp = await client.chat.completions.create({
+      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      temperature: 0.6,
+      messages: [{ role: "system", content: sys }, { role: "user", content: user }],
+    });
+    let md = resp.choices?.[0]?.message?.content?.trim() || "";
+    if (!md) md = localPlanMarkdown(payload);
+    md = linkifyTokens(md, destination);
+    md = ensureDaySections(md, nDays, start);
+    return md;
+  } catch (e) {
+    console.error('OpenAI API error:', e);
+    return localPlanMarkdown(payload); // Fallback
+  }
 }
 
 /* API */
 app.post('/api/preview', (req, res) => {
+  console.log('Preview request received:', req.body); // Debug
   const payload = req.body || {};
   payload.budget = normalizeBudget(payload.budget, payload.currency);
   const id = uid();
@@ -215,6 +227,7 @@ app.post('/api/preview', (req, res) => {
 });
 
 app.post('/api/plan', async (req, res) => {
+  console.log('Plan request received:', req.body); // Debug
   try {
     const payload = req.body || {};
     payload.budget = normalizeBudget(payload.budget, payload.currency);
@@ -225,8 +238,8 @@ app.post('/api/plan', async (req, res) => {
     savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: payload, markdown }));
     res.json({ id, markdown, html, affiliates: aff, version: VERSION });
   } catch (e) {
-    console.error('API plan error:', e); // Debug
-    res.status(500).json({ error: 'Server error, please try again.', version: VERSION });
+    console.error('Plan generation error:', e);
+    res.status(500).json({ error: 'Failed to generate plan. Check server logs.', version: VERSION });
   }
 });
 
@@ -327,7 +340,10 @@ app.get('/api/plan/:id/ics', (req, res) => {
 /* SPA Catch-All */
 app.get(/^\/(?!api\/).*/, (_req, res) => {
   res.setHeader('X-Wayzo-Version', VERSION);
-  if (!fs.existsSync(INDEX)) return res.status(500).send('index file missing');
+  if (!fs.existsSync(INDEX)) {
+    console.error('Index file missing:', INDEX);
+    return res.status(500).send('index file missing');
+  }
   res.sendFile(INDEX);
 });
 
@@ -335,6 +351,7 @@ app.listen(PORT, () => {
   console.log(`Wayzo backend running on :${PORT}`);
   console.log('Version:', VERSION);
   console.log('Index file:', INDEX);
+  console.log('Frontend path:', FRONTEND); // Debug path
 });
 
 // Escape HTML helper
