@@ -1,174 +1,181 @@
-/* global fetch, FormData, FileReader */
 "use strict";
 
-/* Tiny helpers */
-const $ = (sel, el = document) => el.querySelector(sel);
-const $$ = (sel, el = document) => Array.from(el.querySelectorAll(sel));
-const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+// Tiny helpers
+const $ = (sel) => document.querySelector(sel);
 
-function html(strings, ...vals) {
-  return strings.map((s, i) => s + (vals[i] ?? "")).join("");
+// form + inputs
+const form         = document.getElementById('tripForm');
+if (form) form.addEventListener('submit', (e) => { e.preventDefault(); });
+
+const destination  = $('#destination');
+const start        = $('#start');
+const end          = $('#end');
+const totalBudget  = $('#totalBudget');
+const currency     = $('#currency');
+const adults       = $('#adults');
+const children     = $('#children');
+const diet         = $('#diet');
+const prefs        = $('#prefs');
+
+// uploads (robust selection + preview container)
+const filesElRaw   = document.getElementById('attachments') || document.getElementById('photo');
+const filesEl      = filesElRaw || null;
+let previewEl      = document.getElementById('attachmentsPreview') || document.getElementById('filesPreview');
+
+if (!previewEl && filesEl) {
+  previewEl = document.createElement('div');
+  previewEl.id = 'attachmentsPreview';
+  previewEl.className = 'files';
+  filesEl.insertAdjacentElement('afterend', previewEl);
 }
 
-/* Upload helpers */
-async function uploadFiles(inputEl) {
-  try {
-    if (!inputEl || !inputEl.files || inputEl.files.length === 0) return [];
-    const fd = new FormData();
-    for (const f of inputEl.files) fd.append("files", f);
-    const resp = await fetch("/api/upload", { method: "POST", body: fd });
-    if (!resp.ok) throw new Error(`upload failed ${resp.status}`);
-    const j = await resp.json().catch(() => ({ files: [] }));
-    return j.files || [];
-  } catch (e) {
-    console.error("upload error:", e);
-    return [];
-  }
-}
+// buttons (robust binding)
+const submitBtn    = $("button[type='submit']");
+const buyBtn       = $('#buyBtn');
+const saveBtn      = $('#saveBtn');
+const pdfBtn       = $('#pdfBtn');
+const icsBtn       = $('#icsBtn');
 
-function renderThumbs(files, into) {
-  into.innerHTML = "";
-  for (const f of files) {
-    const a = document.createElement("a");
-    a.href = f.url;
-    a.target = "_blank";
-    a.rel = "noopener";
-    a.className = "thumb";
-    a.title = f.name;
-    a.innerHTML = `<img src="${f.url}" alt="${f.name}" loading="lazy" />`;
-    into.appendChild(a);
-  }
-}
+// output
+const previewBox   = $('#preview');
+const loading      = $('#loading');
 
-/* Read form -> payload */
-function readPayload(form) {
-  const data = Object.fromEntries(new FormData(form).entries());
-  const adults = Number(data.adults || 2);
-  const children = Number(data.children || 0);
+// safe helpers
+const val = (el) => (el && el.value || '').trim();
+const num = (el) => {
+  const n = Number((el && el.value || '').replace(/[^\d.]/g, ''));
+  return Number.isFinite(n) ? n : 0;
+};
 
+// collect checkboxes/radios
+const selectedStyle = () => {
+  const el = document.querySelector('input[name="style"]:checked');
+  return el ? el.value : 'mid';
+};
+const selectedPrefs = () => {
+  return Array.from(document.querySelectorAll('.seg.wrap input[type="checkbox"]:checked')).map(i => i.value);
+};
+
+// payload
+function preparePayload() {
   return {
-    destination: data.destination || "",
-    start: data.start || "",
-    end: data.end || "",
-    budget: Number(data.totalBudget || 0),
-    currency: data.currency || "USD $",
-    level: data.level || "mid",
-    adults,
-    children,
-    prefs: data.prefs || "",
-    diet: data.diet || "",
+    destination : val(destination),
+    start       : val(start),
+    end         : val(end),
+    budget      : num(totalBudget),
+    currency    : val(currency) || 'USD $',
+    adults      : num(adults) || 2,
+    children    : num(children) || 0,
+    level       : selectedStyle(),
+    prefs       : selectedPrefs().join(', '),
+    diet        : val(diet),
   };
 }
 
-async function callPreview(payload) {
-  const r = await fetch("/api/preview", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (!r.ok) throw new Error(`preview ${r.status}`);
-  return r.json();
+// simple toaster
+function showLoading(on) {
+  if (!loading) return;
+  loading.hidden = !on;
+}
+function setPreviewHTML(html) {
+  previewBox.innerHTML = html || '';
 }
 
-async function callPlan(payload) {
-  const r = await fetch("/api/plan", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (!r.ok) throw new Error(`plan ${r.status}`);
-  return r.json();
-}
+// upload selected files (images/PDF) and render thumbnails
+async function uploadFiles() {
+  if (!filesEl || !filesEl.files || filesEl.files.length === 0) return [];
+  const fd = new FormData();
+  for (const f of Array.from(filesEl.files)) fd.append('files', f);
 
-/* UI wiring */
-document.addEventListener("DOMContentLoaded", () => {
-  const form = $("#tripForm");
-  const previewDiv = $("#preview");
-  const loading = $("#loading");
-  const buyBtn = $("#buyBtn");
-  const pdfBtn = $("#pdfBtn");
-  const saveBtn = $("#saveBtn");
+  const res = await fetch('/api/upload', { method:'POST', body: fd });
+  if (!res.ok) return [];
+  const { files = [] } = await res.json();
 
-  const filesEl = $("#attachments");
-  const thumbsEl = $("#attachmentsPreview"); // <div id="attachmentsPreview"></div> (add if you want visible thumbs)
-
-  const childrenEl = $("#children");
-  const agesRow = $("#agesRow");
-
-  // Make sure clicks don't navigate
-  if (buyBtn) {
-    buyBtn.addEventListener("click", async (e) => {
-      e.preventDefault();
-      await generate(true);
-    });
-  }
-
-  if (form) {
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      await generate(false);
-    });
-  }
-
-  if (childrenEl && agesRow) {
-    const toggleAges = () => {
-      const n = Number(childrenEl.value || 0);
-      agesRow.style.display = n > 0 ? "" : "none";
-    };
-    childrenEl.addEventListener("input", toggleAges);
-    toggleAges();
-  }
-
-  if (filesEl) {
-    filesEl.addEventListener("change", async () => {
-      loading.style.display = "block";
-      const uploaded = await uploadFiles(filesEl);
-      if (thumbsEl) renderThumbs(uploaded, thumbsEl);
-      // store last uploaded list on the input for later submit
-      filesEl._uploaded = uploaded;
-      loading.style.display = "none";
-    });
-  }
-
-  async function generate(full) {
-    try {
-      loading.style.display = "block";
-      previewDiv.innerHTML = "";
-
-      const payload = readPayload(form);
-
-      // include uploaded attachments (if any were chosen)
-      if (filesEl && Array.isArray(filesEl._uploaded)) {
-        payload.attachments = filesEl._uploaded;
+  // thumbnails if we have a box
+  if (previewEl) {
+    previewEl.innerHTML = '';
+    for (const f of files) {
+      if (f.mime && f.mime.startsWith('image/')) {
+        const img = document.createElement('img');
+        img.src = f.url;
+        img.alt = f.name || 'image';
+        img.loading = 'lazy';
+        previewEl.appendChild(img);
+      } else if (String(f.name || '').toLowerCase().endsWith('.pdf')) {
+        const a = document.createElement('a');
+        a.href = f.url;
+        a.textContent = f.name || 'document.pdf';
+        a.target = '_blank';
+        a.rel = 'noopener';
+        previewEl.appendChild(a);
       }
-
-      const res = full ? await callPlan(payload) : await callPreview(payload);
-
-      // basic HTML render (preview or full)
-      if (res.teaser_html) {
-        previewDiv.innerHTML = res.teaser_html;
-      } else if (res.html) {
-        previewDiv.innerHTML = res.html;
-      } else if (res.markdown) {
-        // very tiny markdown fallback
-        previewDiv.innerHTML = res.markdown
-          .replace(/^### (.*)$/gm, "<h3>$1</h3>")
-          .replace(/^## (.*)$/gm, "<h2>$1</h2>")
-          .replace(/^# (.*)$/gm, "<h1>$1</h1>")
-          .replace(/\n/g, "<br/>");
-      } else {
-        previewDiv.textContent = "No content — please try again.";
-      }
-
-      // enable other UI bits when full result exists
-      if (pdfBtn) pdfBtn.disabled = !res.id;
-      if (saveBtn) saveBtn.disabled = !res.id;
-
-    } catch (e) {
-      console.error(e);
-      previewDiv.textContent = "Something went wrong. Please try again.";
-    } finally {
-      loading.style.display = "none";
     }
   }
+  return files;
+}
+
+// preview button
+async function doPreview() {
+  try {
+    showLoading(true);
+    const payload = preparePayload();
+    await uploadFiles(); // optional; thumbnails + stores files
+
+    const res = await fetch('/api/preview', {
+      method:'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    setPreviewHTML(data.teaser_html || '<div class="muted">No preview available.</div>');
+  } catch (e) {
+    setPreviewHTML('<div class="muted">Preview failed. Try again.</div>');
+  } finally {
+    showLoading(false);
+  }
+}
+
+// full plan (AI)
+async function doFullPlan() {
+  try {
+    showLoading(true);
+    const payload = preparePayload();
+    const res = await fetch('/api/plan', {
+      method:'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+
+    setPreviewHTML(data.html || '');
+    // PDF + ICS links if present
+    if (data.id) {
+      const base = location.origin;
+      if (pdfBtn) { pdfBtn.style.display='inline-block'; pdfBtn.href = `${base}/api/plan/${data.id}/pdf`; }
+      if (icsBtn) { icsBtn.style.display='inline-block';  icsBtn.href  = `${base}/api/plan/${data.id}/ics`; }
+    }
+  } catch (e) {
+    setPreviewHTML('<div class="muted">Plan failed. Try again.</div>');
+  } finally {
+    showLoading(false);
+  }
+}
+
+// save preview (no-op placeholder hitting same preview)
+async function savePreview() {
+  try {
+    await doPreview();
+    alert('Preview saved (client-side placeholder).');
+  } catch {}
+}
+
+// wire up (prevent default on all)
+form?.addEventListener('submit', (e)=> e.preventDefault());
+submitBtn?.addEventListener('click', (e)=> { e.preventDefault(); doPreview(); });
+buyBtn?.addEventListener('click',   (e)=> { e.preventDefault(); doFullPlan(); });
+saveBtn?.addEventListener('click',  (e)=> { e.preventDefault(); savePreview(); });
+
+// live thumbnail render on selection
+filesEl?.addEventListener('change', async () => {
+  try { await uploadFiles(); } catch {}
 });

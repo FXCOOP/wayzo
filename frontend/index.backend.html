@@ -1,167 +1,151 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-  <meta name="color-scheme" content="light only"/>
-
-  <title>Wayzo — Trips that plan themselves</title>
-  <meta name="description" content="Personalized itineraries by budget and style. Day-by-day guidance you can export to PDF.">
-
-  <!-- load light-only stylesheet -->
-  <link rel="stylesheet" href="/style.css?v=21">
-
-  <!-- hard-force light + remove any dark frame on the hero -->
-  <style id="hard-light">
-    :root{ color-scheme: light !important; }
-    @media (prefers-color-scheme: dark){ :root{ color-scheme: light !important; } }
-    html,body{background:#fff !important; color:#0f172a !important;}
-    .topbar,.hero,.main,.card,.footer{background:#fff !important;}
-    .card{border:1px solid #e5e7eb !important; box-shadow:0 4px 18px rgba(2,6,23,.05) !important;}
-    input,select,textarea{background:#fff !important; color:#0f172a !important; border:1px solid #e2e8f0 !important;}
-    .hero{ position:relative; }
-    .hero::before{
-      content:""; position:absolute; inset:0; z-index:-1;
-      background:
-        linear-gradient(0deg, rgba(255,255,255,.96) 0%, rgba(255,255,255,.96) 100%),
-        var(--hero-bg, url('/docs/hero-mountains.jpg')) center/cover no-repeat !important;
-    }
-  </style>
-
-  <script defer src="/app.js?v=21"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wayzo</title>
+  <link rel="icon" href="favicon.svg" />
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
-  <header class="topbar">
-    <div class="container topbar-inner">
-      <a class="brand" href="/"><span class="brand-badge">WZ</span><span class="brand-name">Wayzo</span></a>
-      <a class="btn btn-primary" href="#trip">Start planning</a>
+  <header class="top">
+    <div class="brand">
+      <div class="logo">WZ</div>
+      <div class="name">Wayzo</div>
     </div>
+    <a class="cta" href="#plan">Start planning</a>
   </header>
 
-  <section class="hero" style="--hero-bg:url('/docs/hero-mountains.jpg')">
-    <div class="container hero-grid">
-      <div class="hero-left">
-        <div class="hero-card">
-          <h1>Plan unforgettable trips in minutes — <span class="hl">AI-powered</span></h1>
-          <p class="lede">Personalized itineraries by budget and style. Day-by-day guidance you can export to PDF.</p>
-          <div class="hero-actions">
-            <a class="btn btn-primary" href="#trip">Build my plan</a>
-            <a class="btn btn-ghost" href="#trip">See demo</a>
-          </div>
-          <p class="muted small">No app required · Mobile-first · PDF export</p>
+  <main class="wrap">
+    <section class="hero">
+      <div class="hero-col">
+        <h1>Plan unforgettable trips in minutes — AI-powered</h1>
+        <p>Personalized itineraries by budget and style. Day-by-day guidance you can export to PDF.</p>
+        <div class="hero-actions">
+          <button class="btn btn-primary" type="button" onclick="document.getElementById('destination').focus()">Build my plan</button>
+          <a class="btn ghost" href="#plan">See demo</a>
+        </div>
+        <div class="trust">
+          <div>No app required · Mobile-first · PDF export</div>
         </div>
       </div>
-      <figure class="hero-right hero-card">
-        <img src="/docs/hero-road.jpg" alt="Wayzo — inspiration for your next trip" loading="eager"/>
-        <figcaption>Wayzo — inspiration for your next trip</figcaption>
-      </figure>
-    </div>
-  </section>
+      <div class="hero-col image">
+        <img src="hero-bg.jpg" alt="Wayzo — inspiration for your next trip" />
+        <div class="caption">Wayzo — inspiration for your next trip</div>
+      </div>
+    </section>
 
-  <main class="main" id="trip">
-    <div class="container grid-2">
-      <section class="card">
-        <div class="card-header"><h2>Trip details</h2></div>
+    <section id="plan" class="panel grid">
+      <div class="panel-left">
+        <h2 class="h2">Trip details</h2>
         <p class="muted">We’ll tailor routes, hotels, activities, and meals—then generate your full AI plan.</p>
 
-        <form id="tripForm" class="form" novalidate>
+        <form id="tripForm" class="form" autocomplete="off">
           <div class="field">
-            <label for="destination">Destination</label>
-            <input id="destination" name="destination" type="text" placeholder="City or region (e.g., Toronto · Paris · Tokyo)" aria-describedby="destHelp" required/>
-            <div id="destHelp" class="small muted">Add country for clarity if needed.</div>
+            <label for="destination" class="label">Destination</label>
+            <input id="destination" class="input" placeholder="City or region (e.g., Toronto · Paris · Tokyo)" />
+            <small class="hint">Add country for clarity if needed.</small>
           </div>
 
-          <div class="fields-2" role="group" aria-label="Dates">
+          <div class="grid-2">
             <div class="field">
-              <label for="start">Start date</label>
-              <input id="start" name="start" type="date" required/>
+              <label for="start" class="label">Start date</label>
+              <input id="start" type="date" class="input" />
             </div>
             <div class="field">
-              <label for="end">End date</label>
-              <input id="end" name="end" type="date" required/>
+              <label for="end" class="label">End date</label>
+              <input id="end" type="date" class="input" />
+              <small class="hint">We’ll balance travel time and activities between these dates.</small>
             </div>
           </div>
-          <div class="small muted">We’ll balance travel time and activities between these dates.</div>
 
-          <div class="fields-2" role="group" aria-label="Budget and travelers">
+          <div class="grid-3">
             <div class="field">
-              <label for="budget">Budget</label>
-              <input id="budget" name="budget" type="number" inputmode="numeric" min="100" step="50" placeholder="Total trip budget (e.g., 500)"/>
-              <select id="currency" name="currency" aria-label="Currency">
-                <option value="USD $">USD $</option><option value="EUR €">EUR €</option><option value="ILS ₪">ILS ₪</option>
-                <option value="GBP £">GBP £</option><option value="CAD $">CAD $</option>
+              <label for="totalBudget" class="label">Budget</label>
+              <input id="totalBudget" class="input" placeholder="Total trip budget (e.g., 500)" inputmode="numeric" />
+            </div>
+            <div class="field">
+              <label for="currency" class="label">Currency</label>
+              <select id="currency" class="input">
+                <option>USD $</option>
+                <option>EUR €</option>
+                <option>GBP £</option>
+                <option>ILS ₪</option>
               </select>
             </div>
             <div class="field">
-              <label for="adults">Travelers</label>
-              <input id="adults" name="adults" type="number" min="1" step="1" value="2"/>
-              <input id="children" name="children" type="number" min="0" step="1" value="0"/>
-              <div id="agesRow" class="ages-row hidden"></div>
+              <label for="adults" class="label">Travelers</label>
+              <div class="grid-2">
+                <input id="adults" class="input" placeholder="Adults" inputmode="numeric" />
+                <input id="children" class="input" placeholder="Children" inputmode="numeric" />
+              </div>
             </div>
           </div>
 
           <div class="field">
-            <label>Style</label>
-            <div class="chip"><input type="radio" name="level" value="budget" id="lvl_budget"><label for="lvl_budget">Budget</label></div>
-            <div class="chip"><input type="radio" name="level" value="mid" id="lvl_mid" checked><label for="lvl_mid">Mid-range</label></div>
-            <div class="chip"><input type="radio" name="level" value="luxury" id="lvl_lux"><label for="lvl_lux">Luxury</label></div>
+            <label class="label">Style</label>
+            <div class="seg">
+              <label><input type="radio" name="style" value="budget" /> Budget</label>
+              <label><input type="radio" name="style" value="mid" checked /> Mid-range</label>
+              <label><input type="radio" name="style" value="luxury" /> Luxury</label>
+            </div>
           </div>
 
           <div class="field">
-            <label for="prefs">Preferences</label>
-            <input id="prefs" name="prefs" type="text" placeholder="e.g., museums, hiking, beaches, kid-friendly"/>
+            <label class="label">Preferences</label>
+            <div class="seg wrap">
+              <label><input type="checkbox" value="attractions" /> attractions</label>
+              <label><input type="checkbox" value="relax" /> relax</label>
+              <label><input type="checkbox" value="romantic" /> romantic</label>
+              <label><input type="checkbox" value="adventure" /> adventure</label>
+              <label><input type="checkbox" value="museums" /> museums</label>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="field">
+              <label for="diet" class="label">Dietary needs</label>
+              <input id="diet" class="input" placeholder="e.g., kosher, vegetarian, gluten-free" />
+            </div>
+            <div class="field">
+              <label for="prefs" class="label">Special requests</label>
+              <input id="prefs" class="input" placeholder="Specific needs, preferences, constraints, anchor events, documents/booking refs, etc." />
+            </div>
           </div>
 
           <div class="field">
-            <label for="diet">Dietary needs</label>
-            <input id="diet" name="diet" type="text" placeholder="e.g., kosher, vegetarian, gluten-free"/>
-          </div>
-
-          <div class="field">
-            <label for="special">Special requests</label>
-            <textarea id="special" name="special" placeholder="Specific needs, preferences, constraints, anchor events, documents/booking refs, etc."></textarea>
-          </div>
-
-          <div class="field">
-            <label for="photo">Attach image or PDF (optional)</label>
-            <input type="file" id="photo" name="photo" accept=".jpg,.jpeg,.png,.webp,.pdf"/>
+            <label for="attachments" class="label">Attach image or PDF (optional)</label>
+            <!-- minimal change: use the ID the JS expects -->
+            <input id="attachments" class="input" type="file" name="attachments" accept="image/*,.pdf" multiple />
+            <!-- the JS will create this if it’s missing -->
+            <div id="attachmentsPreview" class="files"></div>
           </div>
 
           <div class="buttons">
-            <button class="btn btn-primary" type="submit">Generate preview</button>
-            <a id="buyBtn" class="btn" href="javascript:void(0)">Generate full plan (AI)</a>
-            <a id="saveBtn" class="btn" href="javascript:void(0)">Save preview</a>
-            <a id="pdfBtn" class="btn" href="#" target="_blank" rel="noopener" style="display:none">Download PDF</a>
+            <button type="submit" class="btn btn-primary">Generate preview</button>
+            <a id="buyBtn" href="#" class="btn">Generate full plan (AI)</a>
+            <a id="saveBtn" href="#" class="btn ghost">Save preview</a>
           </div>
 
-          <div id="loading" class="muted small hidden">Working…</div>
+          <div class="buttons">
+            <a id="pdfBtn" href="#" class="btn ghost" style="display:none" target="_blank" rel="noopener">Download PDF</a>
+            <a id="icsBtn" href="#" class="btn ghost" style="display:none" target="_blank" rel="noopener">Download Trip Journal</a>
+          </div>
         </form>
-      </section>
+      </div>
 
-      <aside class="card">
-        <div class="card-header">
-          <h2>Your itinerary</h2>
-          <span id="buildTag" class="muted small" title="Build version"></span>
-        </div>
-
-        <nav class="quicklinks">
-          <a id="linkFlights" class="btn" href="#" target="_blank" rel="noopener">✈ Flights</a>
-          <a id="linkHotels" class="btn" href="#" target="_blank" rel="noopener">🏨 Hotels</a>
-          <a id="linkActivities" class="btn" href="#" target="_blank" rel="noopener">🎟 Activities</a>
-          <a id="linkCars" class="btn" href="#" target="_blank" rel="noopener">🚗 Cars</a>
-          <a id="linkInsurance" class="btn" href="#" target="_blank" rel="noopener">🛡 Insurance</a>
-          <a id="linkReviews" class="btn" href="#" target="_blank" rel="noopener">⭐ Reviews</a>
-          <a id="linkMaps" class="btn" href="#" target="_blank" rel="noopener">🗺 Maps</a>
-        </nav>
-
-        <div id="preview" class="markdown" style="min-height:240px"></div>
-      </aside>
-    </div>
+      <div class="panel-right">
+        <h2 class="h2">Your itinerary</h2>
+        <div id="loading" class="loading" hidden>Generating…</div>
+        <div id="preview" class="preview"></div>
+      </div>
+    </section>
   </main>
 
-  <footer class="footer">
-    <div class="container small muted">© Wayzo. All rights reserved.</div>
+  <footer class="foot">
+    <small>© Wayzo. All rights reserved.</small>
   </footer>
+
+  <script defer src="app.js"></script>
 </body>
 </html>
