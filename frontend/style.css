@@ -1,5 +1,5 @@
 /* === Wayzo Staging — LIGHT BACKGROUND ONLY (Complete Stylesheet) === */
-/* Last Updated: 2025-08-24 15:59 IDT */
+/* Last Updated: 2025-08-24 16:18 IDT */
 
 * {
   box-sizing: border-box;
@@ -93,8 +93,8 @@ body {
 /* Hero Section with Two Images */
 .hero {
   position: relative;
-  padding: 60px 0; /* Increased for better background visibility */
-  min-height: 400px; /* Ensure enough space for background */
+  padding: 60px 0;
+  min-height: 400px;
 }
 
 .hero::before {
@@ -103,7 +103,7 @@ body {
   inset: 0;
   z-index: -1;
   background: url('/frontend/hero-bg.jpg') center/cover no-repeat;
-  opacity: 0.6; /* Subtle overlay for text readability */
+  opacity: 0.7; /* Adjust for readability */
 }
 
 .hero-grid {
@@ -119,6 +119,8 @@ body {
 
 .hero-left {
   padding: 20px;
+  background: rgba(255, 255, 255, 0.9); /* Slight overlay for text contrast */
+  border-radius: 8px;
 }
 
 .hero-left h1 {
@@ -143,7 +145,7 @@ body {
 .btn {
   appearance: none;
   border: 1px solid rgba(148, 163, 184, 0.25);
-  padding: 0.55rem 0.95rem;
+  padding: 0.75rem 1.25rem; /* Larger padding for better touch targets */
   border-radius: 12px;
   color: #0f172a;
   background: #fff;
@@ -152,12 +154,14 @@ body {
   gap: 0.5rem;
   align-items: center;
   transition: all 0.15s;
-  cursor: pointer; /* Ensure buttons are clickable */
+  cursor: pointer;
+  font-weight: 600;
 }
 
 .btn:hover {
   border-color: rgba(148, 163, 184, 0.45);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .btn-primary {
@@ -169,6 +173,7 @@ body {
 
 .btn-ghost {
   background: transparent;
+  color: #0f172a;
 }
 
 .btn-cta {
@@ -186,7 +191,7 @@ body {
 .hero-right {
   position: relative;
   width: 100%;
-  height: 300px; /* Fixed height for precise background */
+  height: 400px; /* Fixed height for background */
   overflow: hidden;
 }
 
@@ -198,101 +203,114 @@ body {
   height: 100%;
   object-fit: cover;
   object-position: center;
-  opacity: 0; /* Hidden base image, background handles it */
+  opacity: 0; /* Hidden, background handles it */
 }
 
 .hero-right .secondary-image {
   position: absolute;
-  top: 50%;
+  top: 60%; /* Adjusted for better placement */
   left: 50%;
-  transform: translate(-50%, -50%);
-  width: 200px;
-  height: 200px;
+  transform: translateX(-50%);
+  width: 150px; /* Adjusted size for better look */
+  height: 150px;
   object-fit: cover;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  z-index: 1; /* Ensure it’s above background */
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  z-index: 1;
 }
 
 /* Main Content */
 .main {
-  padding: 28px 0 60px;
+  padding: 40px 0;
+  background: #f9fafb; /* Light gray background for contrast */
 }
 
 .grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 18px;
+  gap: 24px;
 }
 
 .card {
-  background: #fff;
+  background: #ffffff;
   border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  padding: 16px;
-  box-shadow: 0 4px 18px rgba(2, 6, 23, 0.05);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 .card h2 {
   margin-bottom: 1rem;
-  font-size: 1.5rem;
+  font-size: 1.75rem;
+  color: #1e293b;
 }
 
 .card p {
-  color: #475569;
+  color: #64748b;
   margin-bottom: 1rem;
+  line-height: 1.7;
 }
 
 /* Form Styling */
 .form {
   padding: 20px;
+  background: #fff;
+  border-radius: 12px;
 }
 
 .fields-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
 .field {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 label {
   font-weight: 600;
+  color: #1e293b;
 }
 
 input,
 textarea,
 select {
-  background: #fff;
+  background: #f1f5f9;
   color: #0f172a;
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 0.55rem 0.7rem;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
   outline: none;
   width: 100%;
+  transition: border-color 0.2s;
 }
 
 input:focus,
 textarea:focus,
 select:focus {
   border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
 }
 
 textarea {
-  min-height: 110px;
+  min-height: 120px;
   resize: vertical;
 }
 
@@ -301,10 +319,11 @@ textarea {
   align-items: center;
   gap: 6px;
   margin-right: 8px;
-  padding: 0.25rem 0.6rem;
+  padding: 0.25rem 0.75rem;
   border-radius: 999px;
   border: 1px solid #e2e8f0;
-  background: #fff;
+  background: #f1f5f9;
+  font-size: 0.9rem;
 }
 
 .chip input {
@@ -314,72 +333,81 @@ textarea {
 .ages-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 6px;
+  gap: 10px;
+  margin-top: 8px;
 }
 
 .age-select {
-  min-width: 54px;
+  min-width: 60px;
+  padding: 0.5rem;
 }
 
 /* Preview and Quick Links */
 #preview,
 #plan {
   margin-top: 20px;
-  padding: 16px;
+  padding: 20px;
   border: 1px solid #e5e7eb;
-  border-radius: 14px;
+  border-radius: 12px;
   background: #fff;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
 .skel {
-  height: 10px;
+  height: 12px;
   background: #e2e8f0;
   border-radius: 6px;
+  margin-top: 8px;
 }
 
 .skel-2 {
-  margin-top: 8px;
   width: 70%;
 }
 
 .quick-links {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
   margin-top: 12px;
 }
 
 .ql {
-  font-size: 14px;
-  color: #0f172a;
+  font-size: 0.95rem;
+  color: #1e293b;
   text-decoration: none;
-  border-bottom: 1px dotted rgba(2, 6, 23, 0.25);
+  border-bottom: 1px dotted rgba(30, 41, 59, 0.3);
+}
+
+.ql:hover {
+  color: #6366f1;
 }
 
 /* Markdown Rendering */
 .markdown img {
   max-width: 100%;
   height: auto;
-  border-radius: 12px;
-  margin: 0.6rem 0;
+  border-radius: 8px;
+  margin: 0.75rem 0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
 .markdown table {
   border-collapse: collapse;
   width: 100%;
-  margin: 0.5rem 0;
+  margin: 0.75rem 0;
+  background: #fff;
 }
 
 .markdown th,
 .markdown td {
   border: 1px solid #e5e7eb;
-  padding: 0.45rem 0.55rem;
+  padding: 0.5rem 0.75rem;
   text-align: left;
+  color: #1e293b;
 }
 
 .markdown thead th {
-  background: #f8fafc;
+  background: #f1f5f9;
 }
 
 /* Footer */
@@ -388,14 +416,16 @@ textarea {
   border-top: 1px solid rgba(2, 6, 23, 0.08);
   background: #f8fafc;
   text-align: center;
+  color: #64748b;
 }
 
 /* Map Styling */
 #map {
   height: 400px;
   width: 100%;
-  border-radius: 8px;
+  border-radius: 12px;
   margin-top: 20px;
+  border: 1px solid #e5e7eb;
 }
 
 /* Responsive Design */
@@ -406,24 +436,35 @@ textarea {
   }
   .hero-right {
     order: 1;
-    height: 200px; /* Reduced for mobile */
+    height: 250px; /* Adjusted for mobile */
   }
   .hero-left {
     order: 2;
-    padding: 10px;
+    padding: 15px;
   }
   .hero-left h1 {
     font-size: 2rem;
   }
+  .hero-cta {
+    flex-direction: column;
+  }
+  .btn {
+    width: 100%;
+    margin-bottom: 10px;
+  }
   .card,
   .form {
-    padding: 10px;
+    padding: 15px;
   }
   #map {
-    height: 250px;
+    height: 300px;
   }
   .fields-2 {
     grid-template-columns: 1fr;
+  }
+  .hero-right .secondary-image {
+    width: 120px; /* Smaller on mobile */
+    height: 120px;
   }
 }
 

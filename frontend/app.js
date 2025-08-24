@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-/* Wayzo app.js - Enhanced UI/UX - 2025-08-24 15:59 IDT */
+/* Wayzo app.js - Enhanced UI/UX - 2025-08-24 16:25 IDT */
 
 "use strict";
 
@@ -32,11 +32,13 @@ if (!previewEl && filesEl) {
 }
 
 // Buttons
-const submitBtn = $("button[type='submit']");
+const submitBtn = $('#submitBtn');
 const buyBtn = $('#buyBtn');
 const saveBtn = $('#saveBtn');
 const pdfBtn = $('#pdfBtn');
 const icsBtn = $('#icsBtn');
+const buildPlanBtn = $('#buildPlanBtn');
+const demoBtn = $('#demoBtn');
 
 // Output
 const previewBox = $('#preview');
@@ -147,11 +149,12 @@ async function doPreview() {
       signal: controller.signal
     });
     clearTimeout(timeoutId);
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     const data = await res.json();
     setPreviewHTML(data.teaser_html || '<div class="muted">No preview available.</div>');
   } catch (e) {
-    setPreviewHTML('<div class="muted">Preview failed. Try again. Error: ' + (e.name === 'AbortError' ? 'Timeout' : e.message) + '</div>');
-    console.error('Preview error:', e); // Debug
+    setPreviewHTML('<div class="muted">Preview failed. Try again. Error: ' + e.message + '</div>');
+    console.error('Preview error:', e);
   } finally {
     showLoading(false);
   }
@@ -165,7 +168,7 @@ async function doFullPlan() {
     showLoading(false);
     return;
   }
-  let attempts = 0, maxAttempts = 2;
+  let attempts = 0, maxAttempts = 3; // Increased attempts
   while (attempts < maxAttempts) {
     try {
       const res = await fetch('/api/plan', {
@@ -173,8 +176,9 @@ async function doFullPlan() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
-      setPreviewHTML(data.html || '');
+      setPreviewHTML(data.html || '<div class="muted">No plan generated.</div>');
       if (data.id) {
         const base = location.origin;
         if (pdfBtn) { pdfBtn.style.display = 'inline-block'; pdfBtn.href = `${base}/api/plan/${data.id}/pdf`; }
@@ -186,7 +190,7 @@ async function doFullPlan() {
       if (attempts === maxAttempts) {
         setPreviewHTML('<div class="muted">Plan failed after retries. Try again. Error: ' + e.message + '</div>');
       }
-      console.error('Full plan error:', e); // Debug
+      console.error('Full plan error:', e);
     }
   }
   showLoading(false);
@@ -203,8 +207,13 @@ async function savePreview() {
       alert('Local storage not available. Preview not saved.');
     }
   } catch (e) {
-    console.error('Save preview error:', e); // Debug
+    console.error('Save preview error:', e);
   }
+}
+
+// Demo function (placeholder)
+function showDemo() {
+  setPreviewHTML('<div class="muted">This is a demo preview. Generate a plan to see real results!</div>');
 }
 
 // Debouncing for button clicks
@@ -221,6 +230,8 @@ form?.addEventListener('submit', (e) => e.preventDefault());
 submitBtn?.addEventListener('click', debounce((e) => { e.preventDefault(); doPreview(); }, 300));
 buyBtn?.addEventListener('click', debounce((e) => { e.preventDefault(); doFullPlan(); }, 300));
 saveBtn?.addEventListener('click', debounce((e) => { e.preventDefault(); savePreview(); }, 300));
+buildPlanBtn?.addEventListener('click', debounce((e) => { e.preventDefault(); doPreview(); }, 300)); // Synced with submit
+demoBtn?.addEventListener('click', debounce((e) => { e.preventDefault(); showDemo(); }, 300));
 
 // Upload and drag-and-drop
 filesEl?.addEventListener('change', async () => {
