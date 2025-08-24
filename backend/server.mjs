@@ -21,7 +21,7 @@ import { buildIcs } from './lib/ics.mjs';
 
 const VERSION = 'staging-v17';
 
-// Load .env locally only; on Render we rely on real env vars.
+/* Load .env locally only; on Render we rely on real env vars */
 if (process.env.NODE_ENV !== 'production') {
   try {
     const { config } = await import('dotenv');
@@ -29,36 +29,36 @@ if (process.env.NODE_ENV !== 'production') {
   } catch {}
 }
 
-/* Force Markdown links/images to open in a new tab */
+/* Markdown: open links/images in new tab */
 marked.use({
   renderer: {
     link(href, title, text) {
-      const t = title ? ` title="${escapeHtml(title)}"` : "";
-      const safe = escapeAttr(href || "#");
+      const t = title ? ` title="${escapeHtml(title)}"` : '';
+      const safe = escapeAttr(href || '#');
       return `<a href="${safe}"${t} target="_blank" rel="noopener">${text}</a>`;
     },
     image(href, title, text) {
-      const t = title ? ` title="${escapeHtml(title)}"` : "";
-      const safe = escapeAttr(href || "");
-      return `<img src="${safe}" alt="${escapeHtml(text||'')}"${t}/>`;
+      const t = title ? ` title="${escapeHtml(title)}"` : '';
+      const safe = escapeAttr(href || '');
+      return `<img src="${safe}" alt="${escapeHtml(text || '')}"${t}/>`;
     }
   }
 });
-function escapeHtml(s=""){return String(s).replace(/[&<>"]/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[m]));}
-function escapeAttr(s=""){return String(s).replace(/"/g,"%22");}
+function escapeHtml(s = '') {
+  return String(s).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+}
+function escapeAttr(s = '') { return String(s).replace(/"/g, '%22'); }
 
 /* Paths */
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
-const REPO    = path.resolve(__dirname, '..');
-const STATIC  = path.join(REPO, 'frontend'); // serve files from /frontend
-const DOCS    = path.join(REPO, 'docs');     // docs at repo root
-const UPLOADS = path.join(__dirname, 'uploads');
+const REPO       = path.resolve(__dirname, '..');       // repo root
+const STATIC     = path.join(REPO, 'frontend');         // serve UI from /frontend
+const DOCS       = path.join(REPO, 'docs');             // docs at repo root
+const UPLOADS    = path.join(__dirname, 'uploads');     // per-service uploads
 fs.mkdirSync(UPLOADS, { recursive: true });
 
-fs.mkdirSync(UPLOADS, { recursive: true });
-
-
+/* Pick index file (prefer index.backend.html, then index.html, then pro.html) */
 let INDEX = path.join(STATIC, 'index.backend.html');
 if (!fs.existsSync(INDEX)) {
   const alt1 = path.join(STATIC, 'index.html');
@@ -68,35 +68,37 @@ if (!fs.existsSync(INDEX)) {
 }
 
 /* App */
-const app = express();
+const app  = express();
 const PORT = Number(process.env.PORT || 10000);
 
 app.set('trust proxy', 1);
-app.use(helmet({ contentSecurityPolicy: false, crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' } }));
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' }
+}));
 app.use(compression());
 app.use(morgan('tiny'));
-app.use(cors()); // ← fixed (no extra ')')
+app.use(cors()); // <- fixed
 app.use(rateLimit({ windowMs: 60_000, limit: 160 }));
 app.use(express.json({ limit: '2mb' }));
 
-/* Static: DO NOT cache CSS/JS on staging (to avoid “stuck” dark theme) */
+/* Static: avoid sticky CSS/JS on staging; cache images long */
 const staticHeaders = {
   setHeaders: (res, filePath) => {
     if (/\.css$/i.test(filePath) || /\.js$/i.test(filePath)) {
-      res.setHeader('Cache-Control', 'no-cache, must-revalidate'); // staging-friendly
+      res.setHeader('Cache-Control', 'no-cache, must-revalidate');
     } else if (/\.(svg|png|jpg|jpeg|webp|ico)$/i.test(filePath)) {
-      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'); // assets ok to cache
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     }
     if (/\.css$/i.test(filePath)) res.setHeader('Content-Type', 'text/css; charset=utf-8');
     if (/\.js$/i.test(filePath))  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
   },
 };
-
-app.use('/docs',     express.static(DOCS, staticHeaders));
-app.use('/uploads',  express.static(UPLOADS, { setHeaders: (res) => res.setHeader('Cache-Control','public, max-age=1209600') }));
+app.use('/docs',    express.static(DOCS, staticHeaders));
+app.use('/uploads', express.static(UPLOADS, { setHeaders: (res) => res.setHeader('Cache-Control', 'public, max-age=1209600') }));
 app.use(express.static(STATIC, staticHeaders));
 
-/* Root / health */
+/* Root + health */
 app.get('/', (_req, res) => {
   res.setHeader('X-Wayzo-Version', VERSION);
   if (!fs.existsSync(INDEX)) return res.status(500).send('index file missing');
@@ -109,14 +111,22 @@ app.get('/version', (_req, res) => res.json({ version: VERSION }));
 const multerUpload = multer({ dest: UPLOADS, limits: { fileSize: 8 * 1024 * 1024, files: 8 } });
 app.post('/api/upload', multerUpload.array('files', 8), (req, res) => {
   const files = (req.files || []).map(f => ({
-    name: f.originalname, size: f.size, url: `/uploads/${path.basename(f.path)}`, mime: f.mimetype
+    name: f.originalname,
+    size: f.size,
+    url: `/uploads/${path.basename(f.path)}`,
+    mime: f.mimetype
   }));
   res.json({ files });
 });
 
-/* DB */
-const db = new Database(path.join(ROOT, 'wayzo.sqlite'));
-db.exec(`CREATE TABLE IF NOT EXISTS plans (id TEXT PRIMARY KEY, created_at TEXT NOT NULL, payload TEXT NOT NULL);`);
+/* DB (SQLite lives in /backend) */
+const DB_PATH = path.join(__dirname, 'wayzo.sqlite');
+const db = new Database(DB_PATH);
+db.exec(`CREATE TABLE IF NOT EXISTS plans (
+  id TEXT PRIMARY KEY,
+  created_at TEXT NOT NULL,
+  payload TEXT NOT NULL
+);`);
 const savePlan = db.prepare('INSERT OR REPLACE INTO plans (id, created_at, payload) VALUES (?, ?, ?)');
 const getPlan  = db.prepare('SELECT payload FROM plans WHERE id = ?');
 
@@ -129,7 +139,7 @@ const seasonFromDate = (iso="") => ([12,1,2].includes(new Date(iso).getMonth()+1
 const travelerLabel = (ad=2,ch=0)=> ch>0?`Family (${ad} adult${ad===1?"":"s"} + ${ch} kid${ch===1?"":"s"})`:(ad===2?"Couple":ad===1?"Solo":`${ad} adult${ad===1?"":"s"}`);
 const perPersonPerDay = (t=0,d=1,tr=1)=>Math.round((Number(t)||0)/Math.max(1,d)/Math.max(1,tr));
 
-/* Local fallback plan */
+/* Local fallback plan (used if no OPENAI_API_KEY) */
 function localPlanMarkdown(input) {
   const { destination='Your destination', start='start', end='end', budget=1500, adults=2, children=0, level='mid', prefs='', diet='', currency='USD $' } = input || {};
   const nDays = daysBetween(start, end);
@@ -208,11 +218,11 @@ Diet: ${diet}`;
     return md;
   }
   const resp = await client.chat.completions.create({
-    model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+    model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
     temperature: 0.6,
-    messages: [{ role: "system", content: sys }, { role: "user", content: user }],
+    messages: [{ role: 'system', content: sys }, { role: 'user', content: user }]
   });
-  let md = resp.choices?.[0]?.message?.content?.trim() || "";
+  let md = resp.choices?.[0]?.message?.content?.trim() || '';
   if (!md) md = localPlanMarkdown(payload);
   md = linkifyTokens(md, destination);
   md = ensureDaySections(md, nDays, start);
@@ -267,7 +277,7 @@ app.get('/api/plan/:id/pdf', (req, res) => {
   const pppd    = perPersonPerDay(normalizeBudget(d.budget, d.currency), days, Math.max(1, (d.adults||0)+(d.children||0)));
   const traveler= travelerLabel(d.adults||0, d.children||0);
 
-  const base = `${req.protocol}://${req.get('host')}`;
+  const base   = `${req.protocol}://${req.get('host')}`;
   const pdfUrl = `${base}/api/plan/${id}/pdf`;
   const icsUrl = `${base}/api/plan/${id}/ics`;
   const shareX = `https://twitter.com/intent/tweet?text=${encodeURIComponent(`My ${d.destination} plan by Wayzo`)}&url=${encodeURIComponent(pdfUrl)}`;
@@ -332,9 +342,9 @@ app.get('/api/plan/:id/ics', (req, res) => {
   const { id } = req.params;
   const row = getPlan.get(id);
   if (!row) return res.status(404).json({ error: 'not found' });
-  const saved = JSON.parse(row.payload || '{}');
-  const md = saved.markdown || '';
-  const dest = saved?.data?.destination || 'Trip';
+  const saved  = JSON.parse(row.payload || '{}');
+  const md     = saved.markdown || '';
+  const dest   = saved?.data?.destination || 'Trip';
   const events = [];
   const rx = /^\s*###\s*Day\s+(\d+)\s*(?:—\s*([^\n(]+))?\s*(?:\((\d{4}-\d{2}-\d{2})\))?/gmi;
   let m;
