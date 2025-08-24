@@ -1,151 +1,140 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Wayzo</title>
-  <link rel="icon" href="favicon.svg" />
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wayzo - Plan Your Trip</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.js"></script>
 </head>
 <body>
-  <header class="top">
-    <div class="brand">
-      <div class="logo">WZ</div>
-      <div class="name">Wayzo</div>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a href="/" class="brand">
+        <div class="brand-badge">WZ</div>
+        <div class="brand-name">Wayzo</div>
+      </a>
+      <a href="/pro.html" class="btn">Classic Start Planning</a>
     </div>
-    <a class="cta" href="#plan">Start planning</a>
   </header>
-
-  <main class="wrap">
-    <section class="hero">
-      <div class="hero-col">
-        <h1>Plan unforgettable trips in minutes — AI-powered</h1>
+  <section class="hero">
+    <div class="container hero-grid">
+      <div class="hero-left">
+        <h1 class="section-title">Plan Unforgettable Trips in Minutes — AI-Powered</h1>
         <p>Personalized itineraries by budget and style. Day-by-day guidance you can export to PDF.</p>
-        <div class="hero-actions">
-          <button class="btn btn-primary" type="button" onclick="document.getElementById('destination').focus()">Build my plan</button>
-          <a class="btn ghost" href="#plan">See demo</a>
+        <div class="hero-cta">
+          <button class="btn btn-primary">Build My Plan</button>
+          <button class="btn btn-ghost">See Demo</button>
         </div>
-        <div class="trust">
-          <div>No app required · Mobile-first · PDF export</div>
+        <p class="hero-note small muted">No app required · Mobile-first · PDF export</p>
+      </div>
+      <div class="hero-right">
+        <img src="/docs/hero-mountains.jpg" alt="Trip planning landscape">
+      </div>
+    </div>
+  </section>
+  <section class="main">
+    <div class="container grid-2">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="section-title">Trip Details</h2>
         </div>
-      </div>
-      <div class="hero-col image">
-        <img src="hero-bg.jpg" alt="Wayzo — inspiration for your next trip" />
-        <div class="caption">Wayzo — inspiration for your next trip</div>
-      </div>
-    </section>
-
-    <section id="plan" class="panel grid">
-      <div class="panel-left">
-        <h2 class="h2">Trip details</h2>
-        <p class="muted">We’ll tailor routes, hotels, activities, and meals—then generate your full AI plan.</p>
-
-        <form id="tripForm" class="form" autocomplete="off">
+        <p>We’ll tailor routes, hotels, activities, and meals—then generate your full AI plan.</p>
+        <form id="tripForm" class="form">
+          <div class="fields-2">
+            <div class="field">
+              <label for="destination">Destination</label>
+              <input id="destination" type="text" placeholder="Add country for clarity if needed." required aria-required="true">
+            </div>
+            <div class="field">
+              <label for="start">Start Date</label>
+              <input id="start" type="date" required aria-required="true">
+            </div>
+            <div class="field">
+              <label for="end">End Date</label>
+              <input id="end" type="date" required aria-required="true">
+            </div>
+            <div class="field">
+              <label for="totalBudget">Budget</label>
+              <input id="totalBudget" type="number" min="0" required aria-required="true">
+            </div>
+          </div>
           <div class="field">
-            <label for="destination" class="label">Destination</label>
-            <input id="destination" class="input" placeholder="City or region (e.g., Toronto · Paris · Tokyo)" />
-            <small class="hint">Add country for clarity if needed.</small>
+            <label for="currency">Currency</label>
+            <select id="currency" required aria-required="true">
+              <option value="USD">$ USD</option>
+              <option value="EUR">€ EUR</option>
+              <option value="GBP">£ GBP</option>
+              <option value="ILS">₪ ILS</option>
+            </select>
           </div>
-
-          <div class="grid-2">
-            <div class="field">
-              <label for="start" class="label">Start date</label>
-              <input id="start" type="date" class="input" />
-            </div>
-            <div class="field">
-              <label for="end" class="label">End date</label>
-              <input id="end" type="date" class="input" />
-              <small class="hint">We’ll balance travel time and activities between these dates.</small>
-            </div>
+          <div class="field ages-row">
+            <label for="adults">Travelers</label>
+            <input id="adults" type="number" min="1" value="1" class="age-select" required aria-required="true"> Adults
+            <input id="children" type="number" min="0" value="0" class="age-select"> Children
           </div>
-
-          <div class="grid-3">
-            <div class="field">
-              <label for="totalBudget" class="label">Budget</label>
-              <input id="totalBudget" class="input" placeholder="Total trip budget (e.g., 500)" inputmode="numeric" />
-            </div>
-            <div class="field">
-              <label for="currency" class="label">Currency</label>
-              <select id="currency" class="input">
-                <option>USD $</option>
-                <option>EUR €</option>
-                <option>GBP £</option>
-                <option>ILS ₪</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="adults" class="label">Travelers</label>
-              <div class="grid-2">
-                <input id="adults" class="input" placeholder="Adults" inputmode="numeric" />
-                <input id="children" class="input" placeholder="Children" inputmode="numeric" />
-              </div>
-            </div>
-          </div>
-
           <div class="field">
-            <label class="label">Style</label>
-            <div class="seg">
-              <label><input type="radio" name="style" value="budget" /> Budget</label>
-              <label><input type="radio" name="style" value="mid" checked /> Mid-range</label>
-              <label><input type="radio" name="style" value="luxury" /> Luxury</label>
+            <label>Style</label>
+            <div>
+              <label class="chip"><input type="radio" name="style" value="budget" required> Budget</label>
+              <label class="chip"><input type="radio" name="style" value="mid-range" checked> Mid-range</label>
+              <label class="chip"><input type="radio" name="style" value="luxury"> Luxury</label>
             </div>
           </div>
-
           <div class="field">
-            <label class="label">Preferences</label>
+            <label>Preferences</label>
             <div class="seg wrap">
-              <label><input type="checkbox" value="attractions" /> attractions</label>
-              <label><input type="checkbox" value="relax" /> relax</label>
-              <label><input type="checkbox" value="romantic" /> romantic</label>
-              <label><input type="checkbox" value="adventure" /> adventure</label>
-              <label><input type="checkbox" value="museums" /> museums</label>
+              <label class="chip"><input type="checkbox" value="attractions"> Attractions</label>
+              <label class="chip"><input type="checkbox" value="relax"> Relax</label>
+              <label class="chip"><input type="checkbox" value="romantic"> Romantic</label>
+              <label class="chip"><input type="checkbox" value="adventure"> Adventure</label>
+              <label class="chip"><input type="checkbox" value="museums"> Museums</label>
             </div>
           </div>
-
-          <div class="grid-2">
-            <div class="field">
-              <label for="diet" class="label">Dietary needs</label>
-              <input id="diet" class="input" placeholder="e.g., kosher, vegetarian, gluten-free" />
-            </div>
-            <div class="field">
-              <label for="prefs" class="label">Special requests</label>
-              <input id="prefs" class="input" placeholder="Specific needs, preferences, constraints, anchor events, documents/booking refs, etc." />
-            </div>
-          </div>
-
           <div class="field">
-            <label for="attachments" class="label">Attach image or PDF (optional)</label>
-            <!-- minimal change: use the ID the JS expects -->
-            <input id="attachments" class="input" type="file" name="attachments" accept="image/*,.pdf" multiple />
-            <!-- the JS will create this if it’s missing -->
-            <div id="attachmentsPreview" class="files"></div>
+            <label for="diet">Dietary Needs</label>
+            <input id="diet" type="text" placeholder="e.g., vegetarian, gluten-free">
           </div>
-
-          <div class="buttons">
-            <button type="submit" class="btn btn-primary">Generate preview</button>
-            <a id="buyBtn" href="#" class="btn">Generate full plan (AI)</a>
-            <a id="saveBtn" href="#" class="btn ghost">Save preview</a>
+          <div class="field">
+            <label for="prefs">Special Requests</label>
+            <textarea id="prefs" placeholder="e.g., wheelchair access, pet-friendly"></textarea>
           </div>
-
-          <div class="buttons">
-            <a id="pdfBtn" href="#" class="btn ghost" style="display:none" target="_blank" rel="noopener">Download PDF</a>
-            <a id="icsBtn" href="#" class="btn ghost" style="display:none" target="_blank" rel="noopener">Download Trip Journal</a>
+          <div class="field">
+            <label for="attachments">Attach Image or PDF (optional)</label>
+            <input id="attachments" type="file" multiple>
+          </div>
+          <div class="field">
+            <button type="submit" id="submitBtn" class="btn btn-primary">Generate Preview</button>
+            <button id="buyBtn" class="btn btn-cta">Generate Full Plan (AI)</button>
+            <button id="saveBtn" class="btn btn-ghost">Save Preview</button>
           </div>
         </form>
       </div>
-
-      <div class="panel-right">
-        <h2 class="h2">Your itinerary</h2>
-        <div id="loading" class="loading" hidden>Generating…</div>
-        <div id="preview" class="preview"></div>
+      <div class="card">
+        <div class="card-header">
+          <h2 class="section-title">Your Itinerary</h2>
+        </div>
+        <div id="preview"></div>
+        <div id="loading" class="hidden">Generating…</div>
+        <a id="pdfBtn" class="btn btn-primary" style="display:none">Download PDF</a>
+        <a id="icsBtn" class="btn btn-primary" style="display:none">Download Calendar</a>
+        <a id="journalBtn" class="btn btn-ghost">Download Trip Journal</a>
+        <div id="map" class="map-placeholder"></div>
       </div>
-    </section>
-  </main>
-
-  <footer class="foot">
-    <small>© Wayzo. All rights reserved.</small>
+    </div>
+  </section>
+  <footer class="footer">
+    <div class="container">© Wayzo. All rights reserved.</div>
   </footer>
-
-  <script defer src="app.js"></script>
+  <script src="app.js"></script>
+  <script>
+    mapboxgl.accessToken = 'your_mapbox_key'; // Replace with your Mapbox key
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/streets-v11',
+      center: [2.3522, 48.8566], // Paris default
+      zoom: 10
+    });
+  </script>
 </body>
 </html>

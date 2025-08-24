@@ -1,26 +1,28 @@
+/* eslint-disable no-console */
+/* Wayzo app.js - Enhanced UI/UX - 2025-08-24 15:15 IDT */
+
 "use strict";
 
 // Tiny helpers
 const $ = (sel) => document.querySelector(sel);
 
-// form + inputs
-const form         = document.getElementById('tripForm');
-if (form) form.addEventListener('submit', (e) => { e.preventDefault(); });
+// Form and inputs
+const form = document.getElementById('tripForm');
+if (form) form.addEventListener('submit', (e) => e.preventDefault());
 
-const destination  = $('#destination');
-const start        = $('#start');
-const end          = $('#end');
-const totalBudget  = $('#totalBudget');
-const currency     = $('#currency');
-const adults       = $('#adults');
-const children     = $('#children');
-const diet         = $('#diet');
-const prefs        = $('#prefs');
+const destination = $('#destination');
+const start = $('#start');
+const end = $('#end');
+const totalBudget = $('#totalBudget');
+const currency = $('#currency');
+const adults = $('#adults');
+const children = $('#children');
+const diet = $('#diet');
+const prefs = $('#prefs');
 
-// uploads (robust selection + preview container)
-const filesElRaw   = document.getElementById('attachments') || document.getElementById('photo');
-const filesEl      = filesElRaw || null;
-let previewEl      = document.getElementById('attachmentsPreview') || document.getElementById('filesPreview');
+// Uploads
+const filesEl = document.getElementById('attachments') || document.getElementById('photo');
+const previewEl = document.getElementById('attachmentsPreview') || document.getElementById('filesPreview');
 
 if (!previewEl && filesEl) {
   previewEl = document.createElement('div');
@@ -29,25 +31,25 @@ if (!previewEl && filesEl) {
   filesEl.insertAdjacentElement('afterend', previewEl);
 }
 
-// buttons (robust binding)
-const submitBtn    = $("button[type='submit']");
-const buyBtn       = $('#buyBtn');
-const saveBtn      = $('#saveBtn');
-const pdfBtn       = $('#pdfBtn');
-const icsBtn       = $('#icsBtn');
+// Buttons
+const submitBtn = $("button[type='submit']");
+const buyBtn = $('#buyBtn');
+const saveBtn = $('#saveBtn');
+const pdfBtn = $('#pdfBtn');
+const icsBtn = $('#icsBtn');
 
-// output
-const previewBox   = $('#preview');
-const loading      = $('#loading');
+// Output
+const previewBox = $('#preview');
+const loading = $('#loading');
 
-// safe helpers
+// Safe helpers
 const val = (el) => (el && el.value || '').trim();
 const num = (el) => {
   const n = Number((el && el.value || '').replace(/[^\d.]/g, ''));
   return Number.isFinite(n) ? n : 0;
 };
 
-// collect checkboxes/radios
+// Collect checkboxes/radios
 const selectedStyle = () => {
   const el = document.querySelector('input[name="style"]:checked');
   return el ? el.value : 'mid';
@@ -56,126 +58,180 @@ const selectedPrefs = () => {
   return Array.from(document.querySelectorAll('.seg.wrap input[type="checkbox"]:checked')).map(i => i.value);
 };
 
-// payload
+// Validate form with enhanced feedback
+function validateForm(payload) {
+  const errors = [];
+  if (!payload.destination) errors.push('Please enter a destination.');
+  if (!payload.start || !payload.end) errors.push('Please select start and end dates.');
+  if (errors.length > 0) {
+    alert(errors.join('\n'));
+    return false;
+  }
+  return true;
+}
+
+// Payload preparation with default values
 function preparePayload() {
   return {
-    destination : val(destination),
-    start       : val(start),
-    end         : val(end),
-    budget      : num(totalBudget),
-    currency    : val(currency) || 'USD $',
-    adults      : num(adults) || 2,
-    children    : num(children) || 0,
-    level       : selectedStyle(),
-    prefs       : selectedPrefs().join(', '),
-    diet        : val(diet),
+    destination: val(destination) || 'Unknown Destination',
+    start: val(start) || new Date().toISOString().split('T')[0],
+    end: val(end) || new Date(Date.now() + 86400000).toISOString().split('T')[0],
+    budget: num(totalBudget) || 1000,
+    currency: val(currency) || 'USD',
+    adults: num(adults) || 1,
+    children: num(children) || 0,
+    diet: val(diet) || 'None',
+    prefs: val(prefs) || '',
+    style: selectedStyle(),
+    interests: selectedPrefs()
   };
 }
 
-// simple toaster
-function showLoading(on) {
-  if (!loading) return;
-  loading.hidden = !on;
-}
-function setPreviewHTML(html) {
-  previewBox.innerHTML = html || '';
+// Loading state management
+function showLoading(show = true) {
+  if (loading) {
+    loading.style.display = show ? 'block' : 'none';
+    document.body.style.cursor = show ? 'wait' : 'default';
+  }
 }
 
-// upload selected files (images/PDF) and render thumbnails
+// Preview innerHTML with enhanced rendering
+function setPreviewHTML(html = '') {
+  if (previewBox) {
+    previewBox.innerHTML = html;
+    // Post-process images
+    const imgs = previewBox.querySelectorAll('img[src^="https://unsplash.com"]');
+    imgs.forEach(img => {
+      img.loading = 'lazy';
+      img.onerror = () => img.src = '/assets/placeholder.jpg';
+    });
+    // Placeholder for map
+    const mapPlaces = previewBox.querySelectorAll('#map');
+    mapPlaces.forEach(place => {
+      place.innerHTML = '<div>Map loading...</div>';
+    });
+  }
+}
+
+// Uploads with file type check
 async function uploadFiles() {
-  if (!filesEl || !filesEl.files || filesEl.files.length === 0) return [];
-  const fd = new FormData();
-  for (const f of Array.from(filesEl.files)) fd.append('files', f);
-
-  const res = await fetch('/api/upload', { method:'POST', body: fd });
-  if (!res.ok) return [];
-  const { files = [] } = await res.json();
-
-  // thumbnails if we have a box
-  if (previewEl) {
-    previewEl.innerHTML = '';
-    for (const f of files) {
-      if (f.mime && f.mime.startsWith('image/')) {
-        const img = document.createElement('img');
-        img.src = f.url;
-        img.alt = f.name || 'image';
-        img.loading = 'lazy';
-        previewEl.appendChild(img);
-      } else if (String(f.name || '').toLowerCase().endsWith('.pdf')) {
-        const a = document.createElement('a');
-        a.href = f.url;
-        a.textContent = f.name || 'document.pdf';
-        a.target = '_blank';
-        a.rel = 'noopener';
-        previewEl.appendChild(a);
-      }
+  if (!filesEl || !previewEl) return;
+  const files = filesEl.files;
+  if (!files.length) return;
+  previewEl.innerHTML = '';
+  for (const f of files) {
+    if (f.type.startsWith('image/') || f.type === 'application/pdf') {
+      const div = document.createElement('div');
+      div.className = 'file';
+      div.textContent = f.name;
+      previewEl.appendChild(div);
+    } else {
+      alert(`Unsupported file type: ${f.name}`);
     }
   }
-  return files;
 }
 
-// preview button
+// Preview request with timeout
 async function doPreview() {
+  showLoading(true);
+  const payload = preparePayload();
+  if (!validateForm(payload)) {
+    showLoading(false);
+    return;
+  }
   try {
-    showLoading(true);
-    const payload = preparePayload();
-    await uploadFiles(); // optional; thumbnails + stores files
-
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
     const res = await fetch('/api/preview', {
-      method:'POST',
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      signal: controller.signal
     });
+    clearTimeout(timeoutId);
     const data = await res.json();
     setPreviewHTML(data.teaser_html || '<div class="muted">No preview available.</div>');
   } catch (e) {
-    setPreviewHTML('<div class="muted">Preview failed. Try again.</div>');
+    setPreviewHTML('<div class="muted">Preview failed. Try again. Error: ' + (e.name === 'AbortError' ? 'Timeout' : e.message) + '</div>');
   } finally {
     showLoading(false);
   }
 }
 
-// full plan (AI)
+// Full plan (AI) with retry logic
 async function doFullPlan() {
-  try {
-    showLoading(true);
-    const payload = preparePayload();
-    const res = await fetch('/api/plan', {
-      method:'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    const data = await res.json();
-
-    setPreviewHTML(data.html || '');
-    // PDF + ICS links if present
-    if (data.id) {
-      const base = location.origin;
-      if (pdfBtn) { pdfBtn.style.display='inline-block'; pdfBtn.href = `${base}/api/plan/${data.id}/pdf`; }
-      if (icsBtn) { icsBtn.style.display='inline-block';  icsBtn.href  = `${base}/api/plan/${data.id}/ics`; }
-    }
-  } catch (e) {
-    setPreviewHTML('<div class="muted">Plan failed. Try again.</div>');
-  } finally {
+  showLoading(true);
+  const payload = preparePayload();
+  if (!validateForm(payload)) {
     showLoading(false);
+    return;
   }
+  let attempts = 0, maxAttempts = 2;
+  while (attempts < maxAttempts) {
+    try {
+      const res = await fetch('/api/plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      setPreviewHTML(data.html || '');
+      if (data.id) {
+        const base = location.origin;
+        if (pdfBtn) { pdfBtn.style.display = 'inline-block'; pdfBtn.href = `${base}/api/plan/${data.id}/pdf`; }
+        if (icsBtn) { icsBtn.style.display = 'inline-block'; icsBtn.href = `${base}/api/plan/${data.id}/ics`; }
+      }
+      break;
+    } catch (e) {
+      attempts++;
+      if (attempts === maxAttempts) {
+        setPreviewHTML('<div class="muted">Plan failed after retries. Try again. Error: ' + e.message + '</div>');
+      }
+    }
+  }
+  showLoading(false);
 }
 
-// save preview (no-op placeholder hitting same preview)
+// Save preview with local storage check
 async function savePreview() {
   try {
     await doPreview();
-    alert('Preview saved (client-side placeholder).');
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('wayzo_preview', previewBox.innerHTML || '');
+      alert('Preview saved locally.');
+    } else {
+      alert('Local storage not available. Preview not saved.');
+    }
   } catch {}
 }
 
-// wire up (prevent default on all)
-form?.addEventListener('submit', (e)=> e.preventDefault());
-submitBtn?.addEventListener('click', (e)=> { e.preventDefault(); doPreview(); });
-buyBtn?.addEventListener('click',   (e)=> { e.preventDefault(); doFullPlan(); });
-saveBtn?.addEventListener('click',  (e)=> { e.preventDefault(); savePreview(); });
+// Debouncing for button clicks
+let debounceTimer;
+const debounce = (callback, delay) => {
+  return (...args) => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => callback(...args), delay);
+  };
+};
 
-// live thumbnail render on selection
+// Wire up events
+form?.addEventListener('submit', (e) => e.preventDefault());
+submitBtn?.addEventListener('click', debounce((e) => { e.preventDefault(); doPreview(); }, 300));
+buyBtn?.addEventListener('click', debounce((e) => { e.preventDefault(); doFullPlan(); }, 300));
+saveBtn?.addEventListener('click', debounce((e) => { e.preventDefault(); savePreview(); }, 300));
+
+// Upload and drag-and-drop
 filesEl?.addEventListener('change', async () => {
   try { await uploadFiles(); } catch {}
+});
+filesEl?.addEventListener('dragover', (e) => e.preventDefault());
+filesEl?.addEventListener('drop', (e) => {
+  e.preventDefault();
+  if (e.dataTransfer.items) {
+    const files = Array.from(e.dataTransfer.items)
+      .filter(item => item.kind === 'file')
+      .map(item => item.getAsFile());
+    filesEl.files = new FileList(files);
+    uploadFiles();
+  }
 });
