@@ -42,6 +42,7 @@ let INDEX = path.join(FRONTEND, "index.backend.html");
 if (!fs.existsSync(INDEX)) {
     const alt = path.join(FRONTEND, "index.html");
     if (fs.existsSync(alt)) INDEX = alt;
+    else return res.status(500).send("index file missing");
 }
 
 /* App */
