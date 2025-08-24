@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-/* Wayzo app.js - Enhanced UI/UX - 2025-08-24 15:32 IDT */
+/* Wayzo app.js - Enhanced UI/UX - 2025-08-24 15:46 IDT */
 
 "use strict";
 
@@ -102,7 +102,7 @@ function setPreviewHTML(html = '') {
     const imgs = previewBox.querySelectorAll('img[src^="https://unsplash.com"]');
     imgs.forEach(img => {
       img.loading = 'lazy';
-      img.onerror = () => img.src = '/frontend/placeholder.jpg'; // Fallback in frontend
+      img.onerror = () => img.src = '/frontend/placeholder.jpg';
     });
     const mapPlaces = previewBox.querySelectorAll('#map');
     mapPlaces.forEach(place => {
