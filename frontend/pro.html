@@ -1,156 +1,105 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Wayzo Pro — AI itinerary builder</title>
-  <link rel="icon" type="image/svg+xml" href="/docs/favicon.svg" />
-  <link rel="stylesheet" href="/frontend/style.css" />
-  <script src="/frontend/app.pro.js" defer></script>
-</head>
-<body>
+<document filename="pro.html">
+
+
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  &#x3C;title>Wayzo Pro - Plan Your Trip&#x3C;/title>
+  <link rel="stylesheet" href="style.css">
+  &#x3C;script src="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.js">&#x3C;/script> <!-- Add for maps -->
+
+
   <header class="topbar">
     <div class="container topbar-inner">
-      <a class="brand" href="/"><span class="brand-badge">WZ</span><span class="brand-name">Wayzo</span></a>
-      <nav style="display:flex;gap:10px">
-        <a class="btn" href="/">Classic</a>
-        <a class="btn btn-cta" href="#planner">Start planning</a>
-      </nav>
+      <a href="/" class="brand">
+        <div class="brand-badge">WZ</div>
+        <div class="brand-name">Wayzo</div>
+      </a>
+      <a href="/" class="btn">Classic</a>
+      <a href="#" class="btn">Start planning</a>
     </div>
   </header>
-
-  <section class="hero" style="--hero-bg: url('/docs/hero-mountains.jpg')">
+  <section class="hero">
     <div class="container hero-grid">
-      <div class="hero-card hero-left">
-        <h1>Wayzo <span class="hl">Pro</span> — plan trips in minutes</h1>
-        <p class="lede">Cleaner inputs. Smart time blocks. Built-in maps & booking links. Export to PDF.</p>
-        <div class="hero-actions">
-          <a class="btn btn-primary" href="#planner">Build my plan</a>
-          <a class="btn btn-ghost" href="#planner">See demo</a>
+      <div class="hero-left">
+        <h1>Wayzo Pro — plan trips in minutes</h1>
+        <p>Cleaner inputs. Smart time blocks. Built-in maps &#x26; booking links. Export to PDF.</p>
+        <div class="hero-cta">
+          <button class="btn primary">Build my plan</button>
+          <button class="btn">See demo</button>
         </div>
-        <p class="muted small">No app required · Mobile-first · PDF export</p>
+        <p class="hero-note">No app required · Mobile-first · PDF export</p>
       </div>
-      <figure class="hero-card hero-right">
-        <img src="/docs/hero-road.jpg" loading="eager" alt="Wayzo — inspiration" />
-        <figcaption>Wayzo — inspiration for your next trip</figcaption>
-      </figure>
+      <div class="hero-right">
+        <img src="assets/hero-bg.jpg" alt="Pro planning">
+      </div>
     </div>
   </section>
-
-  <main id="planner" class="main">
+  <section class="main">
     <div class="container grid-2">
-      <!-- FORM -->
-      <section class="card" aria-labelledby="pro-trip-title">
-        <div class="card-header"><h2 id="pro-trip-title">Trip details</h2></div>
-        <p class="muted">We’ll tailor routes, hotels, activities, and meals—then generate your full AI plan.</p>
-
-        <form id="tripForm" class="form" style="margin-top:12px" novalidate>
-          <div class="field">
-            <label for="dest"><span>Destination</span></label>
-            <input id="dest" name="destination" type="text" autocomplete="off"
-                   placeholder="City or region (e.g., Paris · Tokyo · Bali)" required aria-describedby="destHelp" />
-            <div id="destHelp" class="small muted">City, region, or island. Add country for clarity if needed.</div>
+      <div class="card">
+        <h2>Trip details</h2>
+        <p>We’ll tailor routes, hotels, activities, and meals—then generate your full AI plan.</p>
+        <form id="tripForm">
+          <label for="destination">Destination</label>
+          <input id="destination" type="text" placeholder="City, region, or island. Add country for clarity if needed.">
+<p><label for="start">Start date</label>
+<input id="start" type="date"></p>
+<p><label for="end">End date</label>
+<input id="end" type="date"></p>
+<p><label for="budget">Budget (USD)</label>
+<input id="budget" type="number"></p>
+<p><label for="travelers">Travelers</label>
+<input id="travelers" type="number"></p>
+<p><label>Style</label></p>
+          <div>
+            <input type="radio" name="level" value="budget"> Budget
+            <input type="radio" name="level" value="mid-range"> Mid-range
+            <input type="radio" name="level" value="luxury"> Luxury
           </div>
-
-          <div class="fields-2" role="group" aria-labelledby="datesLegend">
-            <div class="field">
-              <label for="start"><span>Start date</span></label>
-              <input id="start" name="start" type="date" required aria-describedby="dateHelp" />
-            </div>
-            <div class="field">
-              <label for="end"><span>End date</span></label>
-              <input id="end" name="end" type="date" required aria-describedby="dateHelp" />
-            </div>
-          </div>
-          <div id="dateHelp" class="small muted">We’ll balance travel time and activities between these dates.</div>
-
-          <div class="fields-2" role="group" aria-labelledby="btLegend" style="margin-top:8px">
-            <div class="field">
-              <label for="budget"><span>Budget (USD)</span></label>
-              <input id="budget" name="budget" type="number" inputmode="numeric" min="100" step="50"
-                     placeholder="Total trip budget (e.g., 2000)" required aria-describedby="budgetHelp" />
-            </div>
-            <div class="field">
-              <label for="travelers"><span>Travelers</span></label>
-              <input id="travelers" name="travelers" type="number" inputmode="numeric" min="1" step="1"
-                     value="2" required aria-describedby="travHelp" />
-            </div>
-          </div>
-          <div class="small muted" id="budgetHelp">Total for your party (excluding flights).</div>
-          <div class="small muted" id="travHelp">We auto-scale rooms, tables, and tickets.</div>
-
-          <fieldset class="field" style="margin-top:12px">
-            <legend>Style</legend>
-            <label class="chip"><input type="radio" name="level" value="budget" checked /> Budget</label>
-            <label class="chip"><input type="radio" name="level" value="mid" /> Mid-range</label>
-            <label class="chip"><input type="radio" name="level" value="luxury" /> Luxury</label>
-          </fieldset>
-
-          <div class="field" style="margin-top:4px">
-            <label for="prefs"><span>Preferences</span></label>
-            <input id="prefs" name="prefs" type="text"
-                   placeholder="Interests (e.g., museums, beaches, hiking, kid-friendly)"
-                   aria-describedby="prefsHelp" />
-            <div id="prefsHelp" class="small muted">Comma-separated interests guide neighborhoods, food, and pacing.</div>
-          </div>
-
-          <div class="actions" style="margin-top:10px">
-            <button class="btn btn-primary" type="submit" id="previewBtn">Generate preview</button>
-            <button class="btn btn-ghost" type="button" id="buyBtn">Generate full plan (AI)</button>
-            <button class="btn" type="button" id="saveBtn">Save preview</button>
-          </div>
-          <p class="muted small">By continuing you agree to our Terms and Privacy.</p>
+<p><label for="preferences">Preferences</label>
+<input id="preferences" type="text" placeholder="Comma-separated interests guide neighborhoods, routes, and activities."></p>
+<p><label for="dietary">Dietary notes</label>
+<input id="dietary" type="text"></p>
+<p><label for="requests">Special requests</label>
+<input id="requests" type="text"></p>
+<p><button type="submit">Generate preview</button>
+<button id="buyBtn">Generate full plan</button>
+<button id="pdfBtn" style="display:none">Download PDF</button>
+<button id="saveBtn">Save preview</button></p>
         </form>
-      </section>
-
-      <!-- OUTPUT -->
-      <section class="card" aria-labelledby="pro-itinerary-title">
-        <div class="card-header">
-          <h2 id="pro-itinerary-title" class="section-title">Your itinerary</h2>
-          <span class="pill">AI powered</span>
-        </div>
-
-        <div id="preview" class="teaser">
-          <p class="muted">Fill the form and click <b>Generate preview</b>. Then use <b>Generate full plan (AI)</b>.</p>
-        </div>
-
-        <div id="loading" class="hidden" aria-live="polite">
-          <div style="height:10px;background:#e2e8f0;border-radius:8px"></div>
-          <div style="height:10px;background:#e2e8f0;border-radius:8px;margin-top:8px;width:70%"></div>
-        </div>
-
-        <div class="actions" style="margin-top:10px">
-          <a id="pdfBtn" class="btn hidden" href="#" target="_blank" rel="noopener">⬇️ Download PDF</a>
-          <a id="linkMaps" class="btn" target="_blank" rel="noopener">🗺️ Maps</a>
-          <a id="linkFlights" class="btn" target="_blank" rel="noopener">✈️ Flights</a>
-          <a id="linkHotels" class="btn" target="_blank" rel="noopener">🏨 Hotels</a>
-        </div>
-
+      </div>
+      <div class="card">
+        <h2>Your itinerary</h2>
+        <div id="preview"></div>
+        <div id="loading" class="hidden">Working…</div>
+        <div id="map" class="map-placeholder"></div> <!-- Added for embedded map -->
         <div class="quick-links">
-          <a id="linkActivities" class="ql" target="_blank" rel="noopener">🎟️ Activities</a>
-          <a id="linkCars" class="ql" target="_blank" rel="noopener">🚗 Cars</a>
-          <a id="linkInsurance" class="ql" target="_blank" rel="noopener">🛡️ Insurance</a>
-          <a id="linkReviews" class="ql" target="_blank" rel="noopener">⭐ Reviews</a>
+          <a id="linkFlights">✈ Flights</a>
+          <a id="linkHotels">🏨 Hotels</a>
+          <a id="linkActivities">🎟 Activities</a>
+          <a id="linkCars">🚗 Cars</a>
+          <a id="linkInsurance">🛡 Insurance</a>
+          <a id="linkReviews">⭐ Reviews</a>
+          <a id="linkMaps">🗺 Maps</a>
         </div>
-      </section>
+      </div>
     </div>
-  </main>
+  </section>
+  <footer class="footer">
+    <div class="container">© Wayzo. All rights reserved.</div>
+  </footer>
+  &#x3C;script src="app.pro.js">&#x3C;/script>
+  &#x3C;script>
+    mapboxgl.accessToken = 'your_mapbox_key'; // Replace with your Mapbox key
+    var map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/streets-v11',
+      center: [0, 0], // Default center, update dynamically
+      zoom: 2
+    });
+    // Add pins dynamically based on itinerary data (to be implemented)
+  &#x3C;/script>
 
-  <footer class="footer"><div class="container muted small">© Wayzo. All rights reserved.</div></footer>
 
-  <!-- keep end ≥ start -->
-  <script>
-    (function () {
-      const s = document.getElementById('start');
-      const e = document.getElementById('end');
-      if (!s || !e) return;
-      s.addEventListener('change', () => {
-        if (s.value) {
-          e.min = s.value;
-          if (e.value && e.value < s.value) e.value = s.value;
-        }
-      });
-    })();
-  </script>
-</body>
-</html>
+</document>

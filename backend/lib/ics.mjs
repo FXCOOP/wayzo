@@ -1,3 +1,4 @@
+<document filename="ics.mjs">
 function uid() { return Math.random().toString(36).slice(2); }
 function fmt(dt) {
   const d = new Date(dt);
@@ -8,10 +9,12 @@ function fmt(dt) {
 export function buildIcs(planId = 'wayzo', events = [], meta = {}) {
   const lines = [
     'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Wayzo//Trip Plan//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH',
+    'X-WR-TIMEZONE:UTC',
   ];
   for (const ev of events) {
-    const [sh='09:00',eh='11:00'] = [ev.start || '09:00', ev.end || '11:00'];
-    const s = new Date(`${ev.date}T${sh}:00Z`), e = new Date(`${ev.date}T${eh}:00Z`);
+    const [sh='09:00', eh='11:00'] = [ev.start || '09:00', ev.end || '11:00'].map(t => t.split(':'));
+    const s = new Date(`${ev.date}T${sh[0]}:${sh[1]}:00Z`);
+    const e = new Date(`${ev.date}T${eh[0]}:${eh[1]}:00Z`);
     lines.push(
       'BEGIN:VEVENT',
       `UID:${uid()}@wayzo`,
@@ -27,3 +30,4 @@ export function buildIcs(planId = 'wayzo', events = [], meta = {}) {
   lines.push('END:VCALENDAR');
   return lines.join('\r\n');
 }
+</document>

@@ -1,3 +1,4 @@
+
 {
   "name": "wayzo-backend",
   "version": "1.0.0",
@@ -5,7 +6,8 @@
   "type": "module",
   "engines": { "node": "20.x" },
   "scripts": {
-    "start": "node backend/server.mjs"
+    "start": "node backend/server.mjs",
+    "dev": "nodemon server.mjs"
   },
   "dependencies": {
     "better-sqlite3": "^9.6.0",
@@ -18,6 +20,8 @@
     "marked": "^12.0.2",
     "morgan": "^1.10.0",
     "multer": "1.4.5-lts.1",
-    "openai": "^4.58.1"
+    "openai": "^4.58.1",
+    "axios": "^1.7.2",           // Added for weather API
+    "pdfkit": "^0.15.0"          // Added for PDF generation
   }
 }
