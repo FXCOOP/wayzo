@@ -38,10 +38,10 @@ const DOCS       = path.join(ROOT, 'docs');
 const UPLOADS    = path.join(ROOT, 'uploads');
 fs.mkdirSync(UPLOADS, { recursive: true });
 
-let INDEX = path.join(FRONTEND, 'index.backend.html');
+let INDEX = path.join(FRONTEND, "index.backend.html");
 if (!fs.existsSync(INDEX)) {
-  const alt = path.join(FRONTEND, 'index.html');
-  if (fs.existsSync(alt)) INDEX = alt;
+    const alt = path.join(FRONTEND, "index.html");
+    if (fs.existsSync(alt)) INDEX = alt;
 }
 
 /* App */
