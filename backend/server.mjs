@@ -107,17 +107,36 @@ app.get('/', (_req, res) => {
 app.get('/healthz', (_req, res) => res.json({ ok: true, version: VERSION }));
 app.get('/version', (_req, res) => res.json({ version: VERSION }));
 
-/* Uploads */
-const multerUpload = multer({ dest: UPLOADS, limits: { fileSize: 8 * 1024 * 1024, files: 8 } });
-app.post('/api/upload', multerUpload.array('files', 8), (req, res) => {
+/* Uploads (preserve file extension so browser knows it's an image) */
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, UPLOADS),
+  filename: (_req, file, cb) => {
+    const ext = (path.extname(file.originalname || '') || '').toLowerCase();
+    const id  = crypto.randomUUID?.() ?? Math.random().toString(36).slice(2);
+    cb(null, id + ext); // e.g. 3c2f... .jpg
+  }
+});
+
+// Accept common field names: file, files, image, images, photo, photos, attachments
+const upload = multer({
+  storage,
+  limits: { fileSize: 8 * 1024 * 1024, files: 8 }
+});
+
+// Use .any() so it works no matter what the frontend field is called
+app.post('/api/upload', upload.any(), (req, res) => {
   const files = (req.files || []).map(f => ({
     name: f.originalname,
     size: f.size,
-    url: `/uploads/${path.basename(f.path)}`,
+    url: `/uploads/${encodeURIComponent(path.basename(f.filename))}`,
     mime: f.mimetype
   }));
   res.json({ files });
 });
+
+// Static serving for uploaded files (already present above):
+// app.use('/uploads',  express.static(UPLOADS, { setHeaders: (res) => res.setHeader('Cache-Control','public, max-age=1209600') }));
+
 
 /* DB (SQLite lives in /backend) */
 const DB_PATH = path.join(__dirname, 'wayzo.sqlite');
