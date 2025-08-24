@@ -31,15 +31,14 @@ if (process.env.NODE_ENV !== 'production') {
 
 /* Paths */
 const __filename = fileURLToPath(import.meta.url);
-const __dirname  = path.dirname(__filename);
-const ROOT       = __dirname;
-const FRONTEND = path.join(__dirname, "..", "frontend");
-const DOCS       = path.join(ROOT, 'docs');
-const UPLOADS    = path.join(ROOT, 'uploads');
+const __dirname = path.dirname(__filename);
+const ROOT = __dirname;
+const FRONTEND = path.join(__dirname, '..', 'frontend'); // Sibling directory
+const DOCS = path.join(ROOT, 'docs');
+const UPLOADS = path.join(ROOT, 'uploads');
 fs.mkdirSync(UPLOADS, { recursive: true });
 
-let INDEX = path.join(FRONTEND, "index.backend.html");
-
+let INDEX = path.join(FRONTEND, 'index.backend.html');
 
 /* App */
 const app = express();
@@ -53,31 +52,28 @@ app.use(cors());
 app.use(rateLimit({ windowMs: 60_000, limit: 160 }));
 app.use(express.json({ limit: '2mb' }));
 
-/* Static: DO NOT cache CSS/JS on staging (to avoid “stuck” dark theme) */
-const staticHeaders = {
-  setHeaders: (res, filePath) => {
-    if (/\.css$/i.test(filePath) || /\.js$/i.test(filePath)) {
-      res.setHeader('Cache-Control', 'no-cache, must-revalidate'); // staging-friendly
-    } else if (/\.(svg|png|jpg|jpeg|webp|ico)$/i.test(filePath)) {
-      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'); // assets ok to cache
-    }
-    if (/\.css$/i.test(filePath)) res.setHeader('Content-Type', 'text/css; charset=utf-8');
-    if (/\.js$/i.test(filePath))  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-  },
-};
-
-app.use('/docs',     express.static(DOCS, staticHeaders));
-app.use('/uploads',  express.static(UPLOADS, { setHeaders: (res) => res.setHeader('Cache-Control','public, max-age=1209600') }));
-app.use('/',         express.static(FRONTEND, staticHeaders));
+/* Static Serving with Proper Headers */
 app.use('/frontend', express.static(FRONTEND, {
   setHeaders: (res, filePath) => {
-    if (/\.(css|js)$/i.test(filePath)) res.setHeader('Cache-Control', 'no-cache, must-revalidate');
-    else if (/\.(svg|png|jpg|jpeg|webp|ico)$/i.test(filePath)) res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    if (/\.(css|js)$/i.test(filePath)) {
+      res.setHeader('Cache-Control', 'no-cache, must-revalidate'); // Staging-friendly
+    } else if (/\.(svg|png|jpg|jpeg|webp|ico)$/i.test(filePath)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'); // Cache images
+    }
     if (/\.css$/i.test(filePath)) res.setHeader('Content-Type', 'text/css; charset=utf-8');
     if (/\.js$/i.test(filePath)) res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
   }
 }));
-/* Root / health */
+app.use('/docs', express.static(DOCS, {
+  setHeaders: (res, filePath) => {
+    if (/\.(svg|png|jpg|jpeg|webp|ico)$/i.test(filePath)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    }
+  }
+}));
+app.use('/uploads', express.static(UPLOADS, { setHeaders: (res) => res.setHeader('Cache-Control', 'public, max-age=1209600') }));
+
+/* Root / Health */
 app.get('/', (_req, res) => {
   res.setHeader('X-Wayzo-Version', VERSION);
   if (!fs.existsSync(INDEX)) return res.status(500).send('index file missing');
@@ -99,24 +95,24 @@ app.post('/api/upload', multerUpload.array('files', 8), (req, res) => {
 const db = new Database(path.join(ROOT, 'wayzo.sqlite'));
 db.exec(`CREATE TABLE IF NOT EXISTS plans (id TEXT PRIMARY KEY, created_at TEXT NOT NULL, payload TEXT NOT NULL);`);
 const savePlan = db.prepare('INSERT OR REPLACE INTO plans (id, created_at, payload) VALUES (?, ?, ?)');
-const getPlan  = db.prepare('SELECT payload FROM plans WHERE id = ?');
+const getPlan = db.prepare('SELECT payload FROM plans WHERE id = ?');
 
 const nowIso = () => new Date().toISOString();
 const uid = () => (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
 
 /* Helpers */
-const daysBetween = (a,b)=>{ if(!a||!b) return 1; const s=new Date(a),e=new Date(b); if(isNaN(s)||isNaN(e)) return 1; return Math.max(1, Math.round((e-s)/86400000)+1); };
-const seasonFromDate = (iso="") => ([12,1,2].includes(new Date(iso).getMonth()+1)?"Winter":[3,4,5].includes(new Date(iso).getMonth()+1)?"Spring":[6,7,8].includes(new Date(iso).getMonth()+1)?"Summer":"Autumn");
-const travelerLabel = (ad=2,ch=0)=> ch>0?`Family (${ad} adult${ad===1?"":"s"} + ${ch} kid${ch===1?"":"s"})`:(ad===2?"Couple":ad===1?"Solo":`${ad} adult${ad===1?"":"s"}`);
-const perPersonPerDay = (t=0,d=1,tr=1)=>Math.round((Number(t)||0)/Math.max(1,d)/Math.max(1,tr));
+const daysBetween = (a, b) => { if (!a || !b) return 1; const s = new Date(a), e = new Date(b); if (isNaN(s) || isNaN(e)) return 1; return Math.max(1, Math.round((e - s) / 86400000) + 1); };
+const seasonFromDate = (iso = "") => ([12, 1, 2].includes(new Date(iso).getMonth() + 1) ? "Winter" : [3, 4, 5].includes(new Date(iso).getMonth() + 1) ? "Spring" : [6, 7, 8].includes(new Date(iso).getMonth() + 1) ? "Summer" : "Autumn");
+const travelerLabel = (ad = 2, ch = 0) => ch > 0 ? `Family (${ad} adult${ad === 1 ? "" : "s"} + ${ch} kid${ch === 1 ? "" : "s"})` : (ad === 2 ? "Couple" : ad === 1 ? "Solo" : `${ad} adult${ad === 1 ? "" : "s"}`);
+const perPersonPerDay = (t = 0, d = 1, tr = 1) => Math.round((Number(t) || 0) / Math.max(1, d) / Math.max(1, tr));
 
-/* Local fallback plan */
+/* Local Fallback Plan */
 function localPlanMarkdown(input) {
-  const { destination='Your destination', start='start', end='end', budget=1500, adults=2, children=0, level='mid', prefs='', diet='', currency='USD $' } = input || {};
+  const { destination = 'Your destination', start = 'start', end = 'end', budget = 1500, adults = 2, children = 0, level = 'mid', prefs = '', diet = '', currency = 'USD $' } = input || {};
   const nDays = daysBetween(start, end);
-  const b     = computeBudget(budget, nDays, level, Math.max(1, adults + children));
-  const style = level==="luxury"?"Luxury":level==="budget"?"Budget":"Mid-range";
-  const pppd  = perPersonPerDay(budget, nDays, Math.max(1, adults+children));
+  const b = computeBudget(budget, nDays, level, Math.max(1, adults + children));
+  const style = level === "luxury" ? "Luxury" : level === "budget" ? "Budget" : "Mid-range";
+  const pppd = perPersonPerDay(budget, nDays, Math.max(1, adults + children));
 
   return linkifyTokens(`
 # ${destination} — ${start} → ${end}
@@ -124,7 +120,7 @@ function localPlanMarkdown(input) {
 ![City hero](image:${destination} skyline)
 
 **Travelers:** ${travelerLabel(adults, children)}  
-**Style:** ${style}${prefs?` · ${prefs}`:""}  
+**Style:** ${style}${prefs ? ` · ${prefs}` : ""}  
 **Budget:** ${budget} ${currency} (${pppd}/day/person)  
 **Season:** ${seasonFromDate(start)}
 
@@ -168,7 +164,7 @@ function localPlanMarkdown(input) {
 /* OpenAI (optional) */
 const client = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 async function generatePlanWithAI(payload) {
-  const { destination='', start='', end='', budget=0, currency='USD $', adults=2, children=0, level='mid', prefs='', diet='' } = payload || {};
+  const { destination = '', start = '', end = '', budget = 0, currency = 'USD $', adults = 2, children = 0, level = 'mid', prefs = '', diet = '' } = payload || {};
   const nDays = daysBetween(start, end);
   const sys = `Return Markdown ONLY.
 Sections:
@@ -178,8 +174,8 @@ Sections:
 Use token links: [Map](map:query) [Tickets](tickets:query) [Book](book:query) [Reviews](reviews:query).`;
   const user = `Destination: ${destination}
 Dates: ${start} to ${end} (${nDays} days)
-Party: ${adults} adults${children?`, ${children} children`:""}
-Style: ${level}${prefs?` + ${prefs}`:""}
+Party: ${adults} adults${children ? `, ${children} children` : ""}
+Style: ${level}${prefs ? ` + ${prefs}` : ""}
 Budget: ${budget} ${currency}
 Diet: ${diet}`;
 
@@ -225,7 +221,7 @@ app.post('/api/plan', async (req, res) => {
     const id = uid();
     const markdown = await generatePlanWithAI(payload);
     const html = marked.parse(markdown);
-    const aff  = affiliatesFor(payload.destination);
+    const aff = affiliatesFor(payload.destination);
     savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: payload, markdown }));
     res.json({ id, markdown, html, affiliates: aff, version: VERSION });
   } catch {
@@ -233,48 +229,45 @@ app.post('/api/plan', async (req, res) => {
   }
 });
 
-/* ICS + PDF endpoints unchanged from your previous version ... */
-
 app.get('/api/plan/:id/pdf', (req, res) => {
   const { id } = req.params;
   const row = getPlan.get(id);
   if (!row) return res.status(404).json({ error: 'not found' });
   const saved = JSON.parse(row.payload || '{}');
-  const d  = saved?.data || {};
+  const d = saved?.data || {};
   const md = saved?.markdown || '';
   const htmlBody = marked.parse(md);
-  const style = d.level==="luxury"?"Luxury":d.level==="budget"?"Budget":"Mid-range";
-  const season  = seasonFromDate(d.start);
-  const days    = daysBetween(d.start, d.end);
-  const pppd    = perPersonPerDay(normalizeBudget(d.budget, d.currency), days, Math.max(1, (d.adults||0)+(d.children||0)));
-  const traveler= travelerLabel(d.adults||0, d.children||0);
+  const style = d.level === "luxury" ? "Luxury" : d.level === "budget" ? "Budget" : "Mid-range";
+  const season = seasonFromDate(d.start);
+  const days = daysBetween(d.start, d.end);
+  const pppd = perPersonPerDay(normalizeBudget(d.budget, d.currency), days, Math.max(1, (d.adults || 0) + (d.children || 0)));
+  const traveler = travelerLabel(d.adults || 0, d.children || 0);
 
   const base = `${req.protocol}://${req.get('host')}`;
   const pdfUrl = `${base}/api/plan/${id}/pdf`;
   const icsUrl = `${base}/api/plan/${id}/ics`;
   const shareX = `https://twitter.com/intent/tweet?text=${encodeURIComponent(`My ${d.destination} plan by Wayzo`)}&url=${encodeURIComponent(pdfUrl)}`;
 
-  const html = `<!doctype html><html><head><meta charset="utf-8"/>
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Wayzo Trip Report</title>
 <style>
-:root{--ink:#0f172a; --muted:#475569; --brand:#6366f1; --bg:#ffffff; --accent:#eef2ff; --border:#e2e8f0;}
-*{box-sizing:border-box}
-body{font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--ink);margin:24px;background:var(--bg)}
-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid var(--border);flex-wrap:wrap}
-.logo{display:flex;gap:10px;align-items:center}
-.badge{width:28px;height:28px;border-radius:8px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:700}
-.pill{border:1px solid var(--border);background:var(--accent);padding:.25rem .6rem;border-radius:999px;font-size:12px}
-.summary{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 10px 0}
-.summary .chip{border:1px solid var(--border);background:#fff;border-radius:999px;padding:.25rem .6rem;font-size:12px}
-.actions{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 14px}
-.actions a{color:#0f172a;text-decoration:none;border-bottom:1px dotted rgba(2,6,23,.25)}
-.facts{background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px;margin:8px 0}
-img{max-width:100%;height:auto;border-radius:10px}
-table{border-collapse:collapse;width:100%}
-th,td{border:1px solid var(--border);padding:.45rem .55rem;text-align:left}
-thead th{background:var(--accent)}
-footer{margin-top:24px;color:var(--muted);font-size:12px}
+  :root{--ink:#0f172a; --muted:#475569; --brand:#6366f1; --bg:#ffffff; --accent:#eef2ff; --border:#e2e8f0;}
+  body{font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--ink);margin:24px;background:var(--bg)}
+  header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid var(--border);flex-wrap:wrap}
+  .logo{display:flex;gap:10px;align-items:center}
+  .badge{width:28px;height:28px;border-radius:8px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:700}
+  .pill{border:1px solid var(--border);background:var(--accent);padding:.25rem .6rem;border-radius:999px;font-size:12px}
+  .summary{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 10px 0}
+  .summary .chip{border:1px solid var(--border);background:#fff;border-radius:999px;padding:.25rem .6rem;font-size:12px}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 14px}
+  .actions a{color:#0f172a;text-decoration:none;border-bottom:1px dotted rgba(2,6,23,.25)}
+  .facts{background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px;margin:8px 0}
+  img{max-width:100%;height:auto;border-radius:10px}
+  table{border-collapse:collapse;width:100%}
+  th,td{border:1px solid var(--border);padding:.45rem .55rem;text-align:left}
+  thead th{background:var(--accent)}
+  footer{margin-top:24px;color:var(--muted);font-size:12px}
 </style>
 </head><body>
 <header>
@@ -283,7 +276,7 @@ footer{margin-top:24px;color:var(--muted);font-size:12px}
 </header>
 <div class="summary">
   <span class="chip"><b>Travelers:</b> ${traveler}</span>
-  <span class="chip"><b>Style:</b> ${style}${d.prefs?` · ${escapeHtml(d.prefs)}`:""}</span>
+  <span class="chip"><b>Style:</b> ${style}${d.prefs ? ` · ${escapeHtml(d.prefs)}` : ""}</span>
   <span class="chip"><b>Budget:</b> ${normalizeBudget(d.budget, d.currency)} ${d.currency} (${pppd}/day/person)</span>
   <span class="chip"><b>Season:</b> ${season}</span>
 </div>
@@ -321,7 +314,7 @@ app.get('/api/plan/:id/ics', (req, res) => {
   let m;
   while ((m = rx.exec(md))) {
     const title = (m[2] || `Day ${m[1]}`).trim();
-    const date  = m[3] || saved?.data?.start || null;
+    const date = m[3] || saved?.data?.start || null;
     if (date) events.push({ title, date, start: '09:00', end: '11:00' });
   }
   const ics = buildIcs(id, events, { destination: dest });
@@ -330,7 +323,7 @@ app.get('/api/plan/:id/ics', (req, res) => {
   res.send(ics);
 });
 
-/* SPA catch-all */
+/* SPA Catch-All */
 app.get(/^\/(?!api\/).*/, (_req, res) => {
   res.setHeader('X-Wayzo-Version', VERSION);
   if (!fs.existsSync(INDEX)) return res.status(500).send('index file missing');
@@ -343,7 +336,7 @@ app.listen(PORT, () => {
   console.log('Index file:', INDEX);
 });
 
-// tiny escape helpers used by PDF html
+// Escape HTML helper
 function escapeHtml(s = "") {
   return String(s).replace(/[&<>"]/g, m => ({
     "&": "&amp;",
@@ -351,4 +344,4 @@ function escapeHtml(s = "") {
     ">": "&gt;",
     '"': "&quot;"
   }[m]));
-} // Add this closing brace
+}

@@ -1,7 +1,6 @@
 /* === Wayzo Staging — LIGHT BACKGROUND ONLY (Complete Stylesheet) === */
-/* Last Updated: 2025-08-24 15:15 IDT */
+/* Last Updated: 2025-08-24 15:32 IDT */
 
-/* Reset and Base Styles */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -12,7 +11,7 @@ html, body {
   height: 100%;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   color: #0f172a;
-  background: #ffffff !important; /* Enforce light background */
+  background: #ffffff !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -99,7 +98,8 @@ body {
   position: absolute;
   inset: 0;
   z-index: -1;
- background: linear-gradient(0deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.96)), var(--hero-bg, url('/frontend/hero-bg.jpg')) center/cover no-repeat !important; if the image is in frontend/.
+  background: linear-gradient(0deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.96)),
+              url('/frontend/hero-bg.jpg') center/cover no-repeat !important;
 }
 
 .hero-grid {
@@ -377,7 +377,6 @@ body,
   background: #ffffff !important;
 }
 
-/* Override Conflicting Dark Mode */
 @media (prefers-color-scheme: dark) {
   html,
   body,

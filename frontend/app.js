@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-/* Wayzo app.js - Enhanced UI/UX - 2025-08-24 15:15 IDT */
+/* Wayzo app.js - Enhanced UI/UX - 2025-08-24 15:32 IDT */
 
 "use strict";
 
@@ -99,13 +99,11 @@ function showLoading(show = true) {
 function setPreviewHTML(html = '') {
   if (previewBox) {
     previewBox.innerHTML = html;
-    // Post-process images
     const imgs = previewBox.querySelectorAll('img[src^="https://unsplash.com"]');
     imgs.forEach(img => {
       img.loading = 'lazy';
-      img.onerror = () => img.src = '/assets/placeholder.jpg';
+      img.onerror = () => img.src = '/frontend/placeholder.jpg'; // Fallback in frontend
     });
-    // Placeholder for map
     const mapPlaces = previewBox.querySelectorAll('#map');
     mapPlaces.forEach(place => {
       place.innerHTML = '<div>Map loading...</div>';
@@ -141,7 +139,7 @@ async function doPreview() {
   }
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     const res = await fetch('/api/preview', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
