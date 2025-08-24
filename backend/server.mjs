@@ -69,7 +69,14 @@ const staticHeaders = {
 app.use('/docs',     express.static(DOCS, staticHeaders));
 app.use('/uploads',  express.static(UPLOADS, { setHeaders: (res) => res.setHeader('Cache-Control','public, max-age=1209600') }));
 app.use('/',         express.static(FRONTEND, staticHeaders));
-
+app.use('/frontend', express.static(FRONTEND, {
+  setHeaders: (res, filePath) => {
+    if (/\.(css|js)$/i.test(filePath)) res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+    else if (/\.(svg|png|jpg|jpeg|webp|ico)$/i.test(filePath)) res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    if (/\.css$/i.test(filePath)) res.setHeader('Content-Type', 'text/css; charset=utf-8');
+    if (/\.js$/i.test(filePath)) res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  }
+}));
 /* Root / health */
 app.get('/', (_req, res) => {
   res.setHeader('X-Wayzo-Version', VERSION);
