@@ -1,15 +1,13 @@
 /* eslint-disable no-console */
-/* Wayzo app.js - Enhanced UI/UX - 2025-08-25 08:35 IDT */
-
+/* Wayzo app.js - Enhanced Debugging and UI/UX - 2025-08-25 14:57 IDT */
 "use strict";
 
 // Tiny helpers
 const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
 
 // Form and inputs
-const form = document.getElementById('tripForm');
-if (form) form.addEventListener('submit', (e) => e.preventDefault());
-
+const form = $('#tripForm');
 const destination = $('#destination');
 const start = $('#start');
 const end = $('#end');
@@ -19,35 +17,22 @@ const adults = $('#adults');
 const children = $('#children');
 const diet = $('#diet');
 const prefs = $('#prefs');
-
-// Uploads
-const filesEl = document.getElementById('attachments') || document.getElementById('photo');
-const previewEl = document.getElementById('attachmentsPreview') || document.getElementById('filesPreview');
-
-if (!previewEl && filesEl) {
-  previewEl = document.createElement('div');
-  previewEl.id = 'attachmentsPreview';
-  previewEl.className = 'files';
-  filesEl.insertAdjacentElement('afterend', previewEl);
-}
-
-// Buttons
+const filesEl = $('#attachments');
+const previewEl = $('#attachmentsPreview');
+const previewBox = $('#preview');
+const loading = $('#loading');
 const submitBtn = $('#submitBtn');
 const buyBtn = $('#buyBtn');
 const saveBtn = $('#saveBtn');
-const pdfBtn = $('#pdfBtn');
-const icsBtn = $('#icsBtn');
 const buildPlanBtn = $('#buildPlanBtn');
 const demoBtn = $('#demoBtn');
-
-// Output
-const previewBox = $('#preview');
-const loading = $('#loading');
+const pdfBtn = $('#pdfBtn');
+const icsBtn = $('#icsBtn');
 
 // Safe helpers
-const val = (el) => (el && el.value || '').trim();
+const val = (el) => (el && el.value ? el.value.trim() : '');
 const num = (el) => {
-  const n = Number((el && el.value || '').replace(/[^\d.]/g, ''));
+  const n = Number((el && el.value ? el.value.replace(/[^\d.]/g, '') : '0'));
   return Number.isFinite(n) ? n : 0;
 };
 
@@ -57,22 +42,56 @@ const selectedStyle = () => {
   return el ? el.value : 'mid';
 };
 const selectedPrefs = () => {
-  return Array.from(document.querySelectorAll('.seg.wrap input[type="checkbox"]:checked')).map(i => i.value);
+  return Array.from($$('.seg.wrap input[type="checkbox"]:checked')).map(i => i.value);
 };
 
-// Validate form with enhanced feedback
+// Inline form validation
 function validateForm(payload) {
   const errors = [];
-  if (!payload.destination) errors.push('Please enter a destination.');
-  if (!payload.start || !payload.end) errors.push('Please select start and end dates.');
-  if (errors.length > 0) {
-    alert('Validation Errors:\n' + errors.join('\n'));
-    return false;
+  const fields = { destination, start, end, totalBudget };
+  Object.entries(fields).forEach(([key, el]) => {
+    const field = el?.parentElement;
+    if (field) {
+      field.classList.remove('error');
+      field.removeAttribute('data-error');
+    }
+  });
+
+  if (!payload.destination) {
+    errors.push('Destination is required.');
+    if (destination?.parentElement) {
+      destination.parentElement.classList.add('error');
+      destination.parentElement.setAttribute('data-error', 'Please enter a destination.');
+    }
   }
-  return true;
+  if (!payload.start) {
+    errors.push('Start date is required.');
+    if (start?.parentElement) {
+      start.parentElement.classList.add('error');
+      start.parentElement.setAttribute('data-error', 'Please select a start date.');
+    }
+  }
+  if (!payload.end) {
+    errors.push('End date is required.');
+    if (end?.parentElement) {
+      end.parentElement.classList.add('error');
+      end.parentElement.setAttribute('data-error', 'Please select an end date.');
+    }
+  }
+  if (!payload.budget || payload.budget <= 0) {
+    errors.push('Budget must be greater than 0.');
+    if (totalBudget?.parentElement) {
+      totalBudget.parentElement.classList.add('error');
+      totalBudget.parentElement.setAttribute('data-error', 'Please enter a valid budget.');
+    }
+  }
+  if (errors.length > 0) {
+    alert('Form validation errors:\n' + errors.join('\n')); /* Added alert for visibility */
+  }
+  return errors.length === 0;
 }
 
-// Payload preparation with default values
+// Payload preparation
 function preparePayload() {
   return {
     destination: val(destination) || 'Unknown Destination',
@@ -92,28 +111,29 @@ function preparePayload() {
 // Loading state management
 function showLoading(show = true) {
   if (loading) {
-    loading.style.display = show ? 'block' : 'none';
-    document.body.style.cursor = show ? 'wait' : 'default';
+    loading.style.display = show ? 'flex' : 'none';
   }
+  document.body.style.cursor = show ? 'wait' : 'default';
+  [submitBtn, buyBtn, saveBtn, buildPlanBtn, demoBtn].forEach(btn => {
+    if (btn) btn.disabled = show;
+  });
 }
 
-// Preview innerHTML with enhanced rendering
+// Preview innerHTML
 function setPreviewHTML(html = '') {
   if (previewBox) {
-    previewBox.innerHTML = html || '<div class="muted">No content available. Please try again.</div>';
-    const imgs = previewBox.querySelectorAll('img[src^="https://unsplash.com"]');
-    imgs.forEach(img => {
+    previewBox.innerHTML = html || '<div class="muted">Enter trip details and generate a plan to see your itinerary.</div>'; /* Improved placeholder */
+    previewBox.querySelectorAll('img[src^="https://unsplash.com"]').forEach(img => {
       img.loading = 'lazy';
       img.onerror = () => img.src = '/frontend/placeholder.jpg';
     });
-    const mapPlaces = previewBox.querySelectorAll('#map');
-    mapPlaces.forEach(place => {
+    previewBox.querySelectorAll('#map').forEach(place => {
       place.innerHTML = '<div>Map loading...</div>';
     });
   }
 }
 
-// Uploads with file type check
+// Uploads
 async function uploadFiles() {
   if (!filesEl || !previewEl) return;
   const files = filesEl.files;
@@ -131,8 +151,9 @@ async function uploadFiles() {
   }
 }
 
-// Preview request with timeout
+// Preview request
 async function doPreview() {
+  alert('Preview button triggered - starting request.'); /* Debug alert */
   showLoading(true);
   const payload = preparePayload();
   if (!validateForm(payload)) {
@@ -141,8 +162,8 @@ async function doPreview() {
   }
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000); // Increased to 20s
-    console.log('Sending preview request:', payload); // Debug
+    const timeoutId = setTimeout(() => controller.abort(), 30000); /* Increased timeout */
+    console.log('Sending preview request:', payload);
     const res = await fetch('/api/preview', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -153,27 +174,30 @@ async function doPreview() {
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     const data = await res.json();
     setPreviewHTML(data.teaser_html);
-    console.log('Preview response:', data); // Debug
+    console.log('Preview response:', data);
   } catch (e) {
-    setPreviewHTML('<div class="muted">Preview failed. Error: ' + e.message + '</div>');
+    alert('Preview failed: ' + e.message); /* User-facing error */
+    setPreviewHTML('<div class="muted">Preview failed. Error: ' + e.message + '. Check console for details.</div>');
     console.error('Preview error:', e);
   } finally {
     showLoading(false);
   }
 }
 
-// Full plan (AI) with retry logic
+// Full plan (AI)
 async function doFullPlan() {
+  alert('Full Plan button triggered - starting request.'); /* Debug alert */
   showLoading(true);
   const payload = preparePayload();
   if (!validateForm(payload)) {
     showLoading(false);
     return;
   }
-  let attempts = 0, maxAttempts = 4; // Increased attempts
+  let attempts = 0;
+  const maxAttempts = 4;
   while (attempts < maxAttempts) {
     try {
-      console.log('Sending full plan request:', payload); // Debug
+      console.log('Sending full plan request:', payload);
       const res = await fetch('/api/plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -184,15 +208,22 @@ async function doFullPlan() {
       setPreviewHTML(data.html || '<div class="muted">No plan generated.</div>');
       if (data.id) {
         const base = location.origin;
-        if (pdfBtn) { pdfBtn.style.display = 'inline-block'; pdfBtn.href = `${base}/api/plan/${data.id}/pdf`; }
-        if (icsBtn) { icsBtn.style.display = 'inline-block'; icsBtn.href = `${base}/api/plan/${data.id}/ics`; }
+        if (pdfBtn) {
+          pdfBtn.style.display = 'inline-block';
+          pdfBtn.href = `${base}/api/plan/${data.id}/pdf`;
+        }
+        if (icsBtn) {
+          icsBtn.style.display = 'inline-block';
+          icsBtn.href = `${base}/api/plan/${data.id}/ics`;
+        }
       }
-      console.log('Full plan response:', data); // Debug
+      console.log('Full plan response:', data);
       break;
     } catch (e) {
       attempts++;
       if (attempts === maxAttempts) {
-        setPreviewHTML('<div class="muted">Plan failed after retries. Error: ' + e.message + '</div>');
+        alert('Full plan failed after retries: ' + e.message); /* User-facing error */
+        setPreviewHTML('<div class="muted">Plan failed after retries. Error: ' + e.message + '. Check console for details.</div>');
       }
       console.error('Full plan error:', e);
     }
@@ -200,8 +231,9 @@ async function doFullPlan() {
   showLoading(false);
 }
 
-// Save preview with local storage check
+// Save preview
 async function savePreview() {
+  alert('Save Preview button triggered.'); /* Debug alert */
   try {
     await doPreview();
     if (typeof localStorage !== 'undefined') {
@@ -211,16 +243,18 @@ async function savePreview() {
       alert('Local storage not available. Preview not saved.');
     }
   } catch (e) {
+    alert('Save preview failed: ' + e.message);
     console.error('Save preview error:', e);
   }
 }
 
-// Demo function (placeholder)
+// Demo function
 function showDemo() {
+  alert('Demo button triggered.'); /* Debug alert */
   setPreviewHTML('<div class="muted">This is a demo preview. Generate a plan to see real results!</div>');
 }
 
-// Debouncing for button clicks
+// Debouncing
 let debounceTimer;
 const debounce = (callback, delay) => {
   return (...args) => {
@@ -229,52 +263,97 @@ const debounce = (callback, delay) => {
   };
 };
 
-// Wire up events with error handling
-form?.addEventListener('submit', (e) => e.preventDefault());
-submitBtn?.addEventListener('click', debounce((e) => { e.preventDefault(); doPreview(); }, 300));
-buyBtn?.addEventListener('click', debounce((e) => { e.preventDefault(); doFullPlan(); }, 300));
-saveBtn?.addEventListener('click', debounce((e) => { e.preventDefault(); savePreview(); }, 300));
-buildPlanBtn?.addEventListener('click', debounce((e) => { e.preventDefault(); doPreview(); }, 300)); // Synced action
-demoBtn?.addEventListener('click', debounce((e) => { e.preventDefault(); showDemo(); }, 300));
-
-// Upload and drag-and-drop
-filesEl?.addEventListener('change', async () => {
-  try { await uploadFiles(); } catch (e) { console.error('Upload error:', e); }
-});
-filesEl?.addEventListener('dragover', (e) => e.preventDefault());
-filesEl?.addEventListener('drop', (e) => {
-  e.preventDefault();
-  if (e.dataTransfer.items) {
-    const files = Array.from(e.dataTransfer.items)
-      .filter(item => item.kind === 'file')
-      .map(item => item.getAsFile());
-    filesEl.files = new FileList(files);
-    uploadFiles();
-  }
-});
-
-// Initialize Map
+// Wire up events
 document.addEventListener('DOMContentLoaded', () => {
+  console.log('DOM loaded, initializing event listeners');
+  if (!form) console.error('Form #tripForm not found');
+  if (!submitBtn) console.error('Button #submitBtn not found');
+  if (!buyBtn) console.error('Button #buyBtn not found');
+  if (!saveBtn) console.error('Button #saveBtn not found');
+  if (!buildPlanBtn) console.error('Button #buildPlanBtn not found');
+  if (!demoBtn) console.error('Button #demoBtn not found');
+
+  form?.addEventListener('submit', (e) => e.preventDefault());
+  submitBtn?.addEventListener('click', debounce((e) => {
+    e.preventDefault();
+    console.log('Submit button clicked');
+    doPreview();
+  }, 300));
+  buyBtn?.addEventListener('click', debounce((e) => {
+    e.preventDefault();
+    console.log('Buy button clicked');
+    doFullPlan();
+  }, 300));
+  saveBtn?.addEventListener('click', debounce((e) => {
+    e.preventDefault();
+    console.log('Save button clicked');
+    savePreview();
+  }, 300));
+  buildPlanBtn?.addEventListener('click', debounce((e) => {
+    e.preventDefault();
+    console.log('Build plan button clicked');
+    doPreview();
+  }, 300));
+  demoBtn?.addEventListener('click', debounce((e) => {
+    e.preventDefault();
+    console.log('Demo button clicked');
+    showDemo();
+  }, 300));
+
+  if (filesEl) {
+    filesEl.addEventListener('change', async () => {
+      try {
+        console.log('File input changed');
+        await uploadFiles();
+      } catch (e) {
+        console.error('Upload error:', e);
+      }
+    });
+    filesEl.addEventListener('dragover', (e) => e.preventDefault());
+    filesEl.addEventListener('drop', (e) => {
+      e.preventDefault();
+      if (e.dataTransfer.items) {
+        const files = Array.from(e.dataTransfer.items)
+          .filter(item => item.kind === 'file')
+          .map(item => item.getAsFile());
+        filesEl.files = new FileList(files);
+        uploadFiles();
+      }
+    });
+  }
+
+  // Initialize Map
   if (!mapboxgl) {
     console.error('Mapbox GL JS not loaded');
-    return;
+  } else {
+    mapboxgl.accessToken = 'your_mapbox_key'; // Replace with your Mapbox key
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/streets-v11',
+      center: [2.3522, 48.8566], // Paris default
+      zoom: 10
+    });
+    console.log('Map initialized');
   }
-  mapboxgl.accessToken = 'your_mapbox_key'; // Replace with your Mapbox key
-  const map = new mapboxgl.Map({
-    container: 'map',
-    style: 'mapbox://styles/mapbox/streets-v11',
-    center: [2.3522, 48.8566], // Paris default
-    zoom: 10
-  });
-  console.log('Map initialized');
+
+  // Additional debug: Check image loading
+  const heroBg = $('.hero-image');
+  if (heroBg) {
+    heroBg.onerror = () => console.error('hero-bg.jpg failed to load');
+  }
+  const secondaryImg = $('.secondary-image');
+  if (secondaryImg) {
+    secondaryImg.onerror = () => console.error('hero-card.jpg failed to load');
+  }
 });
 
-// Check if all elements are loaded
-console.log('Buttons loaded:', { submitBtn, buyBtn, saveBtn, buildPlanBtn, demoBtn });
-console.log('Form inputs loaded:', { destination, start, end, totalBudget, currency, adults, children, diet, prefs });
-if (!submitBtn || !buyBtn || !saveBtn || !buildPlanBtn || !demoBtn) {
-  console.error('One or more buttons not found in DOM');
-}
-if (!destination || !start || !end || !totalBudget || !currency || !adults || !children || !diet || !prefs) {
-  console.error('One or more form inputs not found in DOM');
-}
+// Initial checks
+console.log('Elements loaded:', {
+  form: !!form,
+  submitBtn: !!submitBtn,
+  buyBtn: !!buyBtn,
+  saveBtn: !!saveBtn,
+  buildPlanBtn: !!buildPlanBtn,
+  demoBtn: !!demoBtn,
+  inputs: !!destination && !!start && !!end && !!totalBudget && !!currency && !!adults && !!children && !!diet && !!prefs
+});

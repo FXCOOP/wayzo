@@ -1,5 +1,5 @@
 /* === Wayzo Staging — LIGHT BACKGROUND ONLY (Updated Stylesheet) === */
-/* Last Updated: 2025-08-25 11:21 IDT */
+/* Last Updated: 2025-08-25 14:57 IDT */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -91,11 +91,12 @@ body {
   z-index: -1;
   background: url('/frontend/hero-bg.jpg') center/cover no-repeat;
   opacity: 0.85;
+  fallback-background: linear-gradient(to right, #eef2ff, #dbeafe); /* Fallback if image fails */
 }
 .hero-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 30px;
+  gap: 40px; /* Increased gap for better separation */
   align-items: center;
   max-width: 1120px;
   margin: 0 auto;
@@ -103,9 +104,9 @@ body {
   z-index: 1;
 }
 .hero-left {
-  padding: 30px;
+  padding: 40px; /* Increased padding for balance */
   background: rgba(255, 255, 255, 0.9);
-  border-radius: 12px;
+  border-radius: 16px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 .hero-left h1 {
@@ -188,17 +189,17 @@ body {
 }
 .hero-right .secondary-image {
   position: absolute;
-  top: 50%;
+  top: 40%; /* Adjusted position for better alignment */
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 250px;
-  height: 250px;
+  width: 300px; /* Increased size for better visual balance */
+  height: 300px;
   object-fit: cover;
-  border-radius: 15px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  border-radius: 20px; /* Softer corners */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); /* Stronger shadow */
   z-index: 1;
-  border: 5px solid #ffffff;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1), transparent);
+  border: 6px solid #ffffff;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.05), transparent);
 }
 .hero-right .secondary-image[src=""] {
   background: url('/frontend/placeholder.jpg') center/cover no-repeat;
@@ -216,8 +217,8 @@ body {
 .card {
   background: #ffffff;
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 25px;
+  border-radius: 16px; /* Softer corners */
+  padding: 30px; /* Increased padding */
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
   transition: transform 0.2s, box-shadow 0.2s;
 }
@@ -330,11 +331,17 @@ textarea {
 #preview,
 #plan {
   margin-top: 20px;
-  padding: 20px;
+  padding: 25px; /* Increased padding */
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  background: #ffffff;
+  border-radius: 16px;
+  background: #f9fafb; /* Softer background */
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  min-height: 200px; /* Prevent collapsing */
+}
+#preview:empty::before {
+  content: 'Enter trip details and generate a preview to see your itinerary here.';
+  color: #64748b;
+  font-style: italic;
 }
 .skel {
   height: 12px;
@@ -350,6 +357,7 @@ textarea {
   gap: 15px;
   flex-wrap: wrap;
   margin-top: 15px;
+  justify-content: center; /* Centered for better look */
 }
 .ql {
   font-size: 1rem;
@@ -405,6 +413,15 @@ textarea {
   margin-top: 20px;
   border: 1px solid #e5e7eb;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  background: #f9fafb; /* Placeholder background */
+}
+#map::before {
+  content: 'Map will load here once a plan is generated.';
+  display: grid;
+  place-items: center;
+  height: 100%;
+  color: #64748b;
+  font-style: italic;
 }
 /* Loading Indicator */
 #loading {
@@ -437,11 +454,11 @@ textarea {
   }
   .hero-right {
     order: 1;
-    height: 300px;
+    height: 400px; /* Reduced for mobile */
   }
   .hero-left {
     order: 2;
-    padding: 15px;
+    padding: 20px;
   }
   .hero-left h1 {
     font-size: 2rem;
@@ -455,7 +472,7 @@ textarea {
   }
   .card,
   .form {
-    padding: 15px;
+    padding: 20px;
   }
   #map {
     height: 300px;
@@ -464,8 +481,9 @@ textarea {
     grid-template-columns: 1fr;
   }
   .hero-right .secondary-image {
-    width: 150px;
-    height: 150px;
+    width: 200px;
+    height: 200px;
+    top: 50%;
   }
   .quick-links {
     flex-direction: column;
