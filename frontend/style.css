@@ -33,6 +33,13 @@
 .pill { background: #eef2ff; color: #6366f1; border: 1px solid #e2e8f0; padding: 0.25rem 0.6rem; border-radius: 999px; font-weight: 700; font-size: 0.85rem; }
 .map-placeholder { border: 1px dashed #e2e8f0; border-radius: 12px; min-height: 240px; display: grid; place-items: center; color: #64748b; }
 .file { padding: 6px 8px; margin-top: 6px; border: 1px dashed #e2e8f0; border-radius: 8px; background: #f8fafc; font-size: 0.9rem; }
+/* Additional UI layout */
+.main { padding: 40px 0; }
+.hero-cta, .hero-actions { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+.seg { display: flex; gap: 10px; }
+.seg.wrap { flex-wrap: wrap; }
+.hero-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 18px; box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
+.teaser { color: #334155; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; }
 .card:hover {
   transform: translateY(-5px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
