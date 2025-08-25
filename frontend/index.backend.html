@@ -10,11 +10,11 @@
 <body>
   <header class="topbar">
     <div class="container topbar-inner">
-      <a href="/" class="brand">
+      <a href="/" class="brand" aria-label="Wayzo Home">
         <div class="brand-badge">WZ</div>
         <div class="brand-name">Wayzo</div>
       </a>
-      <a href="/pro.html" class="btn">Classic Start Planning</a>
+      <a href="/pro.html" class="btn" aria-label="Start Classic Planning">Classic Start Planning</a>
     </div>
   </header>
   <section class="hero">
@@ -23,8 +23,8 @@
         <h1 class="section-title">Plan Unforgettable Trips in Minutes — AI-Powered</h1>
         <p>Personalized itineraries by budget and style. Day-by-day guidance you can export to PDF.</p>
         <div class="hero-cta">
-          <button class="btn btn-primary" id="buildPlanBtn">Build My Plan</button>
-          <button class="btn btn-ghost" id="demoBtn">See Demo</button>
+          <button class="btn btn-primary" id="buildPlanBtn" aria-label="Build My Trip Plan">Build My Plan</button>
+          <button class="btn btn-ghost" id="demoBtn" aria-label="View Demo Plan">See Demo</button>
         </div>
         <p class="hero-note small muted">No app required · Mobile-first · PDF export</p>
       </div>
@@ -77,19 +77,19 @@
           <div class="field">
             <label>Style</label>
             <div>
-              <label class="chip"><input type="radio" name="style" value="budget" required> Budget</label>
-              <label class="chip"><input type="radio" name="style" value="mid-range" checked> Mid-range</label>
-              <label class="chip"><input type="radio" name="style" value="luxury"> Luxury</label>
+              <label class="chip"><input type="radio" name="style" value="budget" required aria-label="Budget Style"> Budget</label>
+              <label class="chip"><input type="radio" name="style" value="mid-range" checked aria-label="Mid-range Style"> Mid-range</label>
+              <label class="chip"><input type="radio" name="style" value="luxury" aria-label="Luxury Style"> Luxury</label>
             </div>
           </div>
           <div class="field">
             <label>Preferences</label>
             <div class="seg wrap">
-              <label class="chip"><input type="checkbox" value="attractions"> Attractions</label>
-              <label class="chip"><input type="checkbox" value="relax"> Relax</label>
-              <label class="chip"><input type="checkbox" value="romantic"> Romantic</label>
-              <label class="chip"><input type="checkbox" value="adventure"> Adventure</label>
-              <label class="chip"><input type="checkbox" value="museums"> Museums</label>
+              <label class="chip"><input type="checkbox" value="attractions" aria-label="Attractions Preference"> Attractions</label>
+              <label class="chip"><input type="checkbox" value="relax" aria-label="Relax Preference"> Relax</label>
+              <label class="chip"><input type="checkbox" value="romantic" aria-label="Romantic Preference"> Romantic</label>
+              <label class="chip"><input type="checkbox" value="adventure" aria-label="Adventure Preference"> Adventure</label>
+              <label class="chip"><input type="checkbox" value="museums" aria-label="Museums Preference"> Museums</label>
             </div>
           </div>
           <div class="field">
@@ -105,9 +105,9 @@
             <input id="attachments" type="file" multiple>
           </div>
           <div class="field">
-            <button type="submit" id="submitBtn" class="btn btn-primary">Generate Preview</button>
-            <button id="buyBtn" class="btn btn-cta">Generate Full Plan (AI)</button>
-            <button id="saveBtn" class="btn btn-ghost">Save Preview</button>
+            <button type="submit" id="submitBtn" class="btn btn-primary" aria-label="Generate Trip Preview">Generate Preview</button>
+            <button id="buyBtn" class="btn btn-cta" aria-label="Generate Full AI Plan">Generate Full Plan (AI)</button>
+            <button id="saveBtn" class="btn btn-ghost" aria-label="Save Trip Preview">Save Preview</button>
           </div>
         </form>
       </div>
@@ -118,9 +118,9 @@
         <div id="preview"></div>
         <div id="loading" class="hidden">Generating…</div>
         <div class="quick-links">
-          <a id="pdfBtn" class="btn btn-primary" style="display:none">Download PDF</a>
-          <a id="icsBtn" class="btn btn-primary" style="display:none">Download Calendar</a>
-          <a id="journalBtn" class="btn btn-ghost">Download Trip Journal</a>
+          <a id="pdfBtn" class="btn btn-primary" style="display:none" aria-label="Download PDF">Download PDF</a>
+          <a id="icsBtn" class="btn btn-primary" style="display:none" aria-label="Download Calendar">Download Calendar</a>
+          <a id="journalBtn" class="btn btn-ghost" aria-label="Download Trip Journal">Download Trip Journal</a>
         </div>
         <div id="map" class="map-placeholder"></div>
       </div>
@@ -130,21 +130,5 @@
     <div class="container">© Wayzo. All rights reserved.</div>
   </footer>
   <script src="/frontend/app.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      if (!mapboxgl) {
-        console.error('Mapbox GL JS not loaded');
-        return;
-      }
-      mapboxgl.accessToken = 'your_mapbox_key'; // Replace with your Mapbox key
-      const map = new mapboxgl.Map({
-        container: 'map',
-        style: 'mapbox://styles/mapbox/streets-v11',
-        center: [2.3522, 48.8566], // Paris default
-        zoom: 10
-      });
-      console.log('Map initialized');
-    });
-  </script>
 </body>
 </html>
