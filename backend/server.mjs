@@ -19,7 +19,7 @@ import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
 
-const VERSION = 'staging-v22';
+const VERSION = 'staging-v24';
 
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
@@ -35,7 +35,7 @@ if (process.env.NODE_ENV !== 'production') {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT = __dirname;
-const FRONTEND = path.join(__dirname, '..', 'frontend'); // Sibling directory
+const FRONTEND = path.join(__dirname, '..', 'frontend');
 const DOCS = path.join(ROOT, 'docs');
 const UPLOADS = path.join(ROOT, 'uploads');
 fs.mkdirSync(UPLOADS, { recursive: true });
@@ -51,14 +51,14 @@ app.use(helmet({ contentSecurityPolicy: false, crossOriginOpenerPolicy: { policy
 app.use(compression());
 app.use(morgan('combined')); // Detailed logging
 app.use(cors());
-app.use(rateLimit({ windowMs: 60_000, limit: 160 }));
-app.use(express.json({ limit: '5mb' })); // Increased limit for potential large payloads
+app.use(rateLimit({ windowMs: 60_000, limit: 200 }));
+app.use(express.json({ limit: '5mb' }));
 
 /* Static Serving with Proper Headers */
 app.use('/frontend', express.static(FRONTEND, {
   setHeaders: (res, filePath) => {
-    console.log('Serving static file:', filePath); // Debug
-    if (!fs.existsSync(filePath)) console.error('File not found:', filePath);
+    console.log('Serving static file:', filePath);
+    if (!fs.existsSync(filePath)) console.error('Static file not found:', filePath);
     if (/\.(css|js)$/i.test(filePath)) {
       res.setHeader('Cache-Control', 'no-cache, must-revalidate');
     } else if (/\.(svg|png|jpg|jpeg|webp|ico)$/i.test(filePath)) {
@@ -84,13 +84,14 @@ app.get('/', (_req, res) => {
     console.error('Index file missing:', INDEX);
     return res.status(500).send('Index file missing. Check server logs.');
   }
+  console.log('Serving index:', INDEX);
   res.sendFile(INDEX);
 });
 app.get('/healthz', (_req, res) => res.json({ ok: true, version: VERSION }));
 app.get('/version', (_req, res) => res.json({ version: VERSION }));
 
 /* Uploads */
-const multerUpload = multer({ dest: UPLOADS, limits: { fileSize: 10 * 1024 * 1024, files: 10 } }); // Increased limits
+const multerUpload = multer({ dest: UPLOADS, limits: { fileSize: 10 * 1024 * 1024, files: 10 } });
 app.post('/api/upload', multerUpload.array('files', 10), (req, res) => {
   console.log('Upload request received:', req.files);
   const files = (req.files || []).map(f => ({
@@ -350,6 +351,7 @@ app.get(/^\/(?!api\/).*/, (_req, res) => {
     console.error('Index file missing:', INDEX);
     return res.status(500).send('Index file missing. Check server logs.');
   }
+  console.log('Serving index:', INDEX);
   res.sendFile(INDEX);
 });
 

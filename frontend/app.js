@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-/* Wayzo app.js - Enhanced UI/UX - 2025-08-24 21:55 IDT */
+/* Wayzo app.js - Enhanced UI/UX - 2025-08-25 08:35 IDT */
 
 "use strict";
 
@@ -100,7 +100,7 @@ function showLoading(show = true) {
 // Preview innerHTML with enhanced rendering
 function setPreviewHTML(html = '') {
   if (previewBox) {
-    previewBox.innerHTML = html || '<div class="muted">No content available.</div>';
+    previewBox.innerHTML = html || '<div class="muted">No content available. Please try again.</div>';
     const imgs = previewBox.querySelectorAll('img[src^="https://unsplash.com"]');
     imgs.forEach(img => {
       img.loading = 'lazy';
@@ -141,7 +141,8 @@ async function doPreview() {
   }
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // Increased timeout
+    const timeoutId = setTimeout(() => controller.abort(), 20000); // Increased to 20s
+    console.log('Sending preview request:', payload); // Debug
     const res = await fetch('/api/preview', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -169,9 +170,10 @@ async function doFullPlan() {
     showLoading(false);
     return;
   }
-  let attempts = 0, maxAttempts = 3;
+  let attempts = 0, maxAttempts = 4; // Increased attempts
   while (attempts < maxAttempts) {
     try {
+      console.log('Sending full plan request:', payload); // Debug
       const res = await fetch('/api/plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -270,3 +272,9 @@ document.addEventListener('DOMContentLoaded', () => {
 // Check if all elements are loaded
 console.log('Buttons loaded:', { submitBtn, buyBtn, saveBtn, buildPlanBtn, demoBtn });
 console.log('Form inputs loaded:', { destination, start, end, totalBudget, currency, adults, children, diet, prefs });
+if (!submitBtn || !buyBtn || !saveBtn || !buildPlanBtn || !demoBtn) {
+  console.error('One or more buttons not found in DOM');
+}
+if (!destination || !start || !end || !totalBudget || !currency || !adults || !children || !diet || !prefs) {
+  console.error('One or more form inputs not found in DOM');
+}
