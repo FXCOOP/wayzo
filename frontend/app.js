@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-/* Wayzo app.js - Enhanced Debugging and UI/UX - 2025-08-25 14:57 IDT */
+/* Wayzo app.js - Enhanced UI/UX and Button Fixes - 2025-08-25 17:12 IDT */
 "use strict";
 
 // Tiny helpers
@@ -85,9 +85,6 @@ function validateForm(payload) {
       totalBudget.parentElement.setAttribute('data-error', 'Please enter a valid budget.');
     }
   }
-  if (errors.length > 0) {
-    alert('Form validation errors:\n' + errors.join('\n')); /* Added alert for visibility */
-  }
   return errors.length === 0;
 }
 
@@ -122,7 +119,8 @@ function showLoading(show = true) {
 // Preview innerHTML
 function setPreviewHTML(html = '') {
   if (previewBox) {
-    previewBox.innerHTML = html || '<div class="muted">Enter trip details and generate a plan to see your itinerary.</div>'; /* Improved placeholder */
+    previewBox.innerHTML = html || '<div class="muted">No content available. Please try again.</div>';
+    previewBox.classList.add('markdown'); // Ensure styles apply
     previewBox.querySelectorAll('img[src^="https://unsplash.com"]').forEach(img => {
       img.loading = 'lazy';
       img.onerror = () => img.src = '/frontend/placeholder.jpg';
@@ -146,23 +144,22 @@ async function uploadFiles() {
       div.textContent = f.name;
       previewEl.appendChild(div);
     } else {
-      alert(`Unsupported file type: ${f.name}`);
+      console.error(`Unsupported file type: ${f.name}`);
     }
   }
 }
 
 // Preview request
 async function doPreview() {
-  alert('Preview button triggered - starting request.'); /* Debug alert */
   showLoading(true);
   const payload = preparePayload();
-  if (!validateForm(payload)) {
+  if (!validateForm(payload) ) {
     showLoading(false);
     return;
   }
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); /* Increased timeout */
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
     console.log('Sending preview request:', payload);
     const res = await fetch('/api/preview', {
       method: 'POST',
@@ -176,8 +173,7 @@ async function doPreview() {
     setPreviewHTML(data.teaser_html);
     console.log('Preview response:', data);
   } catch (e) {
-    alert('Preview failed: ' + e.message); /* User-facing error */
-    setPreviewHTML('<div class="muted">Preview failed. Error: ' + e.message + '. Check console for details.</div>');
+    setPreviewHTML('<div class="muted">Preview failed. Error: ' + e.message + '</div>');
     console.error('Preview error:', e);
   } finally {
     showLoading(false);
@@ -186,7 +182,6 @@ async function doPreview() {
 
 // Full plan (AI)
 async function doFullPlan() {
-  alert('Full Plan button triggered - starting request.'); /* Debug alert */
   showLoading(true);
   const payload = preparePayload();
   if (!validateForm(payload)) {
@@ -222,8 +217,7 @@ async function doFullPlan() {
     } catch (e) {
       attempts++;
       if (attempts === maxAttempts) {
-        alert('Full plan failed after retries: ' + e.message); /* User-facing error */
-        setPreviewHTML('<div class="muted">Plan failed after retries. Error: ' + e.message + '. Check console for details.</div>');
+        setPreviewHTML('<div class="muted">Plan failed after retries. Error: ' + e.message + '</div>');
       }
       console.error('Full plan error:', e);
     }
@@ -233,24 +227,21 @@ async function doFullPlan() {
 
 // Save preview
 async function savePreview() {
-  alert('Save Preview button triggered.'); /* Debug alert */
   try {
     await doPreview();
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('wayzo_preview', previewBox.innerHTML || '');
-      alert('Preview saved locally.');
+      console.log('Preview saved locally.');
     } else {
-      alert('Local storage not available. Preview not saved.');
+      console.error('Local storage not available.');
     }
   } catch (e) {
-    alert('Save preview failed: ' + e.message);
     console.error('Save preview error:', e);
   }
 }
 
 // Demo function
 function showDemo() {
-  alert('Demo button triggered.'); /* Debug alert */
   setPreviewHTML('<div class="muted">This is a demo preview. Generate a plan to see real results!</div>');
 }
 
@@ -336,7 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('Map initialized');
   }
 
-  // Additional debug: Check image loading
+  // Image debug
   const heroBg = $('.hero-image');
   if (heroBg) {
     heroBg.onerror = () => console.error('hero-bg.jpg failed to load');
