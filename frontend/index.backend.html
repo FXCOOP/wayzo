@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Wayzo - Plan Your Trip</title>
+  <meta name="mapbox-key" content="">
   <link rel="stylesheet" href="/frontend/style.css">
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.js"></script>
 </head>
@@ -103,6 +104,7 @@
           <div class="field">
             <label for="attachments">Attach Image or PDF (optional)</label>
             <input id="attachments" type="file" multiple>
+            <div id="attachmentsPreview" class="small muted"></div>
           </div>
           <div class="field">
             <button type="submit" id="submitBtn" class="btn btn-primary" aria-label="Generate Trip Preview">Generate Preview</button>

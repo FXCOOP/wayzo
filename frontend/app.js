@@ -50,7 +50,7 @@ const selectedPrefs = () => {
 function validateForm(payload) {
   const errors = [];
   const fields = { destination, start, end, totalBudget };
-  Object.entries(fields).forEach(([key, el]) => {
+  Object.entries(fields).forEach(([, el]) => {
     const field = el?.parentElement;
     if (field) {
       field.classList.remove('error');
@@ -124,7 +124,7 @@ function setPreviewHTML(html = '') {
     previewBox.classList.add('markdown'); // Apply rich styles
     previewBox.querySelectorAll('img[src^="https://unsplash.com"]').forEach(img => {
       img.loading = 'lazy';
-      img.onerror = () => img.src = '/frontend/placeholder.jpg';
+      img.onerror = () => { try { img.src = '/frontend/placeholder.jpg'; } catch {} };
     });
     previewBox.querySelectorAll('#map').forEach(place => {
       place.innerHTML = '<div>Map loading...</div>';
@@ -304,22 +304,33 @@ document.addEventListener('DOMContentLoaded', () => {
     filesEl.addEventListener('dragover', (e) => e.preventDefault());
     filesEl.addEventListener('drop', (e) => {
       e.preventDefault();
-      if (e.dataTransfer.items) {
-        const files = Array.from(e.dataTransfer.items)
-          .filter(item => item.kind === 'file')
-          .map(item => item.getAsFile());
-        filesEl.files = new FileList(files);
-        uploadFiles();
+      try {
+        const items = e.dataTransfer?.items ? Array.from(e.dataTransfer.items) : [];
+        const dt = new DataTransfer();
+        for (const item of items) {
+          if (item.kind === 'file') {
+            const f = item.getAsFile();
+            if (f) dt.items.add(f);
+          }
+        }
+        if (dt.files && dt.files.length > 0) {
+          filesEl.files = dt.files;
+          uploadFiles();
+        }
+      } catch (err) {
+        console.error('Drag-drop error:', err);
       }
     });
   }
 
   // Initialize Map
-  if (mapEl && mapboxgl) {
-    mapboxgl.accessToken = process.env.MAPBOX_API_KEY || 'your_mapbox_key'; // Replace with your key or set via .env
-    if (!mapboxgl.accessToken || mapboxgl.accessToken === 'your_mapbox_key') {
-      console.warn('Mapbox API key not set. Map will not load.');
+  if (mapEl && typeof mapboxgl !== 'undefined') {
+    const meta = document.querySelector('meta[name="mapbox-key"]');
+    const mapKey = (meta && meta.content ? meta.content : '').trim();
+    if (!mapKey) {
+      console.warn('Mapbox API key not set (meta[name="mapbox-key"]). Map will not load.');
     } else {
+      mapboxgl.accessToken = mapKey;
       const map = new mapboxgl.Map({
         container: 'map',
         style: 'mapbox://styles/mapbox/streets-v11',
