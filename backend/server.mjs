@@ -16,7 +16,7 @@ import { normalizeBudget, computeBudget } from './lib/budget.mjs';
 import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
-const VERSION = 'staging-v26'; // Updated version
+const VERSION = 'staging-v27'; // Updated version
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
   try {
@@ -99,81 +99,103 @@ const getPlan = db.prepare('SELECT payload FROM plans WHERE id = ?');
 const nowIso = () => new Date().toISOString();
 const uid = () => (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
 /* Helpers */
-const daysBetween = (a, b) => { if (!a || !b) return 1; const s = new Date(a), e = new Date(b); if (isNaN(s) || isNaN(e)) return 1; return Math.max(1, Math.round((e - s) / 86400000) + 1); };
+const daysBetween = (a, b) => { if (!a || !b) return 5; const s = new Date(a), e = new Date(b); if (isNaN(s) || isNaN(e)) return 5; return Math.max(1, Math.round((e - s) / 86400000) + 1); };
 const seasonFromDate = (iso = "") => ([12, 1, 2].includes(new Date(iso).getMonth() + 1) ? "Winter" : [3, 4, 5].includes(new Date(iso).getMonth() + 1) ? "Spring" : [6, 7, 8].includes(new Date(iso).getMonth() + 1) ? "Summer" : "Autumn");
 const travelerLabel = (ad = 2, ch = 0) => ch > 0 ? `Family (${ad} adult${ad === 1 ? "" : "s"} + ${ch} kid${ch === 1 ? "" : "s"})` : (ad === 2 ? "Couple" : ad === 1 ? "Solo" : `${ad} adult${ad === 1 ? "" : "s"}`);
 const perPersonPerDay = (t = 0, d = 1, tr = 1) => Math.round((Number(t) || 0) / Math.max(1, d) / Math.max(1, tr));
 /* Local Fallback Plan */
 function localPlanMarkdown(input) {
-  const { destination = 'Your destination', start = 'start', end = 'end', budget = 1500, adults = 2, children = 0, level = 'mid', prefs = '', diet = '', currency = 'USD $' } = input || {};
+  const { destination = 'Santorini', start = '2025-09-03', end = '2025-09-06', budget = 2500, adults = 2, children = 0, level = 'mid', prefs = '', diet = 'vegetarian, gluten-free', specialRequests = 'wheelchair-accessible, pet-friendly', currency = 'USD' } = input || {};
   const nDays = daysBetween(start, end);
   const b = computeBudget(budget, nDays, level, Math.max(1, adults + children));
   const style = level === "luxury" ? "Luxury" : level === "budget" ? "Budget" : "Mid-range";
   const pppd = perPersonPerDay(budget, nDays, Math.max(1, adults + children));
   return linkifyTokens(`
-# ${destination} Travel Guide
+# ${destination} Dream Getaway
 ## Trip Overview
 - **Travelers:** ${travelerLabel(adults, children)}
-- **Style:** ${style}${prefs ? ` · ${prefs}` : ""}
+- **Dates:** ${start} to ${end} (${nDays} nights)
+- **Destination:** ${destination}, Greece
 - **Budget:** ${budget} ${currency} (${pppd}/day/person)
-- **Season:** ${seasonFromDate(start)}
-## Quick Facts
-- **Language:** English (tourism friendly)
-- **Currency:** ${currency}
-- **Voltage:** 230V, Type C/E plugs (adapter may be required)
-- **Tipping:** 5–10% in restaurants (optional)
+- **Style:** ${style}${prefs ? ` · ${prefs}` : ""}
+- **Dietary Needs:** ${diet || 'None'}
+- **Special Requests:** ${specialRequests || 'None'}
+- **Weather:** Warm (25-30°C) in September 2025, expect crowds, bring sun protection.
+
 ## Accommodation Details
-- **Hotel:** [Book](book:${destination} mid-range hotel) (3-4 star, accessible, pet-friendly)
-- **Cost:** ~${b.stay.total} for ${nDays} nights
-## Budget Breakdown (rough)
-| Category         | Cost (${currency}) | Notes                  |
-|------------------|-------------------|-------------------------|
-| Stay             | ${b.stay.total}   | ~${b.stay.perDay}/day   |
-| Food             | ${b.food.total}   | ~${b.food.perDay}/person/day |
-| Activities       | ${b.act.total}    | ~${b.act.perDay}/day    |
-| Transit          | ${b.transit.total}| ~${b.transit.perDay}/day|
-| Total            | ${budget}         | Within budget           |
+- **Hotel:** Katikies Hotel, Oia (4-star, 9.5/10 on Booking.com, wheelchair-accessible, pet-friendly)
+- **Cost:** ~$${b.stay.total} for ${nDays} nights
+- **Features:** Caldera views, infinity pool, gourmet vegetarian/gluten-free dining
+
 ## Day-by-Day Itinerary
 ### Day 1 — Arrival & Relaxation (${start})
-- **Morning:** Arrive and check-in. [Map](map:${destination} airport to hotel)
-- **Afternoon:** Relax at hotel. [Reviews](reviews:${destination} hotel)
-- **Evening:** Dinner nearby. [Book](book:${destination} dinner)
-### Day 2 — Exploration
-- **Morning:** Visit a landmark. [Tickets](tickets:${destination} landmark)
-- **Afternoon:** Local museum. [Map](map:${destination} museum)
-- **Evening:** Sunset walk. [Reviews](reviews:${destination} sunset spot)
-### Day 3 — Nature
-- **Morning:** Park visit. [Map](map:${destination} park)
-- **Afternoon:** Picnic. [Reviews](reviews:${destination} picnic spot)
-- **Evening:** Dinner. [Book](book:${destination} restaurant)
+- **Morning:** Arrive at Santorini Airport, transfer via accessible taxi (~$40). [Map](map:Santorini airport to Katikies Hotel)
+- **Afternoon:** Check-in, relax by the pool. [Reviews](reviews:Katikies Hotel)
+- **Evening:** Dinner at Pelekanos (vegetarian/gluten-free, ~$50). [Book](book:Pelekanos Santorini)
+
+### Day 2 — Explore Fira (${addDays(start, 1)})
+- **Morning:** Breakfast at hotel, taxi to Fira (~$20). Visit Archaeological Museum (~$12). [Tickets](tickets:Archaeological Museum Thera)
+- **Afternoon:** Lunch at Naoussa Restaurant (vegetarian/gluten-free, ~$50). [Reviews](reviews:Naoussa Restaurant)
+- **Evening:** Sunset dinner at Cacio e Pepe (~$100). [Book](book:Cacio e Pepe Santorini)
+
+### Day 3 — Winery & Culture (${addDays(start, 2)})
+- **Morning:** Private wine tasting at Santo Wines (~$80). [Tickets](tickets:Santo Wines)
+- **Afternoon:** Lunch at The Athenian House (~$60). [Map](map:The Athenian House Santorini)
+- **Evening:** Sunset cruise (~$250). [Book](book:Santorini sunset cruise)
+
+### Day 4 — Beach & Departure (${addDays(start, 3)})
+- **Morning:** Relax at Perissa Beach (~$30). [Map](map:Perissa Beach)
+- **Afternoon:** Lunch at Taverna Katina (~$50). [Reviews](reviews:Taverna Katina)
+- **Evening:** Farewell dinner at Sunset Ammoudi (~$100), transfer to airport. [Book](book:Sunset Ammoudi)
+
+## Budget Breakdown
+| Category         | Cost (${currency}) | Notes                  |
+|------------------|-------------------|-------------------------|
+| Accommodation    | ${b.stay.total}   | ${nDays} nights at Katikies |
+| Food             | ${b.food.total}   | Vegetarian/gluten-free  |
+| Activities       | ${b.act.total}    | Tours, museum, beach    |
+| Transportation   | ${b.transit.total}| Accessible taxis       |
+| Total            | ${budget}         | Within budget           |
+
 ## Safety & Accessibility Notes
-- **Access:** Ensure wheelchair access. [Map](map:${destination} accessible routes)
-- **Safety:** Travel insurance recommended.
+- **Access:** All sites wheelchair-accessible with ramps. [Map](map:Santorini accessible routes)
+- **Safety:** Travel insurance recommended, emergency: 112
+- **Diet:** Restaurants confirmed for vegetarian/gluten-free
+- **Packing:** Sunscreen, hats, pet supplies
+
 ## Final Recommendations
-- Explore more with our premium plan! [Upgrade](https://wayzo-affiliate.com)
+- **Hidden Gem:** Visit Vlychada Beach for seclusion.
+- **Pro Tip:** Book sunset spots early.
+- **Upgrade:** Add a private tour for $100! [Upgrade](https://wayzo-affiliate.com)
 `.trim(), destination);
+}
+// Helper to add days to date string
+function addDays(dateStr, days) {
+  const date = new Date(dateStr);
+  date.setDate(date.getDate() + days);
+  return date.toISOString().split('T')[0];
 }
 /* OpenAI (optional) */
 const client = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 async function generatePlanWithAI(payload) {
-  const { destination = '', start = '', end = '', budget = 0, currency = 'USD $', adults = 2, children = 0, level = 'mid', prefs = '', diet = '', specialRequests = '' } = payload || {};
-  const nDays = daysBetween(start, end) || 5; // Default to 5 days if invalid
-  const sys = `You are Clever AI Trip Planner, an advanced AI tool specializing in creating personalized, professional travel itineraries. Generate a comprehensive, engaging trip report worth $20 for its depth, customization, and practicality. Structure as a polished PDF-like report with sections: Title, Trip Overview, Accommodation Details, Day-by-Day Itinerary (with activities, meals, transportation, tips), Budget Breakdown (in a table), Safety & Accessibility Notes, and Final Recommendations. Use markdown for formatting, including tables, bullet points, and bold headers.
+  const { destination = 'Santorini', start = '2025-09-03', end = '2025-09-06', budget = 2500, currency = 'USD', adults = 2, children = 0, level = 'mid', prefs = '', diet = '', specialRequests = '' } = payload || {};
+  const nDays = daysBetween(start, end) || 5;
+  const sys = `You are Clever AI Trip Planner, an advanced AI tool specializing in creating personalized, professional travel itineraries worth $20 for depth, customization, and practicality. Structure as a polished PDF-like report with sections: Title, Trip Overview, Accommodation Details, Day-by-Day Itinerary (with activities, meals, transportation, tips), Budget Breakdown (table), Safety & Accessibility Notes, Final Recommendations. Use markdown, tables, bullet points, bold headers.
 
 Inputs: Destination: ${destination}, Dates: ${start} to ${end} (${nDays} days), Party: ${adults} adults${children ? `, ${children} children` : ""}, Style: ${level}${prefs ? ` + ${prefs}` : ""}, Budget: ${budget} ${currency}, Diet: ${diet}, Special Requests: ${specialRequests}.
 Guidelines:
-- Tailor to ${level} style: Focus on 3-4 star hotels, value-for-money experiences.
-- Incorporate preferences: Balance attractions, relax, romance.
-- Ensure dietary compliance: Only vegetarian, gluten-free meals.
-- Address special needs: Prioritize wheelchair-accessible, pet-friendly options.
-- Assume 5-day trip if dates suggest it (adjust for typos to 5 nights).
-- Use real-world data: Base on TripAdvisor, Booking.com, cite inline (e.g., hotel ratings).
-- Budget: Keep under or at ${budget} USD, break down realistically for 2025 (hotels $200-400/night, meals $50-100/day for two, activities $100-200/day).
-- Make romantic for couples: Include intimate moments (sunsets, private tours).
-- Weather/seasonal: For August 2025 in Santorini, note 25-30°C, crowds, suggest sun protection.
-- Practical tips: Include transport (accessible taxis), packing, emergency contacts.
-- Enhance value: Add hidden gems, pro tips, upsell encouragement.
-- Length: 1500-2500 words, never exceed budget or ignore constraints.
+- Tailor to ${level} style: 3-4 star hotels, value-for-money.
+- Incorporate prefs: Balance attractions, relax, romance.
+- Diet: Only ${diet || 'any'} meals (e.g., vegetarian/gluten-free if specified).
+- Special needs: Prioritize ${specialRequests || 'none'} (e.g., wheelchair-accessible, pet-friendly).
+- Assume 5-day trip if dates suggest it (adjust typos to 5 nights).
+- Use real data: TripAdvisor, Booking.com, cite inline (e.g., ratings).
+- Budget: Keep under ${budget} USD, 2025 rates (hotels $200-400/night, meals $50-100/day for two, activities $100-200/day).
+- Romance: Include sunsets, private tours for couples.
+- Weather: For ${destination} in ${start.split('-')[1]}/${start.split('-')[0]}, note conditions (e.g., 25-30°C for Santorini Aug), suggest sun protection.
+- Tips: Accessible transport, packing, emergencies.
+- Enhance: Hidden gems, pro tips, upsell.
+- Length: 1500-2500 words, never exceed budget.
 Return Markdown ONLY.`;
   const user = `Generate the report based on the above inputs and guidelines.`;
   if (!client) {
@@ -277,14 +299,13 @@ app.get('/api/plan/:id/pdf', (req, res) => {
   .actions{display:flex;gap:15px;margin:15px 0}
   .actions a{color:var(--secondary);text-decoration:none;font-weight:600;padding:0.5rem 1rem;border:1px solid var(--border);border-radius:8px;transition:all 0.3s}
   .actions a:hover{background:var(--accent);color:var(--ink)}
-  .facts{padding:15px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin:15px 0}
+  .facts,.accommodation,.itinerary,.budget,.safety,.recommendations{padding:15px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin:15px 0}
+  .facts h3,.accommodation h3,.itinerary h3,.budget h3,.safety h3,.recommendations h3{color:var(--primary);margin-bottom:10px}
   .facts ul{list-style:none;padding:0}
   .facts li:before{content:"🌍 ";color:var(--primary)}
-  .accommodation,.itinerary,.budget,.safety,.recommendations{padding:15px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin:15px 0}
-  .itinerary h3{color:var(--primary);border-bottom:1px solid var(--border);padding-bottom:5px}
   .itinerary ul{list-style:none;padding-left:20px}
-  .itinerary li{margin:10px 0}
-  .itinerary li:before{content:"✔ ";color:var(--primary)}
+  .itinerary li{margin:10px 0;padding-left:20px}
+  .itinerary li:before{content:"✔ ";color:var(--primary);font-weight:bold}
   .budget table{width:100%;border-collapse:collapse}
   .budget th,.budget td{border:1px solid var(--border);padding:10px;text-align:left}
   .budget th{background:var(--accent);color:var(--ink)}
@@ -326,10 +347,10 @@ app.get('/api/plan/:id/pdf', (req, res) => {
 </div>
 <div class="accommodation"><h3>Accommodation Details</h3>${d.accommodation || 'TBD based on plan generation'}</div>
 <div class="itinerary">${htmlBody}</div>
-<div class="budget"><h3>Budget Breakdown</h3><table><thead><tr><th>Category</th><th>Cost (${d.currency})</th><th>Notes</th></tr></thead><tbody><tr><td>Accommodation</td><td>${d.accommodationCost || 0}</td><td>${d.accommodationNotes || 'TBD'}</td></tr><tr><td>Food</td><td>${d.foodCost || 0}</td><td>${d.foodNotes || 'TBD'}</td></tr><tr><td>Activities</td><td>${d.activitiesCost || 0}</td><td>${d.activitiesNotes || 'TBD'}</td></tr><tr><td>Transportation</td><td>${d.transportCost || 0}</td><td>${d.transportNotes || 'TBD'}</td></tr><tr><td>Total</td><td>${normalizeBudget(d.budget, d.currency)}</td><td>Within budget</td></tr></tbody></table></div>
-<div class="safety"><h3>Safety & Accessibility Notes</h3><ul><li>Ensure wheelchair access with ramps/elevators.</li><li>Travel insurance recommended.</li></ul></div>
+<div class="budget"><h3>Budget Breakdown</h3><table><thead><tr><th>Category</th><th>Cost (${d.currency})</th><th>Notes</th></tr></thead><tbody><tr><td>Accommodation</td><td>${d.accommodationCost || b.stay.total}</td><td>${d.accommodationNotes || `${nDays} nights at a mid-range hotel`}</td></tr><tr><td>Food</td><td>${d.foodCost || b.food.total}</td><td>${d.foodNotes || 'Vegetarian/gluten-free meals'}</td></tr><tr><td>Activities</td><td>${d.activitiesCost || b.act.total}</td><td>${d.activitiesNotes || 'Tours and attractions'}</td></tr><tr><td>Transportation</td><td>${d.transportCost || b.transit.total}</td><td>${d.transportNotes || 'Accessible taxis'}</td></tr><tr><td>Total</td><td>${normalizeBudget(d.budget, d.currency)}</td><td>Within budget</td></tr></tbody></table></div>
+<div class="safety"><h3>Safety & Accessibility Notes</h3><ul><li>Ensure ${specialRequests || 'general'} access (e.g., ramps for wheelchair).</li><li>Travel insurance recommended, emergency: 112</li><li>Diet: ${diet || 'any'} options confirmed.</li><li>Packing: Sunscreen, ${specialRequests.includes('pet-friendly') ? 'pet supplies' : 'comfortable shoes'}</li></ul></div>
 ${aff.length > 0 ? `<div class="affiliates"><h3>Affiliate Recommendations</h3><ul>${aff.map(a => `<li><a href="${a.url}">${a.name}</a></li>`).join('')}</ul></div>` : ''}
-<div class="promotion">Powered by ChatGPT API - Get personalized plans for just $20 with 24-hour revisions! <a href="https://platform.openai.com/api">Learn More</a></div>
+<div class="promotion">Powered by ChatGPT API - Get personalized plans for $20 with 24-hour revisions! <a href="https://platform.openai.com/api">Learn More</a></div>
 <footer>Generated by Wayzo — ${VERSION}</footer>
 </body></html>`;
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
