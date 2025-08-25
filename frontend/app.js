@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-/* Wayzo app.js - Enhanced UI/UX and Button Fixes - 2025-08-25 17:12 IDT */
+/* Wayzo app.js - Enhanced UI/UX and Map Fix - 2025-08-25 15:26 IDT */
 "use strict";
 
 // Tiny helpers
@@ -21,6 +21,7 @@ const filesEl = $('#attachments');
 const previewEl = $('#attachmentsPreview');
 const previewBox = $('#preview');
 const loading = $('#loading');
+const mapEl = $('#map');
 const submitBtn = $('#submitBtn');
 const buyBtn = $('#buyBtn');
 const saveBtn = $('#saveBtn');
@@ -119,8 +120,8 @@ function showLoading(show = true) {
 // Preview innerHTML
 function setPreviewHTML(html = '') {
   if (previewBox) {
-    previewBox.innerHTML = html || '<div class="muted">No content available. Please try again.</div>';
-    previewBox.classList.add('markdown'); // Ensure styles apply
+    previewBox.innerHTML = html || '<div class="muted">Enter your trip details and generate a plan to see a detailed itinerary here.</div>';
+    previewBox.classList.add('markdown'); // Apply rich styles
     previewBox.querySelectorAll('img[src^="https://unsplash.com"]').forEach(img => {
       img.loading = 'lazy';
       img.onerror = () => img.src = '/frontend/placeholder.jpg';
@@ -153,7 +154,7 @@ async function uploadFiles() {
 async function doPreview() {
   showLoading(true);
   const payload = preparePayload();
-  if (!validateForm(payload) ) {
+  if (!validateForm(payload)) {
     showLoading(false);
     return;
   }
@@ -314,17 +315,25 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Initialize Map
-  if (!mapboxgl) {
-    console.error('Mapbox GL JS not loaded');
+  if (mapEl && mapboxgl) {
+    mapboxgl.accessToken = process.env.MAPBOX_API_KEY || 'your_mapbox_key'; // Replace with your key or set via .env
+    if (!mapboxgl.accessToken || mapboxgl.accessToken === 'your_mapbox_key') {
+      console.warn('Mapbox API key not set. Map will not load.');
+    } else {
+      const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/streets-v11',
+        center: [25.276987, 37.441883], // Santorini default
+        zoom: 10
+      });
+      map.on('load', () => {
+        mapEl.classList.add('map-loaded');
+        console.log('Map loaded successfully');
+      });
+      map.on('error', (e) => console.error('Mapbox error:', e));
+    }
   } else {
-    mapboxgl.accessToken = 'your_mapbox_key'; // Replace with your Mapbox key
-    const map = new mapboxgl.Map({
-      container: 'map',
-      style: 'mapbox://styles/mapbox/streets-v11',
-      center: [2.3522, 48.8566], // Paris default
-      zoom: 10
-    });
-    console.log('Map initialized');
+    console.error('Mapbox GL JS not loaded or #map element not found');
   }
 
   // Image debug
@@ -346,5 +355,6 @@ console.log('Elements loaded:', {
   saveBtn: !!saveBtn,
   buildPlanBtn: !!buildPlanBtn,
   demoBtn: !!demoBtn,
-  inputs: !!destination && !!start && !!end && !!totalBudget && !!currency && !!adults && !!children && !!diet && !!prefs
+  inputs: !!destination && !!start && !!end && !!totalBudget && !!currency && !!adults && !!children && !!diet && !!prefs,
+  map: !!mapEl
 });

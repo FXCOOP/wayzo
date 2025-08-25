@@ -16,7 +16,7 @@ import { normalizeBudget, computeBudget } from './lib/budget.mjs';
 import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
-const VERSION = 'staging-v25'; // Updated version
+const VERSION = 'staging-v26'; // Updated version
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
   try {
@@ -111,57 +111,71 @@ function localPlanMarkdown(input) {
   const style = level === "luxury" ? "Luxury" : level === "budget" ? "Budget" : "Mid-range";
   const pppd = perPersonPerDay(budget, nDays, Math.max(1, adults + children));
   return linkifyTokens(`
-# ${destination} — ${start} → ${end}
-![City hero](image:${destination} skyline)
-**Travelers:** ${travelerLabel(adults, children)}
-**Style:** ${style}${prefs ? ` · ${prefs}` : ""}
-**Budget:** ${budget} ${currency} (${pppd}/day/person)
-**Season:** ${seasonFromDate(start)}
----
+# ${destination} Travel Guide
+## Trip Overview
+- **Travelers:** ${travelerLabel(adults, children)}
+- **Style:** ${style}${prefs ? ` · ${prefs}` : ""}
+- **Budget:** ${budget} ${currency} (${pppd}/day/person)
+- **Season:** ${seasonFromDate(start)}
 ## Quick Facts
 - **Language:** English (tourism friendly)
 - **Currency:** ${currency}
 - **Voltage:** 230V, Type C/E plugs (adapter may be required)
 - **Tipping:** 5–10% in restaurants (optional)
----
-## Budget breakdown (rough)
-- Stay: **${b.stay.total}** (~${b.stay.perDay}/day)
-- Food: **${b.food.total}** (~${b.food.perDay}/person/day)
-- Activities: **${b.act.total}** (~${b.act.perDay}/day)
-- Transit: **${b.transit.total}** (~${b.transit.perDay}/day)
----
-## Day-by-Day Plan
+## Accommodation Details
+- **Hotel:** [Book](book:${destination} mid-range hotel) (3-4 star, accessible, pet-friendly)
+- **Cost:** ~${b.stay.total} for ${nDays} nights
+## Budget Breakdown (rough)
+| Category         | Cost (${currency}) | Notes                  |
+|------------------|-------------------|-------------------------|
+| Stay             | ${b.stay.total}   | ~${b.stay.perDay}/day   |
+| Food             | ${b.food.total}   | ~${b.food.perDay}/person/day |
+| Activities       | ${b.act.total}    | ~${b.act.perDay}/day    |
+| Transit          | ${b.transit.total}| ~${b.transit.perDay}/day|
+| Total            | ${budget}         | Within budget           |
+## Day-by-Day Itinerary
 ### Day 1 — Arrival & Relaxation (${start})
-- **Morning:** Arrive and check-in. [Map](map:${destination} airport to hotel) — shortest route to the hotel.
-- **Afternoon:** Pool or easy walk near hotel. [Reviews](reviews:${destination} family friendly cafe)
-- **Evening:** Dinner close-by. [Book](book:${destination} dinner)
-### Day 2 — Downtown Exploration
-- **Morning:** Top lookout. [Tickets](tickets:${destination} tower) — pre-book to skip lines.
-- **Afternoon:** Popular museum. [Tickets](tickets:${destination} museum)
-- **Evening:** Waterfront stroll. [Map](map:${destination} waterfront)
-### Day 3 — Nature & Parks
-- **Morning:** Park or island ferry. [Tickets](tickets:${destination} ferry)
-- **Afternoon:** Picnic + playgrounds. [Map](map:${destination} best picnic spots)
-- **Evening:** Family dinner. [Reviews](reviews:${destination} gluten free dinner)
+- **Morning:** Arrive and check-in. [Map](map:${destination} airport to hotel)
+- **Afternoon:** Relax at hotel. [Reviews](reviews:${destination} hotel)
+- **Evening:** Dinner nearby. [Book](book:${destination} dinner)
+### Day 2 — Exploration
+- **Morning:** Visit a landmark. [Tickets](tickets:${destination} landmark)
+- **Afternoon:** Local museum. [Map](map:${destination} museum)
+- **Evening:** Sunset walk. [Reviews](reviews:${destination} sunset spot)
+### Day 3 — Nature
+- **Morning:** Park visit. [Map](map:${destination} park)
+- **Afternoon:** Picnic. [Reviews](reviews:${destination} picnic spot)
+- **Evening:** Dinner. [Book](book:${destination} restaurant)
+## Safety & Accessibility Notes
+- **Access:** Ensure wheelchair access. [Map](map:${destination} accessible routes)
+- **Safety:** Travel insurance recommended.
+## Final Recommendations
+- Explore more with our premium plan! [Upgrade](https://wayzo-affiliate.com)
 `.trim(), destination);
 }
 /* OpenAI (optional) */
 const client = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 async function generatePlanWithAI(payload) {
-  const { destination = '', start = '', end = '', budget = 0, currency = 'USD $', adults = 2, children = 0, level = 'mid', prefs = '', diet = '' } = payload || {};
-  const nDays = daysBetween(start, end);
-  const sys = `Return Markdown ONLY.
-Sections:
-- Quick Facts (language, currency, voltage, tipping)
-- Budget breakdown (rough)
-- Day-by-Day Plan with ### Day X — Title and Morning/Afternoon/Evening bullets, each with a short note, including recommendations, reviews, maps, and bookings.
-Use token links frequently for recommendations: [Map](map:query) [Tickets](tickets:query) [Book](book:query) [Reviews](reviews:query). Include at least one per bullet where relevant.`;
-  const user = `Destination: ${destination}
-Dates: ${start} to ${end} (${nDays} days)
-Party: ${adults} adults${children ? `, ${children} children` : ""}
-Style: ${level}${prefs ? ` + ${prefs}` : ""}
-Budget: ${budget} ${currency}
-Diet: ${diet}`;
+  const { destination = '', start = '', end = '', budget = 0, currency = 'USD $', adults = 2, children = 0, level = 'mid', prefs = '', diet = '', specialRequests = '' } = payload || {};
+  const nDays = daysBetween(start, end) || 5; // Default to 5 days if invalid
+  const sys = `You are Clever AI Trip Planner, an advanced AI tool specializing in creating personalized, professional travel itineraries. Generate a comprehensive, engaging trip report worth $20 for its depth, customization, and practicality. Structure as a polished PDF-like report with sections: Title, Trip Overview, Accommodation Details, Day-by-Day Itinerary (with activities, meals, transportation, tips), Budget Breakdown (in a table), Safety & Accessibility Notes, and Final Recommendations. Use markdown for formatting, including tables, bullet points, and bold headers.
+
+Inputs: Destination: ${destination}, Dates: ${start} to ${end} (${nDays} days), Party: ${adults} adults${children ? `, ${children} children` : ""}, Style: ${level}${prefs ? ` + ${prefs}` : ""}, Budget: ${budget} ${currency}, Diet: ${diet}, Special Requests: ${specialRequests}.
+Guidelines:
+- Tailor to ${level} style: Focus on 3-4 star hotels, value-for-money experiences.
+- Incorporate preferences: Balance attractions, relax, romance.
+- Ensure dietary compliance: Only vegetarian, gluten-free meals.
+- Address special needs: Prioritize wheelchair-accessible, pet-friendly options.
+- Assume 5-day trip if dates suggest it (adjust for typos to 5 nights).
+- Use real-world data: Base on TripAdvisor, Booking.com, cite inline (e.g., hotel ratings).
+- Budget: Keep under or at ${budget} USD, break down realistically for 2025 (hotels $200-400/night, meals $50-100/day for two, activities $100-200/day).
+- Make romantic for couples: Include intimate moments (sunsets, private tours).
+- Weather/seasonal: For August 2025 in Santorini, note 25-30°C, crowds, suggest sun protection.
+- Practical tips: Include transport (accessible taxis), packing, emergency contacts.
+- Enhance value: Add hidden gems, pro tips, upsell encouragement.
+- Length: 1500-2500 words, never exceed budget or ignore constraints.
+Return Markdown ONLY.`;
+  const user = `Generate the report based on the above inputs and guidelines.`;
   if (!client) {
     console.warn('OpenAI API key not set, using local fallback');
     let md = localPlanMarkdown(payload);
@@ -189,7 +203,7 @@ Diet: ${diet}`;
 }
 /* API */
 app.post('/api/preview', (req, res) => {
-  console.log('Preview request received:', req.body); // Debug
+  console.log('Preview request received:', req.body);
   const payload = req.body || {};
   payload.budget = normalizeBudget(payload.budget, payload.currency);
   const id = uid();
@@ -202,11 +216,12 @@ app.post('/api/preview', (req, res) => {
     <li>Tickets/Bookings with direct links</li>
     <li>Click <b>Generate full plan (AI)</b> for complete schedule</li>
   </ul>
+  ${aff.length > 0 ? `<div>Affiliate Deals: ${aff.map(a => `<a href="${a.url}">${a.name}</a>`).join(', ')}</div>` : ''}
 </div>`;
   res.json({ id, teaser_html, affiliates: aff, version: VERSION });
 });
 app.post('/api/plan', async (req, res) => {
-  console.log('Plan request received:', req.body); // Debug
+  console.log('Plan request received:', req.body);
   try {
     const payload = req.body || {};
     payload.budget = normalizeBudget(payload.budget, payload.currency);
@@ -217,6 +232,7 @@ app.post('/api/plan', async (req, res) => {
     if (aff.length > 0) {
       html += `<div class="affiliates"><h3>Affiliate Recommendations</h3><ul>${aff.map(a => `<li><a href="${a.url}">${a.name}</a></li>`).join('')}</ul></div>`;
     }
+    html += `<div class="promotion">Powered by ChatGPT API - Get personalized plans for just $20 with 24-hour revisions! <a href="https://platform.openai.com/api">Learn More</a></div>`;
     savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: payload, markdown }));
     res.json({ id, markdown, html, affiliates: aff, version: VERSION });
   } catch (e) {
@@ -236,6 +252,7 @@ app.get('/api/plan/:id/pdf', (req, res) => {
   if (aff.length > 0) {
     htmlBody += `<div class="affiliates"><h3>Affiliate Recommendations</h3><ul>${aff.map(a => `<li><a href="${a.url}">${a.name}</a></li>`).join('')}</ul></div>`;
   }
+  htmlBody += `<div class="promotion">Powered by ChatGPT API - Get personalized plans for $20 with 24-hour revisions! <a href="https://platform.openai.com/api">Learn More</a></div>`;
   const style = d.level === "luxury" ? "Luxury" : d.level === "budget" ? "Budget" : "Mid-range";
   const season = seasonFromDate(d.start);
   const days = daysBetween(d.start, d.end);
@@ -249,36 +266,37 @@ app.get('/api/plan/:id/pdf', (req, res) => {
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Wayzo Trip Report</title>
 <style>
-  :root{--ink:#0f172a; --muted:#475569; --brand:#6366f1; --bg:#ffffff; --accent:#eef2ff; --border:#e2e8f0; --primary:#6366f1; --success:#10b981; --warning:#f59e0b;}
-  body{font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--ink);margin:24px;background:var(--bg)}
-  header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid var(--border);flex-wrap:wrap}
+  :root{--ink:#0f172a; --muted:#475569; --brand:#6366f1; --bg:#ffffff; --accent:#eef2ff; --border:#e2e8f0; --primary:#10b981; --secondary:#6366f1; --warning:#f59e0b;}
+  body{font:16px/1.6 'Roboto', sans-serif;color:var(--ink);margin:30px;background:var(--bg);max-width:800px;margin:auto}
+  header{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:20px;background:var(--accent);border-radius:10px;box-shadow:0 4px 15px rgba(0,0,0,0.1)}
   .logo{display:flex;gap:10px;align-items:center}
-  .badge{width:28px;height:28px;border-radius:8px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:700}
-  .pill{border:1px solid var(--border);background:var(--accent);padding:.25rem .6rem;border-radius:999px;font-size:12px}
-  .summary{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 10px 0}
-  .summary .chip{border:1px solid var(--border);background:#fff;border-radius:999px;padding:.25rem .6rem;font-size:12px}
-  .actions{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 14px}
-  .actions a{color:var(--primary);text-decoration:none;border-bottom:1px dotted var(--primary);font-weight:600}
-  .actions a:hover{text-decoration:underline}
-  .facts{background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px;margin:8px 0}
+  .badge{width:30px;height:30px;border-radius:50%;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:700}
+  .pill{background:var(--secondary);color:#fff;padding:0.3rem 0.8rem;border-radius:999px;font-size:12px}
+  .summary{display:flex;gap:10px;flex-wrap:wrap;margin:15px 0;padding:15px;background:var(--bg);border:1px solid var(--border);border-radius:8px}
+  .summary .chip{background:var(--accent);padding:0.3rem 0.6rem;border-radius:999px;font-size:12px}
+  .actions{display:flex;gap:15px;margin:15px 0}
+  .actions a{color:var(--secondary);text-decoration:none;font-weight:600;padding:0.5rem 1rem;border:1px solid var(--border);border-radius:8px;transition:all 0.3s}
+  .actions a:hover{background:var(--accent);color:var(--ink)}
+  .facts{padding:15px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin:15px 0}
   .facts ul{list-style:none;padding:0}
-  .facts li:before{content:"• ";color:var(--success);font-weight:bold}
-  img{max-width:100%;height:auto;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.1)}
-  table{border-collapse:collapse;width:100%;margin:1rem 0;border:1px solid var(--border)}
-  th,td{border:1px solid var(--border);padding:.6rem;text-align:left}
-  thead th{background:var(--accent);font-weight:700;color:var(--ink)}
-  h1,h2,h3{color:var(--success);margin-top:1.5rem}
-  h3{color:var(--primary)}
-  ul{list-style:none;padding-left:1rem}
-  li{margin-bottom:0.5rem}
-  li:before{content:"✓ ";color:var(--success)}
-  a{color:var(--primary);text-decoration:none;font-weight:600}
+  .facts li:before{content:"🌍 ";color:var(--primary)}
+  .accommodation,.itinerary,.budget,.safety,.recommendations{padding:15px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin:15px 0}
+  .itinerary h3{color:var(--primary);border-bottom:1px solid var(--border);padding-bottom:5px}
+  .itinerary ul{list-style:none;padding-left:20px}
+  .itinerary li{margin:10px 0}
+  .itinerary li:before{content:"✔ ";color:var(--primary)}
+  .budget table{width:100%;border-collapse:collapse}
+  .budget th,.budget td{border:1px solid var(--border);padding:10px;text-align:left}
+  .budget th{background:var(--accent);color:var(--ink)}
+  a{color:var(--secondary);text-decoration:none}
   a:hover{text-decoration:underline}
-  .affiliates{margin-top:2rem;padding:1rem;background:var(--accent);border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,0.05)}
-  .affiliates h3{color:var(--warning);margin-bottom:1rem}
-  .affiliates ul{padding-left:0}
-  .affiliates li:before{content:"🔗 ";color:var(--primary)}
-  footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center}
+  .affiliates{margin:20px 0;padding:15px;background:var(--accent);border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,0.1)}
+  .affiliates h3{color:var(--warning);margin-bottom:10px}
+  .affiliates ul{padding:0}
+  .affiliates li:before{content:"⭐ ";color:var(--warning)}
+  .promotion{margin:20px 0;padding:15px;background:var(--accent);border-radius:10px;color:var(--ink);text-align:center}
+  .promotion a{color:var(--secondary);font-weight:600}
+  footer{margin-top:30px;color:var(--muted);font-size:12px;text-align:center;border-top:1px solid var(--border);padding-top:10px}
 </style>
 </head><body>
 <header>
@@ -297,7 +315,7 @@ app.get('/api/plan/:id/pdf', (req, res) => {
   <a href="${base}/" target="_blank" rel="noopener">Edit Inputs</a>
   <a href="${icsUrl}" target="_blank" rel="noopener">Download Calendar</a>
 </div>
-<div class="facts"><b>Quick Facts:</b>
+<div class="facts"><h3>Quick Facts</h3>
   <ul>
     <li>🌡️ <b>Weather:</b> Typical seasonal conditions around ${season}.</li>
     <li>💱 <b>Currency:</b> ${d.currency}</li>
@@ -306,7 +324,12 @@ app.get('/api/plan/:id/pdf', (req, res) => {
     <li>💁 <b>Tipping:</b> 5–10% in restaurants (optional)</li>
   </ul>
 </div>
-${htmlBody}
+<div class="accommodation"><h3>Accommodation Details</h3>${d.accommodation || 'TBD based on plan generation'}</div>
+<div class="itinerary">${htmlBody}</div>
+<div class="budget"><h3>Budget Breakdown</h3><table><thead><tr><th>Category</th><th>Cost (${d.currency})</th><th>Notes</th></tr></thead><tbody><tr><td>Accommodation</td><td>${d.accommodationCost || 0}</td><td>${d.accommodationNotes || 'TBD'}</td></tr><tr><td>Food</td><td>${d.foodCost || 0}</td><td>${d.foodNotes || 'TBD'}</td></tr><tr><td>Activities</td><td>${d.activitiesCost || 0}</td><td>${d.activitiesNotes || 'TBD'}</td></tr><tr><td>Transportation</td><td>${d.transportCost || 0}</td><td>${d.transportNotes || 'TBD'}</td></tr><tr><td>Total</td><td>${normalizeBudget(d.budget, d.currency)}</td><td>Within budget</td></tr></tbody></table></div>
+<div class="safety"><h3>Safety & Accessibility Notes</h3><ul><li>Ensure wheelchair access with ramps/elevators.</li><li>Travel insurance recommended.</li></ul></div>
+${aff.length > 0 ? `<div class="affiliates"><h3>Affiliate Recommendations</h3><ul>${aff.map(a => `<li><a href="${a.url}">${a.name}</a></li>`).join('')}</ul></div>` : ''}
+<div class="promotion">Powered by ChatGPT API - Get personalized plans for just $20 with 24-hour revisions! <a href="https://platform.openai.com/api">Learn More</a></div>
 <footer>Generated by Wayzo — ${VERSION}</footer>
 </body></html>`;
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
