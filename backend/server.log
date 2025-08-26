@@ -1,0 +1,6 @@
+nohup: ignoring input
+Wayzo backend running on :10000
+Version: staging-v25-enhanced
+Index file: /workspace/frontend/index.backend.html
+Frontend path: /workspace/frontend
+::1 - - [26/Aug/2025:18:05:59 +0000] "GET /api/plan/5e27ca17-c5f8-40cb-af83-f47fb1c8d182/report HTTP/1.1" 200 6272 "-" "curl/8.12.1"
