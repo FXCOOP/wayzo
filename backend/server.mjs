@@ -197,23 +197,35 @@ const client = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPE
 async function generatePlanWithAI(payload) {
   const { destination = 'Santorini', start = '2025-09-03', end = '2025-09-06', budget = 2500, currency = 'USD', adults = 2, children = 0, level = 'mid', prefs = '', diet = '', specialRequests = '' } = payload || {};
   const nDays = daysBetween(start, end) || 5;
-  const sys = `You are Clever AI Trip Planner, an advanced AI tool specializing in creating personalized, professional travel itineraries worth $20 for depth, customization, and practicality. Structure as a polished PDF-like report with sections: Title, Trip Overview, Accommodation Details, Day-by-Day Itinerary (with activities, meals, transportation, tips), Budget Breakdown (table), Safety & Accessibility Notes, Final Recommendations. Use markdown, tables, bullet points, bold headers.
+  const sys = `You are Clever AI Trip Planner, an advanced AI tool that produces premium, publication-quality trip reports. Output MUST be clean Markdown only.
+
+Overall goals:
+- Produce a polished, rich report that feels like a paid deliverable (depth, customization, practicality).
+- Use clear section headers, consistent formatting, and concise language.
+- Include actionable links via tokens: [Map](map:query), [Book](book:place), [Tickets](tickets:place), [Reviews](reviews:place) which will be auto-linked; include 1-3 per day.
+- Include at least 1 image token per major section or day using ![Alt](image:term) to provide visual context.
+
+Required structure:
+1) # {Destination} Trip Report
+2) ## Trip Overview — travelers, dates (N nights), style, budget (with per-person-per-day), weather/season
+3) ## Highlights — 5-8 bullet points summarizing the experience
+4) ## Accommodation — 1-2 concrete options matched to style with brief justifications and [Book]/[Reviews] links
+5) ## Day-by-Day Itinerary — For each day:
+   - Morning / Afternoon / Evening blocks with specific places, timing, and [Map]/[Tickets]/[Reviews] links
+   - Dining picks aligned with diet (e.g., vegetarian/gluten-free) and special requests
+   - Include at least one ![Photo](image:{Destination day X highlight})
+6) ## Budget Breakdown — 4-row table (Accommodation, Food, Activities, Transportation) plus Total, within budget
+7) ## Safety & Accessibility — tailored notes for special requests
+8) ## Local Tips & Hidden Gems — 5-8 concise tips
+9) ## Next Steps — clear call-to-action with booking suggestions
 
 Inputs: Destination: ${destination}, Dates: ${start} to ${end} (${nDays} days), Party: ${adults} adults${children ? `, ${children} children` : ""}, Style: ${level}${prefs ? ` + ${prefs}` : ""}, Budget: ${budget} ${currency}, Diet: ${diet}, Special Requests: ${specialRequests}.
 Guidelines:
-- Tailor to ${level} style: 3-4 star hotels, value-for-money.
-- Incorporate prefs: Balance attractions, relax, romance.
-- Diet: Only ${diet || 'any'} meals (e.g., vegetarian/gluten-free if specified).
-- Special needs: Prioritize ${specialRequests || 'none'} (e.g., wheelchair-accessible, pet-friendly).
-- Assume 5-day trip if dates suggest it (adjust typos to 5 nights).
-- Use real data: TripAdvisor, Booking.com, cite inline (e.g., ratings).
-- Budget: Keep under ${budget} USD, 2025 rates (hotels $200-400/night, meals $50-100/day for two, activities $100-200/day).
-- Romance: Include sunsets, private tours for couples.
-- Weather: For ${destination} in ${start.split('-')[1]}/${start.split('-')[0]}, note conditions (e.g., 25-30°C for Santorini Aug), suggest sun protection.
-- Tips: Accessible transport, packing, emergencies.
-- Enhance: Hidden gems, pro tips, upsell.
-- Length: 1500-2500 words, never exceed budget.
-Return Markdown ONLY.`;
+ - Tailor to ${level} style (value-for-money). Balance attractions/relax/romance per prefs.
+ - Diet: Respect ${diet || 'any'} only. Special needs: ${specialRequests || 'none'}.
+ - Assume 5-day trip if dates imply it. Budget: keep under ${budget} ${currency}.
+ - Prefer real, known places; include ratings and quick context where reasonable.
+ - Length target: 1200-2000 words (do not exceed).`;
   const user = `Generate the report based on the above inputs and guidelines.`;
   if (!client) {
     console.warn('OpenAI API key not set, using local fallback');
@@ -232,6 +244,10 @@ Return Markdown ONLY.`;
       console.warn('OpenAI response empty, using fallback');
       md = localPlanMarkdown(payload);
     }
+    // Ensure a hero image at top
+    if (!/^!\[[^\]]*\]\(image:/m.test(md)) {
+      md = `![${destination} — Hero](image:${destination} skyline)\n\n` + md;
+    }
     md = linkifyTokens(md, destination);
     md = ensureDaySections(md, nDays, start);
     return md;
@@ -247,17 +263,34 @@ app.post('/api/preview', (req, res) => {
   payload.budget = normalizeBudget(payload.budget, payload.currency);
   const id = uid();
   const aff = affiliatesFor(payload.destination || '');
+  const quick = {
+    maps: aff.maps(payload.destination || ''),
+    flights: aff.flights(),
+    hotels: aff.hotels(payload.destination || ''),
+    activities: aff.activities(payload.destination || ''),
+    cars: aff.cars(),
+    insurance: aff.insurance(),
+    reviews: aff.reviews(payload.destination || ''),
+  };
   const teaser_html = `
 <div>
   <h3 class="h3">${payload.destination || 'Your destination'} — preview</h3>
   <ul>
-    <li>Neighborhood clustering to minimize transit</li>
-    <li>Tickets/Bookings with direct links</li>
+    <li>Optimized route by neighborhood</li>
+    <li>Bookable hotels and activities with direct links</li>
     <li>Click <b>Generate full plan (AI)</b> for complete schedule</li>
   </ul>
-  ${aff.length > 0 ? `<div>Affiliate Deals: ${aff.map(a => `<a href="${a.url}">${a.name}</a>`).join(', ')}</div>` : ''}
+  <div class="quick-links">
+    <a class="ql" href="${quick.maps}" target="_blank" rel="noopener">Maps</a>
+    <a class="ql" href="${quick.flights}" target="_blank" rel="noopener">Flights</a>
+    <a class="ql" href="${quick.hotels}" target="_blank" rel="noopener">Hotels</a>
+    <a class="ql" href="${quick.activities}" target="_blank" rel="noopener">Activities</a>
+    <a class="ql" href="${quick.cars}" target="_blank" rel="noopener">Cars</a>
+    <a class="ql" href="${quick.insurance}" target="_blank" rel="noopener">Insurance</a>
+    <a class="ql" href="${quick.reviews}" target="_blank" rel="noopener">Reviews</a>
+  </div>
 </div>`;
-  res.json({ id, teaser_html, affiliates: aff, version: VERSION });
+  res.json({ id, teaser_html, quick_links: quick, version: VERSION });
 });
 app.post('/api/plan', async (req, res) => {
   console.log('Plan request received:', req.body);

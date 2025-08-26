@@ -1,4 +1,4 @@
-# API Reference
+# API Reference (staging-v28)
 
 Base URL: `https://<your-backend-domain>`
 
@@ -18,7 +18,7 @@ Create a plan shell + teaser.
 ```
 **Response**
 ```json
-{ "id": "uuid", "teaser_html": "<div>...</div>", "affiliates": { "flights": "...", "hotels": "..." } }
+{ "id": "uuid", "teaser_html": "<div>...</div>", "quick_links": { "maps": "...", "flights": "...", "hotels": "...", "activities": "...", "cars": "...", "insurance": "...", "reviews": "..." }, "version": "staging-v28" }
 ```
 
 ## POST /api/plan
@@ -27,14 +27,14 @@ Generate and store the full plan with OpenAI.
 
 **Response**
 ```json
-{ "id": "uuid", "markdown": "# Trip Plan...", "affiliates": { ... } }
+{ "id": "uuid", "markdown": "# Trip Plan...", "html": "<div>...</div>", "affiliates": { ... }, "version": "staging-v28" }
 ```
 
 ## GET /api/plan/:id
-Fetch saved plan JSON.
+Fetch saved plan JSON (the original payload + markdown).
 
 ## GET /api/plan/:id/pdf
-Stream a generated PDF of the plan.
+Return the report rendered as printable HTML (use a headless browser or your client to save as PDF).
 
 ## POST /api/checkout
 Create a Stripe Checkout session.

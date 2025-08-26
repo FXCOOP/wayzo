@@ -29,6 +29,13 @@ const buildPlanBtn = $('#buildPlanBtn');
 const demoBtn = $('#demoBtn');
 const pdfBtn = $('#pdfBtn');
 const icsBtn = $('#icsBtn');
+const linkMaps = $('#linkMaps');
+const linkFlights = $('#linkFlights');
+const linkHotels = $('#linkHotels');
+const linkActivities = $('#linkActivities');
+const linkCars = $('#linkCars');
+const linkInsurance = $('#linkInsurance');
+const linkReviews = $('#linkReviews');
 
 // Safe helpers
 const val = (el) => (el && el.value ? el.value.trim() : '');
@@ -172,6 +179,15 @@ async function doPreview() {
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     const data = await res.json();
     setPreviewHTML(data.teaser_html);
+    // Wire quick links if present
+    const q = data.quick_links || {};
+    if (linkMaps && q.maps) linkMaps.href = q.maps;
+    if (linkFlights && q.flights) linkFlights.href = q.flights;
+    if (linkHotels && q.hotels) linkHotels.href = q.hotels;
+    if (linkActivities && q.activities) linkActivities.href = q.activities;
+    if (linkCars && q.cars) linkCars.href = q.cars;
+    if (linkInsurance && q.insurance) linkInsurance.href = q.insurance;
+    if (linkReviews && q.reviews) linkReviews.href = q.reviews;
     console.log('Preview response:', data);
   } catch (e) {
     setPreviewHTML('<div class="muted">Preview failed. Error: ' + e.message + '</div>');
