@@ -16,7 +16,7 @@ import { normalizeBudget, computeBudget } from './lib/budget.mjs';
 import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
-const VERSION = 'staging-v27'; // Updated version
+const VERSION = 'staging-v28'; // Updated version
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
   try {
@@ -31,7 +31,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT = __dirname;
 const FRONTEND = path.join(__dirname, '..', 'frontend');
-const DOCS = path.join(ROOT, 'docs');
+const DOCS = path.join(__dirname, '..', 'docs');
 const UPLOADS = path.join(ROOT, 'uploads');
 fs.mkdirSync(UPLOADS, { recursive: true });
 let INDEX = path.join(FRONTEND, 'index.backend.html');
@@ -42,7 +42,12 @@ app.set('trust proxy', 1);
 app.use(helmet({ contentSecurityPolicy: false, crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' } }));
 app.use(compression());
 app.use(morgan('combined')); // Detailed logging
-app.use(cors());
+const ORIGIN = process.env.ORIGIN || '';
+if (ORIGIN) {
+  app.use(cors({ origin: ORIGIN, credentials: true }));
+} else {
+  app.use(cors());
+}
 app.use(rateLimit({ windowMs: 60_000, limit: 200 }));
 app.use(express.json({ limit: '5mb' }));
 /* Static Serving with Proper Headers */
@@ -80,6 +85,15 @@ app.get('/', (_req, res) => {
   console.log('Serving index:', INDEX);
   res.sendFile(INDEX);
 });
+/* Serve Pro page explicitly */
+app.get('/pro.html', (_req, res) => {
+  const proPath = path.join(FRONTEND, 'pro.html');
+  if (!fs.existsSync(proPath)) {
+    console.error('Pro file missing:', proPath);
+    return res.status(404).send('Pro page not found.');
+  }
+  res.sendFile(proPath);
+});
 app.get('/healthz', (_req, res) => res.json({ ok: true, version: VERSION }));
 app.get('/version', (_req, res) => res.json({ version: VERSION }));
 /* Uploads */
@@ -92,7 +106,10 @@ app.post('/api/upload', multerUpload.array('files', 10), (req, res) => {
   res.json({ files });
 });
 /* DB */
-const db = new Database(path.join(ROOT, 'wayzo.sqlite'));
+const DB_PATH = process.env.DB_PATH
+  ? (path.isAbsolute(process.env.DB_PATH) ? process.env.DB_PATH : path.join(ROOT, process.env.DB_PATH))
+  : path.join(ROOT, 'tripmaster.sqlite');
+const db = new Database(DB_PATH);
 db.exec(`CREATE TABLE IF NOT EXISTS plans (id TEXT PRIMARY KEY, created_at TEXT NOT NULL, payload TEXT NOT NULL);`);
 const savePlan = db.prepare('INSERT OR REPLACE INTO plans (id, created_at, payload) VALUES (?, ?, ?)');
 const getPlan = db.prepare('SELECT payload FROM plans WHERE id = ?');
@@ -260,6 +277,18 @@ app.post('/api/plan', async (req, res) => {
   } catch (e) {
     console.error('Plan generation error:', e);
     res.status(500).json({ error: 'Failed to generate plan. Check server logs.', version: VERSION });
+  }
+});
+/* Get saved plan JSON */
+app.get('/api/plan/:id', (req, res) => {
+  const { id } = req.params;
+  const row = getPlan.get(id);
+  if (!row) return res.status(404).json({ error: 'Plan not found' });
+  try {
+    const saved = JSON.parse(row.payload || '{}');
+    res.json(saved);
+  } catch {
+    res.status(500).json({ error: 'Corrupted plan data' });
   }
 });
 app.get('/api/plan/:id/pdf', (req, res) => {
