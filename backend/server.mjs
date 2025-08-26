@@ -16,7 +16,27 @@ import { normalizeBudget, computeBudget } from './lib/budget.mjs';
 import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
-const VERSION = 'staging-v24';
+import PDFGenerator from './lib/pdf-generator.mjs';
+import ExcelGenerator from './lib/excel-generator.mjs';
+const VERSION = 'staging-v25-enhanced';
+
+// Initialize PDF and Excel generators (lazy initialization)
+let pdfGenerator = null;
+let excelGenerator = null;
+
+function getPdfGenerator() {
+  if (!pdfGenerator) {
+    pdfGenerator = new PDFGenerator();
+  }
+  return pdfGenerator;
+}
+
+function getExcelGenerator() {
+  if (!excelGenerator) {
+    excelGenerator = new ExcelGenerator();
+  }
+  return excelGenerator;
+}
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
   try {
@@ -221,7 +241,29 @@ app.post('/api/plan', async (req, res) => {
     res.status(500).json({ error: 'Failed to generate plan. Check server logs.', version: VERSION });
   }
 });
-app.get('/api/plan/:id/pdf', (req, res) => {
+// Enhanced PDF generation endpoint
+app.get('/api/plan/:id/pdf', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const row = getPlan.get(id);
+    if (!row) return res.status(404).json({ error: 'Plan not found' });
+    
+    const saved = JSON.parse(row.payload || '{}');
+    const tripData = { saved, planData: row };
+    
+    const pdfBuffer = await getPdfGenerator().generateTripReport(tripData);
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="wayzo-trip-${id}.pdf"`);
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error('PDF generation error:', error);
+    res.status(500).json({ error: 'Failed to generate PDF report' });
+  }
+});
+
+// Legacy HTML preview endpoint
+app.get('/api/plan/:id/preview', (req, res) => {
   const { id } = req.params;
   const row = getPlan.get(id);
   if (!row) return res.status(404).json({ error: 'Plan not found' });
@@ -236,6 +278,7 @@ app.get('/api/plan/:id/pdf', (req, res) => {
   const traveler = travelerLabel(d.adults || 0, d.children || 0);
   const base = `${req.protocol}://${req.get('host')}`;
   const pdfUrl = `${base}/api/plan/${id}/pdf`;
+  const excelUrl = `${base}/api/plan/${id}/excel`;
   const icsUrl = `${base}/api/plan/${id}/ics`;
   const shareX = `https://twitter.com/intent/tweet?text=${encodeURIComponent(`My ${d.destination} plan by Wayzo`)}&url=${encodeURIComponent(pdfUrl)}`;
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
@@ -251,7 +294,8 @@ app.get('/api/plan/:id/pdf', (req, res) => {
   .summary{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 10px 0}
   .summary .chip{border:1px solid var(--border);background:#fff;border-radius:999px;padding:.25rem .6rem;font-size:12px}
   .actions{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 14px}
-  .actions a{color:#0f172a;text-decoration:none;border-bottom:1px dotted rgba(2,6,23,.25)}
+  .actions a{color:#0f172a;text-decoration:none;border-bottom:1px dotted rgba(2,6,23,.25);background:#f8fafc;padding:8px 16px;border-radius:8px;margin:2px}
+  .actions a:hover{background:#e2e8f0}
   .facts{background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px;margin:8px 0}
   img{max-width:100%;height:auto;border-radius:10px}
   table{border-collapse:collapse;width:100%}
@@ -271,10 +315,11 @@ app.get('/api/plan/:id/pdf', (req, res) => {
   <span class="chip"><b>Season:</b> ${season}</span>
 </div>
 <div class="actions">
-  <a href="${pdfUrl}" target="_blank" rel="noopener">Download PDF</a>
-  <a href="${shareX}" target="_blank" rel="noopener">Share on X</a>
-  <a href="${base}/" target="_blank" rel="noopener">Edit Inputs</a>
-  <a href="${icsUrl}" target="_blank" rel="noopener">Download Trip Journal</a>
+  <a href="${pdfUrl}" target="_blank" rel="noopener">📄 Download Premium PDF</a>
+  <a href="${excelUrl}" target="_blank" rel="noopener">📊 Download Excel Report</a>
+  <a href="${shareX}" target="_blank" rel="noopener">🐦 Share on X</a>
+  <a href="${base}/" target="_blank" rel="noopener">✏️ Edit Inputs</a>
+  <a href="${icsUrl}" target="_blank" rel="noopener">📅 Download Calendar</a>
 </div>
 <div class="facts"><b>Quick Facts:</b>
   <ul>
@@ -291,6 +336,27 @@ ${htmlBody}
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(html);
 });
+// Excel report generation endpoint
+app.get('/api/plan/:id/excel', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const row = getPlan.get(id);
+    if (!row) return res.status(404).json({ error: 'Plan not found' });
+    
+    const saved = JSON.parse(row.payload || '{}');
+    const tripData = { saved, planData: row };
+    
+    const excelBuffer = await getExcelGenerator().generateTripReport(tripData);
+    
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="wayzo-trip-${id}.xlsx"`);
+    res.send(excelBuffer);
+  } catch (error) {
+    console.error('Excel generation error:', error);
+    res.status(500).json({ error: 'Failed to generate Excel report' });
+  }
+});
+
 app.get('/api/plan/:id/ics', (_req, res) => {
   const { id } = req.params;
   const row = getPlan.get(id);
@@ -326,6 +392,23 @@ app.listen(PORT, () => {
   console.log('Version:', VERSION);
   console.log('Index file:', INDEX);
   console.log('Frontend path:', FRONTEND);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  console.log('Received SIGTERM, shutting down gracefully...');
+  if (pdfGenerator) {
+    await pdfGenerator.cleanup();
+  }
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  console.log('Received SIGINT, shutting down gracefully...');
+  if (pdfGenerator) {
+    await pdfGenerator.cleanup();
+  }
+  process.exit(0);
 });
 // Escape HTML helper
 function escapeHtml(s = "") {
