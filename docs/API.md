@@ -33,8 +33,11 @@ Generate and store the full plan with OpenAI.
 ## GET /api/plan/:id
 Fetch saved plan JSON.
 
+## GET /api/plan/:id/report
+Return a rich HTML trip report suitable for viewing and printing.
+
 ## GET /api/plan/:id/pdf
-Stream a generated PDF of the plan.
+Stream a generated PDF of the plan (A4, with header/footer, print backgrounds).
 
 ## POST /api/checkout
 Create a Stripe Checkout session.

@@ -5,6 +5,7 @@
   const form      = $('#tripForm');
   const previewEl = $('#preview');
   const loadingEl = $('#loading');
+  const reportBtn = $('#reportBtn');
   const pdfBtn    = $('#pdfBtn');
   const buyBtn    = $('#buyBtn');
   const saveBtn   = $('#saveBtn');
@@ -41,6 +42,7 @@
     e.preventDefault();
     const payload = readForm();
     setAffiliates(payload.destination);
+    hide(reportBtn);
     hide(pdfBtn);
     show(loadingEl);
 
@@ -63,6 +65,7 @@
   buyBtn?.addEventListener('click', async () => {
     const payload = readForm();
     setAffiliates(payload.destination);
+    hide(reportBtn);
     hide(pdfBtn);
     show(loadingEl);
 
@@ -79,8 +82,8 @@
         : '<p>Plan generated.</p>';
 
       if (out.id) {
-        pdfBtn.href = `/api/plan/${out.id}/pdf`;
-        show(pdfBtn);
+        if (reportBtn) { reportBtn.href = `/api/plan/${out.id}/report`; show(reportBtn); }
+        if (pdfBtn)    { pdfBtn.href    = `/api/plan/${out.id}/pdf`;    show(pdfBtn); }
       }
     } catch {
       previewEl.innerHTML = '<p class="muted">Plan failed. Please try again.</p>';

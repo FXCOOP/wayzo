@@ -28,6 +28,7 @@ const saveBtn = $('#saveBtn');
 const buildPlanBtn = $('#buildPlanBtn');
 const demoBtn = $('#demoBtn');
 const pdfBtn = $('#pdfBtn');
+const reportBtn = $('#reportBtn');
 const icsBtn = $('#icsBtn');
 
 // Safe helpers
@@ -204,6 +205,10 @@ async function doFullPlan() {
       setPreviewHTML(data.html || '<div class="muted">No plan generated.</div>');
       if (data.id) {
         const base = location.origin;
+        if (reportBtn) {
+          reportBtn.style.display = 'inline-block';
+          reportBtn.href = `${base}/api/plan/${data.id}/report`;
+        }
         if (pdfBtn) {
           pdfBtn.style.display = 'inline-block';
           pdfBtn.href = `${base}/api/plan/${data.id}/pdf`;
