@@ -183,6 +183,8 @@ app.post('/api/preview', (req, res) => {
   const payload = req.body || {};
   payload.budget = normalizeBudget(payload.budget, payload.currency);
   const id = uid();
+  const aff = affiliatesFor(payload.destination || '');
+  const teaser_html = google.com`
 </div>`;
   res.json({ id, teaser_html, affiliates: aff, version: VERSION });
 });
