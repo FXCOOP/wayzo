@@ -29,6 +29,8 @@ const buildPlanBtn = $('#buildPlanBtn');
 const demoBtn = $('#demoBtn');
 const pdfBtn = $('#pdfBtn');
 const icsBtn = $('#icsBtn');
+const excelBtn = $('#excelBtn');
+const reportContainer = $('#reportContainer');
 
 // Safe helpers
 const val = (el) => (el && el.value ? el.value.trim() : '');
@@ -204,14 +206,7 @@ async function doFullPlan() {
       setPreviewHTML(data.html || '<div class="muted">No plan generated.</div>');
       if (data.id) {
         const base = location.origin;
-        if (pdfBtn) {
-          pdfBtn.style.display = 'inline-block';
-          pdfBtn.href = `${base}/api/plan/${data.id}/pdf`;
-        }
-        if (icsBtn) {
-          icsBtn.style.display = 'inline-block';
-          icsBtn.href = `${base}/api/plan/${data.id}/ics`;
-        }
+        showReportOptions(data.id, base);
       }
       console.log('Full plan response:', data);
       break;
@@ -238,6 +233,63 @@ async function savePreview() {
     }
   } catch (e) {
     console.error('Save preview error:', e);
+  }
+}
+
+// Show report download options
+function showReportOptions(planId, base) {
+  // Update existing buttons
+  if (pdfBtn) {
+    pdfBtn.style.display = 'inline-block';
+    pdfBtn.href = `${base}/api/plan/${planId}/pdf`;
+  }
+  if (icsBtn) {
+    icsBtn.style.display = 'inline-block';
+    icsBtn.href = `${base}/api/plan/${planId}/ics`;
+  }
+  if (excelBtn) {
+    excelBtn.style.display = 'inline-block';
+    excelBtn.href = `${base}/api/plan/${planId}/excel`;
+  }
+
+  // Create enhanced report options section
+  if (reportContainer) {
+    reportContainer.innerHTML = `
+      <div class="report-options">
+        <h3>📊 Export Your Trip Report</h3>
+        <div class="export-grid">
+          <a href="${base}/api/plan/${planId}/pdf" class="export-card pdf-export" target="_blank">
+            <div class="export-icon">📄</div>
+            <div class="export-content">
+              <h4>Premium PDF Report</h4>
+              <p>Professional travel report with charts, budget breakdown, and detailed itinerary</p>
+            </div>
+          </a>
+          <a href="${base}/api/plan/${planId}/excel" class="export-card excel-export" target="_blank">
+            <div class="export-icon">📊</div>
+            <div class="export-content">
+              <h4>Excel Workbook</h4>
+              <p>Interactive spreadsheet with budget tracking, checklist, and editable itinerary</p>
+            </div>
+          </a>
+          <a href="${base}/api/plan/${planId}/ics" class="export-card calendar-export" target="_blank">
+            <div class="export-icon">📅</div>
+            <div class="export-content">
+              <h4>Calendar Events</h4>
+              <p>Import your trip schedule directly into your favorite calendar app</p>
+            </div>
+          </a>
+          <a href="${base}/api/plan/${planId}/preview" class="export-card preview-export" target="_blank">
+            <div class="export-icon">🖥️</div>
+            <div class="export-content">
+              <h4>Web Preview</h4>
+              <p>Share-friendly web version of your travel plan</p>
+            </div>
+          </a>
+        </div>
+      </div>
+    `;
+    reportContainer.style.display = 'block';
   }
 }
 
