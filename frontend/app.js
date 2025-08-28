@@ -98,369 +98,267 @@
       if (a) a.href = url; 
     };
     
-    // Set affiliate links (these will be added to the UI later)
-    const affiliateLinks = {
-      flights: `https://www.kayak.com/flights?search=${q}`,
-      hotels: `https://www.booking.com/searchresults.html?ss=${q}`,
-      activities: `https://www.getyourguide.com/s/?q=${q}`,
-      cars: `https://www.rentalcars.com/SearchResults.do?destination=${q}`,
-      reviews: `https://www.tripadvisor.com/Search?q=${q}`
-    };
-    
-    return affiliateLinks;
+    // Set affiliate links
+    set('#flightsLink', `https://www.skyscanner.com/transport/flights-from/${q}/`);
+    set('#hotelsLink', `https://www.booking.com/searchresults.html?ss=${q}`);
+    set('#activitiesLink', `https://www.viator.com/search?q=${q}`);
+    set('#carsLink', `https://www.rentalcars.com/search?query=${q}`);
+    set('#reviewsLink', `https://www.tripadvisor.com/Search?q=${q}`);
   };
 
-  // Create affiliate links section
+  // Create affiliate section HTML
   const createAffiliateSection = (links) => {
-    const section = document.createElement('div');
-    section.className = 'affiliate-links';
-    section.style.cssText = 'margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0;';
-    
-    const title = document.createElement('h4');
-    title.textContent = 'Book your trip:';
-    title.style.cssText = 'margin: 0 0 16px 0; font-size: 1.1rem; color: var(--ink);';
-    
-    const linksContainer = document.createElement('div');
-    linksContainer.style.cssText = 'display: flex; gap: 12px; flex-wrap: wrap;';
-    
-    const linkData = [
-      { key: 'flights', label: '✈️ Flights', url: links.flights },
-      { key: 'hotels', label: '🏨 Hotels', url: links.hotels },
-      { key: 'activities', label: '🎟️ Activities', url: links.activities },
-      { key: 'cars', label: '🚗 Cars', url: links.cars },
-      { key: 'reviews', label: '⭐ Reviews', url: links.reviews }
-    ];
-    
-    linkData.forEach(({ key, label, url }) => {
-      if (url) {
-        const link = document.createElement('a');
-        link.href = url;
-        link.target = '_blank';
-        link.rel = 'noopener';
-        link.textContent = label;
-        link.className = 'btn btn-ghost';
-        link.style.cssText = 'font-size: 14px; padding: 8px 16px;';
-        linksContainer.appendChild(link);
-      }
-    });
-    
-    section.appendChild(title);
-    section.appendChild(linksContainer);
-    return section;
+    return `
+      <div class="affiliate-section">
+        <h3>Book your trip:</h3>
+        <div class="affiliate-links">
+          <a id="flightsLink" href="${links.flights}" target="_blank" class="affiliate-link">✈️ Flights</a>
+          <a id="hotelsLink" href="${links.hotels}" target="_blank" class="affiliate-link">🏨 Hotels</a>
+          <a id="activitiesLink" href="${links.activities}" target="_blank" class="affiliate-link">🎟️ Activities</a>
+          <a id="carsLink" href="${links.cars}" target="_blank" class="affiliate-link">🚗 Cars</a>
+          <a id="reviewsLink" href="${links.reviews}" target="_blank" class="affiliate-link">⭐ Reviews</a>
+        </div>
+      </div>
+    `;
   };
 
-  // Helper: append affiliate section for a destination
+  // Append affiliate section to preview
   const appendAffiliateSection = (dest, out) => {
-    const affiliateLinks = setAffiliates(dest);
-    const affiliateSection = createAffiliateSection(affiliateLinks);
-    previewEl.appendChild(affiliateSection);
+    const affiliateSection = createAffiliateSection({
+      flights: `https://www.skyscanner.com/transport/flights-from/${encodeURIComponent(dest)}/`,
+      hotels: `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(dest)}`,
+      activities: `https://www.viator.com/search?q=${encodeURIComponent(dest)}`,
+      cars: `https://www.rentalcars.com/search?query=${encodeURIComponent(dest)}`,
+      reviews: `https://www.tripadvisor.com/Search?q=${encodeURIComponent(dest)}`
+    });
+    out.innerHTML += affiliateSection;
+    setAffiliates(dest);
   };
 
   // Save preview to localStorage
   const savePreview = () => {
-    try {
-      const html = previewEl.innerHTML || '';
-      if (html && !html.includes('error')) {
-        localStorage.setItem('wayzo_preview', html);
-        alert('Preview saved successfully!');
-      } else {
-        alert('Nothing to save. Generate a preview first.');
-      }
-    } catch (err) {
-      console.error('Save error:', err);
-      alert('Failed to save preview.');
-    }
+    const previewData = {
+      html: previewEl.innerHTML,
+      timestamp: new Date().toISOString(),
+      formData: readForm()
+    };
+    localStorage.setItem('wayzo_last_preview', JSON.stringify(previewData));
+    showNotification('Preview saved!', 'success');
   };
 
   // Restore last preview from localStorage
   const restoreLastPreview = () => {
-    try {
-      const last = localStorage.getItem('wayzo_preview');
-      if (last && last !== previewEl.innerHTML) {
-        if (confirm('Restore your last saved preview?')) {
-          previewEl.innerHTML = last;
-        }
+    const saved = localStorage.getItem('wayzo_last_preview');
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        previewEl.innerHTML = data.html;
+        setAffiliates(data.formData.destination);
+        showNotification('Last preview restored!', 'info');
+      } catch (e) {
+        console.error('Failed to restore preview:', e);
       }
-    } catch (err) {
-      console.error('Restore error:', err);
+    } else {
+      showNotification('No saved preview found', 'info');
     }
   };
 
-  // Enhanced full plan generation
-  const generateFullPlan = async () => {
-    const payload = readForm();
+  // Form submission handler
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
     
-    if (!payload.destination || !payload.start || !payload.end || !payload.budget) {
-      previewEl.innerHTML = '<p class="error">Please fill in all required fields.</p>';
-      return;
-    }
-
-    const affiliateLinks = setAffiliates(payload.destination);
-    hide(pdfBtn);
+    const data = readForm();
+    console.log('Form data:', data);
+    
+    // Show loading
+    hide(previewEl);
     show(loadingEl);
-
+    
     try {
-      const res = await fetch('/api/plan', {
+      // Call preview API
+      const response = await fetch('/api/preview', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(data)
       });
       
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       
-      const out = await res.json();
+      const result = await response.json();
+      console.log('Preview result:', result);
       
-      if (out.html) {
-        previewEl.innerHTML = out.html;
-        
-        // Add affiliate links and PDF button
-        const affiliateSection = createAffiliateSection(affiliateLinks);
-        previewEl.appendChild(affiliateSection);
-        
-        if (out.id) {
-          pdfBtn.href = `/api/plan/${out.id}/pdf`;
-          show(pdfBtn);
-        }
-      } else {
-        previewEl.innerHTML = '<p class="error">No plan generated. Please try again.</p>';
-      }
+      // Display preview
+      previewEl.innerHTML = result.teaser_html;
+      setAffiliates(data.destination);
       
-    } catch (err) {
-      console.error('Full plan error:', err);
-      previewEl.innerHTML = '<p class="error">Plan generation failed. Please try again.</p>';
-    } finally {
+      // Show preview and hide loading
       hide(loadingEl);
-    }
-  };
-
-  // Helper to optionally prompt sign-in (only for full plan)
-  const maybePromptSignIn = async () => {
-    if (currentUser) return true;
-    try {
-      if (window.google && google.accounts && google.accounts.id && typeof google.accounts.id.prompt === 'function') {
-        await new Promise((resolve) => {
-          google.accounts.id.prompt(() => resolve());
-          setTimeout(resolve, 2500);
-        });
-      }
-    } catch (_) {}
-    const savedUser = localStorage.getItem('wayzo_user');
-    if (savedUser && !currentUser) currentUser = JSON.parse(savedUser);
-    return !!currentUser;
-  };
-
-  // Preview should NOT be gated; keep it simple and reliable
-  const generatePreview = async (e) => {
-    e?.preventDefault?.();
-    const payload = readForm();
-    if (!payload.destination || !payload.budget) {
-      previewEl.innerHTML = '<p class="error">Please fill in all required fields.</p>';
-      return;
-    }
-    hide(pdfBtn); hide(icsBtn); show(loadingEl);
-    try {
-      const res = await fetch('/api/preview', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      let out;
-      try {
-        out = await res.json();
-      } catch (parseErr) {
-        const txt = await res.text();
-        console.warn('Preview JSON parse failed, got text:', txt);
-        previewEl.innerHTML = txt || '<p class="error">Preview failed. Please try again.</p>';
-        return;
-      }
-      previewEl.innerHTML = out.teaser_html || '<p>Preview created successfully!</p>';
-      appendAffiliateSection(payload.destination, out);
-      trackEvent('preview_generated', { destination: payload.destination });
-    } catch (err) {
-      console.error('Preview error:', err);
-      previewEl.innerHTML = '<p class="error">Preview failed. Please try again.</p>';
-    } finally { hide(loadingEl); }
-  };
-
-  // Bind click handlers after redefining generatePreview
-  form.addEventListener('submit', generatePreview);
-  fullPlanBtn?.addEventListener('click', generateFullPlan);
-  saveBtn?.addEventListener('click', savePreview);
-
-  // Restore last preview on page load
-  restoreLastPreview();
-
-  // Add some helpful UI enhancements
-  const addUIEnhancements = () => {
-    // Add today's date as default start date
-    const startInput = $('#start');
-    if (startInput) {
-      const today = new Date().toISOString().split('T')[0];
-      startInput.value = today;
+      show(previewEl);
       
-      // Set end date to 5 days later
-      const endInput = $('#end');
-      if (endInput) {
-        const endDate = new Date();
-        endDate.setDate(endDate.getDate() + 5);
-        endInput.value = endDate.toISOString().split('T')[0];
-      }
+      // Show action buttons
+      show(pdfBtn);
+      show(icsBtn);
+      show(saveBtn);
+      
+      // Track successful preview generation
+      trackEvent('preview_generated', { destination: data.destination, budget: data.budget });
+      
+    } catch (error) {
+      console.error('Preview generation failed:', error);
+      hide(loadingEl);
+      previewEl.innerHTML = `
+        <div class="error-message">
+          <p>❌ Failed to generate preview. Please try again.</p>
+          <p class="muted">Error: ${error.message}</p>
+        </div>
+      `;
+      show(previewEl);
     }
-  };
+  });
 
-  // Initialize UI enhancements
-  addUIEnhancements();
-
-  // Paywall state
-  let hasPaid = false;
-
-  // Dynamically load PayPal SDK
-  const loadPayPalSdk = async (clientId) => {
-    if (!clientId) return;
-    if (window.paypal) return;
-    await new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=USD`;
-      s.async = true;
-      s.onload = resolve;
-      s.onerror = reject;
-      document.head.appendChild(s);
-    });
-  };
-
-  // Render PayPal button
-  const renderPayPalButton = async () => {
+  // Full plan generation
+  fullPlanBtn.addEventListener('click', async () => {
+    const data = readForm();
+    console.log('Generating full plan for:', data);
+    
+    // Show loading
+    hide(previewEl);
+    show(loadingEl);
+    
     try {
-      const cfg = window.WAYZO_PUBLIC_CONFIG || {};
-      if (!cfg.PAYPAL_CLIENT_ID) return;
-      await loadPayPalSdk(cfg.PAYPAL_CLIENT_ID);
-      const price = String(cfg.REPORT_PRICE_USD || 19);
-      const containerSel = '#paypal-button-container';
-      const container = document.querySelector(containerSel);
-      if (!container) return;
-      container.classList.remove('hidden');
-      const note = document.querySelector('#purchaseNote');
-      if (note) note.classList.remove('hidden');
-      window.paypal.Buttons({
-        style: { layout: 'vertical', color: 'gold', shape: 'rect', label: 'paypal' },
-        createOrder: (data, actions) => actions.order.create({
-          purchase_units: [{ amount: { value: price, currency_code: 'USD' } }]
-        }),
-        onApprove: (data, actions) => actions.order.capture().then(async (details) => {
-          try {
-            await fetch('/api/pay/confirm', {
-              method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ orderID: data.orderID, total: price, currency: 'USD' })
-            });
-          } catch (e) { console.warn('Confirm send failed:', e); }
-          hasPaid = true;
-          alert('Payment successful. Full report unlocked.');
-          // Auto-generate full plan now that payment is confirmed
-          await generateFullPlan();
-          // Hide purchase UI
-          container.classList.add('hidden');
-          if (note) note.classList.add('hidden');
-        }),
-        onError: (err) => { console.error('PayPal error:', err); alert('Payment error. Please try again.'); }
-      }).render(containerSel);
-    } catch (e) { console.error('PayPal init failed:', e); }
-  };
-
-  // Ensure PayPal is loaded if configured
-  const preparePaywallUi = async () => {
-    const cfg = window.WAYZO_PUBLIC_CONFIG || {};
-    if (!cfg.PAYPAL_CLIENT_ID) return false;
-    await loadPayPalSdk(cfg.PAYPAL_CLIENT_ID);
-    return true;
-  };
-
-  // Bind full plan with sign-in + paywall
-  const bindPaywall = () => {
-    if (!fullPlanBtn) return;
-    fullPlanBtn.onclick = async (e) => {
-      e.preventDefault();
-      const signed = await maybePromptSignIn();
-      if (!signed) {
-        alert('Please sign in to continue.');
-        return;
-      }
-      const cfg = window.WAYZO_PUBLIC_CONFIG || {};
-      if (cfg.PAYPAL_CLIENT_ID && !hasPaid) {
-        const ok = await preparePaywallUi();
-        await renderPayPalButton();
-        const note = document.querySelector('#purchaseNote');
-        if (note) note.classList.remove('hidden');
-        return; // Wait for payment approval to auto-call generateFullPlan
-      }
-      return generateFullPlan();
-    };
-  };
-
-  // Payment confirm endpoint helper (backend must exist)
-  // (No-op here; handled in onApprove)
-
-  // Init: avoid referencing google if not loaded
-  const init = () => {
-    const savedUser = localStorage.getItem('wayzo_user');
-    if (savedUser) {
-      currentUser = JSON.parse(savedUser);
-      if (loginBtn) { loginBtn.textContent = currentUser.name; loginBtn.onclick = showUserMenu; }
-    } else {
-      ensureLoginVisible();
-      if (loginBtn) loginBtn.onclick = () => (window.google && google.accounts && google.accounts.id && google.accounts.id.prompt ? google.accounts.id.prompt() : alert('Sign-in temporarily unavailable.'));
+      // Call plan API
+      const response = await fetch('/api/plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      
+      const result = await response.json();
+      console.log('Full plan result:', result);
+      
+      // Display full plan
+      previewEl.innerHTML = result.html;
+      setAffiliates(data.destination);
+      
+      // Show paywall
+      show($('#purchaseActions'));
+      
+      // Hide loading
+      hide(loadingEl);
+      show(previewEl);
+      
+      // Track plan generation
+      trackEvent('plan_generated', { destination: data.destination, budget: data.budget });
+      
+    } catch (error) {
+      console.error('Plan generation failed:', error);
+      hide(loadingEl);
+      previewEl.innerHTML = `
+        <div class="error-message">
+          <p>❌ Failed to generate plan. Please try again.</p>
+          <p class="muted">Error: ${error.message}</p>
+        </div>
+      `;
+      show(previewEl);
     }
-    setupChildrenAges();
-    setupDateModes();
-    addUIEnhancements();
-    bindPaywall();
-    restoreLastPreview();
-    detectUserLocation();
-    initializeGoogleAuth();
-    initGoogleFromConfig();
-    initializeCookieConsent();
-    trackEvent('page_view', { path: window.location.pathname });
+  });
+
+  // Save button
+  saveBtn.addEventListener('click', savePreview);
+
+  // Add UI enhancements
+  const addUIEnhancements = () => {
+    // Add restore preview button
+    const restoreBtn = document.createElement('button');
+    restoreBtn.className = 'btn btn-ghost';
+    restoreBtn.textContent = 'Restore Last Preview';
+    restoreBtn.onclick = restoreLastPreview;
+    
+    const actions = $('.actions');
+    if (actions && !actions.querySelector('.btn-ghost[onclick="restoreLastPreview()"]')) {
+      actions.appendChild(restoreBtn);
+    }
   };
 
-  // Stubs required references used above
-  let currentUser = null;
-  const setupChildrenAges = () => {
-    const childrenInput = $('#children');
-    const agesContainer = $('#childrenAges');
-    const agesInputs = $('#agesContainer');
-    if (!childrenInput || !agesContainer || !agesInputs) return;
-    const updateAges = () => {
-      const count = Number(childrenInput.value) || 0;
-      agesInputs.innerHTML = '';
-      if (count > 0) {
-        show(agesContainer);
-        for (let i = 0; i < count; i++) {
-          const ageDiv = document.createElement('div');
-          ageDiv.className = 'age-input';
-          ageDiv.innerHTML = `<label>Child ${i + 1}</label><input type="number" min="1" max="17" placeholder="Age" />`;
-          agesInputs.appendChild(ageDiv);
-        }
-      } else { hide(agesContainer); }
-    };
-    childrenInput.addEventListener('change', updateAges);
-    updateAges();
+  // Bind paywall functionality
+  const bindPaywall = () => {
+    // Placeholder for paywall functionality
+    console.log('Paywall functionality ready');
   };
 
-  // Google OAuth init using public config
+  // Initialize Google Auth from config
   const initGoogleFromConfig = () => {
     try {
-      const cfg = window.WAYZO_PUBLIC_CONFIG || {};
-      if (cfg.GOOGLE_CLIENT_ID && window.google && google.accounts && google.accounts.id) {
-        google.accounts.id.initialize({ client_id: cfg.GOOGLE_CLIENT_ID, callback: (cred) => {
-          try {
-            const payload = JSON.parse(atob((cred.credential || '').split('.')[1] || ''));
-            currentUser = { id: payload.sub, email: payload.email, name: payload.name, picture: payload.picture };
-            localStorage.setItem('wayzo_user', JSON.stringify(currentUser));
-            if (loginBtn) { loginBtn.textContent = currentUser.name; }
-          } catch (_) {}
-        }});
+      if (window.google && window.google.accounts && window.google.accounts.id) {
+        // Initialize Google Sign-In
+        google.accounts.id.initialize({
+          client_id: window.GOOGLE_CLIENT_ID || 'your-google-client-id.apps.googleusercontent.com',
+          callback: (response) => {
+            console.log('Google Sign-In response:', response);
+            // Handle Google sign-in response
+            showNotification('Google sign-in successful!', 'success');
+          }
+        });
+        
         // Render button if present
         if (loginBtn) {
           google.accounts.id.renderButton(loginBtn, { theme: 'outline', size: 'large' });
         }
       }
     } catch (_) {}
+  };
+
+  // Main initialization
+  const init = () => {
+    setupDateModes();
+    setupChildrenAges();
+    addUIEnhancements();
+    initGoogleFromConfig();
+    bindPaywall();
+    
+    // Initialize cookie consent
+    initializeCookieConsent();
+    
+    // Detect user location
+    detectUserLocation();
+    
+    // Ensure login is visible
+    ensureLoginVisible();
+  };
+
+  // Setup children ages functionality
+  const setupChildrenAges = () => {
+    const childrenInput = $('#children');
+    const childrenAgesDiv = $('#childrenAges');
+    const agesContainer = $('#agesContainer');
+    
+    if (!childrenInput || !childrenAgesDiv || !agesContainer) return;
+    
+    const updateAges = () => {
+      const count = Number(childrenInput.value) || 0;
+      agesContainer.innerHTML = '';
+      
+      for (let i = 0; i < count; i++) {
+        const ageDiv = document.createElement('div');
+        ageDiv.className = 'age-input';
+        ageDiv.innerHTML = `
+          <label>Child ${i + 1} age:</label>
+          <input type="number" min="0" max="17" placeholder="Age" />
+        `;
+        agesContainer.appendChild(ageDiv);
+      }
+      
+      if (count > 0) {
+        childrenAgesDiv.classList.remove('hidden');
+      } else {
+        childrenAgesDiv.classList.add('hidden');
+      }
+    };
+    
+    childrenInput.addEventListener('change', updateAges);
+    updateAges();
   };
 
   // Setup dietary needs functionality
@@ -502,16 +400,6 @@
       });
     });
   };
-
-  // Run init now
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
-
-  // Setup dietary and style functionality after DOM is ready
-  document.addEventListener('DOMContentLoaded', () => {
-    setupDietaryNeeds();
-    setupStyleSelection();
-    setupReferralSystem();
-  });
 
   // Setup referral system
   const setupReferralSystem = () => {
@@ -555,10 +443,39 @@
 
   // ====== NEW FEATURES JAVASCRIPT ======
 
+  // Make functions globally accessible
+  window.changeLanguage = changeLanguage;
+  window.addNewDestination = addNewDestination;
+  window.removeDestination = removeDestination;
+  window.showAuthModal = showAuthModal;
+  window.hideAuthModal = hideAuthModal;
+  window.switchAuthTab = switchAuthTab;
+  window.handleManualSignIn = handleManualSignIn;
+  window.handleManualSignUp = handleManualSignUp;
+  window.handleGoogleSignIn = handleGoogleSignIn;
+  window.handleGoogleSignUp = handleGoogleSignUp;
+  window.handleFacebookSignIn = handleFacebookSignIn;
+  window.handleFacebookSignUp = handleFacebookSignUp;
+  window.handleAppleSignIn = handleAppleSignIn;
+  window.handleAppleSignUp = handleAppleSignUp;
+  window.handleDemoMode = handleDemoMode;
+  window.toggleUserMenu = toggleUserMenu;
+  window.signOut = signOut;
+  window.showDashboard = showDashboard;
+  window.showMyPlans = showMyPlans;
+  window.showReferrals = showReferrals;
+  window.showBilling = showBilling;
+  window.showProfile = showProfile;
+  window.switchCabinetTab = switchCabinetTab;
+  window.showPlanningForm = showPlanningForm;
+  window.updateProfile = updateProfile;
+  window.copyReferralLink = copyReferralLink;
+  window.shareReferral = shareReferral;
+
   // Multi-Destination Management
   let destinationCount = 1;
 
-  window.addNewDestination = () => {
+  function addNewDestination() {
     if (destinationCount >= 10) {
       alert('Maximum 10 destinations allowed');
       return;
@@ -589,17 +506,17 @@
     
     container.appendChild(newDestination);
     updateDestinationNumbers();
-  };
+  }
 
-  window.removeDestination = (button) => {
+  function removeDestination(button) {
     if (destinationCount > 1) {
       button.closest('.destination-item').remove();
       destinationCount--;
       updateDestinationNumbers();
     }
-  };
+  }
 
-  const updateDestinationNumbers = () => {
+  function updateDestinationNumbers() {
     const destinations = $$('.destination-item');
     destinations.forEach((dest, index) => {
       const numberSpan = dest.querySelector('.destination-number');
@@ -607,10 +524,10 @@
         numberSpan.textContent = index + 1;
       }
     });
-  };
+  }
 
   // Trip Type Management
-  const setupTripTypeSelector = () => {
+  function setupTripTypeSelector() {
     const tripTypeInputs = $$('input[name="tripType"]');
     const singleDestination = $('#singleDestination');
     const multiDestination = $('#multiDestination');
@@ -621,7 +538,7 @@
         singleDestination.classList.remove('hidden');
         multiDestination.classList.add('hidden');
       } else {
-        singleDestination.classList.add('hidden');
+        singleDestination.classList.remove('hidden');
         multiDestination.classList.remove('hidden');
         // Update form validation
         const singleInputs = singleDestination.querySelectorAll('input[required]');
@@ -635,21 +552,21 @@
       input.addEventListener('change', updateDisplay);
     });
     updateDisplay();
-  };
+  }
 
   // Authentication System
   let isAuthenticated = false;
   let currentUser = null;
 
-  const showAuthModal = () => {
+  function showAuthModal() {
     $('#authModal').classList.remove('hidden');
-  };
+  }
 
-  const hideAuthModal = () => {
+  function hideAuthModal() {
     $('#authModal').classList.add('hidden');
-  };
+  }
 
-  const switchAuthTab = (tab) => {
+  function switchAuthTab(tab) {
     // Hide all tabs
     $$('.auth-tab-content').forEach(content => content.classList.remove('active'));
     $$('.auth-tab').forEach(tabBtn => tabBtn.classList.remove('active'));
@@ -657,9 +574,9 @@
     // Show selected tab
     $(`#${tab}Tab`).classList.add('active');
     event.target.classList.add('active');
-  };
+  }
 
-  const handleManualSignIn = (event) => {
+  function handleManualSignIn(event) {
     event.preventDefault();
     const formData = new FormData(event.target);
     const email = formData.get('email') || event.target.querySelector('input[type="email"]').value;
@@ -667,9 +584,9 @@
     
     // Mock authentication
     mockManualSignIn(email, password);
-  };
+  }
 
-  const handleManualSignUp = (event) => {
+  function handleManualSignUp(event) {
     event.preventDefault();
     const formData = new FormData(event.target);
     const name = formData.get('name') || event.target.querySelector('input[type="text"]').value;
@@ -678,9 +595,9 @@
     
     // Mock registration
     mockManualSignUp(name, email, password);
-  };
+  }
 
-  const mockManualSignIn = (email, password) => {
+  function mockManualSignIn(email, password) {
     // Simulate authentication
     setTimeout(() => {
       currentUser = {
@@ -693,9 +610,9 @@
       updateUIForAuthenticatedUser();
       showNotification('Successfully signed in!', 'success');
     }, 1000);
-  };
+  }
 
-  const mockManualSignUp = (name, email, password) => {
+  function mockManualSignUp(name, email, password) {
     // Simulate registration
     setTimeout(() => {
       currentUser = {
@@ -708,39 +625,39 @@
       updateUIForAuthenticatedUser();
       showNotification('Account created successfully!', 'success');
     }, 1000);
-  };
+  }
 
-  const handleGoogleSignIn = () => {
+  function handleGoogleSignIn() {
     // Placeholder for Google OAuth
     showNotification('Google sign-in coming soon!', 'info');
-  };
+  }
 
-  const handleGoogleSignUp = () => {
+  function handleGoogleSignUp() {
     // Placeholder for Google OAuth
     showNotification('Google sign-up coming soon!', 'info');
-  };
+  }
 
-  const handleFacebookSignIn = () => {
+  function handleFacebookSignIn() {
     // Placeholder for Facebook OAuth
     showNotification('Facebook sign-in coming soon!', 'info');
-  };
+  }
 
-  const handleFacebookSignUp = () => {
+  function handleFacebookSignUp() {
     // Placeholder for Facebook OAuth
     showNotification('Facebook sign-up coming soon!', 'info');
-  };
+  }
 
-  const handleAppleSignIn = () => {
+  function handleAppleSignIn() {
     // Placeholder for Apple OAuth
     showNotification('Apple sign-in coming soon!', 'info');
-  };
+  }
 
-  const handleAppleSignUp = () => {
+  function handleAppleSignUp() {
     // Placeholder for Apple OAuth
     showNotification('Apple sign-up coming soon!', 'info');
-  };
+  }
 
-  const handleDemoMode = () => {
+  function handleDemoMode() {
     currentUser = {
       name: 'Demo User',
       email: 'demo@wayzo.com',
@@ -750,9 +667,9 @@
     hideAuthModal();
     updateUIForAuthenticatedUser();
     showNotification('Welcome to demo mode!', 'success');
-  };
+  }
 
-  const updateUIForAuthenticatedUser = () => {
+  function updateUIForAuthenticatedUser() {
     if (loginBtn) loginBtn.classList.add('hidden');
     if ($('#userMenuBtn')) {
       $('#userMenuBtn').classList.remove('hidden');
@@ -761,16 +678,16 @@
     if ($('#userName')) $('#userName').textContent = currentUser.name;
     if ($('#userEmail')) $('#userEmail').textContent = currentUser.email;
     if ($('#userAvatar')) $('#userAvatar').src = currentUser.avatar;
-  };
+  }
 
-  const toggleUserMenu = () => {
+  function toggleUserMenu() {
     const userMenu = $('#userMenu');
     if (userMenu) {
       userMenu.classList.toggle('hidden');
     }
-  };
+  }
 
-  const signOut = () => {
+  function signOut() {
     isAuthenticated = false;
     currentUser = null;
     if (loginBtn) loginBtn.classList.remove('hidden');
@@ -778,35 +695,35 @@
     if ($('#userMenu')) $('#userMenu').classList.add('hidden');
     if ($('#personalCabinet')) $('#personalCabinet').classList.add('hidden');
     showNotification('Signed out successfully', 'info');
-  };
+  }
 
   // Personal Cabinet Management
-  const showDashboard = () => {
+  function showDashboard() {
     $('#personalCabinet').classList.remove('hidden');
     switchCabinetTab('overview');
-  };
+  }
 
-  const showMyPlans = () => {
+  function showMyPlans() {
     $('#personalCabinet').classList.remove('hidden');
     switchCabinetTab('plans');
-  };
+  }
 
-  const showReferrals = () => {
+  function showReferrals() {
     $('#personalCabinet').classList.remove('hidden');
     switchCabinetTab('referrals');
-  };
+  }
 
-  const showBilling = () => {
+  function showBilling() {
     $('#personalCabinet').classList.remove('hidden');
     switchCabinetTab('billing');
-  };
+  }
 
-  const showProfile = () => {
+  function showProfile() {
     $('#personalCabinet').classList.remove('hidden');
     switchCabinetTab('profile');
-  };
+  }
 
-  const switchCabinetTab = (tab) => {
+  function switchCabinetTab(tab) {
     // Hide all tabs
     $$('.cabinet-tab').forEach(tabContent => tabContent.classList.remove('active'));
     $$('.sidebar-item').forEach(item => item.classList.remove('active'));
@@ -814,13 +731,13 @@
     // Show selected tab
     $(`#${tab}Tab`).classList.add('active');
     event.target.classList.add('active');
-  };
+  }
 
-  const showPlanningForm = () => {
+  function showPlanningForm() {
     $('#personalCabinet').classList.add('hidden');
-  };
+  }
 
-  const updateProfile = (event) => {
+  function updateProfile(event) {
     event.preventDefault();
     const name = $('#profileName').value;
     const phone = $('#profilePhone').value;
@@ -831,10 +748,10 @@
       updateUIForAuthenticatedUser();
       showNotification('Profile updated successfully!', 'success');
     }
-  };
+  }
 
   // Notification System
-  const showNotification = (message, type = 'info') => {
+  function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
     notification.innerHTML = `
@@ -850,9 +767,9 @@
         notification.remove();
       }
     }, 5000);
-  };
+  }
 
-  const getNotificationIcon = (type) => {
+  function getNotificationIcon(type) {
     const icons = {
       success: '✅',
       error: '❌',
@@ -860,10 +777,10 @@
       info: 'ℹ️'
     };
     return icons[type] || icons.info;
-  };
+  }
 
   // Referral System Functions
-  const copyReferralLink = () => {
+  function copyReferralLink() {
     const linkInput = $('#referralLink');
     if (linkInput) {
       navigator.clipboard.writeText(linkInput.value).then(() => {
@@ -872,9 +789,9 @@
         showNotification('Failed to copy link', 'error');
       });
     }
-  };
+  }
 
-  const shareReferral = (platform) => {
+  function shareReferral(platform) {
     const link = $('#referralLink').value;
     const text = 'Check out Wayzo for amazing trip planning!';
     
@@ -894,17 +811,17 @@
     if (shareUrl) {
       window.open(shareUrl, '_blank');
     }
-  };
+  }
 
   // Language Management
-  const changeLanguage = (language) => {
+  function changeLanguage(language) {
     // Placeholder for language switching
     showNotification(`Language changed to ${language}`, 'info');
     localStorage.setItem('wayzo_language', language);
-  };
+  }
 
   // Event Listeners
-  const setupEventListeners = () => {
+  function setupEventListeners() {
     // Login button
     if (loginBtn) {
       loginBtn.addEventListener('click', showAuthModal);
@@ -930,7 +847,7 @@
         $('#userMenu').classList.add('hidden');
       }
     });
-  };
+  }
 
   // Initialize new features
   document.addEventListener('DOMContentLoaded', () => {
@@ -945,6 +862,16 @@
         languageSelect.value = savedLanguage;
       }
     }
+  });
+
+  // Run init now
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+
+  // Setup dietary and style functionality after DOM is ready
+  document.addEventListener('DOMContentLoaded', () => {
+    setupDietaryNeeds();
+    setupStyleSelection();
+    setupReferralSystem();
   });
 
 })();
