@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Contact Us — Wayzo</title>
+
+  <link rel="icon" type="image/svg+xml" href="/frontend/favicon.svg" />
+  <link rel="stylesheet" href="/frontend/style.css" />
+</head>
+<body>
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a class="brand" href="/">
+        <span class="brand-badge">WZ</span>
+        <span class="brand-name">Wayzo</span>
+      </a>
+      <a class="btn btn-ghost" href="/">← Back to Wayzo</a>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="container">
+      <div class="card">
+        <div class="card-header">
+          <h1>Contact Us</h1>
+          <p class="muted">Get in touch with the Wayzo team</p>
+        </div>
+        
+        <div class="contact-content">
+          <div class="contact-info">
+            <h2>Get in Touch</h2>
+            <p>Have questions about Wayzo? Need help with your trip planning? We're here to help!</p>
+            
+            <div class="contact-methods">
+              <div class="contact-method">
+                <h3>📧 Email Support</h3>
+                <p><strong>General Inquiries:</strong> hello@wayzo.com</p>
+                <p><strong>Technical Support:</strong> support@wayzo.com</p>
+                <p><strong>Business Partnerships:</strong> partnerships@wayzo.com</p>
+              </div>
+              
+              <div class="contact-method">
+                <h3>🌐 Online</h3>
+                <p><strong>Help Center:</strong> <a href="/help">wayzo.com/help</a></p>
+                <p><strong>Status Page:</strong> <a href="/status">wayzo.com/status</a></p>
+                <p><strong>Feedback:</strong> <a href="/feedback">wayzo.com/feedback</a></p>
+              </div>
+              
+              <div class="contact-method">
+                <h3>📱 Social Media</h3>
+                <p><strong>Twitter:</strong> <a href="https://twitter.com/wayzo" target="_blank">@wayzo</a></p>
+                <p><strong>Instagram:</strong> <a href="https://instagram.com/wayzo" target="_blank">@wayzo</a></p>
+                <p><strong>LinkedIn:</strong> <a href="https://linkedin.com/company/wayzo" target="_blank">Wayzo</a></p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="contact-form">
+            <h2>Send us a Message</h2>
+            <form id="contactForm" class="form">
+              <div class="field">
+                <span>Name *</span>
+                <input type="text" name="name" required />
+              </div>
+              
+              <div class="field">
+                <span>Email *</span>
+                <input type="email" name="email" required />
+              </div>
+              
+              <div class="field">
+                <span>Subject *</span>
+                <select name="subject" required>
+                  <option value="">Select a subject</option>
+                  <option value="general">General Inquiry</option>
+                  <option value="support">Technical Support</option>
+                  <option value="feedback">Feedback</option>
+                  <option value="partnership">Business Partnership</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              
+              <div class="field">
+                <span>Message *</span>
+                <textarea name="message" rows="6" required placeholder="Tell us how we can help you..."></textarea>
+              </div>
+              
+              <div class="actions">
+                <button type="submit" class="btn btn-primary">Send Message</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container">
+      <p class="muted small">© Wayzo. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    // Simple contact form handling
+    document.getElementById('contactForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const formData = new FormData(this);
+      const data = Object.fromEntries(formData.entries());
+      
+      // In a real implementation, you'd send this to your backend
+      console.log('Contact form submitted:', data);
+      
+      // Show success message
+      alert('Thank you for your message! We\'ll get back to you soon.');
+      
+      // Reset form
+      this.reset();
+    });
+  </script>
+</body>
+</html>
