@@ -263,20 +263,12 @@ async function generatePlanWithAI(payload) {
 **REQUIRED SECTIONS:**
 - 🎯 **Trip Overview** - Quick facts and highlights
 - 💰 **Budget Breakdown** - Detailed cost analysis per person
-<<<<<<< HEAD
-- 🗺️ **Getting Around** - Transportation tips and maps
-- 🏨 **Accommodation** - Hotel recommendations with links (family-friendly if applicable)
-- 🍽️ **Dining Guide** - Restaurant suggestions considering dietary restrictions
-- 🎭 **Daily Itineraries** - Hour-by-hour plans for each day
-- 🎫 **Must-See Attractions** - Top sights with booking links
-=======
 - 🗺️ **Getting Around** - Transportation tips and maps with [Map](map:...)
 - 🏨 **Accommodation** - 3–5 hotel options (Budget/Mid/Luxury) with [Book](book:...), [Reviews](reviews:...)
 - 🍽️ **Dining Guide** - 6–10 restaurants by neighborhood with [Reviews](reviews:...)
 - 🎭 **Daily Itineraries** - Hour-by-hour plans per day with [Tickets](tickets:...), [Map](map:...)
 - 🎫 **Must-See Attractions** - 8–12 sights with [Tickets](tickets:...)
 - 🧳 **Don't Forget List** - 8–12 packing/reminders tailored to destination and season
->>>>>>> staging
 - 🛡️ **Travel Tips** - Local customs, safety, and practical advice
 - 📱 **Useful Apps** - Mobile apps for the destination
 - 🚨 **Emergency Info** - Important contacts and healthcare
@@ -375,26 +367,6 @@ Create the most amazing, detailed, and useful trip plan possible!`;
 }
 /* API */
 app.post('/api/preview', (req, res) => {
-<<<<<<< HEAD
-  console.log('Preview request received:', req.body); // Debug
-  const payload = req.body || {};
-  payload.budget = normalizeBudget(payload.budget, payload.currency);
-  const id = uid();
-  const aff = affiliatesFor(payload.destination || '');
-  
-  // Create an engaging preview with enhanced data
-  const destination = payload.destination || 'your destination';
-  const from = payload.from || 'your location';
-  const nDays = payload.flexibleDates ? payload.flexibleDates.duration : daysBetween(payload.start, payload.end);
-  const style = payload.level === "luxury" ? "Luxury" : payload.level === "budget" ? "Budget" : "Mid-range";
-  const adults = payload.adults || 2;
-  const children = payload.children || 0;
-  const totalTravelers = adults + children;
-  const budget = payload.budget || 0;
-  const dateMode = payload.dateMode || 'exact';
-  
-  const teaser_html = `
-=======
   try {
     console.log('Preview request received:', req.body); // Debug
     const payload = req.body || {};
@@ -419,7 +391,6 @@ app.post('/api/preview', (req, res) => {
     const id = uid();
 
     const teaser_html = `
->>>>>>> staging
     <div class="preview-teaser">
       <h3>🎯 ${escapeHtml(destination)} Trip Preview</h3>
       <div class="preview-stats">
@@ -433,11 +404,7 @@ app.post('/api/preview', (req, res) => {
         </div>
         <div class="stat">
           <span class="stat-label">Travelers</span>
-<<<<<<< HEAD
-          <span class="stat-value">${adults} adults${children > 0 ? ` + ${children} children` : ''}</span>
-=======
           <span class="stat-value">${adults} adults${children ? ` + ${children} children` : ''}</span>
->>>>>>> staging
         </div>
         <div class="stat">
           <span class="stat-label">Budget</span>
