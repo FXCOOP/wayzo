@@ -115,18 +115,28 @@
 
           <div class="fields-2">
             <div class="field">
-              <span>Budget (USD)</span>
-              <input id="budget" type="number" min="100" step="50" name="budget" placeholder="1500" required />
+              <span>Budget</span>
+              <div class="fields-2">
+                <input id="budget" type="number" min="100" step="50" name="budget" placeholder="1500" required />
+                <select id="currency" name="currency" aria-label="Currency">
+                  <option value="USD" selected>USD $</option>
+                  <option value="EUR">EUR €</option>
+                  <option value="GBP">GBP £</option>
+                  <option value="ILS">ILS ₪</option>
+                  <option value="AUD">AUD $</option>
+                  <option value="CAD">CAD $</option>
+                </select>
+              </div>
             </div>
             <div class="field">
               <span>Travelers</span>
               <div class="travelers-input">
                 <div class="traveler-type">
-                  <label>Adults</label>
+                  <label for="adults">Adults</label>
                   <input id="adults" type="number" min="1" max="10" name="adults" value="2" required />
                 </div>
                 <div class="traveler-type">
-                  <label>Children</label>
+                  <label for="children">Children</label>
                   <input id="children" type="number" min="0" max="8" name="children" value="0" />
                 </div>
               </div>

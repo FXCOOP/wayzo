@@ -392,3 +392,26 @@ a:hover{ text-decoration: underline; }
     width: 100%;
   }
 }
+
+/* Footer refinement */
+.footer{ padding: 24px 0; }
+.footer-content{ display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 20px; margin-bottom: 12px; }
+.footer-section h4{ margin:0 0 8px 0; font-size: 0.95rem; }
+.footer-section a{ font-size: 0.9rem; margin-bottom: 4px; }
+
+/* Cookie banner refinement */
+.cookie-banner{ padding: 8px 0; }
+.cookie-content{ max-width: 960px; }
+.cookie-text p{ margin: 0; line-height: 1.4; }
+.cookie-actions .btn{ padding: 6px 10px; font-size: 0.85rem; }
+
+/* Inputs alignment */
+.fields-2 > .field .fields-2{ grid-template-columns: 1fr 140px; align-items: center; }
+#currency{ height: 44px; border:1px solid var(--border); border-radius:8px; background: var(--bg); }
+
+@media (max-width: 768px){
+  .footer-content{ grid-template-columns: 1fr; gap: 12px; }
+  .cookie-content{ padding: 0 12px; }
+  .cookie-actions{ width:100%; justify-content:center; }
+  .fields-2 > .field .fields-2{ grid-template-columns: 1fr 1fr; }
+}

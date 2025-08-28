@@ -2,6 +2,7 @@
 
 (function () {
   const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => document.querySelectorAll(sel);
 
   // Form elements
   const form = $('#tripForm');
@@ -19,19 +20,52 @@
   // Enhanced form reading with professional brief
   const readForm = () => {
     const data = Object.fromEntries(new FormData(form).entries());
-    data.travelers = Number(data.travelers || 2);
-    data.budget = Number(data.budget || 0);
-    data.level = data.level || 'budget';
     
-    // Clean up brief text if provided
-    if (data.brief) {
-      data.brief = data.brief.trim();
-      if (data.brief) {
-        data.professional_brief = data.brief; // Add to payload for AI
-      }
+    // Parse numbers
+    data.adults = Number(data.adults || 2);
+    data.children = Number(data.children || 0);
+    data.budget = Number(data.budget || 0);
+    data.duration = Number(data.duration || 5);
+    data.currency = data.currency || 'USD';
+    
+    if (data.dateMode === 'flexible') {
+      data.flexibleDates = { month: data.travelMonth, duration: data.duration };
+      delete data.start; delete data.end;
     }
     
+    if (data.children > 0) {
+      data.childrenAges = [];
+      $$('.age-input input').forEach(input => { if (input.value) data.childrenAges.push(Number(input.value)); });
+    }
+    
+    if (data.dietary) {
+      data.dietary = Array.isArray(data.dietary) ? data.dietary : [data.dietary];
+      data.dietary = data.dietary.filter(d => d !== 'none');
+    }
+    
+    const fileInput = $('#planFiles');
+    if (fileInput && fileInput.files && fileInput.files.length > 0) {
+      data.uploadedFiles = Array.from(fileInput.files).map(file => ({ name: file.name, size: file.size, type: file.type }));
+    }
+    
+    if (data.brief) {
+      data.brief = data.brief.trim();
+      if (data.brief) data.professional_brief = data.brief;
+    }
     return data;
+  };
+
+  // Ensure radio click toggles reliably
+  const setupDateModes = () => {
+    const exactDates = $('#exactDates');
+    const flexibleDates = $('#flexibleDates');
+    const radios = $$('input[name="dateMode"]');
+    const update = () => {
+      const mode = (document.querySelector('input[name="dateMode"]:checked') || { value: 'exact' }).value;
+      if (mode === 'exact') { show(exactDates); hide(flexibleDates); } else { hide(exactDates); show(flexibleDates); }
+    };
+    radios.forEach(r => { r.addEventListener('change', update); r.addEventListener('click', update); });
+    update();
   };
 
   // Set affiliate links for the destination
