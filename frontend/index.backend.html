@@ -271,8 +271,10 @@
           <p>Generating your perfect trip...</p>
         </div>
         <div class="actions">
-          <a id="pdfBtn" class="btn btn-ghost hidden" href="#" target="_blank">Download Trip Journal</a>
-          <a id="icsBtn" class="btn btn-ghost hidden" href="#" target="_blank">Add to Calendar (ICS)</a>
+          <button id="pdfBtn" class="btn btn-ghost hidden" onclick="downloadPDF()">📄 Download PDF</button>
+          <button id="icsBtn" class="btn btn-ghost hidden" onclick="downloadICS()">📅 Add to Calendar</button>
+          <button id="excelBtn" class="btn btn-ghost hidden" onclick="downloadExcel()">📊 Download Excel</button>
+          <button id="shareBtn" class="btn btn-ghost hidden" onclick="sharePlan()">📤 Share Plan</button>
         </div>
         <div class="actions" id="purchaseActions">
           <div id="paypal-button-container" class="hidden"></div>
@@ -472,6 +474,9 @@
       </button>
       <button class="menu-btn" onclick="showBilling()">
         <i class="fas fa-credit-card"></i> Billing
+      </button>
+      <button class="menu-btn admin-only" onclick="accessAdminPanel()" style="display: none;">
+        <i class="fas fa-cog"></i> Admin Panel
       </button>
       <button class="menu-btn" onclick="signOut()">
         <i class="fas fa-sign-out-alt"></i> Sign Out

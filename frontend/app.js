@@ -471,6 +471,11 @@
   window.updateProfile = updateProfile;
   window.copyReferralLink = copyReferralLink;
   window.shareReferral = shareReferral;
+  window.downloadPDF = downloadPDF;
+  window.downloadICS = downloadICS;
+  window.downloadExcel = downloadExcel;
+  window.sharePlan = sharePlan;
+  window.accessAdminPanel = accessAdminPanel;
 
   // Multi-Destination Management
   let destinationCount = 1;
@@ -659,14 +664,15 @@
 
   function handleDemoMode() {
     currentUser = {
-      name: 'Demo User',
+      name: 'Demo Admin',
       email: 'demo@wayzo.com',
-      avatar: '/frontend/assets/default-avatar.svg'
+      avatar: '/frontend/assets/default-avatar.svg',
+      isAdmin: true
     };
     isAuthenticated = true;
     hideAuthModal();
     updateUIForAuthenticatedUser();
-    showNotification('Welcome to demo mode!', 'success');
+    showNotification('Welcome to demo mode! You have admin access.', 'success');
   }
 
   function updateUIForAuthenticatedUser() {
@@ -678,6 +684,12 @@
     if ($('#userName')) $('#userName').textContent = currentUser.name;
     if ($('#userEmail')) $('#userEmail').textContent = currentUser.email;
     if ($('#userAvatar')) $('#userAvatar').src = currentUser.avatar;
+    
+    // Show admin button if user is admin
+    const adminBtn = document.querySelector('.admin-only');
+    if (adminBtn) {
+      adminBtn.style.display = currentUser.isAdmin ? 'block' : 'none';
+    }
   }
 
   function toggleUserMenu() {
@@ -815,9 +827,215 @@
 
   // Language Management
   function changeLanguage(language) {
-    // Placeholder for language switching
-    showNotification(`Language changed to ${language}`, 'info');
+    // Real language switching functionality
+    const languages = {
+      en: 'English',
+      es: 'Español',
+      fr: 'Français',
+      de: 'Deutsch',
+      it: 'Italiano',
+      pt: 'Português',
+      ru: 'Русский',
+      zh: '中文',
+      ja: '日本語',
+      ko: '한국어'
+    };
+    
+    // Update page content based on language
+    updatePageLanguage(language);
+    
+    showNotification(`Language changed to ${languages[language]}`, 'success');
     localStorage.setItem('wayzo_language', language);
+  }
+
+  // Update page content based on language
+  function updatePageLanguage(language) {
+    // Update form labels and placeholders
+    const translations = {
+      en: {
+        'Traveling from (optional)': 'Traveling from (optional)',
+        'Destination': 'Destination',
+        'Budget': 'Budget',
+        'Travelers': 'Travelers',
+        'Generate preview': 'Generate preview',
+        'Generate full plan': 'Generate full plan'
+      },
+      es: {
+        'Traveling from (optional)': 'Viajando desde (opcional)',
+        'Destination': 'Destino',
+        'Budget': 'Presupuesto',
+        'Travelers': 'Viajeros',
+        'Generate preview': 'Generar vista previa',
+        'Generate full plan': 'Generar plan completo'
+      },
+      fr: {
+        'Traveling from (optional)': 'Voyageant depuis (optionnel)',
+        'Destination': 'Destination',
+        'Budget': 'Budget',
+        'Travelers': 'Voyageurs',
+        'Generate preview': 'Générer l\'aperçu',
+        'Generate full plan': 'Générer le plan complet'
+      }
+      // Add more languages as needed
+    };
+
+    const langData = translations[language] || translations.en;
+    
+    // Update form labels
+    Object.keys(langData).forEach(key => {
+      const elements = document.querySelectorAll(`span:contains("${key}")`);
+      elements.forEach(el => {
+        if (el.textContent === key) {
+          el.textContent = langData[key];
+        }
+      });
+    });
+  }
+
+  // Download and Export Functions
+  function downloadPDF() {
+    const content = document.getElementById('preview').innerHTML;
+    if (!content || content.includes('Enter your trip details')) {
+      showNotification('No content to download. Generate a plan first.', 'warning');
+      return;
+    }
+    
+    // Create PDF content
+    const pdfContent = `
+      <html>
+        <head>
+          <title>Wayzo Trip Plan</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            .header { text-align: center; margin-bottom: 30px; }
+            .content { line-height: 1.6; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>🚀 Wayzo Trip Plan</h1>
+            <p>Generated on ${new Date().toLocaleDateString()}</p>
+          </div>
+          <div class="content">
+            ${content}
+          </div>
+        </body>
+      </html>
+    `;
+    
+    // Create blob and download
+    const blob = new Blob([pdfContent], { type: 'text/html' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'wayzo-trip-plan.html';
+    a.click();
+    window.URL.revokeObjectURL(url);
+    
+    showNotification('PDF download started!', 'success');
+  }
+
+  function downloadICS() {
+    const formData = readForm();
+    if (!formData.destination || !formData.start) {
+      showNotification('Please generate a plan with dates first.', 'warning');
+      return;
+    }
+    
+    // Create ICS content
+    const startDate = new Date(formData.start);
+    const endDate = new Date(formData.end);
+    const icsContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Wayzo//Trip Planner//EN',
+      'BEGIN:VEVENT',
+      `SUMMARY:Trip to ${formData.destination}`,
+      `DTSTART:${startDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+      `DTEND:${endDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+      `DESCRIPTION:Trip planned with Wayzo - ${formData.destination}`,
+      'END:VEVENT',
+      'END:VCALENDAR'
+    ].join('\r\n');
+    
+    // Download ICS file
+    const blob = new Blob([icsContent], { type: 'text/calendar' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `trip-${formData.destination.toLowerCase()}.ics`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    
+    showNotification('Calendar file downloaded!', 'success');
+  }
+
+  function downloadExcel() {
+    const formData = readForm();
+    if (!formData.destination) {
+      showNotification('Please generate a plan first.', 'warning');
+      return;
+    }
+    
+    // Create CSV content
+    const csvContent = [
+      'Trip Details',
+      'Destination,' + formData.destination,
+      'Start Date,' + (formData.start || 'Flexible'),
+      'End Date,' + (formData.end || 'Flexible'),
+      'Budget,' + formData.budget + ' ' + formData.currency,
+      'Travelers,' + formData.adults + ' adults, ' + formData.children + ' children',
+      'Style,' + formData.level,
+      '',
+      'Generated by Wayzo Trip Planner',
+      'Date,' + new Date().toLocaleDateString()
+    ].join('\n');
+    
+    // Download CSV file
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `trip-${formData.destination.toLowerCase()}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    
+    showNotification('Excel file downloaded!', 'success');
+  }
+
+  function sharePlan() {
+    const formData = readForm();
+    if (!formData.destination) {
+      showNotification('Please generate a plan first.', 'warning');
+      return;
+    }
+    
+    const shareText = `Check out my trip to ${formData.destination} planned with Wayzo! 🚀✈️`;
+    const shareUrl = window.location.href;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: 'My Wayzo Trip Plan',
+        text: shareText,
+        url: shareUrl
+      });
+    } else {
+      // Fallback for browsers without native sharing
+      navigator.clipboard.writeText(shareText + ' ' + shareUrl);
+      showNotification('Trip details copied to clipboard!', 'success');
+    }
+  }
+
+  // Admin Panel Access
+  function accessAdminPanel() {
+    // Check if user is admin (demo mode makes you admin)
+    if (currentUser && (currentUser.email === 'demo@wayzo.com' || currentUser.isAdmin)) {
+      // Open admin panel in new tab
+      window.open('/admin.html', '_blank');
+      showNotification('Admin panel opened!', 'success');
+    } else {
+      showNotification('Admin access required. Use demo mode for admin access.', 'warning');
+    }
   }
 
   // Event Listeners
