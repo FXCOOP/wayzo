@@ -170,74 +170,42 @@
     }
   };
 
-  // Helper to ensure user is signed in before continuing an action
-  const ensureSignedIn = async () => {
+  // Helper to optionally prompt sign-in (only for full plan)
+  const maybePromptSignIn = async () => {
     if (currentUser) return true;
     try {
-      if (window.google?.accounts?.id?.prompt) {
+      if (window.google && google.accounts && google.accounts.id && typeof google.accounts.id.prompt === 'function') {
         await new Promise((resolve) => {
-          // google prompt is async UI; give user chance to sign in
           google.accounts.id.prompt(() => resolve());
-          setTimeout(resolve, 3000);
+          setTimeout(resolve, 2500);
         });
-      } else {
-        alert('Please sign in to continue.');
       }
     } catch (_) {}
-    // Recheck
     const savedUser = localStorage.getItem('wayzo_user');
-    if (savedUser && !currentUser) {
-      currentUser = JSON.parse(savedUser);
-    }
-    if (!currentUser) {
-      // Fallback: focus sign-in button
-      loginBtn?.focus();
-      return false;
-    }
-    return true;
+    if (savedUser && !currentUser) currentUser = JSON.parse(savedUser);
+    return !!currentUser;
   };
 
-  // Enhanced preview generation (gated by sign-in)
+  // Preview should NOT be gated; keep it simple and reliable
   const generatePreview = async (e) => {
     e?.preventDefault?.();
-    const ok = await ensureSignedIn();
-    if (!ok) return;
     const payload = readForm();
-    
     if (!payload.destination || !payload.budget) {
       previewEl.innerHTML = '<p class="error">Please fill in all required fields.</p>';
       return;
     }
-
-    const affiliateLinks = setAffiliates(payload.destination);
-    hide(pdfBtn);
-    hide(loadingEl);
-    show(loadingEl);
-
+    hide(pdfBtn); hide(icsBtn); show(loadingEl);
     try {
-      const res = await fetch('/api/preview', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-      
+      const res = await fetch('/api/preview', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const out = await res.json();
       previewEl.innerHTML = out.teaser_html || '<p>Preview created successfully!</p>';
-      
-      // Always show affiliate links
       appendAffiliateSection(payload.destination, out);
-      
       trackEvent('preview_generated', { destination: payload.destination });
-      
     } catch (err) {
       console.error('Preview error:', err);
       previewEl.innerHTML = '<p class="error">Preview failed. Please try again.</p>';
-      trackEvent('preview_error', { error: err.message });
-    } finally {
-      hide(loadingEl);
-    }
+    } finally { hide(loadingEl); }
   };
 
   // Bind click handlers after redefining generatePreview
@@ -324,40 +292,49 @@
     } catch (e) { console.error('PayPal init failed:', e); }
   };
 
-  // Override full plan button to enforce paywall (after sign-in)
+  // Ensure PayPal is loaded if configured
+  const preparePaywallUi = async () => {
+    const cfg = window.WAYZO_PUBLIC_CONFIG || {};
+    if (!cfg.PAYPAL_CLIENT_ID) return false;
+    await loadPayPalSdk(cfg.PAYPAL_CLIENT_ID);
+    return true;
+  };
+
+  // Bind full plan with sign-in + paywall
   const bindPaywall = () => {
     if (!fullPlanBtn) return;
     fullPlanBtn.onclick = async (e) => {
       e.preventDefault();
-      const signed = await ensureSignedIn();
-      if (!signed) return;
-      const cfg = window.WAYZO_PUBLIC_CONFIG || {};
-      if (!cfg.PAYPAL_CLIENT_ID) {
-        alert('Payment temporarily unavailable. Generating full plan without charge.');
-        return generateFullPlan();
+      const signed = await maybePromptSignIn();
+      if (!signed) {
+        alert('Please sign in to continue.');
+        return;
       }
-      if (hasPaid) return generateFullPlan();
-      await preparePaywallUi();
-      await renderPayPalButton();
-      alert(`Please complete payment ($${cfg.REPORT_PRICE_USD || 19}) to unlock the full report.`);
+      const cfg = window.WAYZO_PUBLIC_CONFIG || {};
+      if (cfg.PAYPAL_CLIENT_ID && !hasPaid) {
+        const ok = await preparePaywallUi();
+        await renderPayPalButton();
+        const note = document.querySelector('#purchaseNote');
+        if (note) note.classList.remove('hidden');
+        return; // Wait for payment approval to auto-call generateFullPlan
+      }
+      return generateFullPlan();
     };
   };
 
   // Payment confirm endpoint helper (backend must exist)
   // (No-op here; handled in onApprove)
 
-  // Init additions
+  // Init: avoid referencing google if not loaded
   const init = () => {
     const savedUser = localStorage.getItem('wayzo_user');
     if (savedUser) {
       currentUser = JSON.parse(savedUser);
-      loginBtn.textContent = currentUser.name;
-      loginBtn.onclick = showUserMenu;
+      if (loginBtn) { loginBtn.textContent = currentUser.name; loginBtn.onclick = showUserMenu; }
     } else {
       ensureLoginVisible();
-      loginBtn.onclick = () => (window.google?.accounts?.id?.prompt ? google.accounts.id.prompt() : alert('Sign-in temporarily unavailable.'));
+      if (loginBtn) loginBtn.onclick = () => (window.google && google.accounts && google.accounts.id && google.accounts.id.prompt ? google.accounts.id.prompt() : alert('Sign-in temporarily unavailable.'));
     }
-
     setupChildrenAges();
     setupDateModes();
     addUIEnhancements();
