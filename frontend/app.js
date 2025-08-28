@@ -33,7 +33,7 @@
   const toggle = (el) => el && el.classList.toggle('hidden');
 
   // Google OAuth Configuration
-  const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID'; // Replace with your actual client ID
+  const GOOGLE_CLIENT_ID = '895305213685-espndkeltc09u250gvtj6jncqp149jpo.apps.googleusercontent.com';
   
   // Initialize Google OAuth
   const initializeGoogleAuth = () => {
