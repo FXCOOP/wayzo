@@ -503,18 +503,6 @@
     });
   };
 
-  // Run init now
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
-
-  // Setup dietary and style functionality after DOM is ready
-  document.addEventListener('DOMContentLoaded', () => {
-    setupDietaryNeeds();
-    setupStyleSelection();
-    setupReferralSystem();
-    setupAuthentication();
-    setupPersonalCabinet();
-  });
-
   // Setup referral system
   const setupReferralSystem = () => {
     // Generate a unique referral code for the user
@@ -1305,5 +1293,163 @@
     userPlans: [],
     referralCredits: 0
   };
+
+  // Setup multi-destination functionality
+  const setupMultiDestination = () => {
+    const tripTypeRadios = $$('input[name="tripType"]');
+    const singleDestination = $('#singleDestination');
+    const multiDestination = $('#multiDestination');
+    const addDestinationBtn = $('#addDestinationBtn');
+    const multiDestinations = $('.multi-destinations');
+
+    // Handle trip type switching
+    tripTypeRadios.forEach(radio => {
+      radio.addEventListener('change', () => {
+        if (radio.value === 'single') {
+          singleDestination.classList.remove('hidden');
+          multiDestination.classList.add('hidden');
+        } else {
+          singleDestination.classList.add('hidden');
+          multiDestination.classList.remove('hidden');
+        }
+      });
+    });
+
+    // Add new destination
+    if (addDestinationBtn) {
+      addDestinationBtn.addEventListener('click', () => {
+        addNewDestination();
+      });
+    }
+
+    // Setup remove destination buttons
+    setupRemoveDestinationButtons();
+  };
+
+  // Add new destination
+  const addNewDestination = () => {
+    const multiDestinations = $('.multi-destinations');
+    const existingDestinations = $$('.destination-item');
+    const newIndex = existingDestinations.length;
+
+    if (newIndex >= 10) {
+      showNotification('Maximum 10 destinations allowed', 'warning');
+      return;
+    }
+
+    const newDestination = document.createElement('div');
+    newDestination.className = 'destination-item';
+    newDestination.dataset.index = newIndex;
+    newDestination.innerHTML = `
+      <div class="destination-header">
+        <h4>Destination ${newIndex + 1}</h4>
+        <button type="button" class="btn btn-icon remove-destination" title="Remove destination">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="destination-inputs">
+        <div class="field">
+          <span>Place Name</span>
+          <input type="text" name="destinations[${newIndex}][name]" class="form-input" placeholder="e.g., Rome" required />
+        </div>
+        <div class="field">
+          <span>Country</span>
+          <input type="text" name="destinations[${newIndex}][country]" class="form-input" placeholder="e.g., Italy" />
+        </div>
+        <div class="fields-2">
+          <div class="field">
+            <span>Days to Stay</span>
+            <input type="number" name="destinations[${newIndex}][days]" class="form-input" min="1" max="30" value="3" required />
+          </div>
+          <div class="field">
+            <span>Priority Level</span>
+            <select name="destinations[${newIndex}][priority]" class="form-input">
+              <option value="must-see">Must See</option>
+              <option value="high">High Priority</option>
+              <option value="medium" selected>Medium Priority</option>
+              <option value="low">Low Priority</option>
+              <option value="optional">Optional</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <span>Special Requirements</span>
+          <textarea name="destinations[${newIndex}][requirements]" class="form-input" rows="2" placeholder="Any specific requirements for this destination..."></textarea>
+        </div>
+      </div>
+    `;
+
+    multiDestinations.appendChild(newDestination);
+    
+    // Setup remove button for new destination
+    const removeBtn = newDestination.querySelector('.remove-destination');
+    if (removeBtn) {
+      removeBtn.addEventListener('click', () => {
+        removeDestination(newDestination);
+      });
+    }
+
+    // Update destination numbers
+    updateDestinationNumbers();
+    
+    // Scroll to new destination
+    newDestination.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    showNotification(`Destination ${newIndex + 1} added!`, 'success');
+  };
+
+  // Remove destination
+  const removeDestination = (destinationElement) => {
+    destinationElement.classList.add('removing');
+    
+    setTimeout(() => {
+      destinationElement.remove();
+      updateDestinationNumbers();
+      showNotification('Destination removed', 'info');
+    }, 300);
+  };
+
+  // Update destination numbers
+  const updateDestinationNumbers = () => {
+    const destinations = $$('.destination-item');
+    destinations.forEach((dest, index) => {
+      const header = dest.querySelector('h4');
+      if (header) {
+        header.textContent = `Destination ${index + 1}`;
+      }
+      
+      // Update form field names
+      const inputs = dest.querySelectorAll('input, select, textarea');
+      inputs.forEach(input => {
+        const name = input.name;
+        if (name.includes('[0]')) {
+          input.name = name.replace('[0]', `[${index}]`);
+        }
+      });
+    });
+  };
+
+  // Setup remove destination buttons
+  const setupRemoveDestinationButtons = () => {
+    const removeButtons = $$('.remove-destination');
+    removeButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const destinationItem = btn.closest('.destination-item');
+        if (destinationItem) {
+          removeDestination(destinationItem);
+        }
+      });
+    });
+  };
+
+  // Initialize all features when DOM is ready
+  document.addEventListener('DOMContentLoaded', () => {
+    setupDietaryNeeds();
+    setupStyleSelection();
+    setupReferralSystem();
+    setupAuthentication();
+    setupPersonalCabinet();
+    setupMultiDestination();
+  });
 
 })();

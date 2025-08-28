@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wayzo Admin Dashboard - Back Office Management</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Admin Header -->
+    <header class="admin-header">
+        <div class="admin-header-content">
+            <div class="admin-brand">
+                <span class="brand-badge">WZ</span>
+                <span class="brand-name">Wayzo Admin</span>
+                <span class="admin-badge">Enterprise</span>
+            </div>
+            <div class="admin-actions">
+                <div class="admin-user">
+                    <img src="/assets/default-avatar.svg" alt="Admin" class="admin-avatar">
+                    <span class="admin-name">System Administrator</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <button class="btn btn-ghost" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Admin Navigation -->
+    <nav class="admin-nav">
+        <div class="admin-nav-content">
+            <ul class="admin-nav-menu">
+                <li class="nav-item active">
+                    <a href="#dashboard" class="nav-link">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#users" class="nav-link">
+                        <i class="fas fa-users"></i>
+                        <span>Users</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#trips" class="nav-link">
+                        <i class="fas fa-map-marked-alt"></i>
+                        <span>Trips</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#analytics" class="nav-link">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Analytics</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#reports" class="nav-link">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Reports</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#logs" class="nav-link">
+                        <i class="fas fa-list-alt"></i>
+                        <span>System Logs</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#settings" class="nav-link">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Admin Content -->
+    <main class="admin-main">
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="admin-section active">
+            <div class="admin-section-header">
+                <h1>System Dashboard</h1>
+                <p>Real-time overview of Wayzo platform performance</p>
+            </div>
+
+            <!-- Key Metrics -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h3 id="totalUsers">0</h3>
+                        <p>Total Users</p>
+                        <span class="metric-change positive">+12.5%</span>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-map-marked-alt"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h3 id="totalTrips">0</h3>
+                        <p>Trips Created</p>
+                        <span class="metric-change positive">+8.3%</span>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h3 id="totalRevenue">$0</h3>
+                        <p>Revenue (MTD)</p>
+                        <span class="metric-change positive">+15.2%</span>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h3 id="conversionRate">0%</h3>
+                        <p>Conversion Rate</p>
+                        <span class="metric-change negative">-2.1%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="charts-row">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>User Growth</h3>
+                        <div class="chart-controls">
+                            <select id="userGrowthPeriod" class="chart-select">
+                                <option value="7">Last 7 days</option>
+                                <option value="30" selected>Last 30 days</option>
+                                <option value="90">Last 90 days</option>
+                            </select>
+                        </div>
+                    </div>
+                    <canvas id="userGrowthChart"></canvas>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Revenue Trends</h3>
+                        <div class="chart-controls">
+                            <select id="revenuePeriod" class="chart-select">
+                                <option value="7">Last 7 days</option>
+                                <option value="30" selected>Last 30 days</option>
+                                <option value="90">Last 90 days</option>
+                            </select>
+                        </div>
+                    </div>
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="activity-section">
+                <div class="activity-header">
+                    <h3>Recent Activity</h3>
+                    <button class="btn btn-secondary" id="viewAllActivity">View All</button>
+                </div>
+                <div class="activity-list" id="recentActivity">
+                    <!-- Activity items will be populated here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Users Section -->
+        <section id="users" class="admin-section">
+            <div class="admin-section-header">
+                <h1>User Management</h1>
+                <p>Manage user accounts, permissions, and access control</p>
+            </div>
+
+            <div class="users-controls">
+                <div class="search-box">
+                    <input type="text" id="userSearch" placeholder="Search users..." class="search-input">
+                    <i class="fas fa-search"></i>
+                </div>
+                <div class="user-filters">
+                    <select id="userStatusFilter" class="filter-select">
+                        <option value="">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="suspended">Suspended</option>
+                    </select>
+                    <select id="userRoleFilter" class="filter-select">
+                        <option value="">All Roles</option>
+                        <option value="user">User</option>
+                        <option value="premium">Premium</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" id="exportUsers">
+                    <i class="fas fa-download"></i>
+                    Export Users
+                </button>
+            </div>
+
+            <div class="users-table-container">
+                <table class="admin-table" id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Email</th>
+                            <th>Status</th>
+                            <th>Role</th>
+                            <th>Joined</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <!-- User rows will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Analytics Section -->
+        <section id="analytics" class="admin-section">
+            <div class="admin-section-header">
+                <h1>Advanced Analytics</h1>
+                <p>Deep insights into user behavior and platform performance</p>
+            </div>
+
+            <div class="analytics-grid">
+                <div class="analytics-card">
+                    <h3>Geographic Distribution</h3>
+                    <canvas id="geoChart"></canvas>
+                </div>
+
+                <div class="analytics-card">
+                    <h3>Popular Destinations</h3>
+                    <canvas id="destinationsChart"></canvas>
+                </div>
+
+                <div class="analytics-card">
+                    <h3>User Engagement</h3>
+                    <canvas id="engagementChart"></canvas>
+                </div>
+
+                <div class="analytics-card">
+                    <h3>Conversion Funnel</h3>
+                    <canvas id="funnelChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Reports Section -->
+        <section id="reports" class="admin-section">
+            <div class="admin-section-header">
+                <h1>Reports & Insights</h1>
+                <p>Generate comprehensive reports and business intelligence</p>
+            </div>
+
+            <div class="reports-grid">
+                <div class="report-card">
+                    <div class="report-icon">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <h3>Business Intelligence Report</h3>
+                    <p>Comprehensive analysis of platform performance, user behavior, and revenue metrics</p>
+                    <button class="btn btn-primary" onclick="generateReport('bi')">Generate Report</button>
+                </div>
+
+                <div class="report-card">
+                    <div class="report-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3>User Analytics Report</h3>
+                    <p>Detailed user behavior analysis, demographics, and engagement patterns</p>
+                    <button class="btn btn-primary" onclick="generateReport('users')">Generate Report</button>
+                </div>
+
+                <div class="report-card">
+                    <div class="report-icon">
+                        <i class="fas fa-map-marked-alt"></i>
+                    </div>
+                    <h3>Trip Planning Report</h3>
+                    <p>Analysis of trip planning patterns, popular destinations, and seasonal trends</p>
+                    <button class="btn btn-primary" onclick="generateReport('trips')">Generate Report</button>
+                </div>
+
+                <div class="report-card">
+                    <div class="report-icon">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <h3>Financial Report</h3>
+                    <p>Revenue analysis, cost breakdown, and profitability metrics</p>
+                    <button class="btn btn-primary" onclick="generateReport('financial')">Generate Report</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- System Logs Section -->
+        <section id="logs" class="admin-section">
+            <div class="admin-section-header">
+                <h1>System Logs</h1>
+                <p>Monitor system performance, errors, and security events</p>
+            </div>
+
+            <div class="logs-controls">
+                <div class="log-filters">
+                    <select id="logLevelFilter" class="filter-select">
+                        <option value="">All Levels</option>
+                        <option value="error">Error</option>
+                        <option value="warning">Warning</option>
+                        <option value="info">Info</option>
+                        <option value="debug">Debug</option>
+                    </select>
+                    <select id="logTimeFilter" class="filter-select">
+                        <option value="1">Last Hour</option>
+                        <option value="24" selected>Last 24 Hours</option>
+                        <option value="168">Last Week</option>
+                        <option value="720">Last Month</option>
+                    </select>
+                </div>
+                <button class="btn btn-secondary" id="refreshLogs">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh
+                </button>
+            </div>
+
+            <div class="logs-container">
+                <div class="logs-table-container">
+                    <table class="admin-table" id="logsTable">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Level</th>
+                                <th>Source</th>
+                                <th>Message</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logsTableBody">
+                            <!-- Log entries will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Settings Section -->
+        <section id="settings" class="admin-section">
+            <div class="admin-section-header">
+                <h1>System Settings</h1>
+                <p>Configure platform settings, integrations, and system parameters</p>
+            </div>
+
+            <div class="settings-grid">
+                <div class="settings-card">
+                    <h3>General Settings</h3>
+                    <form class="settings-form">
+                        <div class="form-group">
+                            <label>Platform Name</label>
+                            <input type="text" value="Wayzo" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Maintenance Mode</label>
+                            <label class="switch">
+                                <input type="checkbox" id="maintenanceMode">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>Default Language</label>
+                            <select class="form-input">
+                                <option value="en" selected>English</option>
+                                <option value="es">Spanish</option>
+                                <option value="fr">French</option>
+                                <option value="de">German</option>
+                                <option value="it">Italian</option>
+                                <option value="pt">Portuguese</option>
+                                <option value="ru">Russian</option>
+                                <option value="zh">Chinese</option>
+                                <option value="ja">Japanese</option>
+                                <option value="ko">Korean</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </form>
+                </div>
+
+                <div class="settings-card">
+                    <h3>Security Settings</h3>
+                    <form class="settings-form">
+                        <div class="form-group">
+                            <label>Two-Factor Authentication</label>
+                            <label class="switch">
+                                <input type="checkbox" id="twoFactorAuth" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>Session Timeout (minutes)</label>
+                            <input type="number" value="30" min="5" max="480" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Password Policy</label>
+                            <select class="form-input">
+                                <option value="low">Low (6+ characters)</option>
+                                <option value="medium" selected>Medium (8+ characters, mixed case)</option>
+                                <option value="high">High (10+ characters, symbols required)</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </form>
+                </div>
+
+                <div class="settings-card">
+                    <h3>Integration Settings</h3>
+                    <form class="settings-form">
+                        <div class="form-group">
+                            <label>Google Analytics ID</label>
+                            <input type="text" placeholder="GA-XXXXXXXXX" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Stripe API Key</label>
+                            <input type="password" placeholder="sk_test_..." class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Email Service</label>
+                            <select class="form-input">
+                                <option value="sendgrid">SendGrid</option>
+                                <option value="mailgun">Mailgun</option>
+                                <option value="ses">AWS SES</option>
+                                <option value="smtp">SMTP</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Admin Scripts -->
+    <script src="admin.js"></script>
+</body>
+</html>
