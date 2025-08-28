@@ -554,73 +554,113 @@
             
             <!-- Sign In Tab -->
             <div id="signinTab" class="auth-tab-content active">
-                <div class="auth-options">
-                    <button id="googleSignInBtn" class="btn btn-google">
-                        <i class="fab fa-google"></i>
-                        Continue with Google
-                    </button>
-                    
-                    <div class="auth-divider">
-                        <span>or</span>
-                    </div>
-                    
-                    <form id="signinForm" class="auth-form">
-                        <div class="form-group">
-                            <label for="signinEmail">Email</label>
-                            <input type="email" id="signinEmail" name="email" required class="form-input">
-                        </div>
-                        <div class="form-group">
-                            <label for="signinPassword">Password</label>
-                            <input type="password" id="signinPassword" name="password" required class="form-input">
-                        </div>
-                        <button type="submit" class="btn btn-primary btn-full">Sign In</button>
-                    </form>
-                    
-                    <div class="auth-links">
-                        <a href="#" id="forgotPasswordLink">Forgot password?</a>
-                    </div>
+              <div class="auth-options">
+                <button id="googleSignInBtn" class="btn btn-google">
+                  <i class="fab fa-google"></i>
+                  Continue with Google
+                </button>
+                
+                <button id="facebookSignInBtn" class="btn btn-facebook">
+                  <i class="fab fa-facebook-f"></i>
+                  Continue with Facebook
+                </button>
+                
+                <button id="appleSignInBtn" class="btn btn-apple">
+                  <i class="fab fa-apple"></i>
+                  Continue with Apple
+                </button>
+                
+                <div class="auth-divider">
+                  <span>or</span>
                 </div>
+                
+                <form id="signinForm" class="auth-form">
+                  <div class="form-group">
+                    <label for="signinEmail">Email</label>
+                    <input type="email" id="signinEmail" name="email" required class="form-input" placeholder="Enter your email">
+                  </div>
+                  <div class="form-group">
+                    <label for="signinPassword">Password</label>
+                    <input type="password" id="signinPassword" name="password" required class="form-input" placeholder="Enter your password">
+                  </div>
+                  <button type="submit" class="btn btn-primary btn-full">Sign In</button>
+                </form>
+                
+                <div class="auth-links">
+                  <a href="#" id="forgotPasswordLink">Forgot password?</a>
+                </div>
+                
+                <div class="demo-mode">
+                  <p class="demo-text">Want to try it out?</p>
+                  <button id="demoSignInBtn" class="btn btn-demo">
+                    <i class="fas fa-play"></i>
+                    Try Demo Mode
+                  </button>
+                </div>
+              </div>
             </div>
             
             <!-- Sign Up Tab -->
             <div id="signupTab" class="auth-tab-content">
-                <div class="auth-options">
-                    <button id="googleSignUpBtn" class="btn btn-google">
-                        <i class="fab fa-google"></i>
-                        Sign up with Google
-                    </button>
-                    
-                    <div class="auth-divider">
-                        <span>or</span>
-                    </div>
-                    
-                    <form id="signupForm" class="auth-form">
-                        <div class="form-group">
-                            <label for="signupName">Full Name</label>
-                            <input type="text" id="signupName" name="name" required class="form-input">
-                        </div>
-                        <div class="form-group">
-                            <label for="signupEmail">Email</label>
-                            <input type="email" id="signupEmail" name="email" required class="form-input">
-                        </div>
-                        <div class="form-group">
-                            <label for="signupPassword">Password</label>
-                            <input type="password" id="signupPassword" name="password" required class="form-input" minlength="8">
-                        </div>
-                        <div class="form-group">
-                            <label for="signupConfirmPassword">Confirm Password</label>
-                            <input type="password" id="signupConfirmPassword" name="confirmPassword" required class="form-input" minlength="8">
-                        </div>
-                        <div class="form-group checkbox-group">
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="agreeTerms" name="agreeTerms" required>
-                                <span class="checkbox-custom"></span>
-                                I agree to the <a href="/terms" target="_blank">Terms of Service</a> and <a href="/privacy" target="_blank">Privacy Policy</a>
-                            </label>
-                        </div>
-                        <button type="submit" class="btn btn-primary btn-full">Create Account</button>
-                    </form>
+              <div class="auth-options">
+                <button id="googleSignUpBtn" class="btn btn-google">
+                  <i class="fab fa-google"></i>
+                  Sign up with Google
+                </button>
+                
+                <button id="facebookSignUpBtn" class="btn btn-facebook">
+                  <i class="fab fa-facebook-f"></i>
+                  Sign up with Facebook
+                </button>
+                
+                <button id="appleSignUpBtn" class="btn btn-apple">
+                  <i class="fab fa-apple"></i>
+                  Sign up with Apple
+                </button>
+                
+                <div class="auth-divider">
+                  <span>or</span>
                 </div>
+                
+                <div class="quick-signup">
+                  <p class="quick-signup-text">Quick signup with email only</p>
+                  <button id="quickSignupBtn" class="btn btn-outline">
+                    <i class="fas fa-envelope"></i>
+                    Sign up with Email
+                  </button>
+                </div>
+                
+                <form id="signupForm" class="auth-form">
+                  <div class="form-group">
+                    <label for="signupName">Full Name</label>
+                    <input type="text" id="signupName" name="name" required class="form-input" placeholder="Enter your full name">
+                  </div>
+                  <div class="form-group">
+                    <label for="signupEmail">Email</label>
+                    <input type="email" id="signupEmail" name="email" required class="form-input" placeholder="Enter your email">
+                  </div>
+                  <div class="form-group">
+                    <label for="signupPassword">Password</label>
+                    <input type="password" id="signupPassword" name="password" required class="form-input" placeholder="Create a password (min. 8 characters)" minlength="8">
+                  </div>
+                  <div class="form-group">
+                    <label for="signupConfirmPassword">Confirm Password</label>
+                    <input type="password" id="signupConfirmPassword" name="confirmPassword" required class="form-input" placeholder="Confirm your password" minlength="8">
+                  </div>
+                  <div class="form-group checkbox-group">
+                    <label class="checkbox-label">
+                      <input type="checkbox" id="agreeTerms" name="agreeTerms" required>
+                      <span class="checkbox-custom"></span>
+                      I agree to the <a href="/terms" target="_blank">Terms of Service</a> and <a href="/privacy" target="_blank">Privacy Policy</a>
+                    </label>
+                  </div>
+                  <button type="submit" class="btn btn-primary btn-full">Create Account</button>
+                </form>
+                
+                <div class="auth-links">
+                  <p class="auth-note">By signing up, you agree to receive updates about your trips and special offers.</p>
+                </div>
+              </div>
             </div>
         </div>
     </div>

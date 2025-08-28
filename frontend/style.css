@@ -523,6 +523,96 @@ fieldset.field .chip {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
+.btn-facebook {
+  background: #1877f2;
+  color: white;
+  border: 2px solid #1877f2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-facebook:hover {
+  background: #166fe5;
+  border-color: #166fe5;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(24, 119, 242, 0.3);
+}
+
+.btn-apple {
+  background: #000;
+  color: white;
+  border: 2px solid #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-apple:hover {
+  background: #1a1a1a;
+  border-color: #1a1a1a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.quick-signup {
+  text-align: center;
+  margin: 20px 0;
+}
+
+.quick-signup-text {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 12px;
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--brand);
+  border: 2px solid var(--brand);
+  transition: all 0.2s ease;
+}
+
+.btn-outline:hover {
+  background: var(--brand);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.demo-mode {
+  text-align: center;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.demo-text {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 12px;
+}
+
+.btn-demo {
+  background: #10b981;
+  color: white;
+  border: 2px solid #10b981;
+  transition: all 0.2s ease;
+}
+
+.btn-demo:hover {
+  background: #059669;
+  border-color: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
 .auth-divider {
   display: flex;
   align-items: center;
@@ -593,6 +683,14 @@ fieldset.field .chip {
 
 .auth-links a:hover {
   text-decoration: underline;
+}
+
+.auth-note {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-align: center;
+  margin: 0;
+  line-height: 1.4;
 }
 
 .checkbox-group {

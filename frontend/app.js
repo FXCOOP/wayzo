@@ -557,6 +557,18 @@
 
   // Setup authentication system
   const setupAuthentication = () => {
+    console.log('Setting up authentication...');
+    
+    // Initialize wayzoApp if it doesn't exist
+    if (!window.wayzoApp) {
+      window.wayzoApp = {
+        isAuthenticated: false,
+        currentUser: null,
+        userPlans: [],
+        referralCredits: 0
+      };
+    }
+
     // Check if user is already authenticated
     const token = localStorage.getItem('wayzo_token');
     if (token) {
@@ -572,16 +584,23 @@
     const authTabs = $$('.auth-tab');
     const authTabContents = $$('.auth-tab-content');
 
+    console.log('Login button:', loginBtn);
+    console.log('Auth modal:', authModal);
+
     // Show auth modal when login button is clicked
     if (loginBtn) {
-      loginBtn.addEventListener('click', () => {
+      loginBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Login button clicked');
         showAuthModal();
       });
     }
 
     // Close auth modal
     if (closeAuthModal) {
-      closeAuthModal.addEventListener('click', () => {
+      closeAuthModal.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Close button clicked');
         hideAuthModal();
       });
     }
@@ -590,6 +609,7 @@
     if (authModal) {
       authModal.addEventListener('click', (e) => {
         if (e.target === authModal) {
+          console.log('Clicked outside modal');
           hideAuthModal();
         }
       });
@@ -597,8 +617,10 @@
 
     // Tab switching
     authTabs.forEach(tab => {
-      tab.addEventListener('click', () => {
+      tab.addEventListener('click', (e) => {
+        e.preventDefault();
         const targetTab = tab.dataset.tab;
+        console.log('Switching to tab:', targetTab);
         switchAuthTab(targetTab);
       });
     });
@@ -609,15 +631,19 @@
 
   // Show authentication modal
   const showAuthModal = () => {
+    console.log('Showing auth modal');
     const authModal = $('#authModal');
     if (authModal) {
       authModal.classList.remove('hidden');
       document.body.style.overflow = 'hidden';
+    } else {
+      console.error('Auth modal not found');
     }
   };
 
   // Hide authentication modal
   const hideAuthModal = () => {
+    console.log('Hiding auth modal');
     const authModal = $('#authModal');
     if (authModal) {
       authModal.classList.add('hidden');
@@ -627,6 +653,7 @@
 
   // Switch between auth tabs
   const switchAuthTab = (targetTab) => {
+    console.log('Switching to tab:', targetTab);
     const authTabs = $$('.auth-tab');
     const authTabContents = $$('.auth-tab-content');
 
@@ -651,15 +678,24 @@
 
   // Setup authentication forms
   const setupAuthForms = () => {
+    console.log('Setting up auth forms...');
     const signinForm = $('#signinForm');
     const signupForm = $('#signupForm');
     const googleSignInBtn = $('#googleSignInBtn');
     const googleSignUpBtn = $('#googleSignUpBtn');
+    const facebookSignInBtn = $('#facebookSignInBtn');
+    const facebookSignUpBtn = $('#facebookSignUpBtn');
+    const appleSignInBtn = $('#appleSignInBtn');
+    const appleSignUpBtn = $('#appleSignUpBtn');
+
+    console.log('Signin form:', signinForm);
+    console.log('Signup form:', signupForm);
 
     // Manual sign in
     if (signinForm) {
       signinForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        console.log('Signin form submitted');
         await handleManualSignIn();
       });
     }
@@ -668,29 +704,102 @@
     if (signupForm) {
       signupForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        console.log('Signup form submitted');
         await handleManualSignUp();
       });
     }
 
     // Google sign in
     if (googleSignInBtn) {
-      googleSignInBtn.addEventListener('click', () => {
+      googleSignInBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Google signin clicked');
         handleGoogleSignIn();
       });
     }
 
     // Google sign up
     if (googleSignUpBtn) {
-      googleSignUpBtn.addEventListener('click', () => {
+      googleSignUpBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Google signup clicked');
         handleGoogleSignUp();
+      });
+    }
+
+    // Facebook sign in
+    if (facebookSignInBtn) {
+      facebookSignInBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Facebook signin clicked');
+        handleFacebookSignIn();
+      });
+    }
+
+    // Facebook sign up
+    if (facebookSignUpBtn) {
+      facebookSignUpBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Facebook signup clicked');
+        handleFacebookSignUp();
+      });
+    }
+
+    // Apple sign in
+    if (appleSignInBtn) {
+      appleSignInBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Apple signin clicked');
+        handleAppleSignIn();
+      });
+    }
+
+    // Apple sign up
+    if (appleSignUpBtn) {
+      appleSignUpBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Apple signup clicked');
+        handleAppleSignUp();
+      });
+    }
+
+    // Quick signup button
+    const quickSignupBtn = $('#quickSignupBtn');
+    if (quickSignupBtn) {
+      quickSignupBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Quick signup clicked');
+        // Highlight the email form fields
+        const signupName = $('#signupName');
+        const signupEmail = $('#signupEmail');
+        if (signupName) signupName.focus();
+        showNotification('Fill in your details below to create your account!', 'info');
+      });
+    }
+
+    // Demo mode button
+    const demoSignInBtn = $('#demoSignInBtn');
+    if (demoSignInBtn) {
+      demoSignInBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Demo mode clicked');
+        handleDemoMode();
       });
     }
   };
 
   // Handle manual sign in
   const handleManualSignIn = async () => {
-    const email = $('#signinEmail').value;
-    const password = $('#signinPassword').value;
+    console.log('Handling manual signin...');
+    const email = $('#signinEmail')?.value;
+    const password = $('#signinPassword')?.value;
+
+    console.log('Email:', email, 'Password:', password);
+
+    if (!email || !password) {
+      showNotification('Please fill in all fields', 'error');
+      return;
+    }
 
     try {
       // In a real app, you'd send this to your backend
@@ -705,17 +814,26 @@
       hideAuthModal();
       showNotification(`Welcome back, ${user.name}!`, 'success');
     } catch (error) {
+      console.error('Signin error:', error);
       showNotification('Invalid email or password', 'error');
     }
   };
 
   // Handle manual sign up
   const handleManualSignUp = async () => {
-    const name = $('#signupName').value;
-    const email = $('#signupEmail').value;
-    const password = $('#signupPassword').value;
-    const confirmPassword = $('#signupConfirmPassword').value;
-    const agreeTerms = $('#agreeTerms').checked;
+    console.log('Handling manual signup...');
+    const name = $('#signupName')?.value;
+    const email = $('#signupEmail')?.value;
+    const password = $('#signupPassword')?.value;
+    const confirmPassword = $('#signupConfirmPassword')?.value;
+    const agreeTerms = $('#agreeTerms')?.checked;
+
+    console.log('Signup data:', { name, email, password, confirmPassword, agreeTerms });
+
+    if (!name || !email || !password || !confirmPassword) {
+      showNotification('Please fill in all fields', 'error');
+      return;
+    }
 
     if (password !== confirmPassword) {
       showNotification('Passwords do not match', 'error');
@@ -740,12 +858,14 @@
       hideAuthModal();
       showNotification(`Welcome to Wayzo, ${user.name}!`, 'success');
     } catch (error) {
+      console.error('Signup error:', error);
       showNotification('Failed to create account', 'error');
     }
   };
 
   // Mock manual sign in (replace with real backend)
   const mockManualSignIn = async (email, password) => {
+    console.log('Mock signin for:', email);
     // Simulate API call
     return new Promise((resolve, reject) => {
       setTimeout(() => {
@@ -765,6 +885,7 @@
 
   // Mock manual sign up (replace with real backend)
   const mockManualSignUp = async (name, email, password) => {
+    console.log('Mock signup for:', name, email);
     // Simulate API call
     return new Promise((resolve) => {
       setTimeout(() => {
@@ -1017,6 +1138,26 @@
     showNotification('Google sign-up coming soon!', 'info');
   };
 
+  const handleFacebookSignIn = () => {
+    // This would integrate with Facebook OAuth
+    showNotification('Facebook sign-in coming soon!', 'info');
+  };
+
+  const handleFacebookSignUp = () => {
+    // This would integrate with Facebook OAuth
+    showNotification('Facebook sign-up coming soon!', 'info');
+  };
+
+  const handleAppleSignIn = () => {
+    // This would integrate with Apple OAuth
+    showNotification('Apple sign-in coming soon!', 'info');
+  };
+
+  const handleAppleSignUp = () => {
+    // This would integrate with Apple OAuth
+    showNotification('Apple sign-up coming soon!', 'info');
+  };
+
   const showNotification = (message, type = 'info') => {
     // Create notification element
     const notification = document.createElement('div');
@@ -1138,6 +1279,23 @@
     if (shareUrl) {
       window.open(shareUrl, '_blank');
     }
+  };
+
+  // Demo mode functionality
+  const handleDemoMode = () => {
+    console.log('Handling demo mode...');
+    const demoUser = {
+      id: 'demo_user_1',
+      name: 'Demo User',
+      email: 'demo@wayzo.com',
+      picture: '/assets/default-avatar.svg'
+    };
+    window.wayzoApp.currentUser = demoUser;
+    window.wayzoApp.isAuthenticated = true;
+    localStorage.setItem('wayzo_token', 'demo_token_' + Date.now());
+    localStorage.setItem('wayzo_user', JSON.stringify(demoUser));
+    updateUIForAuthenticatedUser();
+    showNotification('Welcome to Wayzo (Demo Mode)!', 'success');
   };
 
   // Initialize wayzoApp object
