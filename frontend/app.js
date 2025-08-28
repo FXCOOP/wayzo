@@ -54,94 +54,6 @@
     return affiliateLinks;
   };
 
-  // Enhanced preview generation
-  const generatePreview = async (e) => {
-    e.preventDefault();
-    const payload = readForm();
-    
-    if (!payload.destination || !payload.start || !payload.end || !payload.budget) {
-      previewEl.innerHTML = '<p class="error">Please fill in all required fields.</p>';
-      return;
-    }
-
-    const affiliateLinks = setAffiliates(payload.destination);
-    hide(pdfBtn);
-    hide(loadingEl);
-    show(loadingEl);
-
-    try {
-      const res = await fetch('/api/preview', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-      
-      const out = await res.json();
-      previewEl.innerHTML = out.teaser_html || '<p>Preview created successfully!</p>';
-      
-      // Add affiliate links below the preview
-      if (out.affiliates && Object.keys(out.affiliates).length > 0) {
-        const affiliateSection = createAffiliateSection(affiliateLinks);
-        previewEl.appendChild(affiliateSection);
-      }
-      
-    } catch (err) {
-      console.error('Preview error:', err);
-      previewEl.innerHTML = '<p class="error">Preview failed. Please try again.</p>';
-    } finally {
-      hide(loadingEl);
-    }
-  };
-
-  // Enhanced full plan generation
-  const generateFullPlan = async () => {
-    const payload = readForm();
-    
-    if (!payload.destination || !payload.start || !payload.end || !payload.budget) {
-      previewEl.innerHTML = '<p class="error">Please fill in all required fields.</p>';
-      return;
-    }
-
-    const affiliateLinks = setAffiliates(payload.destination);
-    hide(pdfBtn);
-    show(loadingEl);
-
-    try {
-      const res = await fetch('/api/plan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-      
-      const out = await res.json();
-      
-      if (out.html) {
-        previewEl.innerHTML = out.html;
-        
-        // Add affiliate links and PDF button
-        const affiliateSection = createAffiliateSection(affiliateLinks);
-        previewEl.appendChild(affiliateSection);
-        
-        if (out.id) {
-          pdfBtn.href = `/api/plan/${out.id}/pdf`;
-          show(pdfBtn);
-        }
-      } else {
-        previewEl.innerHTML = '<p class="error">No plan generated. Please try again.</p>';
-      }
-      
-    } catch (err) {
-      console.error('Full plan error:', err);
-      previewEl.innerHTML = '<p class="error">Plan generation failed. Please try again.</p>';
-    } finally {
-      hide(loadingEl);
-    }
-  };
-
   // Create affiliate links section
   const createAffiliateSection = (links) => {
     const section = document.createElement('div');
@@ -211,7 +123,124 @@
     }
   };
 
-  // Wire up events
+  // Enhanced full plan generation
+  const generateFullPlan = async () => {
+    const payload = readForm();
+    
+    if (!payload.destination || !payload.start || !payload.end || !payload.budget) {
+      previewEl.innerHTML = '<p class="error">Please fill in all required fields.</p>';
+      return;
+    }
+
+    const affiliateLinks = setAffiliates(payload.destination);
+    hide(pdfBtn);
+    show(loadingEl);
+
+    try {
+      const res = await fetch('/api/plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      
+      const out = await res.json();
+      
+      if (out.html) {
+        previewEl.innerHTML = out.html;
+        
+        // Add affiliate links and PDF button
+        const affiliateSection = createAffiliateSection(affiliateLinks);
+        previewEl.appendChild(affiliateSection);
+        
+        if (out.id) {
+          pdfBtn.href = `/api/plan/${out.id}/pdf`;
+          show(pdfBtn);
+        }
+      } else {
+        previewEl.innerHTML = '<p class="error">No plan generated. Please try again.</p>';
+      }
+      
+    } catch (err) {
+      console.error('Full plan error:', err);
+      previewEl.innerHTML = '<p class="error">Plan generation failed. Please try again.</p>';
+    } finally {
+      hide(loadingEl);
+    }
+  };
+
+  // Helper to ensure user is signed in before continuing an action
+  const ensureSignedIn = async () => {
+    if (currentUser) return true;
+    try {
+      if (window.google?.accounts?.id?.prompt) {
+        await new Promise((resolve) => {
+          // google prompt is async UI; give user chance to sign in
+          google.accounts.id.prompt(() => resolve());
+          setTimeout(resolve, 3000);
+        });
+      } else {
+        alert('Please sign in to continue.');
+      }
+    } catch (_) {}
+    // Recheck
+    const savedUser = localStorage.getItem('wayzo_user');
+    if (savedUser && !currentUser) {
+      currentUser = JSON.parse(savedUser);
+    }
+    if (!currentUser) {
+      // Fallback: focus sign-in button
+      loginBtn?.focus();
+      return false;
+    }
+    return true;
+  };
+
+  // Enhanced preview generation (gated by sign-in)
+  const generatePreview = async (e) => {
+    e?.preventDefault?.();
+    const ok = await ensureSignedIn();
+    if (!ok) return;
+    const payload = readForm();
+    
+    if (!payload.destination || !payload.budget) {
+      previewEl.innerHTML = '<p class="error">Please fill in all required fields.</p>';
+      return;
+    }
+
+    const affiliateLinks = setAffiliates(payload.destination);
+    hide(pdfBtn);
+    hide(loadingEl);
+    show(loadingEl);
+
+    try {
+      const res = await fetch('/api/preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      
+      const out = await res.json();
+      previewEl.innerHTML = out.teaser_html || '<p>Preview created successfully!</p>';
+      
+      // Always show affiliate links
+      appendAffiliateSection(payload.destination, out);
+      
+      trackEvent('preview_generated', { destination: payload.destination });
+      
+    } catch (err) {
+      console.error('Preview error:', err);
+      previewEl.innerHTML = '<p class="error">Preview failed. Please try again.</p>';
+      trackEvent('preview_error', { error: err.message });
+    } finally {
+      hide(loadingEl);
+    }
+  };
+
+  // Bind click handlers after redefining generatePreview
   form.addEventListener('submit', generatePreview);
   fullPlanBtn?.addEventListener('click', generateFullPlan);
   saveBtn?.addEventListener('click', savePreview);
@@ -295,23 +324,23 @@
     } catch (e) { console.error('PayPal init failed:', e); }
   };
 
-  // Override full plan button to enforce paywall
+  // Override full plan button to enforce paywall (after sign-in)
   const bindPaywall = () => {
     if (!fullPlanBtn) return;
-    const originalHandler = generateFullPlan;
-    fullPlanBtn.removeEventListener('click', originalHandler);
-    fullPlanBtn.addEventListener('click', async (e) => {
+    fullPlanBtn.onclick = async (e) => {
       e.preventDefault();
+      const signed = await ensureSignedIn();
+      if (!signed) return;
       const cfg = window.WAYZO_PUBLIC_CONFIG || {};
       if (!cfg.PAYPAL_CLIENT_ID) {
-        // If no PayPal configured, fall back to original
-        return originalHandler();
+        alert('Payment temporarily unavailable. Generating full plan without charge.');
+        return generateFullPlan();
       }
-      if (hasPaid) return originalHandler();
-      // Show PayPal and prompt user
+      if (hasPaid) return generateFullPlan();
+      await preparePaywallUi();
       await renderPayPalButton();
       alert(`Please complete payment ($${cfg.REPORT_PRICE_USD || 19}) to unlock the full report.`);
-    });
+    };
   };
 
   // Payment confirm endpoint helper (backend must exist)
