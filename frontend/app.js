@@ -10,106 +10,102 @@
   const pdfBtn = $('#pdfBtn');
   const fullPlanBtn = $('#fullPlanBtn');
   const saveBtn = $('#saveBtn');
-  const icsBtn = document.querySelector('#icsBtn');
-  
-  // Make login more visible if Google API not ready
-  const ensureLoginVisible = () => {
-    if (loginBtn) loginBtn.classList.add('btn-primary');
+
+  if (!form || !previewEl) return; // nothing to wire up
+
+  const show = (el) => el && el.classList.remove('hidden');
+  const hide = (el) => el && el.classList.add('hidden');
+
+  // Enhanced form reading with professional brief
+  const readForm = () => {
+    const data = Object.fromEntries(new FormData(form).entries());
+    data.travelers = Number(data.travelers || 2);
+    data.budget = Number(data.budget || 0);
+    data.level = data.level || 'budget';
+    
+    // Clean up brief text if provided
+    if (data.brief) {
+      data.brief = data.brief.trim();
+      if (data.brief) {
+        data.professional_brief = data.brief; // Add to payload for AI
+      }
+    }
+    
+    return data;
   };
 
-  // Initialize Google OAuth
-  const initializeGoogleAuth = () => {
-    if (typeof google !== 'undefined' && google.accounts) {
-      google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: handleGoogleSignIn
+  // Set affiliate links for the destination
+  const setAffiliates = (dest) => {
+    const q = encodeURIComponent(dest || '');
+    const set = (id, url) => { 
+      const a = $(id); 
+      if (a) a.href = url; 
+    };
+    
+    // Set affiliate links (these will be added to the UI later)
+    const affiliateLinks = {
+      flights: `https://www.kayak.com/flights?search=${q}`,
+      hotels: `https://www.booking.com/searchresults.html?ss=${q}`,
+      activities: `https://www.getyourguide.com/s/?q=${q}`,
+      cars: `https://www.rentalcars.com/SearchResults.do?destination=${q}`,
+      reviews: `https://www.tripadvisor.com/Search?q=${q}`
+    };
+    
+    return affiliateLinks;
+  };
+
+  // Enhanced preview generation
+  const generatePreview = async (e) => {
+    e.preventDefault();
+    const payload = readForm();
+    
+    if (!payload.destination || !payload.start || !payload.end || !payload.budget) {
+      previewEl.innerHTML = '<p class="error">Please fill in all required fields.</p>';
+      return;
+    }
+
+    const affiliateLinks = setAffiliates(payload.destination);
+    hide(pdfBtn);
+    hide(loadingEl);
+    show(loadingEl);
+
+    try {
+      const res = await fetch('/api/preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
       
-      google.accounts.id.renderButton(loginBtn, {
-        theme: 'outline',
-        size: 'large',
-        text: 'signin_with',
-        shape: 'pill'
-      });
-    } else {
-      ensureLoginVisible();
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      
+      const out = await res.json();
+      previewEl.innerHTML = out.teaser_html || '<p>Preview created successfully!</p>';
+      
+      // Add affiliate links below the preview
+      if (out.affiliates && Object.keys(out.affiliates).length > 0) {
+        const affiliateSection = createAffiliateSection(affiliateLinks);
+        previewEl.appendChild(affiliateSection);
+      }
+      
+    } catch (err) {
+      console.error('Preview error:', err);
+      previewEl.innerHTML = '<p class="error">Preview failed. Please try again.</p>';
+    } finally {
+      hide(loadingEl);
     }
-  };
-
-  // Checklist builder
-  const buildChecklistFromPlan = (container, planId) => {
-    try {
-      const headings = container.querySelectorAll('h2, h3');
-      const items = [];
-      headings.forEach(h => {
-        const t = (h.textContent || '').trim();
-        if (/^Day\s+\d+/i.test(t)) {
-          let el = h.nextElementSibling;
-          let collected = 0;
-          while (el && collected < 10 && !/^H[23]$/.test(el.tagName)) {
-            if (el.tagName === 'UL' || el.tagName === 'OL') {
-              el.querySelectorAll('li').forEach(li => {
-                const text = li.textContent.trim();
-                if (text.length > 0) items.push(text);
-              });
-              collected += 1;
-            }
-            el = el.nextElementSibling;
-          }
-        }
-      });
-      if (items.length === 0) return;
-      const stateKey = `wayzo_checklist_${planId}`;
-      const saved = JSON.parse(localStorage.getItem(stateKey) || '[]');
-      const wrap = document.createElement('section');
-      wrap.className = 'card';
-      const header = document.createElement('div');
-      header.className = 'card-header';
-      header.innerHTML = '<h2>Trip Checklist</h2>';
-      const list = document.createElement('div');
-      list.style.cssText = 'display:grid;gap:8px;margin:12px 0;';
-      items.slice(0, 40).forEach((text, idx) => {
-        const id = `${planId}_${idx}`;
-        const row = document.createElement('label');
-        row.style.cssText = 'display:flex;align-items:center;gap:10px;';
-        const cb = document.createElement('input');
-        cb.type = 'checkbox';
-        cb.checked = saved.includes(id);
-        cb.addEventListener('change', () => {
-          const cur = new Set(JSON.parse(localStorage.getItem(stateKey) || '[]'));
-          if (cb.checked) cur.add(id); else cur.delete(id);
-          localStorage.setItem(stateKey, JSON.stringify(Array.from(cur)));
-        });
-        const span = document.createElement('span');
-        span.textContent = text;
-        row.appendChild(cb);
-        row.appendChild(span);
-        list.appendChild(row);
-      });
-      wrap.appendChild(header);
-      wrap.appendChild(list);
-      container.prepend(wrap);
-    } catch (e) { console.warn('Checklist build failed:', e); }
-  };
-
-  // Always render affiliate section (fallback to generated from dest)
-  const appendAffiliateSection = (dest, out) => {
-    const affiliateLinks = setAffiliates(dest);
-    const affiliateSection = createAffiliateSection(affiliateLinks);
-    previewEl.appendChild(affiliateSection);
   };
 
   // Enhanced full plan generation
   const generateFullPlan = async () => {
     const payload = readForm();
     
-    if (!payload.destination || !payload.budget) {
+    if (!payload.destination || !payload.start || !payload.end || !payload.budget) {
       previewEl.innerHTML = '<p class="error">Please fill in all required fields.</p>';
       return;
     }
 
+    const affiliateLinks = setAffiliates(payload.destination);
     hide(pdfBtn);
-    hide(icsBtn);
     show(loadingEl);
 
     try {
@@ -126,23 +122,14 @@
       if (out.html) {
         previewEl.innerHTML = out.html;
         
-        // Add affiliate links and PDF/ICS buttons
-        appendAffiliateSection(payload.destination, out);
+        // Add affiliate links and PDF button
+        const affiliateSection = createAffiliateSection(affiliateLinks);
+        previewEl.appendChild(affiliateSection);
         
         if (out.id) {
           pdfBtn.href = `/api/plan/${out.id}/pdf`;
-          icsBtn.href = `/api/plan/${out.id}/ics`;
           show(pdfBtn);
-          show(icsBtn);
-          // Build interactive checklist
-          buildChecklistFromPlan(previewEl, out.id);
         }
-        
-        trackEvent('full_plan_generated', { 
-          destination: payload.destination,
-          planId: out.id 
-        });
-        updateAnalytics();
       } else {
         previewEl.innerHTML = '<p class="error">No plan generated. Please try again.</p>';
       }
@@ -150,7 +137,6 @@
     } catch (err) {
       console.error('Full plan error:', err);
       previewEl.innerHTML = '<p class="error">Plan generation failed. Please try again.</p>';
-      trackEvent('full_plan_error', { error: err.message });
     } finally {
       hide(loadingEl);
     }
