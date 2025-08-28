@@ -82,6 +82,15 @@ app.get('/', (_req, res) => {
 });
 app.get('/healthz', (_req, res) => res.json({ ok: true, version: VERSION }));
 app.get('/version', (_req, res) => res.json({ version: VERSION }));
+
+// Public runtime config for frontend (safe values only)
+app.get('/config.js', (_req, res) => {
+  const paypalClientId = process.env.PAYPAL_CLIENT_ID || '';
+  const priceUsd = Number(process.env.REPORT_PRICE_USD || 19);
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  res.send(`window.WAYZO_PUBLIC_CONFIG = { PAYPAL_CLIENT_ID: ${JSON.stringify(paypalClientId)}, REPORT_PRICE_USD: ${JSON.stringify(priceUsd)} };`);
+});
+
 /* Uploads */
 const multerUpload = multer({ dest: UPLOADS, limits: { fileSize: 10 * 1024 * 1024, files: 10 } });
 app.post('/api/upload', multerUpload.array('files', 10), (req, res) => {
@@ -467,3 +476,48 @@ function escapeHtml(s = "") {
     '"': "&quot;"
   }[m]));
 }
+
+// Event tracking endpoint
+app.post('/api/track', (req, res) => {
+  try {
+    const eventData = req.body;
+    console.log('Event tracked:', eventData);
+    
+    // Store event in database for analytics
+    const eventId = uid();
+    db.prepare(`
+      INSERT INTO events (id, event_type, user_id, data, created_at) 
+      VALUES (?, ?, ?, ?, ?)
+    `).run(
+      eventId,
+      eventData.event,
+      eventData.userId || 'anonymous',
+      JSON.stringify(eventData),
+      new Date().toISOString()
+    );
+    
+    res.json({ success: true, eventId });
+  } catch (e) {
+    console.error('Event tracking error:', e);
+    res.status(500).json({ error: 'Failed to track event' });
+  }
+});
+
+// Payment confirmation (basic logging; extend with validation)
+app.post('/api/pay/confirm', (req, res) => {
+  const { orderID, total, currency } = req.body || {};
+  console.log('Payment confirmed:', { orderID, total, currency });
+  try {
+    const eventId = uid();
+    db.prepare(`
+      INSERT INTO events (id, event_type, user_id, data, created_at)
+      VALUES (?, 'payment_confirmed', ?, ?, ?)
+    `).run(
+      eventId,
+      'anonymous',
+      JSON.stringify({ orderID, total, currency }),
+      new Date().toISOString()
+    );
+  } catch (e) { console.warn('Payment event log failed:', e); }
+  res.json({ success: true, orderID });
+});

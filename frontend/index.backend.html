@@ -7,6 +7,7 @@
 
   <link rel="icon" type="image/svg+xml" href="/frontend/favicon.svg" />
   <link rel="stylesheet" href="/frontend/style.css" />
+  <script src="/config.js"></script>
   <script src="/frontend/app.js" defer></script>
 </head>
 <body>
@@ -200,6 +201,11 @@
         </div>
         <div class="actions">
           <a id="pdfBtn" class="btn btn-ghost hidden" href="#" target="_blank">Download Trip Journal</a>
+          <a id="icsBtn" class="btn btn-ghost hidden" href="#" target="_blank">Add to Calendar (ICS)</a>
+        </div>
+        <div class="actions" id="purchaseActions">
+          <div id="paypal-button-container" class="hidden"></div>
+          <div id="purchaseNote" class="muted small hidden">Unlock full report for $19 via PayPal.</div>
         </div>
       </section>
     </div>

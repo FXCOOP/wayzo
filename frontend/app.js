@@ -240,4 +240,105 @@
   // Initialize UI enhancements
   addUIEnhancements();
 
+  // Paywall state
+  let hasPaid = false;
+
+  // Dynamically load PayPal SDK
+  const loadPayPalSdk = async (clientId) => {
+    if (!clientId) return;
+    if (window.paypal) return;
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=USD`;
+      s.async = true;
+      s.onload = resolve;
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  };
+
+  // Render PayPal button
+  const renderPayPalButton = async () => {
+    try {
+      const cfg = window.WAYZO_PUBLIC_CONFIG || {};
+      if (!cfg.PAYPAL_CLIENT_ID) return;
+      await loadPayPalSdk(cfg.PAYPAL_CLIENT_ID);
+      const price = String(cfg.REPORT_PRICE_USD || 19);
+      const containerSel = '#paypal-button-container';
+      const container = document.querySelector(containerSel);
+      if (!container) return;
+      container.classList.remove('hidden');
+      const note = document.querySelector('#purchaseNote');
+      if (note) note.classList.remove('hidden');
+      window.paypal.Buttons({
+        style: { layout: 'vertical', color: 'gold', shape: 'rect', label: 'paypal' },
+        createOrder: (data, actions) => actions.order.create({
+          purchase_units: [{ amount: { value: price, currency_code: 'USD' } }]
+        }),
+        onApprove: (data, actions) => actions.order.capture().then(async (details) => {
+          try {
+            await fetch('/api/pay/confirm', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ orderID: data.orderID, total: price, currency: 'USD' })
+            });
+          } catch (e) { console.warn('Confirm send failed:', e); }
+          hasPaid = true;
+          alert('Payment successful. Full report unlocked.');
+          // Auto-generate full plan now that payment is confirmed
+          await generateFullPlan();
+          // Hide purchase UI
+          container.classList.add('hidden');
+          if (note) note.classList.add('hidden');
+        }),
+        onError: (err) => { console.error('PayPal error:', err); alert('Payment error. Please try again.'); }
+      }).render(containerSel);
+    } catch (e) { console.error('PayPal init failed:', e); }
+  };
+
+  // Override full plan button to enforce paywall
+  const bindPaywall = () => {
+    if (!fullPlanBtn) return;
+    const originalHandler = generateFullPlan;
+    fullPlanBtn.removeEventListener('click', originalHandler);
+    fullPlanBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const cfg = window.WAYZO_PUBLIC_CONFIG || {};
+      if (!cfg.PAYPAL_CLIENT_ID) {
+        // If no PayPal configured, fall back to original
+        return originalHandler();
+      }
+      if (hasPaid) return originalHandler();
+      // Show PayPal and prompt user
+      await renderPayPalButton();
+      alert(`Please complete payment ($${cfg.REPORT_PRICE_USD || 19}) to unlock the full report.`);
+    });
+  };
+
+  // Payment confirm endpoint helper (backend must exist)
+  // (No-op here; handled in onApprove)
+
+  // Init additions
+  const init = () => {
+    const savedUser = localStorage.getItem('wayzo_user');
+    if (savedUser) {
+      currentUser = JSON.parse(savedUser);
+      loginBtn.textContent = currentUser.name;
+      loginBtn.onclick = showUserMenu;
+    } else {
+      ensureLoginVisible();
+      loginBtn.onclick = () => (window.google?.accounts?.id?.prompt ? google.accounts.id.prompt() : alert('Sign-in temporarily unavailable.'));
+    }
+
+    setupChildrenAges();
+    setupDateModes();
+    addUIEnhancements();
+    wireUpEvents();
+    bindPaywall();
+    restoreLastPreview();
+    detectUserLocation();
+    initializeGoogleAuth();
+    initializeCookieConsent();
+    trackEvent('page_view', { path: window.location.pathname });
+  };
+
 })();
