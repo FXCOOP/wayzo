@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Wayzo — Plan unforgettable trips in minutes — AI-powered</title>
 
-  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-  <link rel="stylesheet" href="style.css" />
-  <script src="app.js" defer></script>
+  <link rel="icon" type="image/svg+xml" href="/frontend/favicon.svg" />
+  <link rel="stylesheet" href="/frontend/style.css" />
+  <script src="/frontend/app.js" defer></script>
 </head>
 <body>
   <!-- Top bar -->
@@ -23,7 +23,7 @@
 
   <!-- HERO -->
   <!-- Background comes from CSS var --hero-bg; keep the file at hero-bg.jpg -->
-  <section class="hero" style="--hero-bg: url('hero-bg.jpg')">
+  <section class="hero" style="--hero-bg: url('/frontend/hero-bg.jpg')">
     <div class="container hero-grid">
       <!-- Left: headline card -->
       <div class="hero-card hero-left">
@@ -40,7 +40,7 @@
 
       <!-- Right: inspiration image card -->
       <figure class="hero-card hero-right">
-        <img src="hero-card.jpg" loading="eager" alt="Wayzo — inspiration for your next trip" />
+        <img src="/frontend/hero-card.jpg" loading="eager" alt="Wayzo — inspiration for your next trip" />
         <figcaption>Wayzo — inspiration for your next trip</figcaption>
       </figure>
     </div>
@@ -54,12 +54,13 @@
         <div class="card-header">
           <h2>Trip details</h2>
         </div>
-        <p class="muted">We’ll tailor routes, hotels, activities, and meals—then generate your full AI plan.</p>
+        <p class="muted">We'll tailor routes, hotels, activities, and meals—then generate your full AI plan.</p>
 
         <form id="tripForm" class="form" style="margin-top:12px">
           <div class="field">
             <span>Destination</span>
             <input id="dest" type="text" name="destination" placeholder="e.g., Paris, Tokyo, Bali" required />
+            <div class="field-help">Add country for clarity if needed.</div>
           </div>
 
           <div class="fields-2">
@@ -96,51 +97,44 @@
             <input id="prefs" type="text" name="prefs" placeholder="e.g., museums, beaches, hiking, kid-friendly" />
           </div>
 
+          <div class="field">
+            <span>Professional brief (optional)</span>
+            <textarea id="brief" name="brief" rows="4" placeholder="Detailed requirements: must-see places, vibe preferences, group details, dining preferences, time constraints, anchor events, rainy-day backups..."></textarea>
+            <div class="field-help">This helps us create a more personalized and detailed plan.</div>
+          </div>
+
           <div class="actions">
             <button class="btn btn-primary" type="submit" id="previewBtn">Generate preview</button>
-            <button class="btn btn-ghost" type="button" id="buyBtn">Generate full plan (AI)</button>
-            <button class="btn" type="button" id="saveBtn">Save preview</button>
+            <button class="btn btn-ghost" type="button" id="fullPlanBtn">Generate full plan</button>
+            <button class="btn btn-ghost" type="button" id="saveBtn">Save preview</button>
           </div>
-          <p class="muted small">By continuing you agree to our Terms and Privacy.</p>
         </form>
       </section>
 
-      <!-- Output -->
+      <!-- Results -->
       <section class="card">
         <div class="card-header">
-          <h2 class="section-title">Your itinerary</h2>
-          <span class="pill">AI powered</span>
+          <h2>Your itinerary</h2>
         </div>
-
-        <div id="preview" class="teaser">
-          <p class="muted">
-            Fill the form and click <b>Generate preview</b>. Then use <b>Generate full plan (AI)</b>.
-          </p>
+        <div id="preview" class="preview-content">
+          <p class="muted">Enter your trip details and generate a plan to see a detailed itinerary here.</p>
         </div>
-
-        <div id="loading" class="hidden" aria-live="polite">
-          <div style="height:10px;background:#e2e8f0;border-radius:8px"></div>
-          <div style="height:10px;background:#e2e8f0;border-radius:8px;margin-top:8px;width:70%"></div>
+        <div id="loading" class="loading hidden">
+          <div class="spinner"></div>
+          <p>Generating your perfect trip...</p>
         </div>
-
-        <div class="actions" style="margin-top:10px">
-          <a id="pdfBtn" class="btn hidden" href="#" target="_blank" rel="noopener">⬇️ Download PDF</a>
-          <a id="linkFlights" class="btn" target="_blank" rel="noopener">✈️ Flights</a>
-          <a id="linkHotels" class="btn" target="_blank" rel="noopener">🏨 Hotels</a>
-        </div>
-
-        <div class="quick-links">
-          <a id="linkActivities" class="ql" target="_blank" rel="noopener">🎟️ Activities</a>
-          <a id="linkCars" class="ql" target="_blank" rel="noopener">🚗 Cars</a>
-          <a id="linkInsurance" class="ql" target="_blank" rel="noopener">🛡️ Insurance</a>
-          <a id="linkReviews" class="ql" target="_blank" rel="noopener">⭐ Reviews</a>
+        <div class="actions">
+          <a id="pdfBtn" class="btn btn-ghost hidden" href="#" target="_blank">Download Trip Journal</a>
         </div>
       </section>
     </div>
   </main>
 
+  <!-- FOOTER -->
   <footer class="footer">
-    <div class="container muted small">© Wayzo. All rights reserved.</div>
+    <div class="container">
+      <p class="muted small">© Wayzo. All rights reserved.</p>
+    </div>
   </footer>
 </body>
 </html>
