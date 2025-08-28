@@ -1005,3 +1005,4 @@ window.hideAuthModal = function() {
     window.wayzoApp.authManager.hideAuthModal();
   }
 };
+// Staging deployment trigger - Thu Aug 28 06:30:22 PM UTC 2025
