@@ -103,6 +103,7 @@ app.post('/api/upload', multerUpload.array('files', 10), (req, res) => {
 /* DB */
 const db = new Database(path.join(ROOT, 'tripmaster.sqlite'));
 db.exec(`CREATE TABLE IF NOT EXISTS plans (id TEXT PRIMARY KEY, created_at TEXT NOT NULL, payload TEXT NOT NULL);`);
+db.exec(`CREATE TABLE IF NOT EXISTS events (id TEXT PRIMARY KEY, event_type TEXT NOT NULL, user_id TEXT, data TEXT, created_at TEXT NOT NULL);`);
 const savePlan = db.prepare('INSERT OR REPLACE INTO plans (id, created_at, payload) VALUES (?, ?, ?)');
 const getPlan = db.prepare('SELECT payload FROM plans WHERE id = ?');
 const nowIso = () => new Date().toISOString();
@@ -509,9 +510,8 @@ function escapeHtml(s = "") {
 // Event tracking endpoint
 app.post('/api/track', (req, res) => {
   try {
-    const eventData = req.body;
+    const eventData = req.body || {};
     console.log('Event tracked:', eventData);
-    
     // Store event in database for analytics
     const eventId = uid();
     db.prepare(`
@@ -519,16 +519,16 @@ app.post('/api/track', (req, res) => {
       VALUES (?, ?, ?, ?, ?)
     `).run(
       eventId,
-      eventData.event,
+      eventData.event || 'unknown',
       eventData.userId || 'anonymous',
       JSON.stringify(eventData),
       new Date().toISOString()
     );
-    
     res.json({ success: true, eventId });
   } catch (e) {
-    console.error('Event tracking error:', e);
-    res.status(500).json({ error: 'Failed to track event' });
+    console.warn('Event tracking error (non-fatal):', e);
+    // Never fail client flows due to analytics
+    res.json({ success: false });
   }
 });
 
