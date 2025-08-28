@@ -1,1455 +1,1007 @@
-// app.js — Enhanced Wayzo trip planner with professional brief support
+// ====== WAYZO TRIP PLANNING APPLICATION ======
 
-(function () {
-  const $ = (sel) => document.querySelector(sel);
-  const $$ = (sel) => document.querySelectorAll(sel);
+// Global application state
+window.wayzoApp = {
+  isAuthenticated: false,
+  currentUser: null,
+  currentLanguage: 'en',
+  translations: null,
+  maxDestinations: 10
+};
 
-  // Form elements
-  const form = $('#tripForm');
-  const previewEl = $('#preview');
-  const loadingEl = $('#loading');
-  const pdfBtn = $('#pdfBtn');
-  const icsBtn = $('#icsBtn');
-  const fullPlanBtn = $('#fullPlanBtn');
-  const saveBtn = $('#saveBtn');
-  const loginBtn = $('#loginBtn');
+// ====== MULTI-LANGUAGE SYSTEM ======
+class LanguageManager {
+  constructor() {
+    this.currentLanguage = 'en';
+    this.translations = window.WayzoTranslations || {};
+    this.init();
+  }
 
-  if (!form || !previewEl) return; // nothing to wire up
-
-  const show = (el) => el && el.classList.remove('hidden');
-  const hide = (el) => el && el.classList.add('hidden');
-
-  // No-op safe helpers (overridden if SDKs loaded)
-  const trackEvent = (event, data = {}) => {
-    try {
-      fetch('/api/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event, ...data, timestamp: new Date().toISOString() }) }).catch(() => {});
-    } catch (_) {}
-  };
-  const initializeGoogleAuth = () => {};
-  const ensureLoginVisible = () => { if (loginBtn) loginBtn.classList.add('btn-primary'); };
-  const showUserMenu = () => {};
-  const detectUserLocation = async () => {};
-  const initializeCookieConsent = () => {};
-
-  // Enhanced form reading with professional brief
-  const readForm = () => {
-    const data = Object.fromEntries(new FormData(form).entries());
-    
-    // Parse numbers
-    data.adults = Number(data.adults || 2);
-    data.children = Number(data.children || 0);
-    data.budget = Number(data.budget || 0);
-    data.duration = Number(data.duration || 5);
-    data.currency = data.currency || 'USD';
-    
-    if (data.dateMode === 'flexible') {
-      data.flexibleDates = { month: data.travelMonth, duration: data.duration };
-      delete data.start; delete data.end;
+  init() {
+    // Load saved language preference
+    const savedLanguage = localStorage.getItem('wayzo_language');
+    if (savedLanguage && this.translations[savedLanguage]) {
+      this.setLanguage(savedLanguage);
     }
     
-    if (data.children > 0) {
-      data.childrenAges = [];
-      $$('.age-input input').forEach(input => { if (input.value) data.childrenAges.push(Number(input.value)); });
-    }
-    
-    if (data.dietary) {
-      data.dietary = Array.isArray(data.dietary) ? data.dietary : [data.dietary];
-      data.dietary = data.dietary.filter(d => d !== 'none');
-    }
-    
-    const fileInput = $('#planFiles');
-    if (fileInput && fileInput.files && fileInput.files.length > 0) {
-      data.uploadedFiles = Array.from(fileInput.files).map(file => ({ name: file.name, size: file.size, type: file.type }));
-    }
-    
-    if (data.brief) {
-      data.brief = data.brief.trim();
-      if (data.brief) data.professional_brief = data.brief;
-    }
-    
-    // Handle referral code
-    if (data.referralCode) {
-      data.referralCode = data.referralCode.trim().toUpperCase();
-      // Track referral usage
-      trackEvent('referral_used', { code: data.referralCode });
-    }
-    
-    return data;
-  };
+    // Setup language selector
+    this.setupLanguageSelector();
+  }
 
-  // Ensure radio click toggles reliably
-  const setupDateModes = () => {
-    const exactDates = $('#exactDates');
-    const flexibleDates = $('#flexibleDates');
-    const radios = $$('input[name="dateMode"]');
-    const update = () => {
-      const mode = (document.querySelector('input[name="dateMode"]:checked') || { value: 'exact' }).value;
-      if (mode === 'exact') { show(exactDates); hide(flexibleDates); } else { hide(exactDates); show(flexibleDates); }
-    };
-    radios.forEach(r => { r.addEventListener('change', update); r.addEventListener('click', update); });
-    update();
-  };
+  setLanguage(langCode) {
+    if (!this.translations[langCode]) {
+      console.warn(`Language ${langCode} not supported, falling back to English`);
+      langCode = 'en';
+    }
 
-  // Set affiliate links for the destination
-  const setAffiliates = (dest) => {
-    const q = encodeURIComponent(dest || '');
-    const set = (id, url) => { 
-      const a = $(id); 
-      if (a) a.href = url; 
-    };
+    this.currentLanguage = langCode;
+    window.wayzoApp.currentLanguage = langCode;
+    localStorage.setItem('wayzo_language', langCode);
     
-    // Set affiliate links (these will be added to the UI later)
-    const affiliateLinks = {
-      flights: `https://www.kayak.com/flights?search=${q}`,
-      hotels: `https://www.booking.com/searchresults.html?ss=${q}`,
-      activities: `https://www.getyourguide.com/s/?q=${q}`,
-      cars: `https://www.rentalcars.com/SearchResults.do?destination=${q}`,
-      reviews: `https://www.tripadvisor.com/Search?q=${q}`
-    };
+    // Update language selector
+    const selector = document.getElementById('languageSelect');
+    if (selector) {
+      selector.value = langCode;
+    }
     
-    return affiliateLinks;
-  };
+    // Translate all elements
+    this.translatePage();
+  }
 
-  // Create affiliate links section
-  const createAffiliateSection = (links) => {
-    const section = document.createElement('div');
-    section.className = 'affiliate-links';
-    section.style.cssText = 'margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0;';
-    
-    const title = document.createElement('h4');
-    title.textContent = 'Book your trip:';
-    title.style.cssText = 'margin: 0 0 16px 0; font-size: 1.1rem; color: var(--ink);';
-    
-    const linksContainer = document.createElement('div');
-    linksContainer.style.cssText = 'display: flex; gap: 12px; flex-wrap: wrap;';
-    
-    const linkData = [
-      { key: 'flights', label: '✈️ Flights', url: links.flights },
-      { key: 'hotels', label: '🏨 Hotels', url: links.hotels },
-      { key: 'activities', label: '🎟️ Activities', url: links.activities },
-      { key: 'cars', label: '🚗 Cars', url: links.cars },
-      { key: 'reviews', label: '⭐ Reviews', url: links.reviews }
-    ];
-    
-    linkData.forEach(({ key, label, url }) => {
-      if (url) {
-        const link = document.createElement('a');
-        link.href = url;
-        link.target = '_blank';
-        link.rel = 'noopener';
-        link.textContent = label;
-        link.className = 'btn btn-ghost';
-        link.style.cssText = 'font-size: 14px; padding: 8px 16px;';
-        linksContainer.appendChild(link);
+  translatePage() {
+    const elements = document.querySelectorAll('[data-i18n]');
+    elements.forEach(element => {
+      const key = element.getAttribute('data-i18n');
+      const translation = this.getText(key);
+      if (translation) {
+        element.textContent = translation;
       }
     });
-    
-    section.appendChild(title);
-    section.appendChild(linksContainer);
-    return section;
-  };
 
-  // Helper: append affiliate section for a destination
-  const appendAffiliateSection = (dest, out) => {
-    const affiliateLinks = setAffiliates(dest);
-    const affiliateSection = createAffiliateSection(affiliateLinks);
-    previewEl.appendChild(affiliateSection);
-  };
-
-  // Save preview to localStorage
-  const savePreview = () => {
-    try {
-      const html = previewEl.innerHTML || '';
-      if (html && !html.includes('error')) {
-        localStorage.setItem('wayzo_preview', html);
-        alert('Preview saved successfully!');
-      } else {
-        alert('Nothing to save. Generate a preview first.');
+    // Handle placeholders
+    const inputs = document.querySelectorAll('[data-i18n-placeholder]');
+    inputs.forEach(input => {
+      const key = input.getAttribute('data-i18n-placeholder');
+      const translation = this.getText(key);
+      if (translation) {
+        input.placeholder = translation;
       }
-    } catch (err) {
-      console.error('Save error:', err);
-      alert('Failed to save preview.');
-    }
-  };
+    });
+  }
 
-  // Restore last preview from localStorage
-  const restoreLastPreview = () => {
-    try {
-      const last = localStorage.getItem('wayzo_preview');
-      if (last && last !== previewEl.innerHTML) {
-        if (confirm('Restore your last saved preview?')) {
-          previewEl.innerHTML = last;
-        }
-      }
-    } catch (err) {
-      console.error('Restore error:', err);
-    }
-  };
+  getText(key) {
+    return this.translations[this.currentLanguage]?.[key] || 
+           this.translations['en']?.[key] || 
+           key;
+  }
 
-  // Enhanced full plan generation
-  const generateFullPlan = async () => {
-    const payload = readForm();
-    
-    if (!payload.destination || !payload.start || !payload.end || !payload.budget) {
-      previewEl.innerHTML = '<p class="error">Please fill in all required fields.</p>';
-      return;
-    }
-
-    const affiliateLinks = setAffiliates(payload.destination);
-    hide(pdfBtn);
-    show(loadingEl);
-
-    try {
-      const res = await fetch('/api/plan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+  setupLanguageSelector() {
+    const selector = document.getElementById('languageSelect');
+    if (selector) {
+      selector.addEventListener('change', (e) => {
+        this.setLanguage(e.target.value);
       });
-      
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-      
-      const out = await res.json();
-      
-      if (out.html) {
-        previewEl.innerHTML = out.html;
-        
-        // Add affiliate links and PDF button
-        const affiliateSection = createAffiliateSection(affiliateLinks);
-        previewEl.appendChild(affiliateSection);
-        
-        if (out.id) {
-          pdfBtn.href = `/api/plan/${out.id}/pdf`;
-          show(pdfBtn);
-        }
-      } else {
-        previewEl.innerHTML = '<p class="error">No plan generated. Please try again.</p>';
-      }
-      
-    } catch (err) {
-      console.error('Full plan error:', err);
-      previewEl.innerHTML = '<p class="error">Plan generation failed. Please try again.</p>';
-    } finally {
-      hide(loadingEl);
     }
-  };
+  }
+}
 
-  // Helper to optionally prompt sign-in (only for full plan)
-  const maybePromptSignIn = async () => {
-    if (currentUser) return true;
-    try {
-      if (window.google && google.accounts && google.accounts.id && typeof google.accounts.id.prompt === 'function') {
-        await new Promise((resolve) => {
-          google.accounts.id.prompt(() => resolve());
-          setTimeout(resolve, 2500);
-        });
-      }
-    } catch (_) {}
+// ====== AUTHENTICATION SYSTEM ======
+class AuthenticationManager {
+  constructor() {
+    this.isAuthenticated = false;
+    this.currentUser = null;
+    this.init();
+  }
+
+  init() {
+    // Check for existing session
+    this.checkExistingSession();
+    
+    // Setup event listeners
+    this.setupEventListeners();
+    
+    // Setup Google OAuth
+    this.setupGoogleOAuth();
+  }
+
+  checkExistingSession() {
     const savedUser = localStorage.getItem('wayzo_user');
-    if (savedUser && !currentUser) currentUser = JSON.parse(savedUser);
-    return !!currentUser;
-  };
-
-  // Preview should NOT be gated; keep it simple and reliable
-  const generatePreview = async (e) => {
-    e?.preventDefault?.();
-    const payload = readForm();
-    if (!payload.destination || !payload.budget) {
-      previewEl.innerHTML = '<p class="error">Please fill in all required fields.</p>';
-      return;
-    }
-    hide(pdfBtn); hide(icsBtn); show(loadingEl);
-    try {
-      const res = await fetch('/api/preview', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      let out;
+    const savedToken = localStorage.getItem('wayzo_token');
+    
+    if (savedUser && savedToken) {
       try {
-        out = await res.json();
-      } catch (parseErr) {
-        const txt = await res.text();
-        console.warn('Preview JSON parse failed, got text:', txt);
-        previewEl.innerHTML = txt || '<p class="error">Preview failed. Please try again.</p>';
-        return;
-      }
-      previewEl.innerHTML = out.teaser_html || '<p>Preview created successfully!</p>';
-      appendAffiliateSection(payload.destination, out);
-      trackEvent('preview_generated', { destination: payload.destination });
-    } catch (err) {
-      console.error('Preview error:', err);
-      previewEl.innerHTML = '<p class="error">Preview failed. Please try again.</p>';
-    } finally { hide(loadingEl); }
-  };
-
-  // Bind click handlers after redefining generatePreview
-  form.addEventListener('submit', generatePreview);
-  fullPlanBtn?.addEventListener('click', generateFullPlan);
-  saveBtn?.addEventListener('click', savePreview);
-
-  // Restore last preview on page load
-  restoreLastPreview();
-
-  // Add some helpful UI enhancements
-  const addUIEnhancements = () => {
-    // Add today's date as default start date
-    const startInput = $('#start');
-    if (startInput) {
-      const today = new Date().toISOString().split('T')[0];
-      startInput.value = today;
-      
-      // Set end date to 5 days later
-      const endInput = $('#end');
-      if (endInput) {
-        const endDate = new Date();
-        endDate.setDate(endDate.getDate() + 5);
-        endInput.value = endDate.toISOString().split('T')[0];
+        this.currentUser = JSON.parse(savedUser);
+        this.isAuthenticated = true;
+        this.updateUI();
+        console.log('Session restored:', this.currentUser);
+      } catch (e) {
+        console.error('Failed to restore session:', e);
+        this.clearSession();
       }
     }
-  };
+  }
 
-  // Initialize UI enhancements
-  addUIEnhancements();
-
-  // Paywall state
-  let hasPaid = false;
-
-  // Dynamically load PayPal SDK
-  const loadPayPalSdk = async (clientId) => {
-    if (!clientId) return;
-    if (window.paypal) return;
-    await new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=USD`;
-      s.async = true;
-      s.onload = resolve;
-      s.onerror = reject;
-      document.head.appendChild(s);
-    });
-  };
-
-  // Render PayPal button
-  const renderPayPalButton = async () => {
-    try {
-      const cfg = window.WAYZO_PUBLIC_CONFIG || {};
-      if (!cfg.PAYPAL_CLIENT_ID) return;
-      await loadPayPalSdk(cfg.PAYPAL_CLIENT_ID);
-      const price = String(cfg.REPORT_PRICE_USD || 19);
-      const containerSel = '#paypal-button-container';
-      const container = document.querySelector(containerSel);
-      if (!container) return;
-      container.classList.remove('hidden');
-      const note = document.querySelector('#purchaseNote');
-      if (note) note.classList.remove('hidden');
-      window.paypal.Buttons({
-        style: { layout: 'vertical', color: 'gold', shape: 'rect', label: 'paypal' },
-        createOrder: (data, actions) => actions.order.create({
-          purchase_units: [{ amount: { value: price, currency_code: 'USD' } }]
-        }),
-        onApprove: (data, actions) => actions.order.capture().then(async (details) => {
-          try {
-            await fetch('/api/pay/confirm', {
-              method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ orderID: data.orderID, total: price, currency: 'USD' })
-            });
-          } catch (e) { console.warn('Confirm send failed:', e); }
-          hasPaid = true;
-          alert('Payment successful. Full report unlocked.');
-          // Auto-generate full plan now that payment is confirmed
-          await generateFullPlan();
-          // Hide purchase UI
-          container.classList.add('hidden');
-          if (note) note.classList.add('hidden');
-        }),
-        onError: (err) => { console.error('PayPal error:', err); alert('Payment error. Please try again.'); }
-      }).render(containerSel);
-    } catch (e) { console.error('PayPal init failed:', e); }
-  };
-
-  // Ensure PayPal is loaded if configured
-  const preparePaywallUi = async () => {
-    const cfg = window.WAYZO_PUBLIC_CONFIG || {};
-    if (!cfg.PAYPAL_CLIENT_ID) return false;
-    await loadPayPalSdk(cfg.PAYPAL_CLIENT_ID);
-    return true;
-  };
-
-  // Bind full plan with sign-in + paywall
-  const bindPaywall = () => {
-    if (!fullPlanBtn) return;
-    fullPlanBtn.onclick = async (e) => {
-      e.preventDefault();
-      const signed = await maybePromptSignIn();
-      if (!signed) {
-        alert('Please sign in to continue.');
-        return;
-      }
-      const cfg = window.WAYZO_PUBLIC_CONFIG || {};
-      if (cfg.PAYPAL_CLIENT_ID && !hasPaid) {
-        const ok = await preparePaywallUi();
-        await renderPayPalButton();
-        const note = document.querySelector('#purchaseNote');
-        if (note) note.classList.remove('hidden');
-        return; // Wait for payment approval to auto-call generateFullPlan
-      }
-      return generateFullPlan();
-    };
-  };
-
-  // Payment confirm endpoint helper (backend must exist)
-  // (No-op here; handled in onApprove)
-
-  // Init: avoid referencing google if not loaded
-  const init = () => {
-    const savedUser = localStorage.getItem('wayzo_user');
-    if (savedUser) {
-      currentUser = JSON.parse(savedUser);
-      if (loginBtn) { loginBtn.textContent = currentUser.name; loginBtn.onclick = showUserMenu; }
-    } else {
-      ensureLoginVisible();
-      if (loginBtn) loginBtn.onclick = () => (window.google && google.accounts && google.accounts.id && google.accounts.id.prompt ? google.accounts.id.prompt() : alert('Sign-in temporarily unavailable.'));
-    }
-    setupChildrenAges();
-    setupDateModes();
-    addUIEnhancements();
-    bindPaywall();
-    restoreLastPreview();
-    detectUserLocation();
-    initializeGoogleAuth();
-    initGoogleFromConfig();
-    initializeCookieConsent();
-    trackEvent('page_view', { path: window.location.pathname });
-  };
-
-  // Stubs required references used above
-  let currentUser = null;
-  const setupChildrenAges = () => {
-    const childrenInput = $('#children');
-    const agesContainer = $('#childrenAges');
-    const agesInputs = $('#agesContainer');
-    if (!childrenInput || !agesContainer || !agesInputs) return;
-    const updateAges = () => {
-      const count = Number(childrenInput.value) || 0;
-      agesInputs.innerHTML = '';
-      if (count > 0) {
-        show(agesContainer);
-        for (let i = 0; i < count; i++) {
-          const ageDiv = document.createElement('div');
-          ageDiv.className = 'age-input';
-          ageDiv.innerHTML = `<label>Child ${i + 1}</label><input type="number" min="1" max="17" placeholder="Age" />`;
-          agesInputs.appendChild(ageDiv);
-        }
-      } else { hide(agesContainer); }
-    };
-    childrenInput.addEventListener('change', updateAges);
-    updateAges();
-  };
-
-  // Google OAuth init using public config
-  const initGoogleFromConfig = () => {
-    try {
-      const cfg = window.WAYZO_PUBLIC_CONFIG || {};
-      if (cfg.GOOGLE_CLIENT_ID && window.google && google.accounts && google.accounts.id) {
-        google.accounts.id.initialize({ client_id: cfg.GOOGLE_CLIENT_ID, callback: (cred) => {
-          try {
-            const payload = JSON.parse(atob((cred.credential || '').split('.')[1] || ''));
-            currentUser = { id: payload.sub, email: payload.email, name: payload.name, picture: payload.picture };
-            localStorage.setItem('wayzo_user', JSON.stringify(currentUser));
-            if (loginBtn) { loginBtn.textContent = currentUser.name; }
-          } catch (_) {}
-        }});
-        // Render button if present
-        if (loginBtn) {
-          google.accounts.id.renderButton(loginBtn, { theme: 'outline', size: 'large' });
-        }
-      }
-    } catch (_) {}
-  };
-
-  // Setup dietary needs functionality
-  const setupDietaryNeeds = () => {
-    const dietaryInputs = $$('input[name="dietary"]');
-    const noRestrictionsInput = $('input[name="dietary"][value="none"]');
-    
-    if (!noRestrictionsInput) return;
-    
-    // When "no restrictions" is checked, uncheck others
-    noRestrictionsInput.addEventListener('change', (e) => {
-      if (e.target.checked) {
-        dietaryInputs.forEach(input => {
-          if (input !== e.target) input.checked = false;
-        });
-      }
-    });
-    
-    // When other options are checked, uncheck "no restrictions"
-    dietaryInputs.forEach(input => {
-      if (input !== noRestrictionsInput) {
-        input.addEventListener('change', (e) => {
-          if (e.target.checked) {
-            noRestrictionsInput.checked = false;
-          }
-        });
-      }
-    });
-  };
-
-  // Setup style selection functionality
-  const setupStyleSelection = () => {
-    const styleInputs = $$('input[name="level"]');
-    
-    styleInputs.forEach(input => {
-      input.addEventListener('change', (e) => {
-        // Update visual state if needed
-        console.log('Style selected:', e.target.value);
-      });
-    });
-  };
-
-  // Setup referral system
-  const setupReferralSystem = () => {
-    // Generate a unique referral code for the user
-    const savedCode = localStorage.getItem('wayzo_referral_code');
-    if (!savedCode) {
-      const newCode = 'WAYZO' + Math.random().toString(36).substr(2, 6).toUpperCase();
-      localStorage.setItem('wayzo_referral_code', newCode);
-    }
-    
-    // Display the referral code
-    const codeElement = $('#userReferralCode');
-    if (codeElement) {
-      codeElement.textContent = savedCode || localStorage.getItem('wayzo_referral_code');
-    }
-  };
-
-  // Copy referral code to clipboard
-  window.copyReferralCode = () => {
-    const codeElement = $('#userReferralCode');
-    if (codeElement) {
-      const code = codeElement.textContent;
-      navigator.clipboard.writeText(code).then(() => {
-        // Show success message
-        const btn = event.target;
-        const originalText = btn.textContent;
-        btn.textContent = 'Copied!';
-        btn.style.background = 'var(--brand)';
-        btn.style.color = 'white';
-        
-        setTimeout(() => {
-          btn.textContent = originalText;
-          btn.style.background = '';
-          btn.style.color = '';
-        }, 2000);
-      }).catch(() => {
-        alert('Failed to copy code. Please copy manually: ' + code);
-      });
-    }
-  };
-
-  // Setup authentication system
-  const setupAuthentication = () => {
-    console.log('Setting up authentication...');
-    
-    // Initialize wayzoApp if it doesn't exist
-    if (!window.wayzoApp) {
-      window.wayzoApp = {
-        isAuthenticated: false,
-        currentUser: null,
-        userPlans: [],
-        referralCredits: 0
-      };
+  setupEventListeners() {
+    // Auth modal triggers
+    const authBtn = document.getElementById('authBtn');
+    if (authBtn) {
+      authBtn.addEventListener('click', () => this.showAuthModal());
     }
 
-    // Check if user is already authenticated
-    const token = localStorage.getItem('wayzo_token');
-    if (token) {
-      window.wayzoApp.isAuthenticated = true;
-      window.wayzoApp.currentUser = JSON.parse(localStorage.getItem('wayzo_user') || '{}');
-      updateUIForAuthenticatedUser();
-    }
-
-    // Setup auth modal functionality
-    const loginBtn = $('#loginBtn');
-    const authModal = $('#authModal');
-    const closeAuthModal = $('#closeAuthModal');
-    const authTabs = $$('.auth-tab');
-    const authTabContents = $$('.auth-tab-content');
-
-    console.log('Login button:', loginBtn);
-    console.log('Auth modal:', authModal);
-
-    // Show auth modal when login button is clicked
-    if (loginBtn) {
-      loginBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        console.log('Login button clicked');
-        showAuthModal();
-      });
-    }
-
-    // Close auth modal
+    const closeAuthModal = document.getElementById('closeAuthModal');
     if (closeAuthModal) {
-      closeAuthModal.addEventListener('click', (e) => {
-        e.preventDefault();
-        console.log('Close button clicked');
-        hideAuthModal();
-      });
-    }
-
-    // Close modal when clicking outside
-    if (authModal) {
-      authModal.addEventListener('click', (e) => {
-        if (e.target === authModal) {
-          console.log('Clicked outside modal');
-          hideAuthModal();
-        }
-      });
+      closeAuthModal.addEventListener('click', () => this.hideAuthModal());
     }
 
     // Tab switching
+    const authTabs = document.querySelectorAll('.auth-tab');
     authTabs.forEach(tab => {
-      tab.addEventListener('click', (e) => {
-        e.preventDefault();
-        const targetTab = tab.dataset.tab;
-        console.log('Switching to tab:', targetTab);
-        switchAuthTab(targetTab);
-      });
+      tab.addEventListener('click', () => this.switchAuthTab(tab.dataset.tab));
     });
 
-    // Setup form submissions
-    setupAuthForms();
-  };
-
-  // Show authentication modal
-  const showAuthModal = () => {
-    console.log('Showing auth modal');
-    const authModal = $('#authModal');
-    if (authModal) {
-      authModal.classList.remove('hidden');
-      document.body.style.overflow = 'hidden';
-    } else {
-      console.error('Auth modal not found');
+    // Form submissions
+    const signinForm = document.getElementById('signinForm');
+    if (signinForm) {
+      signinForm.addEventListener('submit', (e) => this.handleManualSignIn(e));
     }
-  };
 
-  // Hide authentication modal
-  const hideAuthModal = () => {
-    console.log('Hiding auth modal');
-    const authModal = $('#authModal');
-    if (authModal) {
-      authModal.classList.add('hidden');
+    const signupForm = document.getElementById('signupForm');
+    if (signupForm) {
+      signupForm.addEventListener('submit', (e) => this.handleManualSignUp(e));
+    }
+
+    // Demo mode
+    const demoBtn = document.getElementById('demoSignInBtn');
+    if (demoBtn) {
+      demoBtn.addEventListener('click', () => this.handleDemoMode());
+    }
+
+    // User menu
+    const userMenuBtn = document.getElementById('userMenuBtn');
+    if (userMenuBtn) {
+      userMenuBtn.addEventListener('click', () => this.toggleUserMenu());
+    }
+
+    // Sign out
+    const signOutBtn = document.getElementById('signOutBtn');
+    if (signOutBtn) {
+      signOutBtn.addEventListener('click', () => this.signOut());
+    }
+
+    // Admin panel
+    const adminBtn = document.getElementById('adminBtn');
+    if (adminBtn) {
+      adminBtn.addEventListener('click', () => this.openAdminPanel());
+    }
+  }
+
+  setupGoogleOAuth() {
+    // Google Sign In
+    const googleSignInBtn = document.getElementById('googleSignInBtn');
+    if (googleSignInBtn) {
+      googleSignInBtn.addEventListener('click', () => this.handleGoogleSignIn());
+    }
+
+    // Google Sign Up
+    const googleSignUpBtn = document.getElementById('googleSignUpBtn');
+    if (googleSignUpBtn) {
+      googleSignUpBtn.addEventListener('click', () => this.handleGoogleSignUp());
+    }
+  }
+
+  showAuthModal() {
+    const modal = document.getElementById('authModal');
+    if (modal) {
+      modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  hideAuthModal() {
+    const modal = document.getElementById('authModal');
+    if (modal) {
+      modal.classList.add('hidden');
       document.body.style.overflow = '';
     }
-  };
+  }
 
-  // Switch between auth tabs
-  const switchAuthTab = (targetTab) => {
-    console.log('Switching to tab:', targetTab);
-    const authTabs = $$('.auth-tab');
-    const authTabContents = $$('.auth-tab-content');
-
-    // Update tab buttons
-    authTabs.forEach(tab => {
-      if (tab.dataset.tab === targetTab) {
-        tab.classList.add('active');
-      } else {
-        tab.classList.remove('active');
-      }
-    });
-
-    // Update tab content
-    authTabContents.forEach(content => {
-      if (content.id === `${targetTab}Tab`) {
-        content.classList.add('active');
-      } else {
-        content.classList.remove('active');
-      }
-    });
-  };
-
-  // Setup authentication forms
-  const setupAuthForms = () => {
-    console.log('Setting up auth forms...');
-    const signinForm = $('#signinForm');
-    const signupForm = $('#signupForm');
-    const googleSignInBtn = $('#googleSignInBtn');
-    const googleSignUpBtn = $('#googleSignUpBtn');
-    const facebookSignInBtn = $('#facebookSignInBtn');
-    const facebookSignUpBtn = $('#facebookSignUpBtn');
-    const appleSignInBtn = $('#appleSignInBtn');
-    const appleSignUpBtn = $('#appleSignUpBtn');
-
-    console.log('Signin form:', signinForm);
-    console.log('Signup form:', signupForm);
-
-    // Manual sign in
-    if (signinForm) {
-      signinForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        console.log('Signin form submitted');
-        await handleManualSignIn();
-      });
-    }
-
-    // Manual sign up
-    if (signupForm) {
-      signupForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        console.log('Signup form submitted');
-        await handleManualSignUp();
-      });
-    }
-
-    // Google sign in
-    if (googleSignInBtn) {
-      googleSignInBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        console.log('Google signin clicked');
-        handleGoogleSignIn();
-      });
-    }
-
-    // Google sign up
-    if (googleSignUpBtn) {
-      googleSignUpBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        console.log('Google signup clicked');
-        handleGoogleSignUp();
-      });
-    }
-
-    // Facebook sign in
-    if (facebookSignInBtn) {
-      facebookSignInBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        console.log('Facebook signin clicked');
-        handleFacebookSignIn();
-      });
-    }
-
-    // Facebook sign up
-    if (facebookSignUpBtn) {
-      facebookSignUpBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        console.log('Facebook signup clicked');
-        handleFacebookSignUp();
-      });
-    }
-
-    // Apple sign in
-    if (appleSignInBtn) {
-      appleSignInBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        console.log('Apple signin clicked');
-        handleAppleSignIn();
-      });
-    }
-
-    // Apple sign up
-    if (appleSignUpBtn) {
-      appleSignUpBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        console.log('Apple signup clicked');
-        handleAppleSignUp();
-      });
-    }
-
-    // Quick signup button
-    const quickSignupBtn = $('#quickSignupBtn');
-    if (quickSignupBtn) {
-      quickSignupBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        console.log('Quick signup clicked');
-        // Highlight the email form fields
-        const signupName = $('#signupName');
-        const signupEmail = $('#signupEmail');
-        if (signupName) signupName.focus();
-        showNotification('Fill in your details below to create your account!', 'info');
-      });
-    }
-
-    // Demo mode button
-    const demoSignInBtn = $('#demoSignInBtn');
-    if (demoSignInBtn) {
-      demoSignInBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        console.log('Demo mode clicked');
-        handleDemoMode();
-      });
-    }
-  };
-
-  // Handle manual sign in
-  const handleManualSignIn = async () => {
-    console.log('Handling manual signin...');
-    const email = $('#signinEmail')?.value;
-    const password = $('#signinPassword')?.value;
-
-    console.log('Email:', email, 'Password:', password);
-
-    if (!email || !password) {
-      showNotification('Please fill in all fields', 'error');
-      return;
-    }
-
-    try {
-      // In a real app, you'd send this to your backend
-      const user = await mockManualSignIn(email, password);
-      
-      window.wayzoApp.currentUser = user;
-      window.wayzoApp.isAuthenticated = true;
-      localStorage.setItem('wayzo_token', 'manual_token_' + Date.now());
-      localStorage.setItem('wayzo_user', JSON.stringify(user));
-
-      updateUIForAuthenticatedUser();
-      hideAuthModal();
-      showNotification(`Welcome back, ${user.name}!`, 'success');
-    } catch (error) {
-      console.error('Signin error:', error);
-      showNotification('Invalid email or password', 'error');
-    }
-  };
-
-  // Handle manual sign up
-  const handleManualSignUp = async () => {
-    console.log('Handling manual signup...');
-    const name = $('#signupName')?.value;
-    const email = $('#signupEmail')?.value;
-    const password = $('#signupPassword')?.value;
-    const confirmPassword = $('#signupConfirmPassword')?.value;
-    const agreeTerms = $('#agreeTerms')?.checked;
-
-    console.log('Signup data:', { name, email, password, confirmPassword, agreeTerms });
-
-    if (!name || !email || !password || !confirmPassword) {
-      showNotification('Please fill in all fields', 'error');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      showNotification('Passwords do not match', 'error');
-      return;
-    }
-
-    if (!agreeTerms) {
-      showNotification('Please agree to the terms', 'error');
-      return;
-    }
-
-    try {
-      // In a real app, you'd send this to your backend
-      const user = await mockManualSignUp(name, email, password);
-      
-      window.wayzoApp.currentUser = user;
-      window.wayzoApp.isAuthenticated = true;
-      localStorage.setItem('wayzo_token', 'manual_token_' + Date.now());
-      localStorage.setItem('wayzo_user', JSON.stringify(user));
-
-      updateUIForAuthenticatedUser();
-      hideAuthModal();
-      showNotification(`Welcome to Wayzo, ${user.name}!`, 'success');
-    } catch (error) {
-      console.error('Signup error:', error);
-      showNotification('Failed to create account', 'error');
-    }
-  };
-
-  // Mock manual sign in (replace with real backend)
-  const mockManualSignIn = async (email, password) => {
-    console.log('Mock signin for:', email);
-    // Simulate API call
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        if (email === 'demo@wayzo.com' && password === 'demo123') {
-          resolve({
-            id: 'manual_user_1',
-            name: 'Demo User',
-            email: email,
-            picture: '/assets/default-avatar.svg'
-          });
-        } else {
-          reject(new Error('Invalid credentials'));
-        }
-      }, 1000);
-    });
-  };
-
-  // Mock manual sign up (replace with real backend)
-  const mockManualSignUp = async (name, email, password) => {
-    console.log('Mock signup for:', name, email);
-    // Simulate API call
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          id: 'manual_user_' + Date.now(),
-          name: name,
-          email: email,
-          picture: '/assets/default-avatar.svg'
-        });
-      }, 1000);
-    });
-  };
-
-  // Setup personal cabinet
-  const setupPersonalCabinet = () => {
-    const sidebarItems = $$('.sidebar-item');
-    const cabinetTabs = $$('.cabinet-tab');
-    const createNewPlanBtn = $('#createNewPlanBtn');
-    const copyReferralBtn = $('#copyReferralBtn');
-    const shareBtns = $$('.share-btn');
-    const profileForm = $('#profileForm');
-    const dashboardBtn = $('#dashboardBtn');
-    const myPlansBtn = $('#myPlansBtn');
-    const referralBtn = $('#referralBtn');
-    const billingBtn = $('#billingBtn');
-    const signOutBtn = $('#signOutBtn');
-
-    // Tab switching
-    sidebarItems.forEach(item => {
-      item.addEventListener('click', () => {
-        const targetTab = item.dataset.tab;
-        switchCabinetTab(targetTab);
-      });
-    });
-
-    // Create new plan
-    if (createNewPlanBtn) {
-      createNewPlanBtn.addEventListener('click', () => {
-        showPlanningForm();
-      });
-    }
-
-    // Copy referral link
-    if (copyReferralBtn) {
-      copyReferralBtn.addEventListener('click', () => {
-        copyReferralLink();
-      });
-    }
-
-    // Share buttons
-    shareBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const platform = btn.classList[1];
-        shareReferral(platform);
-      });
-    });
-
-    // Profile form
-    if (profileForm) {
-      profileForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        updateProfile();
-      });
-    }
-
-    // User menu actions
-    if (dashboardBtn) {
-      dashboardBtn.addEventListener('click', () => {
-        switchCabinetTab('overview');
-        toggleUserMenu();
-      });
-    }
-
-    if (myPlansBtn) {
-      myPlansBtn.addEventListener('click', () => {
-        switchCabinetTab('plans');
-        toggleUserMenu();
-      });
-    }
-
-    if (referralBtn) {
-      referralBtn.addEventListener('click', () => {
-        switchCabinetTab('referrals');
-        toggleUserMenu();
-      });
-    }
-
-    if (billingBtn) {
-      billingBtn.addEventListener('click', () => {
-        switchCabinetTab('billing');
-        toggleUserMenu();
-      });
-    }
-
-    if (signOutBtn) {
-      signOutBtn.addEventListener('click', () => {
-        signOut();
-      });
-    }
-  };
-
-  // Switch cabinet tabs
-  const switchCabinetTab = (targetTab) => {
-    const sidebarItems = $$('.sidebar-item');
-    const cabinetTabs = $$('.cabinet-tab');
-
-    // Update sidebar
-    sidebarItems.forEach(item => {
-      if (item.dataset.tab === targetTab) {
-        item.classList.add('active');
-      } else {
-        item.classList.remove('active');
-      }
-    });
-
-    // Update content
-    cabinetTabs.forEach(tab => {
-      if (tab.id === `${targetTab}Tab`) {
-        tab.classList.add('active');
-      } else {
-        tab.classList.remove('active');
-      }
-    });
-  };
-
-  // Show planning form
-  const showPlanningForm = () => {
-    const personalCabinet = $('#personalCabinet');
-    const planningForm = $('#planningForm');
+  switchAuthTab(tabName) {
+    // Update active tab
+    const tabs = document.querySelectorAll('.auth-tab');
+    tabs.forEach(tab => tab.classList.remove('active'));
     
-    if (personalCabinet) personalCabinet.classList.add('hidden');
-    if (planningForm) {
-      planningForm.classList.remove('hidden');
-      planningForm.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
-  // Update UI for authenticated user
-  const updateUIForAuthenticatedUser = () => {
-    const loginBtn = $('#loginBtn');
-    const userMenu = $('#userMenu');
-    const personalCabinet = $('#personalCabinet');
-    const cabinetUserName = $('#cabinetUserName');
-    const profileName = $('#profileName');
-    const profileEmail = $('#profileEmail');
-
-    if (loginBtn) {
-      loginBtn.innerHTML = `
-        <img src="${window.wayzoApp.currentUser.picture || '/assets/default-avatar.svg'}" alt="Avatar" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 8px;">
-        ${window.wayzoApp.currentUser.name}
-      `;
-      loginBtn.onclick = () => toggleUserMenu();
+    const activeTab = document.querySelector(`[data-tab="${tabName}"]`);
+    if (activeTab) {
+      activeTab.classList.add('active');
     }
 
-    if (cabinetUserName) cabinetUserName.textContent = window.wayzoApp.currentUser.name;
-    if (profileName) profileName.value = window.wayzoApp.currentUser.name;
-    if (profileEmail) profileEmail.value = window.wayzoApp.currentUser.email;
-
-    // Show personal cabinet
-    if (personalCabinet) {
-      personalCabinet.classList.remove('hidden');
-      updateCabinetStats();
+    // Update active content
+    const contents = document.querySelectorAll('.auth-tab-content');
+    contents.forEach(content => content.classList.remove('active'));
+    
+    const activeContent = document.getElementById(`${tabName}Tab`);
+    if (activeContent) {
+      activeContent.classList.add('active');
     }
-  };
+  }
 
-  // Update cabinet statistics
-  const updateCabinetStats = () => {
-    const totalPlans = $('#totalPlans');
-    const referralCredits = $('#referralCredits');
-    const activePlans = $('#activePlans');
-    const totalReferrals = $('#totalReferrals');
-    const earnedCredits = $('#earnedCredits');
-    const referralLink = $('#referralLink');
+  async handleManualSignIn(e) {
+    e.preventDefault();
+    
+    const email = document.getElementById('signinEmail').value.trim();
+    const password = document.getElementById('signinPassword').value;
+    
+    if (!email || !password) {
+      this.showNotification('Please fill in all fields', 'error');
+      return;
+    }
 
-    if (totalPlans) totalPlans.textContent = window.wayzoApp.userPlans.length;
-    if (referralCredits) referralCredits.textContent = `$${window.wayzoApp.referralCredits}`;
-    if (activePlans) activePlans.textContent = window.wayzoApp.userPlans.filter(p => p.status === 'paid').length;
-    if (totalReferrals) totalReferrals.textContent = window.wayzoApp.currentUser.referrals || 0;
-    if (earnedCredits) earnedCredits.textContent = `$${window.wayzoApp.referralCredits}`;
-    if (referralLink) referralLink.value = `${window.location.origin}?ref=${window.wayzoApp.currentUser.id}`;
+    try {
+      // Simulate API call
+      const user = await this.mockSignIn(email, password);
+      this.authenticateUser(user);
+      this.hideAuthModal();
+      this.showNotification('Welcome back!', 'success');
+    } catch (error) {
+      this.showNotification(error.message, 'error');
+    }
+  }
 
-    updatePlansList();
-  };
+  async handleManualSignUp(e) {
+    e.preventDefault();
+    
+    const name = document.getElementById('signupName').value.trim();
+    const email = document.getElementById('signupEmail').value.trim();
+    const password = document.getElementById('signupPassword').value;
+    const confirmPassword = document.getElementById('signupConfirmPassword').value;
+    const agreeTerms = document.getElementById('agreeTerms').checked;
+    
+    // Validation
+    if (!name || !email || !password || !confirmPassword) {
+      this.showNotification('Please fill in all fields', 'error');
+      return;
+    }
+    
+    if (password !== confirmPassword) {
+      this.showNotification('Passwords do not match', 'error');
+      return;
+    }
+    
+    if (password.length < 8) {
+      this.showNotification('Password must be at least 8 characters', 'error');
+      return;
+    }
+    
+    if (!agreeTerms) {
+      this.showNotification('Please agree to the terms', 'error');
+      return;
+    }
 
-  // Toggle user menu
-  const toggleUserMenu = () => {
-    const userMenu = $('#userMenu');
+    try {
+      // Simulate API call
+      const user = await this.mockSignUp(name, email, password);
+      this.authenticateUser(user);
+      this.hideAuthModal();
+      this.showNotification('Account created successfully!', 'success');
+    } catch (error) {
+      this.showNotification(error.message, 'error');
+    }
+  }
+
+  async handleGoogleSignIn() {
+    try {
+      // Simulate Google OAuth
+      const user = await this.mockGoogleSignIn();
+      this.authenticateUser(user);
+      this.hideAuthModal();
+      this.showNotification('Welcome back!', 'success');
+    } catch (error) {
+      this.showNotification('Google sign-in failed. Please try again.', 'error');
+    }
+  }
+
+  async handleGoogleSignUp() {
+    try {
+      // Simulate Google OAuth
+      const user = await this.mockGoogleSignUp();
+      this.authenticateUser(user);
+      this.hideAuthModal();
+      this.showNotification('Account created successfully!', 'success');
+    } catch (error) {
+      this.showNotification('Google sign-up failed. Please try again.', 'error');
+    }
+  }
+
+  handleDemoMode() {
+    const demoUser = {
+      id: 'demo-123',
+      name: 'Demo User',
+      email: 'demo@wayzo.com',
+      avatar: '/assets/default-avatar.svg',
+      isDemo: true
+    };
+    
+    this.authenticateUser(demoUser);
+    this.hideAuthModal();
+    this.showNotification('Demo mode activated!', 'success');
+  }
+
+  authenticateUser(user) {
+    this.currentUser = user;
+    this.isAuthenticated = true;
+    window.wayzoApp.currentUser = user;
+    window.wayzoApp.isAuthenticated = true;
+    
+    // Save to localStorage
+    localStorage.setItem('wayzo_user', JSON.stringify(user));
+    localStorage.setItem('wayzo_token', 'demo-token-' + Date.now());
+    
+    // Update UI
+    this.updateUI();
+    
+    // Update global state
+    window.wayzoApp.currentUser = user;
+    window.wayzoApp.isAuthenticated = true;
+  }
+
+  signOut() {
+    this.currentUser = null;
+    this.isAuthenticated = false;
+    window.wayzoApp.currentUser = null;
+    window.wayzoApp.isAuthenticated = false;
+    
+    // Clear localStorage
+    this.clearSession();
+    
+    // Update UI
+    this.updateUI();
+    
+    // Hide user menu
+    const userMenu = document.getElementById('userMenu');
+    if (userMenu) {
+      userMenu.classList.add('hidden');
+    }
+    
+    this.showNotification('Signed out successfully', 'success');
+  }
+
+  clearSession() {
+    localStorage.removeItem('wayzo_user');
+    localStorage.removeItem('wayzo_token');
+  }
+
+  updateUI() {
+    const authBtn = document.getElementById('authBtn');
+    const userMenuBtn = document.getElementById('userMenuBtn');
+    const userMenu = document.getElementById('userMenu');
+    
+    if (this.isAuthenticated) {
+      // Hide auth button, show user menu
+      if (authBtn) authBtn.classList.add('hidden');
+      if (userMenuBtn) userMenuBtn.classList.remove('hidden');
+      if (userMenu) userMenu.classList.remove('hidden');
+      
+      // Update user info
+      this.updateUserInfo();
+      
+      // Show admin button if user is admin
+      this.checkAdminStatus();
+    } else {
+      // Show auth button, hide user menu
+      if (authBtn) authBtn.classList.remove('hidden');
+      if (userMenuBtn) userMenuBtn.classList.add('hidden');
+      if (userMenu) userMenu.classList.add('hidden');
+    }
+  }
+
+  updateUserInfo() {
+    if (!this.currentUser) return;
+    
+    const userName = document.getElementById('userName');
+    const userEmail = document.getElementById('userEmail');
+    const userAvatar = document.getElementById('userAvatar');
+    
+    if (userName) userName.textContent = this.currentUser.name;
+    if (userEmail) userEmail.textContent = this.currentUser.email;
+    if (userAvatar && this.currentUser.avatar) {
+      userAvatar.src = this.currentUser.avatar;
+    }
+  }
+
+  checkAdminStatus() {
+    // Demo user is admin for testing
+    const adminBtn = document.querySelector('.admin-only');
+    if (adminBtn) {
+      if (this.currentUser?.isDemo || this.currentUser?.role === 'admin') {
+        adminBtn.style.display = 'block';
+      } else {
+        adminBtn.style.display = 'none';
+      }
+    }
+  }
+
+  toggleUserMenu() {
+    const userMenu = document.getElementById('userMenu');
     if (userMenu) {
       userMenu.classList.toggle('hidden');
     }
-  };
+  }
 
-  // Sign out
-  const signOut = () => {
-    window.wayzoApp.currentUser = null;
-    window.wayzoApp.isAuthenticated = false;
-    localStorage.removeItem('wayzo_token');
-    localStorage.removeItem('wayzo_user');
+  openAdminPanel() {
+    window.open('/admin.html', '_blank');
+  }
 
-    const loginBtn = $('#loginBtn');
-    const userMenu = $('#userMenu');
-    const personalCabinet = $('#personalCabinet');
-
-    if (loginBtn) {
-      loginBtn.innerHTML = `
-        <i class="fas fa-user"></i>
-        Sign In
-      `;
-      loginBtn.onclick = () => showAuthModal();
-    }
-
-    if (userMenu) userMenu.classList.add('hidden');
-    if (personalCabinet) personalCabinet.classList.add('hidden');
-
-    showNotification('Signed out successfully', 'success');
-  };
-
-  // Update profile
-  const updateProfile = async () => {
-    const form = $('#profileForm');
-    const formData = new FormData(form);
+  // Mock API calls for demo purposes
+  async mockSignIn(email, password) {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    try {
-      // Update user profile
-      window.wayzoApp.currentUser = {
-        ...window.wayzoApp.currentUser,
-        name: formData.get('name'),
-        phone: formData.get('phone'),
-        location: formData.get('location')
+    // Simple validation for demo
+    if (email === 'demo@wayzo.com' && password === 'demo123') {
+      return {
+        id: 'user-123',
+        name: 'Demo User',
+        email: email,
+        avatar: '/assets/default-avatar.svg'
       };
-
-      localStorage.setItem('wayzo_user', JSON.stringify(window.wayzoApp.currentUser));
-      updateUIForAuthenticatedUser();
-      
-      showNotification('Profile updated successfully!', 'success');
-    } catch (error) {
-      console.error('Profile update error:', error);
-      showNotification('Failed to update profile', 'error');
     }
-  };
+    
+    throw new Error('Invalid email or password');
+  }
 
-  // Add missing functions
-  const handleGoogleSignIn = () => {
-    // This would integrate with Google OAuth
-    showNotification('Google sign-in coming soon!', 'info');
-  };
+  async mockSignUp(name, email, password) {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    return {
+      id: 'user-' + Date.now(),
+      name: name,
+      email: email,
+      avatar: '/assets/default-avatar.svg'
+    };
+  }
 
-  const handleGoogleSignUp = () => {
-    // This would integrate with Google OAuth
-    showNotification('Google sign-up coming soon!', 'info');
-  };
+  async mockGoogleSignIn() {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    return {
+      id: 'google-user-123',
+      name: 'Google User',
+      email: 'google@wayzo.com',
+      avatar: '/assets/default-avatar.svg'
+    };
+  }
 
-  const handleFacebookSignIn = () => {
-    // This would integrate with Facebook OAuth
-    showNotification('Facebook sign-in coming soon!', 'info');
-  };
+  async mockGoogleSignUp() {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    return {
+      id: 'google-user-' + Date.now(),
+      name: 'Google User',
+      email: 'google@wayzo.com',
+      avatar: '/assets/default-avatar.svg'
+    };
+  }
 
-  const handleFacebookSignUp = () => {
-    // This would integrate with Facebook OAuth
-    showNotification('Facebook sign-up coming soon!', 'info');
-  };
-
-  const handleAppleSignIn = () => {
-    // This would integrate with Apple OAuth
-    showNotification('Apple sign-in coming soon!', 'info');
-  };
-
-  const handleAppleSignUp = () => {
-    // This would integrate with Apple OAuth
-    showNotification('Apple sign-up coming soon!', 'info');
-  };
-
-  const showNotification = (message, type = 'info') => {
+  showNotification(message, type = 'info') {
     // Create notification element
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
     notification.innerHTML = `
-      <div class="notification-content">
-        <i class="fas fa-${getNotificationIcon(type)}"></i>
-        <span>${message}</span>
-        <button class="notification-close">&times;</button>
-      </div>
+      <i class="fas ${this.getNotificationIcon(type)}"></i>
+      <span>${message}</span>
+      <button class="notification-close">&times;</button>
     `;
-
+    
+    // Add to page
     document.body.appendChild(notification);
-
-    // Auto-remove after 5 seconds
+    
+    // Show notification
+    setTimeout(() => notification.classList.add('show'), 100);
+    
+    // Auto-hide after 5 seconds
     setTimeout(() => {
-      notification.remove();
+      notification.classList.remove('show');
+      setTimeout(() => notification.remove(), 300);
     }, 5000);
-
-    // Close button functionality
+    
+    // Close button
     const closeBtn = notification.querySelector('.notification-close');
     if (closeBtn) {
       closeBtn.addEventListener('click', () => {
-        notification.remove();
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
       });
     }
-  };
+  }
 
-  const getNotificationIcon = (type) => {
-    switch (type) {
-      case 'success': return 'check-circle';
-      case 'error': return 'exclamation-circle';
-      case 'warning': return 'exclamation-triangle';
-      default: return 'info-circle';
-    }
-  };
-
-  // Add missing cabinet functions
-  const updatePlansList = () => {
-    const plansList = $('#plansList');
-    const recentPlansList = $('#recentPlansList');
-    
-    if (!plansList || !recentPlansList) return;
-
-    const plans = window.wayzoApp.userPlans || [];
-    
-    if (plans.length === 0) {
-      plansList.innerHTML = '<p class="no-plans">No plans yet. Start planning your next adventure!</p>';
-      recentPlansList.innerHTML = '<p class="no-plans">No plans yet. Start planning your next adventure!</p>';
-      return;
-    }
-
-    // Render plans
-    const plansHTML = plans.map(plan => `
-      <div class="plan-item">
-        <div class="plan-info">
-          <h4>${plan.destination}</h4>
-          <p>${plan.duration} days • ${plan.style} • $${plan.budget}</p>
-          <span class="plan-status ${plan.status}">${plan.status}</span>
-        </div>
-        <div class="plan-actions">
-          <button class="btn btn-secondary btn-sm">View</button>
-          <button class="btn btn-primary btn-sm">Edit</button>
-        </div>
-      </div>
-    `).join('');
-
-    plansList.innerHTML = plansHTML;
-    recentPlansList.innerHTML = plans.slice(0, 3).map(plan => `
-      <div class="plan-item">
-        <div class="plan-info">
-          <h4>${plan.destination}</h4>
-          <p>${plan.duration} days • ${plan.style} • $${plan.budget}</p>
-        </div>
-      </div>
-    `).join('');
-  };
-
-  const copyReferralLink = () => {
-    const referralLink = $('#referralLink');
-    if (referralLink) {
-      navigator.clipboard.writeText(referralLink.value).then(() => {
-        const copyBtn = $('#copyReferralBtn');
-        if (copyBtn) {
-          copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
-          copyBtn.style.background = '#10b981';
-          copyBtn.style.color = 'white';
-          
-          setTimeout(() => {
-            copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy';
-            copyBtn.style.background = '';
-            copyBtn.style.color = '';
-          }, 2000);
-        }
-        showNotification('Referral link copied!', 'success');
-      }).catch(() => {
-        showNotification('Failed to copy link', 'error');
-      });
-    }
-  };
-
-  const shareReferral = (platform) => {
-    const referralLink = $('#referralLink')?.value || '';
-    const message = `Check out Wayzo - AI-powered trip planning! Use my referral link: ${referralLink}`;
-    
-    let shareUrl = '';
-    switch (platform) {
-      case 'share-email':
-        shareUrl = `mailto:?subject=Try Wayzo - AI Trip Planning&body=${encodeURIComponent(message)}`;
-        break;
-      case 'share-whatsapp':
-        shareUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-        break;
-      case 'share-telegram':
-        shareUrl = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent('Check out Wayzo - AI-powered trip planning!')}`;
-        break;
-    }
-    
-    if (shareUrl) {
-      window.open(shareUrl, '_blank');
-    }
-  };
-
-  // Demo mode functionality
-  const handleDemoMode = () => {
-    console.log('Handling demo mode...');
-    const demoUser = {
-      id: 'demo_user_1',
-      name: 'Demo User',
-      email: 'demo@wayzo.com',
-      picture: '/assets/default-avatar.svg'
+  getNotificationIcon(type) {
+    const icons = {
+      success: 'fa-check-circle',
+      error: 'fa-exclamation-circle',
+      warning: 'fa-exclamation-triangle',
+      info: 'fa-info-circle'
     };
-    window.wayzoApp.currentUser = demoUser;
-    window.wayzoApp.isAuthenticated = true;
-    localStorage.setItem('wayzo_token', 'demo_token_' + Date.now());
-    localStorage.setItem('wayzo_user', JSON.stringify(demoUser));
-    updateUIForAuthenticatedUser();
-    showNotification('Welcome to Wayzo (Demo Mode)!', 'success');
-  };
+    return icons[type] || icons.info;
+  }
+}
 
-  // Initialize wayzoApp object
-  window.wayzoApp = {
-    isAuthenticated: false,
-    currentUser: null,
-    userPlans: [],
-    referralCredits: 0
-  };
+// ====== MULTI-DESTINATION PLANNING ======
+class MultiDestinationManager {
+  constructor() {
+    this.destinations = [];
+    this.maxDestinations = 10;
+    this.init();
+  }
 
-  // Setup multi-destination functionality
-  const setupMultiDestination = () => {
-    const tripTypeRadios = $$('input[name="tripType"]');
-    const singleDestination = $('#singleDestination');
-    const multiDestination = $('#multiDestination');
-    const addDestinationBtn = $('#addDestinationBtn');
-    const multiDestinations = $('.multi-destinations');
+  init() {
+    this.setupEventListeners();
+    this.addFirstDestination();
+  }
 
-    // Handle trip type switching
-    tripTypeRadios.forEach(radio => {
-      radio.addEventListener('change', () => {
-        if (radio.value === 'single') {
-          singleDestination.classList.remove('hidden');
-          multiDestination.classList.add('hidden');
-        } else {
-          singleDestination.classList.add('hidden');
-          multiDestination.classList.remove('hidden');
-        }
-      });
-    });
-
-    // Add new destination
-    if (addDestinationBtn) {
-      addDestinationBtn.addEventListener('click', () => {
-        addNewDestination();
-      });
+  setupEventListeners() {
+    const tripTypeSelector = document.getElementById('tripType');
+    if (tripTypeSelector) {
+      tripTypeSelector.addEventListener('change', (e) => this.handleTripTypeChange(e));
     }
 
-    // Setup remove destination buttons
-    setupRemoveDestinationButtons();
-  };
+    const addDestinationBtn = document.getElementById('addDestinationBtn');
+    if (addDestinationBtn) {
+      addDestinationBtn.addEventListener('click', () => this.addNewDestination());
+    }
+  }
 
-  // Add new destination
-  const addNewDestination = () => {
-    const multiDestinations = $('.multi-destinations');
-    const existingDestinations = $$('.destination-item');
-    const newIndex = existingDestinations.length;
+  handleTripTypeChange(e) {
+    const isMulti = e.target.value === 'multi';
+    const multiDestinationSection = document.getElementById('multiDestination');
+    
+    if (multiDestinationSection) {
+      if (isMulti) {
+        multiDestinationSection.classList.remove('hidden');
+        this.addFirstDestination();
+      } else {
+        multiDestinationSection.classList.add('hidden');
+        this.clearDestinations();
+      }
+    }
+  }
 
-    if (newIndex >= 10) {
-      showNotification('Maximum 10 destinations allowed', 'warning');
+  addFirstDestination() {
+    if (this.destinations.length === 0) {
+      this.addNewDestination();
+    }
+  }
+
+  addNewDestination() {
+    if (this.destinations.length >= this.maxDestinations) {
+      this.showMaxDestinationsMessage();
       return;
     }
 
-    const newDestination = document.createElement('div');
-    newDestination.className = 'destination-item';
-    newDestination.dataset.index = newIndex;
-    newDestination.innerHTML = `
+    const destinationId = 'dest-' + Date.now();
+    const destination = {
+      id: destinationId,
+      placeName: '',
+      country: '',
+      daysToStay: 1,
+      priority: 'medium',
+      specialRequirements: ''
+    };
+
+    this.destinations.push(destination);
+    this.renderDestination(destination);
+    this.updateDestinationNumbers();
+    this.setupRemoveButtons();
+    
+    console.log('Destination added:', destination);
+  }
+
+  renderDestination(destination) {
+    const container = document.getElementById('destinationsContainer');
+    if (!container) return;
+
+    const destinationElement = document.createElement('div');
+    destinationElement.className = 'destination-item';
+    destinationElement.id = destination.id;
+    
+    destinationElement.innerHTML = `
       <div class="destination-header">
-        <h4>Destination ${newIndex + 1}</h4>
-        <button type="button" class="btn btn-icon remove-destination" title="Remove destination">
+        <span class="destination-number">${this.destinations.length}</span>
+        <button class="btn-icon remove-destination" data-destination-id="${destination.id}">
           <i class="fas fa-times"></i>
         </button>
       </div>
       <div class="destination-inputs">
-        <div class="field">
-          <span>Place Name</span>
-          <input type="text" name="destinations[${newIndex}][name]" class="form-input" placeholder="e.g., Rome" required />
+        <div class="form-group">
+          <label for="${destination.id}-placeName">Place Name</label>
+          <input type="text" id="${destination.id}-placeName" 
+                 class="form-input" placeholder="e.g., Paris, Tokyo, New York"
+                 value="${destination.placeName}">
         </div>
-        <div class="field">
-          <span>Country</span>
-          <input type="text" name="destinations[${newIndex}][country]" class="form-input" placeholder="e.g., Italy" />
+        <div class="form-group">
+          <label for="${destination.id}-country">Country</label>
+          <input type="text" id="${destination.id}-country" 
+                 class="form-input" placeholder="e.g., France, Japan, USA"
+                 value="${destination.country}">
         </div>
-        <div class="fields-2">
-          <div class="field">
-            <span>Days to Stay</span>
-            <input type="number" name="destinations[${newIndex}][days]" class="form-input" min="1" max="30" value="3" required />
-          </div>
-          <div class="field">
-            <span>Priority Level</span>
-            <select name="destinations[${newIndex}][priority]" class="form-input">
-              <option value="must-see">Must See</option>
-              <option value="high">High Priority</option>
-              <option value="medium" selected>Medium Priority</option>
-              <option value="low">Low Priority</option>
-              <option value="optional">Optional</option>
-            </select>
-          </div>
+        <div class="form-group">
+          <label for="${destination.id}-daysToStay">Days to Stay</label>
+          <input type="number" id="${destination.id}-daysToStay" 
+                 class="form-input" min="1" max="30" value="${destination.daysToStay}">
         </div>
-        <div class="field">
-          <span>Special Requirements</span>
-          <textarea name="destinations[${newIndex}][requirements]" class="form-input" rows="2" placeholder="Any specific requirements for this destination..."></textarea>
+        <div class="form-group">
+          <label for="${destination.id}-priority">Priority Level</label>
+          <select id="${destination.id}-priority" class="form-input">
+            <option value="must-see" ${destination.priority === 'must-see' ? 'selected' : ''}>Must See</option>
+            <option value="high" ${destination.priority === 'high' ? 'selected' : ''}>High Priority</option>
+            <option value="medium" ${destination.priority === 'medium' ? 'selected' : ''}>Medium Priority</option>
+            <option value="low" ${destination.priority === 'low' ? 'selected' : ''}>Low Priority</option>
+            <option value="optional" ${destination.priority === 'optional' ? 'selected' : ''}>Optional</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="${destination.id}-specialRequirements">Special Requirements</label>
+          <textarea id="${destination.id}-specialRequirements" 
+                    class="form-input" rows="2" 
+                    placeholder="Any special needs, accessibility requirements, etc."
+                    >${destination.specialRequirements}</textarea>
         </div>
       </div>
     `;
 
-    multiDestinations.appendChild(newDestination);
+    container.appendChild(destinationElement);
     
-    // Setup remove button for new destination
-    const removeBtn = newDestination.querySelector('.remove-destination');
-    if (removeBtn) {
-      removeBtn.addEventListener('click', () => {
-        removeDestination(newDestination);
+    // Setup input event listeners
+    this.setupDestinationInputListeners(destinationElement, destination);
+  }
+
+  setupDestinationInputListeners(element, destination) {
+    const inputs = element.querySelectorAll('input, select, textarea');
+    inputs.forEach(input => {
+      input.addEventListener('input', (e) => {
+        const field = e.target.id.split('-')[1];
+        destination[field] = e.target.value;
+        console.log('Destination updated:', destination);
       });
-    }
+    });
+  }
 
-    // Update destination numbers
-    updateDestinationNumbers();
-    
-    // Scroll to new destination
-    newDestination.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    
-    showNotification(`Destination ${newIndex + 1} added!`, 'success');
-  };
-
-  // Remove destination
-  const removeDestination = (destinationElement) => {
-    destinationElement.classList.add('removing');
-    
-    setTimeout(() => {
-      destinationElement.remove();
-      updateDestinationNumbers();
-      showNotification('Destination removed', 'info');
-    }, 300);
-  };
-
-  // Update destination numbers
-  const updateDestinationNumbers = () => {
-    const destinations = $$('.destination-item');
-    destinations.forEach((dest, index) => {
-      const header = dest.querySelector('h4');
-      if (header) {
-        header.textContent = `Destination ${index + 1}`;
+  removeDestination(destinationId) {
+    const index = this.destinations.findIndex(d => d.id === destinationId);
+    if (index > -1) {
+      this.destinations.splice(index, 1);
+      
+      const element = document.getElementById(destinationId);
+      if (element) {
+        element.remove();
       }
       
-      // Update form field names
-      const inputs = dest.querySelectorAll('input, select, textarea');
-      inputs.forEach(input => {
-        const name = input.name;
-        if (name.includes('[0]')) {
-          input.name = name.replace('[0]', `[${index}]`);
+      this.updateDestinationNumbers();
+      console.log('Destination removed:', destinationId);
+    }
+  }
+
+  updateDestinationNumbers() {
+    const numbers = document.querySelectorAll('.destination-number');
+    numbers.forEach((number, index) => {
+      number.textContent = index + 1;
+    });
+  }
+
+  setupRemoveButtons() {
+    const removeButtons = document.querySelectorAll('.remove-destination');
+    removeButtons.forEach(button => {
+      button.addEventListener('click', (e) => {
+        const destinationId = e.target.closest('.remove-destination').dataset.destinationId;
+        this.removeDestination(destinationId);
+      });
+    });
+  }
+
+  clearDestinations() {
+    this.destinations = [];
+    const container = document.getElementById('destinationsContainer');
+    if (container) {
+      container.innerHTML = '';
+    }
+  }
+
+  showMaxDestinationsMessage() {
+    const authManager = window.wayzoApp.authManager;
+    if (authManager) {
+      authManager.showNotification('Maximum 10 destinations allowed', 'warning');
+    }
+  }
+
+  getDestinations() {
+    return this.destinations;
+  }
+}
+
+// ====== REFERRAL SYSTEM ======
+class ReferralManager {
+  constructor() {
+    this.userReferralCode = null;
+    this.init();
+  }
+
+  init() {
+    this.generateReferralCode();
+    this.setupEventListeners();
+  }
+
+  generateReferralCode() {
+    // Check if user already has a referral code
+    let existingCode = localStorage.getItem('wayzo_referral_code');
+    
+    if (!existingCode) {
+      // Generate new referral code
+      const prefix = 'WAYZO';
+      const randomChars = Math.random().toString(36).substring(2, 8).toUpperCase();
+      existingCode = prefix + randomChars;
+      localStorage.setItem('wayzo_referral_code', existingCode);
+    }
+    
+    this.userReferralCode = existingCode;
+    this.displayReferralCode();
+  }
+
+  displayReferralCode() {
+    const referralCodeElement = document.getElementById('userReferralCode');
+    if (referralCodeElement) {
+      referralCodeElement.textContent = this.userReferralCode;
+    }
+  }
+
+  setupEventListeners() {
+    const copyBtn = document.getElementById('copyReferralBtn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => this.copyReferralCode());
+    }
+  }
+
+  copyReferralCode() {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(this.userReferralCode).then(() => {
+        this.showCopySuccess();
+      }).catch(() => {
+        this.fallbackCopy();
+      });
+    } else {
+      this.fallbackCopy();
+    }
+  }
+
+  fallbackCopy() {
+    const textArea = document.createElement('textarea');
+    textArea.value = this.userReferralCode;
+    document.body.appendChild(textArea);
+    textArea.select();
+    
+    try {
+      document.execCommand('copy');
+      this.showCopySuccess();
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+    
+    document.body.removeChild(textArea);
+  }
+
+  showCopySuccess() {
+    const copyBtn = document.getElementById('copyReferralBtn');
+    if (copyBtn) {
+      const originalText = copyBtn.textContent;
+      copyBtn.textContent = 'Copied!';
+      copyBtn.style.background = '#10b981';
+      copyBtn.style.color = 'white';
+      
+      setTimeout(() => {
+        copyBtn.textContent = originalText;
+        copyBtn.style.background = '';
+        copyBtn.style.color = '';
+      }, 2000);
+    }
+  }
+}
+
+// ====== DIETARY AND STYLE SELECTION ======
+class PreferenceManager {
+  constructor() {
+    this.init();
+  }
+
+  init() {
+    this.setupDietaryNeeds();
+    this.setupStyleSelection();
+  }
+
+  setupDietaryNeeds() {
+    const dietaryCheckboxes = document.querySelectorAll('input[name="dietary"]');
+    const noRestrictionsCheckbox = document.querySelector('input[value="no-restrictions"]');
+    
+    if (!dietaryCheckboxes.length) return;
+    
+    dietaryCheckboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', (e) => {
+        if (e.target.value === 'no-restrictions') {
+          // If "No restrictions" is checked, uncheck others
+          if (e.target.checked) {
+            dietaryCheckboxes.forEach(cb => {
+              if (cb !== e.target) cb.checked = false;
+            });
+          }
+        } else {
+          // If any other option is checked, uncheck "No restrictions"
+          if (e.target.checked && noRestrictionsCheckbox) {
+            noRestrictionsCheckbox.checked = false;
+          }
         }
       });
     });
-  };
+  }
 
-  // Setup remove destination buttons
-  const setupRemoveDestinationButtons = () => {
-    const removeButtons = $$('.remove-destination');
-    removeButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const destinationItem = btn.closest('.destination-item');
-        if (destinationItem) {
-          removeDestination(destinationItem);
+  setupStyleSelection() {
+    const styleCheckboxes = document.querySelectorAll('input[name="style"]');
+    
+    styleCheckboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', (e) => {
+        console.log('Style selected:', e.target.value);
+        // Add visual feedback here if needed
+      });
+    });
+  }
+}
+
+// ====== FORM HANDLING ======
+class FormManager {
+  constructor() {
+    this.init();
+  }
+
+  init() {
+    this.setupFormSubmission();
+    this.setupDateFlexibility();
+    this.setupChildrenAges();
+  }
+
+  setupFormSubmission() {
+    const form = document.querySelector('form');
+    if (form) {
+      form.addEventListener('submit', (e) => this.handleFormSubmit(e));
+    }
+  }
+
+  setupDateFlexibility() {
+    const dateFlexibilityRadios = document.querySelectorAll('input[name="dateFlexibility"]');
+    const exactDates = document.getElementById('exactDates');
+    const flexibleDates = document.getElementById('flexibleDates');
+    
+    if (!dateFlexibilityRadios.length || !exactDates || !flexibleDates) return;
+    
+    dateFlexibilityRadios.forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        if (e.target.value === 'exact') {
+          exactDates.classList.remove('hidden');
+          flexibleDates.classList.add('hidden');
+        } else {
+          exactDates.classList.add('hidden');
+          flexibleDates.classList.remove('hidden');
         }
       });
     });
-  };
+  }
 
-  // Initialize all features when DOM is ready
-  document.addEventListener('DOMContentLoaded', () => {
-    setupDietaryNeeds();
-    setupStyleSelection();
-    setupReferralSystem();
-    setupAuthentication();
-    setupPersonalCabinet();
-    setupMultiDestination();
-  });
+  setupChildrenAges() {
+    const childrenInput = document.getElementById('children');
+    const childrenAgesField = document.getElementById('childrenAges');
+    
+    if (!childrenInput || !childrenAgesField) return;
+    
+    childrenInput.addEventListener('change', (e) => {
+      const count = parseInt(e.target.value) || 0;
+      if (count > 0) {
+        childrenAgesField.classList.remove('hidden');
+      } else {
+        childrenAgesField.classList.add('hidden');
+      }
+    });
+  }
 
-})();
+  async handleFormSubmit(e) {
+    e.preventDefault();
+    
+    // Check if user is authenticated
+    if (!window.wayzoApp.isAuthenticated) {
+      window.wayzoApp.authManager.showNotification('Please sign in to create a plan', 'warning');
+      window.wayzoApp.authManager.showAuthModal();
+      return;
+    }
+    
+    const formData = this.readForm();
+    console.log('Form submitted:', formData);
+    
+    // Show success message
+    window.wayzoApp.authManager.showNotification('Trip plan submitted successfully!', 'success');
+    
+    // Here you would typically send the data to your backend
+    // For now, we'll just log it
+    return formData;
+  }
+
+  readForm() {
+    const formData = {
+      from: document.getElementById('from')?.value || '',
+      destination: document.getElementById('destination')?.value || '',
+      dateFlexibility: document.querySelector('input[name="dateFlexibility"]:checked')?.value || '',
+      startDate: document.getElementById('startDate')?.value || '',
+      endDate: document.getElementById('endDate')?.value || '',
+      travelMonth: document.getElementById('travelMonth')?.value || '',
+      tripDuration: document.getElementById('tripDuration')?.value || '',
+      budget: document.getElementById('budget')?.value || '',
+      adults: document.getElementById('adults')?.value || '',
+      children: document.getElementById('children')?.value || '',
+      childrenAges: document.getElementById('childrenAges')?.value || '',
+      style: document.querySelector('input[name="style"]:checked')?.value || '',
+      preferences: document.getElementById('preferences')?.value || '',
+      dietary: this.getSelectedDietary(),
+      professionalBrief: document.getElementById('professionalBrief')?.value || '',
+      referralCode: document.getElementById('referralCode')?.value || '',
+      destinations: window.wayzoApp.multiDestinationManager?.getDestinations() || []
+    };
+    
+    return formData;
+  }
+
+  getSelectedDietary() {
+    const selected = [];
+    const checkboxes = document.querySelectorAll('input[name="dietary"]:checked');
+    checkboxes.forEach(cb => selected.push(cb.value));
+    return selected;
+  }
+}
+
+// ====== INITIALIZATION ======
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('Wayzo App Initializing...');
+  
+  // Initialize language manager
+  window.wayzoApp.languageManager = new LanguageManager();
+  
+  // Initialize authentication manager
+  window.wayzoApp.authManager = new AuthenticationManager();
+  
+  // Initialize multi-destination manager
+  window.wayzoApp.multiDestinationManager = new MultiDestinationManager();
+  
+  // Initialize referral manager
+  window.wayzoApp.referralManager = new ReferralManager();
+  
+  // Initialize preference manager
+  window.wayzoApp.preferenceManager = new PreferenceManager();
+  
+  // Initialize form manager
+  window.wayzoApp.formManager = new FormManager();
+  
+  console.log('Wayzo App Initialized Successfully!');
+  console.log('App State:', window.wayzoApp);
+});
+
+// ====== GLOBAL FUNCTIONS ======
+window.copyReferralCode = function() {
+  if (window.wayzoApp.referralManager) {
+    window.wayzoApp.referralManager.copyReferralCode();
+  }
+};
+
+window.showAuthModal = function() {
+  if (window.wayzoApp.authManager) {
+    window.wayzoApp.authManager.showAuthModal();
+  }
+};
+
+window.hideAuthModal = function() {
+  if (window.wayzoApp.authManager) {
+    window.wayzoApp.authManager.hideAuthModal();
+  }
+};
