@@ -1,307 +1,707 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Wayzo — Plan unforgettable trips in minutes — AI-powered</title>
-
-  <link rel="icon" type="image/svg+xml" href="/frontend/favicon.svg" />
-  <link rel="stylesheet" href="/frontend/style.css" />
-  <script src="/config.js"></script>
-  <script src="/frontend/app.js" defer></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wayzo - AI-Powered Trip Planning</title>
+    <link rel="stylesheet" href="/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-  <!-- Top bar -->
-  <header class="topbar">
-    <div class="container topbar-inner">
-      <a class="brand" href="/">
-        <span class="brand-badge">WZ</span>
-        <span class="brand-name">Wayzo</span>
-      </a>
-      <div class="topbar-actions">
-        <button id="loginBtn" class="btn btn-ghost">Sign In</button>
-        <a class="btn btn-cta" href="#planner">Start planning</a>
-      </div>
-    </div>
-  </header>
-
-  <!-- HERO -->
-  <!-- Background comes from CSS var --hero-bg; keep the file at hero-bg.jpg -->
-  <section class="hero" style="--hero-bg: url('/frontend/hero-bg.jpg')">
-    <div class="container hero-grid">
-      <!-- Left: headline card -->
-      <div class="hero-card hero-left">
-        <h1>Plan unforgettable trips in minutes — <span class="hl">AI-powered</span></h1>
-        <p class="lede">
-          Personalized itineraries by budget and style. Book flights, stays, and activities — ready to book.
-        </p>
-        <div class="hero-actions">
-          <a class="btn btn-primary" href="#planner">Build my plan</a>
-          <a class="btn btn-ghost" href="#planner">See demo</a>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <img src="/assets/logo.png" alt="Wayzo" class="logo-img">
+                <span class="logo-text">Wayzo</span>
+            </div>
+            <nav class="nav">
+                <a href="#home" class="nav-link">Home</a>
+                <a href="#about" class="nav-link">About</a>
+                <a href="#demo" class="nav-link">Demo</a>
+            </nav>
+            <div class="topbar-actions">
+                <button id="loginBtn" class="btn btn-secondary">
+                    <i class="fas fa-user"></i>
+                    Sign In
+                </button>
+            </div>
         </div>
-        <p class="muted small">No app required · Mobile-first · PDF export</p>
-      </div>
+    </header>
 
-      <!-- Right: inspiration image card -->
-      <figure class="hero-card hero-right">
-        <img src="/frontend/hero-card.jpg" loading="eager" alt="Wayzo — inspiration for your next trip" />
-        <figcaption>Wayzo — inspiration for your next trip</figcaption>
-      </figure>
-    </div>
-  </section>
-
-  <!-- MAIN -->
-  <main id="planner" class="main">
-    <div class="container grid-2">
-      <!-- Form -->
-      <section class="card">
-        <div class="card-header">
-          <h2>Trip details</h2>
+    <!-- User Menu (Hidden by default) -->
+    <div id="userMenu" class="user-menu hidden">
+        <div class="user-info">
+            <img id="userAvatar" src="/assets/default-avatar.png" alt="User Avatar" class="user-avatar">
+            <div class="user-details">
+                <span id="userName" class="user-name">User Name</span>
+                <span id="userEmail" class="user-email">user@email.com</span>
+            </div>
         </div>
-        <p class="muted">We'll tailor routes, hotels, activities, and meals—then generate your full AI plan.</p>
+        <div class="user-menu-actions">
+            <button id="dashboardBtn" class="menu-btn">
+                <i class="fas fa-tachometer-alt"></i>
+                Dashboard
+            </button>
+            <button id="myPlansBtn" class="menu-btn">
+                <i class="fas fa-map-marked-alt"></i>
+                My Plans
+            </button>
+            <button id="referralBtn" class="menu-btn">
+                <i class="fas fa-gift"></i>
+                Refer Friends ($5 off!)
+            </button>
+            <button id="billingBtn" class="menu-btn">
+                <i class="fas fa-credit-card"></i>
+                Billing
+            </button>
+            <button id="signOutBtn" class="menu-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                Sign Out
+            </button>
+        </div>
+    </div>
 
-        <form id="tripForm" class="form" style="margin-top:12px">
-          <div class="field">
-            <span>Traveling from (optional)</span>
-            <input id="from" type="text" name="from" placeholder="e.g., New York, London" />
-            <div class="field-help">Leave empty to use your current location for best deals.</div>
-          </div>
-
-          <div class="field">
-            <span>Destination</span>
-            <input id="dest" type="text" name="destination" placeholder="e.g., Paris, Tokyo, Bali" required />
-            <div class="field-help">Add country for clarity if needed.</div>
-          </div>
-
-          <div class="field">
-            <span>Date flexibility</span>
-            <div class="date-flexibility">
-              <label class="chip">
-                <input type="radio" name="dateMode" value="exact" checked /> Exact dates
-              </label>
-              <label class="chip">
-                <input type="radio" name="dateMode" value="flexible" /> Flexible (best prices)
-              </label>
-            </div>
-          </div>
-
-          <div id="exactDates" class="fields-2">
-            <div class="field">
-              <span>Start date</span>
-              <input id="start" type="date" name="start" required />
-            </div>
-            <div class="field">
-              <span>End date</span>
-              <input id="end" type="date" name="end" required />
-            </div>
-          </div>
-
-          <div id="flexibleDates" class="fields-2 hidden">
-            <div class="field">
-              <span>Travel month</span>
-              <input id="travelMonth" type="month" name="travelMonth" />
-            </div>
-            <div class="field">
-              <span>Trip duration</span>
-              <select id="duration" name="duration">
-                <option value="3">3 days</option>
-                <option value="5" selected>5 days</option>
-                <option value="7">1 week</option>
-                <option value="10">10 days</option>
-                <option value="14">2 weeks</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="fields-2">
-            <div class="field">
-              <span>Budget</span>
-              <div class="fields-2">
-                <input id="budget" type="number" min="100" step="50" name="budget" placeholder="1500" required />
-                <select id="currency" name="currency" aria-label="Currency">
-                  <option value="USD" selected>USD $</option>
-                  <option value="EUR">EUR €</option>
-                  <option value="GBP">GBP £</option>
-                  <option value="ILS">ILS ₪</option>
-                  <option value="AUD">AUD $</option>
-                  <option value="CAD">CAD $</option>
-                </select>
-              </div>
-            </div>
-            <div class="field">
-              <span>Travelers</span>
-              <div class="travelers-input">
-                <div class="traveler-type">
-                  <label for="adults">Adults</label>
-                  <input id="adults" type="number" min="1" max="10" name="adults" value="2" required />
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Hero Section -->
+        <section id="home" class="hero">
+            <div class="hero-content">
+                <h1 class="hero-title">Plan unforgettable trips in minutes — AI-powered</h1>
+                <p class="hero-subtitle">Personalized itineraries by budget and style. Book flights, stays, and activities — ready to book.</p>
+                <div class="hero-actions">
+                    <button id="startPlanningBtn" class="btn btn-primary btn-large">
+                        <i class="fas fa-rocket"></i>
+                        Build my plan
+                    </button>
+                    <button id="demoBtn" class="btn btn-secondary btn-large">
+                        <i class="fas fa-play"></i>
+                        See demo
+                    </button>
                 </div>
-                <div class="traveler-type">
-                  <label for="children">Children</label>
-                  <input id="children" type="number" min="0" max="8" name="children" value="0" />
+                <div class="hero-features">
+                    <span class="feature"><i class="fas fa-mobile-alt"></i> No app required</span>
+                    <span class="feature"><i class="fas fa-mobile-alt"></i> Mobile-first</span>
+                    <span class="feature"><i class="fas fa-file-pdf"></i> PDF export</span>
                 </div>
-              </div>
             </div>
-          </div>
+        </section>
 
-          <div id="childrenAges" class="field hidden">
-            <span>Children's ages</span>
-            <div id="agesContainer" class="ages-container">
-              <!-- Dynamic age inputs will be added here -->
+        <!-- Planning Form Section -->
+        <section id="planningForm" class="planning-section">
+            <div class="container">
+                <div class="form-header">
+                    <h2>Trip details</h2>
+                    <p>We'll tailor routes, hotels, activities, and meals—then generate your full AI plan.</p>
+                </div>
+                
+                <form id="tripForm" class="trip-form">
+                    <!-- Traveling From -->
+                    <div class="form-group">
+                        <label for="travelingFrom" class="form-label">
+                            <i class="fas fa-plane-departure"></i>
+                            Traveling from (optional)
+                        </label>
+                        <input type="text" id="travelingFrom" name="travelingFrom" class="form-input" 
+                               placeholder="e.g., New York, NY">
+                        <small class="form-help">Leave empty to use your current location for best deals.</small>
+                    </div>
+
+                    <!-- Destination -->
+                    <div class="form-group">
+                        <label for="destination" class="form-label">
+                            <i class="fas fa-map-marker-alt"></i>
+                            Destination
+                        </label>
+                        <input type="text" id="destination" name="destination" class="form-input" required
+                               placeholder="e.g., Paris, France">
+                        <small class="form-help">Add country for clarity if needed.</small>
+                    </div>
+
+                    <!-- Date Flexibility -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-calendar-alt"></i>
+                            Date flexibility
+                        </label>
+                        <div class="date-flexibility">
+                            <label class="radio-option">
+                                <input type="radio" name="dateFlexibility" value="exact" checked>
+                                <span class="radio-custom"></span>
+                                Exact dates
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="dateFlexibility" value="flexible">
+                                <span class="radio-custom"></span>
+                                Flexible (best prices)
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Date Selection -->
+                    <div id="exactDates" class="date-selection">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="startDate" class="form-label">Start date</label>
+                                <input type="date" id="startDate" name="startDate" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="endDate" class="form-label">End date</label>
+                                <input type="date" id="endDate" name="endDate" class="form-input" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="flexibleDates" class="date-selection hidden">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="travelMonth" class="form-label">Travel month</label>
+                                <input type="month" id="travelMonth" name="travelMonth" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label for="tripDuration" class="form-label">Trip duration</label>
+                                <select id="tripDuration" name="tripDuration" class="form-select">
+                                    <option value="3">3 days</option>
+                                    <option value="5" selected>5 days</option>
+                                    <option value="7">7 days</option>
+                                    <option value="10">10 days</option>
+                                    <option value="14">14 days</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Budget -->
+                    <div class="form-group">
+                        <label for="budget" class="form-label">
+                            <i class="fas fa-dollar-sign"></i>
+                            Budget
+                        </label>
+                        <div class="budget-input-group">
+                            <input type="number" id="budget" name="budget" class="form-input" required min="100" step="100">
+                            <select id="currency" name="currency" class="form-select currency-select">
+                                <option value="USD">USD $</option>
+                                <option value="EUR">EUR €</option>
+                                <option value="GBP">GBP £</option>
+                                <option value="CAD">CAD $</option>
+                                <option value="AUD">AUD $</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Travelers -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-users"></i>
+                            Travelers
+                        </label>
+                        <div class="travelers-input">
+                            <div class="traveler-count">
+                                <label for="adults">Adults</label>
+                                <div class="number-input">
+                                    <button type="button" class="number-btn" onclick="changeNumber('adults', -1)">-</button>
+                                    <input type="number" id="adults" name="adults" value="2" min="1" max="10" class="form-input">
+                                    <button type="button" class="number-btn" onclick="changeNumber('adults', 1)">+</button>
+                                </div>
+                            </div>
+                            <div class="traveler-count">
+                                <label for="children">Children</label>
+                                <div class="number-input">
+                                    <button type="button" class="number-btn" onclick="changeNumber('children', -1)">-</button>
+                                    <input type="number" id="children" name="children" value="0" min="0" max="10" class="form-input">
+                                    <button type="button" class="number-btn" onclick="changeNumber('children', 1)">+</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="childrenAges" class="ages-container hidden">
+                            <label class="form-label">Children's ages</label>
+                            <div class="ages-grid" id="agesGrid"></div>
+                        </div>
+                    </div>
+
+                    <!-- Style -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-star"></i>
+                            Style
+                        </label>
+                        <div class="style-options">
+                            <label class="style-option">
+                                <input type="radio" name="style" value="budget">
+                                <span class="style-chip">Budget</span>
+                            </label>
+                            <label class="style-option">
+                                <input type="radio" name="style" value="mid-range" checked>
+                                <span class="style-chip">Mid-range</span>
+                            </label>
+                            <label class="style-option">
+                                <input type="radio" name="style" value="luxury">
+                                <span class="style-chip">Luxury</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Preferences -->
+                    <div class="form-group">
+                        <label for="preferences" class="form-label">
+                            <i class="fas fa-heart"></i>
+                            Preferences
+                        </label>
+                        <input type="text" id="preferences" name="preferences" class="form-input" 
+                               placeholder="e.g., museums, beaches, hiking, kid-friendly">
+                    </div>
+
+                    <!-- Dietary Needs -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-utensils"></i>
+                            Dietary needs (optional)
+                        </label>
+                        <div class="dietary-options">
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="dietary" value="vegetarian">
+                                <span class="checkbox-custom"></span>
+                                Vegetarian
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="dietary" value="vegan">
+                                <span class="checkbox-custom"></span>
+                                Vegan
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="dietary" value="gluten-free">
+                                <span class="checkbox-custom"></span>
+                                Gluten-free
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="dietary" value="halal">
+                                <span class="checkbox-custom"></span>
+                                Halal
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="dietary" value="kosher">
+                                <span class="checkbox-custom"></span>
+                                Kosher
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="dietary" value="no-restrictions" checked>
+                                <span class="checkbox-custom"></span>
+                                No restrictions
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Professional Brief -->
+                    <div class="form-group">
+                        <label for="professionalBrief" class="form-label">
+                            <i class="fas fa-file-alt"></i>
+                            Professional brief (optional)
+                        </label>
+                        <textarea id="professionalBrief" name="professionalBrief" class="form-textarea" rows="4"
+                                  placeholder="Detailed requirements: must-see places, vibe preferences, group details, dining preferences, time constraints, anchor events, rainy-day backups..."></textarea>
+                        <small class="form-help">This helps us create a more personalized and detailed plan.</small>
+                    </div>
+
+                    <!-- File Upload -->
+                    <div class="form-group">
+                        <label for="fileUpload" class="form-label">
+                            <i class="fas fa-upload"></i>
+                            Upload existing plans (optional)
+                        </label>
+                        <div class="file-upload">
+                            <input type="file" id="fileUpload" name="fileUpload" class="file-input" 
+                                   accept=".pdf,.doc,.docx,.txt,.jpg,.png">
+                            <label for="fileUpload" class="file-label">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>No file chosen</span>
+                            </label>
+                        </div>
+                        <small class="form-help">Upload existing itineraries, hotel confirmations, or travel documents for analysis.</small>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <button type="button" id="generatePreviewBtn" class="btn btn-secondary">
+                            <i class="fas fa-eye"></i>
+                            Generate preview
+                        </button>
+                        <button type="button" id="generateFullPlanBtn" class="btn btn-primary">
+                            <i class="fas fa-magic"></i>
+                            Generate full plan
+                        </button>
+                        <button type="button" id="savePreviewBtn" class="btn btn-outline">
+                            <i class="fas fa-save"></i>
+                            Save preview
+                        </button>
+                    </div>
+                </form>
             </div>
-            <div class="field-help">Ages help us find age-appropriate activities and accommodations.</div>
-          </div>
+        </section>
 
-          <fieldset class="field">
-            <legend>Style</legend>
-            <label class="chip"><input type="radio" name="level" value="budget" checked /> Budget</label>
-            <label class="chip"><input type="radio" name="level" value="mid" /> Mid-range</label>
-            <label class="chip"><input type="radio" name="level" value="luxury" /> Luxury</label>
-          </fieldset>
-
-          <div class="field">
-            <span>Preferences</span>
-            <input id="prefs" type="text" name="prefs" placeholder="e.g., museums, beaches, hiking, kid-friendly" />
-          </div>
-
-          <div class="field">
-            <span>Dietary needs (optional)</span>
-            <div class="dietary-options">
-              <label class="chip"><input type="checkbox" name="dietary" value="vegetarian" /> Vegetarian</label>
-              <label class="chip"><input type="checkbox" name="dietary" value="vegan" /> Vegan</label>
-              <label class="chip"><input type="checkbox" name="dietary" value="gluten-free" /> Gluten-free</label>
-              <label class="chip"><input type="checkbox" name="dietary" value="halal" /> Halal</label>
-              <label class="chip"><input type="checkbox" name="dietary" value="kosher" /> Kosher</label>
-              <label class="chip"><input type="checkbox" name="dietary" value="none" checked /> No restrictions</label>
+        <!-- Preview Section -->
+        <section id="previewSection" class="preview-section hidden">
+            <div class="container">
+                <div class="preview-header">
+                    <h2>Your itinerary</h2>
+                    <div id="previewContent"></div>
+                </div>
             </div>
-          </div>
+        </section>
 
-          <div class="field">
-            <span>Professional brief (optional)</span>
-            <textarea id="brief" name="brief" rows="4" placeholder="Detailed requirements: must-see places, vibe preferences, group details, dining preferences, time constraints, anchor events, rainy-day backups..."></textarea>
-            <div class="field-help">This helps us create a more personalized and detailed plan.</div>
-          </div>
+        <!-- Paywall Section -->
+        <section id="paywallSection" class="paywall-section hidden">
+            <div class="container">
+                <div class="paywall-content">
+                    <div class="paywall-header">
+                        <h2>🚀 Unlock Your Complete Travel Plan</h2>
+                        <p>Get your personalized AI-generated itinerary with hotels, activities, and insider tips!</p>
+                    </div>
+                    
+                    <div class="paywall-features">
+                        <div class="feature-item">
+                            <i class="fas fa-hotel"></i>
+                            <span>Curated hotel recommendations</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-map-marked-alt"></i>
+                            <span>Detailed daily itineraries</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-utensils"></i>
+                            <span>Restaurant & dining guide</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-ticket-alt"></i>
+                            <span>Activity & attraction tickets</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-file-pdf"></i>
+                            <span>PDF export & sharing</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-mobile-alt"></i>
+                            <span>Mobile-optimized format</span>
+                        </div>
+                    </div>
 
-          <div class="field">
-            <span>Upload existing plans (optional)</span>
-            <div class="file-upload">
-              <input id="planFiles" type="file" name="planFiles" multiple accept=".pdf,.doc,.docx,.txt" />
-              <div class="field-help">Upload existing itineraries, hotel confirmations, or travel documents for analysis.</div>
+                    <div class="pricing-section">
+                        <div class="price-display">
+                            <span class="currency">$</span>
+                            <span class="amount">19</span>
+                            <span class="period">one-time</span>
+                        </div>
+                        <p class="price-description">Complete travel plan with lifetime access</p>
+                    </div>
+
+                    <div class="payment-options">
+                        <div id="paypal-button-container" class="paypal-container"></div>
+                        <div class="payment-note">
+                            <i class="fas fa-lock"></i>
+                            Secure payment powered by PayPal
+                        </div>
+                    </div>
+
+                    <div class="trust-badges">
+                        <div class="badge">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>30-day money-back guarantee</span>
+                        </div>
+                        <div class="badge">
+                            <i class="fas fa-clock"></i>
+                            <span>Instant access</span>
+                        </div>
+                        <div class="badge">
+                            <i class="fas fa-headset"></i>
+                            <span>24/7 support</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
+        </section>
 
-          <div class="actions">
-            <button class="btn btn-primary" type="submit" id="previewBtn">Generate preview</button>
-            <button class="btn btn-ghost" type="button" id="fullPlanBtn">Generate full plan</button>
-            <button class="btn btn-ghost" type="button" id="saveBtn">Save preview</button>
-          </div>
-        </form>
-      </section>
+        <!-- User Dashboard (Hidden by default) -->
+        <section id="userDashboard" class="dashboard-section hidden">
+            <div class="container">
+                <div class="dashboard-header">
+                    <h2>Welcome back, <span id="dashboardUserName">User</span>!</h2>
+                    <p>Manage your travel plans and account</p>
+                </div>
+                
+                <div class="dashboard-content">
+                    <div class="dashboard-sidebar">
+                        <div class="sidebar-menu">
+                            <button class="sidebar-item active" data-tab="overview">
+                                <i class="fas fa-tachometer-alt"></i>
+                                Overview
+                            </button>
+                            <button class="sidebar-item" data-tab="plans">
+                                <i class="fas fa-map-marked-alt"></i>
+                                My Plans
+                            </button>
+                            <button class="sidebar-item" data-tab="referrals">
+                                <i class="fas fa-gift"></i>
+                                Referrals
+                            </button>
+                            <button class="sidebar-item" data-tab="billing">
+                                <i class="fas fa-credit-card"></i>
+                                Billing
+                            </button>
+                            <button class="sidebar-item" data-tab="profile">
+                                <i class="fas fa-user"></i>
+                                Profile
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-main">
+                        <!-- Overview Tab -->
+                        <div id="overviewTab" class="dashboard-tab active">
+                            <div class="overview-stats">
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-map-marked-alt"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <h3 id="totalPlans">0</h3>
+                                        <p>Total Plans</p>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-gift"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <h3 id="referralCredits">$0</h3>
+                                        <p>Referral Credits</p>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-calendar-check"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <h3 id="activePlans">0</h3>
+                                        <p>Active Plans</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="recent-plans">
+                                <h3>Recent Plans</h3>
+                                <div id="recentPlansList" class="plans-list">
+                                    <p class="no-plans">No plans yet. Start planning your next adventure!</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Plans Tab -->
+                        <div id="plansTab" class="dashboard-tab">
+                            <div class="plans-header">
+                                <h3>My Travel Plans</h3>
+                                <button id="createNewPlanBtn" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i>
+                                    Create New Plan
+                                </button>
+                            </div>
+                            <div id="plansList" class="plans-list">
+                                <p class="no-plans">No plans yet. Start planning your next adventure!</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Referrals Tab -->
+                        <div id="referralsTab" class="dashboard-tab">
+                            <div class="referral-content">
+                                <h3>Refer Friends & Earn $5 Off!</h3>
+                                <p>Share Wayzo with friends and get $5 off your next plan for each successful referral.</p>
+                                
+                                <div class="referral-stats">
+                                    <div class="referral-stat">
+                                        <span class="stat-number" id="totalReferrals">0</span>
+                                        <span class="stat-label">Total Referrals</span>
+                                    </div>
+                                    <div class="referral-stat">
+                                        <span class="stat-number" id="earnedCredits">$0</span>
+                                        <span class="stat-label">Earned Credits</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="referral-link-section">
+                                    <label for="referralLink" class="form-label">Your Referral Link</label>
+                                    <div class="referral-link-input">
+                                        <input type="text" id="referralLink" readonly class="form-input">
+                                        <button id="copyReferralBtn" class="btn btn-secondary">
+                                            <i class="fas fa-copy"></i>
+                                            Copy
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="share-buttons">
+                                    <button class="share-btn share-email">
+                                        <i class="fas fa-envelope"></i>
+                                        Email
+                                    </button>
+                                    <button class="share-btn share-whatsapp">
+                                        <i class="fab fa-whatsapp"></i>
+                                        WhatsApp
+                                    </button>
+                                    <button class="share-btn share-telegram">
+                                        <i class="fab fa-telegram"></i>
+                                        Telegram
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Billing Tab -->
+                        <div id="billingTab" class="dashboard-tab">
+                            <div class="billing-content">
+                                <h3>Billing & Payments</h3>
+                                <div class="billing-summary">
+                                    <div class="billing-card">
+                                        <h4>Payment History</h4>
+                                        <div id="paymentHistory" class="payment-list">
+                                            <p class="no-payments">No payment history yet.</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="billing-card">
+                                        <h4>Available Credits</h4>
+                                        <div class="credits-display">
+                                            <span class="credits-amount" id="availableCredits">$0</span>
+                                            <p>Use credits for your next plan</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Profile Tab -->
+                        <div id="profileTab" class="dashboard-tab">
+                            <div class="profile-content">
+                                <h3>Profile Settings</h3>
+                                <form id="profileForm" class="profile-form">
+                                    <div class="form-group">
+                                        <label for="profileName" class="form-label">Full Name</label>
+                                        <input type="text" id="profileName" name="name" class="form-input">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="profileEmail" class="form-label">Email</label>
+                                        <input type="email" id="profileEmail" name="email" class="form-input" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="profilePhone" class="form-label">Phone (optional)</label>
+                                        <input type="tel" id="profilePhone" name="phone" class="form-input">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="profileLocation" class="form-label">Location (optional)</label>
+                                        <input type="text" id="profileLocation" name="location" class="form-input">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Update Profile</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-      <!-- Results -->
-      <section class="card">
-        <div class="card-header">
-          <h2>Your itinerary</h2>
+        <!-- Analytics Panel (Hidden by default) -->
+        <div id="analyticsPanel" class="analytics-panel hidden">
+            <div class="analytics-header">
+                <h3>Analytics Dashboard</h3>
+                <button id="closeAnalyticsBtn" class="close-btn">&times;</button>
+            </div>
+            <div class="analytics-content">
+                <div class="analytics-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Plans Generated</span>
+                        <span class="stat-value" id="plansGenerated">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Revenue</span>
+                        <span class="stat-value" id="totalRevenue">$0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Conversion Rate</span>
+                        <span class="stat-value" id="conversionRate">0%</span>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div id="preview" class="preview-content">
-          <p class="muted">Enter your trip details and generate a plan to see a detailed itinerary here.</p>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <div class="footer-brand">
+                    <img src="/assets/logo.png" alt="Wayzo" class="footer-logo">
+                    <h3>Wayzo</h3>
+                    <p>AI-powered trip planning for unforgettable adventures.</p>
+                </div>
+            </div>
+            
+            <div class="footer-section">
+                <h4>Legal</h4>
+                <ul class="footer-links">
+                    <li><a href="/privacy">Privacy Policy</a></li>
+                    <li><a href="/terms">Terms & Conditions</a></li>
+                    <li><a href="/cookies">Cookie Policy</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h4>Support</h4>
+                <ul class="footer-links">
+                    <li><a href="/contact">Contact Us</a></li>
+                    <li><a href="#help">Help Center</a></li>
+                    <li><a href="#faq">FAQ</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h4>Connect</h4>
+                <div class="social-links">
+                    <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-facebook"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-linkedin"></i></a>
+                </div>
+            </div>
         </div>
-        <div id="loading" class="loading hidden">
-          <div class="spinner"></div>
-          <p>Generating your perfect trip...</p>
+        
+        <div class="footer-bottom">
+            <p>&copy; 2025 Wayzo. All rights reserved.</p>
+            <div class="footer-bottom-links">
+                <a href="/privacy">Privacy</a>
+                <a href="/terms">Terms</a>
+                <a href="/cookies">Cookies</a>
+            </div>
         </div>
-        <div class="actions">
-          <a id="pdfBtn" class="btn btn-ghost hidden" href="#" target="_blank">Download Trip Journal</a>
-          <a id="icsBtn" class="btn btn-ghost hidden" href="#" target="_blank">Add to Calendar (ICS)</a>
+    </footer>
+
+    <!-- Cookie Banner -->
+    <div id="cookieBanner" class="cookie-banner">
+        <div class="cookie-content">
+            <div class="cookie-text">
+                <i class="fas fa-cookie-bite"></i>
+                <p>We use cookies to enhance your experience and analyze site usage. By continuing to use our site, you agree to our use of cookies.</p>
+            </div>
+            <div class="cookie-actions">
+                <a href="/cookies" class="cookie-link">Learn more</a>
+                <a href="/privacy" class="cookie-link">Privacy Policy</a>
+                <a href="/terms" class="cookie-link">Terms & Conditions</a>
+                <button id="acceptAllCookies" class="btn btn-primary btn-small">Accept All</button>
+                <button id="rejectNonEssential" class="btn btn-secondary btn-small">Reject Non-Essential</button>
+            </div>
         </div>
-        <div class="actions" id="purchaseActions">
-          <div id="paypal-button-container" class="hidden"></div>
-          <div id="purchaseNote" class="muted small hidden">Unlock full report for $19 via PayPal.</div>
-        </div>
-      </section>
     </div>
-  </main>
 
-  <!-- FOOTER -->
-  <footer class="footer">
-    <div class="container">
-      <div class="footer-content">
-        <div class="footer-section">
-          <h4>Wayzo</h4>
-          <p>AI-powered trip planning for unforgettable adventures.</p>
-        </div>
-        <div class="footer-section">
-          <h4>Legal</h4>
-          <a href="/privacy">Privacy Policy</a>
-          <a href="/terms">Terms & Conditions</a>
-          <a href="/cookies">Cookie Policy</a>
-        </div>
-        <div class="footer-section">
-          <h4>Support</h4>
-          <a href="/contact">Contact Us</a>
-          <a href="/help">Help Center</a>
-        </div>
-      </div>
-      <p class="muted small">© Wayzo. All rights reserved.</p>
-    </div>
-  </footer>
-
-  <!-- Analytics Dashboard (Admin only) -->
-  <div id="analyticsPanel" class="analytics-panel hidden">
-    <div class="analytics-header">
-      <h3>Analytics Dashboard</h3>
-      <button id="closeAnalytics" class="btn btn-ghost">×</button>
-    </div>
-    <div class="analytics-content">
-      <div class="analytics-grid">
-        <div class="metric-card">
-          <h4>Total Plans Generated</h4>
-          <div id="totalPlans" class="metric-value">-</div>
-        </div>
-        <div class="metric-card">
-          <h4>Today's Plans</h4>
-          <div id="todayPlans" class="metric-value">-</div>
-        </div>
-        <div class="metric-card">
-          <h4>Affiliate Clicks</h4>
-          <div id="affiliateClicks" class="metric-value">-</div>
-        </div>
-        <div class="metric-card">
-          <h4>Conversion Rate</h4>
-          <div id="conversionRate" class="metric-value">-</div>
-        </div>
-      </div>
-      <div class="analytics-charts">
-        <div class="chart-container">
-          <h4>Plans by Destination</h4>
-          <div id="destinationChart" class="chart"></div>
-        </div>
-        <div class="chart-container">
-          <h4>Revenue by Month</h4>
-          <div id="revenueChart" class="chart"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Cookie Consent Banner -->
-  <div id="cookieBanner" class="cookie-banner">
-    <div class="cookie-content">
-      <div class="cookie-text">
-        <p>🍪 We use cookies to enhance your experience and analyze site usage. By continuing to use our site, you agree to our use of cookies.</p>
-        <p class="cookie-links">
-          <a href="/cookies">Learn more</a> • 
-          <a href="/privacy">Privacy Policy</a> • 
-          <a href="/terms">Terms & Conditions</a>
-        </p>
-      </div>
-      <div class="cookie-actions">
-        <button id="acceptCookies" class="btn btn-primary">Accept All</button>
-        <button id="rejectCookies" class="btn btn-ghost">Reject Non-Essential</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Google OAuth Script -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <!-- Scripts -->
+    <script src="https://www.paypal.com/sdk/js?client-id=YOUR_PAYPAL_CLIENT_ID&currency=USD"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="/app.js"></script>
 </body>
 </html>
