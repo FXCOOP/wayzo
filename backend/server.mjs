@@ -155,7 +155,7 @@ function localPlanMarkdown(input) {
 `.trim(), destination);
 }
 function containsDaySections(md = "") {
-  try { return /(^|\n)##\s*Day\s+\d+/i.test(md); } catch { return false; }
+  try { return /(^|\n)\s*#{0,6}\s*Day\s+\d+/i.test(md); } catch { return false; }
 }
 /* OpenAI (optional) */
 const client = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
@@ -337,12 +337,17 @@ app.post('/api/plan', async (req, res) => {
   console.log('Plan request received:', req.body); // Debug
   try {
     const payload = req.body || {};
+    payload.currency = payload.currency || 'USD';
     payload.budget = normalizeBudget(payload.budget, payload.currency);
     const id = uid();
     const markdown = await generatePlanWithAI(payload);
     const html = marked.parse(markdown);
     const aff = affiliatesFor(payload.destination);
     savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: payload, markdown }));
+    
+    // Track plan generation for analytics
+    trackPlanGeneration(payload);
+    
     res.json({ id, markdown, html, affiliates: aff, version: VERSION });
   } catch (e) {
     console.error('Plan generation error:', e);
@@ -358,6 +363,7 @@ app.get('/api/plan/:id/pdf', (req, res) => {
   }
   const saved = JSON.parse(row.payload || '{}');
   const d = saved?.data || {};
+  d.currency = d.currency || 'USD';
   const md = saved?.markdown || '';
   const htmlBody = marked.parse(md);
   const style = d.level === "luxury" ? "Luxury" : d.level === "budget" ? "Budget" : "Mid-range";
@@ -365,6 +371,7 @@ app.get('/api/plan/:id/pdf', (req, res) => {
   const days = daysBetween(d.start, d.end);
   const pppd = perPersonPerDay(normalizeBudget(d.budget, d.currency), days, Math.max(1, (d.adults || 0) + (d.children || 0)));
   const traveler = travelerLabel(d.adults || 0, d.children || 0);
+  const cur = d.currency || 'USD';
   const base = `${req.protocol}://${req.get('host')}`;
   const pdfUrl = `${base}/api/plan/${id}/pdf`;
   const icsUrl = `${base}/api/plan/${id}/ics`;
@@ -398,7 +405,7 @@ app.get('/api/plan/:id/pdf', (req, res) => {
     <span class="chip"><b>Destination:</b> ${escapeHtml(d.destination || 'Trip')}</span>
     <span class="chip"><b>Travelers:</b> ${traveler}</span>
     <span class="chip"><b>Style:</b> ${style}${d.prefs ? ` · ${escapeHtml(d.prefs)}` : ""}</span>
-    <span class="chip"><b>Budget:</b> ${normalizeBudget(d.budget, d.currency)} ${d.currency} (${pppd}/day/person)</span>
+    <span class="chip"><b>Budget:</b> ${normalizeBudget(d.budget, cur)} ${cur} (${pppd}/day/person)</span>
     <span class="chip"><b>Season:</b> ${season}</span>
   </div>
 </header>
