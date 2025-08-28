@@ -198,7 +198,15 @@
     try {
       const res = await fetch('/api/preview', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const out = await res.json();
+      let out;
+      try {
+        out = await res.json();
+      } catch (parseErr) {
+        const txt = await res.text();
+        console.warn('Preview JSON parse failed, got text:', txt);
+        previewEl.innerHTML = txt || '<p class="error">Preview failed. Please try again.</p>';
+        return;
+      }
       previewEl.innerHTML = out.teaser_html || '<p>Preview created successfully!</p>';
       appendAffiliateSection(payload.destination, out);
       trackEvent('preview_generated', { destination: payload.destination });
