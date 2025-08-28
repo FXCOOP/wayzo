@@ -265,22 +265,32 @@ Create the most amazing, detailed, and useful trip plan possible!`;
 }
 /* API */
 app.post('/api/preview', (req, res) => {
-  console.log('Preview request received:', req.body); // Debug
-  const payload = req.body || {};
-  payload.budget = normalizeBudget(payload.budget, payload.currency);
-  const id = uid();
-  const aff = affiliatesFor(payload.destination || '');
-  
-  // Create an engaging preview
-  const destination = payload.destination || 'your destination';
-  const nDays = daysBetween(payload.start, payload.end);
-  const style = payload.level === "luxury" ? "Luxury" : payload.level === "budget" ? "Budget" : "Mid-range";
-  const travelers = payload.travelers || 2;
-  const budget = payload.budget || 0;
-  
-  const teaser_html = `
+  try {
+    console.log('Preview request received:', req.body); // Debug
+    const payload = req.body || {};
+    const currency = payload.currency || 'USD';
+    const budgetNum = Number(payload.budget || 0);
+    const level = payload.level || 'mid';
+    const destination = (payload.destination || 'your destination').toString();
+    const adults = Number(payload.adults || 2);
+    const children = Number(payload.children || 0);
+    const totalTravelers = Math.max(1, adults + children);
+
+    // Normalize budget safely
+    payload.budget = normalizeBudget(budgetNum, currency);
+
+    // Duration handling (supports flexible dates)
+    const nDays = payload.flexibleDates && Number(payload.flexibleDates.duration)
+      ? Number(payload.flexibleDates.duration)
+      : daysBetween(payload.start, payload.end);
+
+    const style = level === 'luxury' ? 'Luxury' : level === 'budget' ? 'Budget' : 'Mid-range';
+    const aff = affiliatesFor(destination);
+    const id = uid();
+
+    const teaser_html = `
     <div class="preview-teaser">
-      <h3>🎯 ${destination} Trip Preview</h3>
+      <h3>🎯 ${escapeHtml(destination)} Trip Preview</h3>
       <div class="preview-stats">
         <div class="stat">
           <span class="stat-label">Duration</span>
@@ -288,19 +298,19 @@ app.post('/api/preview', (req, res) => {
         </div>
         <div class="stat">
           <span class="stat-label">Style</span>
-          <span class="stat-value">${style}</span>
+          <span class="stat-value">${escapeHtml(style)}</span>
         </div>
         <div class="stat">
           <span class="stat-label">Travelers</span>
-          <span class="stat-value">${travelers}</span>
+          <span class="stat-value">${adults} adults${children ? ` + ${children} children` : ''}</span>
         </div>
         <div class="stat">
           <span class="stat-label">Budget</span>
-          <span class="stat-value">$${budget.toLocaleString()}</span>
+          <span class="stat-value">$${Number(budgetNum || 0).toLocaleString()}</span>
         </div>
       </div>
       <p class="preview-description">
-        Ready to create your personalized ${nDays}-day ${style.toLowerCase()} adventure in ${destination}? 
+        Ready to create your personalized ${nDays}-day ${style.toLowerCase()} adventure in ${escapeHtml(destination)}?
         Our AI will craft a detailed itinerary with hotels, activities, dining, and insider tips.
       </p>
       <div class="preview-features">
@@ -315,9 +325,13 @@ app.post('/api/preview', (req, res) => {
         <strong>Click "Generate full plan" to create your complete itinerary!</strong>
       </p>
     </div>
-  `;
-  
-  res.json({ id, teaser_html, affiliates: aff, version: VERSION });
+    `;
+
+    res.json({ id, teaser_html, affiliates: aff, version: VERSION });
+  } catch (e) {
+    console.error('Preview endpoint error:', e);
+    res.status(200).json({ id: uid(), teaser_html: '<p class="error">Unable to build preview right now.</p>', affiliates: {}, version: VERSION });
+  }
 });
 app.post('/api/plan', async (req, res) => {
   console.log('Plan request received:', req.body); // Debug
