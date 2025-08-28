@@ -92,7 +92,7 @@ app.post('/api/upload', multerUpload.array('files', 10), (req, res) => {
   res.json({ files });
 });
 /* DB */
-const db = new Database(path.join(ROOT, 'wayzo.sqlite'));
+const db = new Database(path.join(ROOT, 'tripmaster.sqlite'));
 db.exec(`CREATE TABLE IF NOT EXISTS plans (id TEXT PRIMARY KEY, created_at TEXT NOT NULL, payload TEXT NOT NULL);`);
 const savePlan = db.prepare('INSERT OR REPLACE INTO plans (id, created_at, payload) VALUES (?, ?, ?)');
 const getPlan = db.prepare('SELECT payload FROM plans WHERE id = ?');
@@ -191,8 +191,7 @@ app.post('/api/preview', (req, res) => {
   payload.budget = normalizeBudget(payload.budget, payload.currency);
   const id = uid();
   const aff = affiliatesFor(payload.destination || '');
-  const teaser_html = google.com`
-</div>`;
+  const teaser_html = `<div>Preview for ${payload.destination || 'your trip'}</div>`;
   res.json({ id, teaser_html, affiliates: aff, version: VERSION });
 });
 app.post('/api/plan', async (req, res) => {
