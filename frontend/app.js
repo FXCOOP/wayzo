@@ -9,6 +9,7 @@
   const previewEl = $('#preview');
   const loadingEl = $('#loading');
   const pdfBtn = $('#pdfBtn');
+  const icsBtn = $('#icsBtn');
   const fullPlanBtn = $('#fullPlanBtn');
   const saveBtn = $('#saveBtn');
 
@@ -125,6 +126,13 @@
     section.appendChild(title);
     section.appendChild(linksContainer);
     return section;
+  };
+
+  // Helper: append affiliate section for a destination
+  const appendAffiliateSection = (dest, out) => {
+    const affiliateLinks = setAffiliates(dest);
+    const affiliateSection = createAffiliateSection(affiliateLinks);
+    previewEl.appendChild(affiliateSection);
   };
 
   // Save preview to localStorage
