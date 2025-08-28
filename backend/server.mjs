@@ -5,6 +5,13 @@ import helmet from 'helmet';
 import { marked } from 'marked';
 import OpenAI from 'openai';
 import multer from 'multer';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import morgan from 'morgan';
+import cors from 'cors';
+import rateLimit from 'express-rate-limit';
+import Database from 'better-sqlite3';
 import { normalizeBudget, computeBudget } from './lib/budget.mjs';
 import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
@@ -251,6 +258,7 @@ app.get('/api/plan/:id/pdf', (req, res) => {
   <span class="chip"><b>Budget:</b> ${normalizeBudget(d.budget, d.currency)} ${d.currency} (${pppd}/day/person)</span>
   <span class="chip"><b>Season:</b> ${season}</span>
 </div>
+</body></html>`;
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(html);
 });
@@ -261,6 +269,8 @@ app.get('/api/plan/:id/ics', (_req, res) => {
   const saved = JSON.parse(row.payload || '{}');
   const md = saved.markdown || '';
   const dest = saved?.data?.destination || 'Trip';
+  const events = [];
+  const rx = /^## Day (\d+)(?::\s*(.+))?$/gm;
   let m;
   while ((m = rx.exec(md))) {
     const title = (m[2] || `Day ${m[1]}`).trim();
