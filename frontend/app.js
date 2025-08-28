@@ -396,17 +396,16 @@
       if (loginBtn) { loginBtn.textContent = currentUser.name; loginBtn.onclick = showUserMenu; }
     } else {
       ensureLoginVisible();
-      if (loginBtn) loginBtn.onclick = () => alert('Sign-in temporarily unavailable.');
+      if (loginBtn) loginBtn.onclick = () => (window.google && google.accounts && google.accounts.id && google.accounts.id.prompt ? google.accounts.id.prompt() : alert('Sign-in temporarily unavailable.'));
     }
     setupChildrenAges();
     setupDateModes();
     addUIEnhancements();
-    // Event listeners are already bound above
     bindPaywall();
     restoreLastPreview();
-    // SDK initializers are safe no-ops if not present
     detectUserLocation();
     initializeGoogleAuth();
+    initGoogleFromConfig();
     initializeCookieConsent();
     trackEvent('page_view', { path: window.location.pathname });
   };
@@ -433,6 +432,27 @@
     };
     childrenInput.addEventListener('change', updateAges);
     updateAges();
+  };
+
+  // Google OAuth init using public config
+  const initGoogleFromConfig = () => {
+    try {
+      const cfg = window.WAYZO_PUBLIC_CONFIG || {};
+      if (cfg.GOOGLE_CLIENT_ID && window.google && google.accounts && google.accounts.id) {
+        google.accounts.id.initialize({ client_id: cfg.GOOGLE_CLIENT_ID, callback: (cred) => {
+          try {
+            const payload = JSON.parse(atob((cred.credential || '').split('.')[1] || ''));
+            currentUser = { id: payload.sub, email: payload.email, name: payload.name, picture: payload.picture };
+            localStorage.setItem('wayzo_user', JSON.stringify(currentUser));
+            if (loginBtn) { loginBtn.textContent = currentUser.name; }
+          } catch (_) {}
+        }});
+        // Render button if present
+        if (loginBtn) {
+          google.accounts.id.renderButton(loginBtn, { theme: 'outline', size: 'large' });
+        }
+      }
+    } catch (_) {}
   };
 
   // Run init now

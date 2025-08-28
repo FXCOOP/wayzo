@@ -87,8 +87,9 @@ app.get('/version', (_req, res) => res.json({ version: VERSION }));
 app.get('/config.js', (_req, res) => {
   const paypalClientId = process.env.PAYPAL_CLIENT_ID || '';
   const priceUsd = Number(process.env.REPORT_PRICE_USD || 19);
+  const googleClientId = process.env.GOOGLE_CLIENT_ID || '';
   res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-  res.send(`window.WAYZO_PUBLIC_CONFIG = { PAYPAL_CLIENT_ID: ${JSON.stringify(paypalClientId)}, REPORT_PRICE_USD: ${JSON.stringify(priceUsd)} };`);
+  res.send(`window.WAYZO_PUBLIC_CONFIG = { PAYPAL_CLIENT_ID: ${JSON.stringify(paypalClientId)}, REPORT_PRICE_USD: ${JSON.stringify(priceUsd)}, GOOGLE_CLIENT_ID: ${JSON.stringify(googleClientId)} };`);
 });
 
 /* Uploads */
