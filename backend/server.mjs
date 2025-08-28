@@ -148,36 +148,94 @@ function localPlanMarkdown(input) {
 /* OpenAI (optional) */
 const client = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 async function generatePlanWithAI(payload) {
-  const { destination = '', start = '', end = '', budget = 0, currency = 'USD $', adults = 2, children = 0, level = 'mid', prefs = '', diet = '' } = payload || {};
+  const { destination = '', start = '', end = '', budget = 0, currency = 'USD $', adults = 2, children = 0, level = 'mid', prefs = '', diet = '', professional_brief = '' } = payload || {};
   const nDays = daysBetween(start, end);
-  const sys = `Return Markdown ONLY.
-Sections:
-Use token links: [Map](map:query) [Tickets](tickets:query) [Book](book:query) [Reviews](reviews:query).`;
-  const user = `Destination: ${destination}
-Dates: ${start} to ${end} (${nDays} days)
-Party: ${adults} adults${children ? `, ${children} children` : ""}
-Style: ${level}${prefs ? ` + ${prefs}` : ""}
-Budget: ${budget} ${currency}
-Diet: ${diet}`;
+  
+  // Enhanced system prompt for amazing reports
+  const sys = `You are Wayzo, an expert AI travel planner. Create AMAZING, DETAILED trip plans that are:
+
+1. **Highly Personalized**: Use the professional brief to tailor everything
+2. **Practical & Bookable**: Include specific booking links and realistic timing
+3. **Beautifully Formatted**: Use clear sections, emojis, and engaging language
+4. **Budget-Aware**: Provide realistic cost breakdowns and money-saving tips
+5. **Accessibility-Focused**: Consider mobility, dietary needs, and family-friendly options
+
+**REQUIRED SECTIONS:**
+- 🎯 **Trip Overview** - Quick facts and highlights
+- 💰 **Budget Breakdown** - Detailed cost analysis
+- 🗺️ **Getting Around** - Transportation tips and maps
+- 🏨 **Accommodation** - Hotel recommendations with links
+- 🍽️ **Dining Guide** - Restaurant suggestions and food culture
+- 🎭 **Daily Itineraries** - Hour-by-hour plans for each day
+- 🎫 **Must-See Attractions** - Top sights with booking links
+- 🛡️ **Travel Tips** - Local customs, safety, and practical advice
+- 📱 **Useful Apps** - Mobile apps for the destination
+- 🚨 **Emergency Info** - Important contacts and healthcare
+
+**FORMATTING:**
+- Use emojis and clear headings
+- Include [Map](map:query) for location links
+- Add [Book](book:query) for booking links
+- Use [Reviews](reviews:query) for recommendations
+- Include [Tickets](tickets:query) for attractions
+
+**STYLE:** Make it exciting, informative, and ready to use!`;
+
+  // Enhanced user prompt with professional brief
+  const user = `Create an AMAZING trip plan for:
+
+**Destination:** ${destination}
+**Dates:** ${start} to ${end} (${nDays} days)
+**Travelers:** ${adults} adults${children ? `, ${children} children` : ""}
+**Style:** ${level}${prefs ? ` + ${prefs}` : ""}
+**Budget:** ${budget} ${currency}
+**Dietary Needs:** ${diet || 'No restrictions'}
+
+${professional_brief ? `**PROFESSIONAL BRIEF:** ${professional_brief}
+
+Use this detailed brief to create a highly personalized plan that addresses every specific requirement mentioned.` : ''}
+
+**Requirements:**
+- Make it feel like a premium travel guide
+- Include specific neighborhood recommendations
+- Add local insider tips and hidden gems
+- Consider seasonal factors and local events
+- Provide realistic timing and logistics
+- Include money-saving alternatives
+- Make it family-friendly if children are included
+
+Create the most amazing, detailed, and useful trip plan possible!`;
+
   if (!client) {
     console.warn('OpenAI API key not set, using local fallback');
     let md = localPlanMarkdown(payload);
     md = ensureDaySections(md, nDays, start);
     return md;
   }
+  
   try {
     const resp = await client.chat.completions.create({
       model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-      temperature: 0.6,
+      temperature: 0.7, // Slightly higher for more creative responses
+      max_tokens: 4000, // Allow longer, more detailed responses
       messages: [{ role: "system", content: sys }, { role: "user", content: user }],
     });
+    
     let md = resp.choices?.[0]?.message?.content?.trim() || "";
     if (!md) {
       console.warn('OpenAI response empty, using fallback');
       md = localPlanMarkdown(payload);
     }
+    
+    // Enhance the markdown with better formatting
     md = linkifyTokens(md, destination);
     md = ensureDaySections(md, nDays, start);
+    
+    // Add a beautiful header if not present
+    if (!md.includes('# ')) {
+      md = `# 🗺️ ${destination} — Your Perfect Trip\n\n${md}`;
+    }
+    
     return md;
   } catch (e) {
     console.error('OpenAI API error:', e);
@@ -191,7 +249,53 @@ app.post('/api/preview', (req, res) => {
   payload.budget = normalizeBudget(payload.budget, payload.currency);
   const id = uid();
   const aff = affiliatesFor(payload.destination || '');
-  const teaser_html = `<div>Preview for ${payload.destination || 'your trip'}</div>`;
+  
+  // Create an engaging preview
+  const destination = payload.destination || 'your destination';
+  const nDays = daysBetween(payload.start, payload.end);
+  const style = payload.level === "luxury" ? "Luxury" : payload.level === "budget" ? "Budget" : "Mid-range";
+  const travelers = payload.travelers || 2;
+  const budget = payload.budget || 0;
+  
+  const teaser_html = `
+    <div class="preview-teaser">
+      <h3>🎯 ${destination} Trip Preview</h3>
+      <div class="preview-stats">
+        <div class="stat">
+          <span class="stat-label">Duration</span>
+          <span class="stat-value">${nDays} days</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Style</span>
+          <span class="stat-value">${style}</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Travelers</span>
+          <span class="stat-value">${travelers}</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Budget</span>
+          <span class="stat-value">$${budget.toLocaleString()}</span>
+        </div>
+      </div>
+      <p class="preview-description">
+        Ready to create your personalized ${nDays}-day ${style.toLowerCase()} adventure in ${destination}? 
+        Our AI will craft a detailed itinerary with hotels, activities, dining, and insider tips.
+      </p>
+      <div class="preview-features">
+        <span class="feature">🗺️ Custom routes</span>
+        <span class="feature">🏨 Hotel picks</span>
+        <span class="feature">🍽️ Restaurant guide</span>
+        <span class="feature">🎫 Activity booking</span>
+        <span class="feature">📱 Mobile-friendly</span>
+        <span class="feature">📄 PDF export</span>
+      </div>
+      <p class="preview-cta">
+        <strong>Click "Generate full plan" to create your complete itinerary!</strong>
+      </p>
+    </div>
+  `;
+  
   res.json({ id, teaser_html, affiliates: aff, version: VERSION });
 });
 app.post('/api/plan', async (req, res) => {
