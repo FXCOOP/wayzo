@@ -392,3 +392,30 @@ a:hover{ text-decoration: underline; }
     width: 100%;
   }
 }
+
+/* Footer sizing tweaks */
+.footer{ padding: 28px 0; }
+.footer .muted.small{ font-size: 12px; }
+.footer-content{ gap: 24px; margin-bottom: 16px; }
+
+/* Cookie banner sizing tweaks */
+.cookie-banner{ padding: 10px 0; }
+.cookie-text p{ font-size: 0.8rem; }
+.cookie-actions .btn{ padding: 8px 12px; font-size: 0.85rem; }
+
+@media (max-width: 768px) {
+  .cookie-text p{ font-size: 0.85rem; }
+  .cookie-actions .btn{ width: auto; }
+}
+
+/* Make topbar actions clearer */
+.topbar-actions .btn-ghost#loginBtn{ border:1px solid var(--border); }
+.topbar-actions .btn-ghost#loginBtn:hover{ border-color: var(--primary); color: var(--primary); }
+
+/* Checklist row tweaks */
+.card .card-header h2{ margin:0; }
+.card .card-header + div label input[type="checkbox"]{ width:16px; height:16px; }
+
+/* Results action buttons */
+.card .actions{ flex-wrap: wrap; }
+.card .actions .btn{ min-width: 200px; }
