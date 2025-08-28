@@ -7,6 +7,7 @@
 
   <link rel="icon" type="image/svg+xml" href="/frontend/favicon.svg" />
   <link rel="stylesheet" href="/frontend/style.css" />
+  <script src="/config.js"></script>
   <script src="/frontend/app.js" defer></script>
 </head>
 <body>
@@ -114,18 +115,28 @@
 
           <div class="fields-2">
             <div class="field">
-              <span>Budget (USD)</span>
-              <input id="budget" type="number" min="100" step="50" name="budget" placeholder="1500" required />
+              <span>Budget</span>
+              <div class="fields-2">
+                <input id="budget" type="number" min="100" step="50" name="budget" placeholder="1500" required />
+                <select id="currency" name="currency" aria-label="Currency">
+                  <option value="USD" selected>USD $</option>
+                  <option value="EUR">EUR €</option>
+                  <option value="GBP">GBP £</option>
+                  <option value="ILS">ILS ₪</option>
+                  <option value="AUD">AUD $</option>
+                  <option value="CAD">CAD $</option>
+                </select>
+              </div>
             </div>
             <div class="field">
               <span>Travelers</span>
               <div class="travelers-input">
                 <div class="traveler-type">
-                  <label>Adults</label>
+                  <label for="adults">Adults</label>
                   <input id="adults" type="number" min="1" max="10" name="adults" value="2" required />
                 </div>
                 <div class="traveler-type">
-                  <label>Children</label>
+                  <label for="children">Children</label>
                   <input id="children" type="number" min="0" max="8" name="children" value="0" />
                 </div>
               </div>
@@ -178,6 +189,12 @@
             </div>
           </div>
 
+          <div class="field">
+            <span>Referral code (optional)</span>
+            <input id="referralCode" type="text" name="referralCode" placeholder="Enter friend's referral code for $5 off" />
+            <div class="field-help">Get $5 off your plan when you use a friend's referral code!</div>
+          </div>
+
           <div class="actions">
             <button class="btn btn-primary" type="submit" id="previewBtn">Generate preview</button>
             <button class="btn btn-ghost" type="button" id="fullPlanBtn">Generate full plan</button>
@@ -200,10 +217,48 @@
         </div>
         <div class="actions">
           <a id="pdfBtn" class="btn btn-ghost hidden" href="#" target="_blank">Download Trip Journal</a>
+          <a id="icsBtn" class="btn btn-ghost hidden" href="#" target="_blank">Add to Calendar (ICS)</a>
+        </div>
+        <div class="actions" id="purchaseActions">
+          <div id="paypal-button-container" class="hidden"></div>
+          <div id="purchaseNote" class="muted small hidden">Unlock full report for $19 via PayPal.</div>
         </div>
       </section>
     </div>
   </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>Wayzo</h4>
+          <p>AI-powered trip planning for unforgettable adventures.</p>
+        </div>
+        <div class="footer-section">
+          <h4>Legal</h4>
+          <a href="/privacy">Privacy Policy</a>
+          <a href="/terms">Terms & Conditions</a>
+          <a href="/cookies">Cookie Policy</a>
+        </div>
+        <div class="footer-section">
+          <h4>Support</h4>
+          <a href="/contact">Contact Us</a>
+          <a href="/help">Help Center</a>
+        </div>
+        <div class="footer-section">
+          <h4>Refer Friends</h4>
+          <p>Share Wayzo and earn $5 off your next plan!</p>
+          <div class="referral-display">
+            <span class="referral-label">Your code:</span>
+            <span class="referral-code" id="userReferralCode">WAYZO123</span>
+            <button class="btn btn-small" onclick="copyReferralCode()">Copy</button>
+          </div>
+        </div>
+      </div>
+      <p class="muted small">© Wayzo. All rights reserved.</p>
+    </div>
+  </footer>
 
   <!-- Analytics Dashboard (Admin only) -->
   <div id="analyticsPanel" class="analytics-panel hidden">
@@ -243,33 +298,6 @@
     </div>
   </div>
 
-  <!-- FOOTER -->
-  <footer class="footer">
-    <div class="container">
-      <div class="footer-content">
-        <div class="footer-section">
-          <h4>Wayzo</h4>
-          <p>AI-powered trip planning for unforgettable adventures.</p>
-        </div>
-        <div class="footer-section">
-          <h4>Legal</h4>
-          <a href="/privacy">Privacy Policy</a>
-          <a href="/terms">Terms & Conditions</a>
-          <a href="/cookies">Cookie Policy</a>
-        </div>
-        <div class="footer-section">
-          <h4>Support</h4>
-          <a href="/contact">Contact Us</a>
-          <a href="/help">Help Center</a>
-        </div>
-      </div>
-      <p class="muted small">© Wayzo. All rights reserved.</p>
-    </div>
-  </footer>
-
-  <!-- Google OAuth Script -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-
   <!-- Cookie Consent Banner -->
   <div id="cookieBanner" class="cookie-banner">
     <div class="cookie-content">
@@ -287,5 +315,8 @@
       </div>
     </div>
   </div>
+
+  <!-- Google OAuth Script -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </body>
 </html>

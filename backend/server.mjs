@@ -120,6 +120,16 @@ app.get('/contact', (_req, res) => {
 
 app.get('/healthz', (_req, res) => res.json({ ok: true, version: VERSION }));
 app.get('/version', (_req, res) => res.json({ version: VERSION }));
+
+// Public runtime config for frontend (safe values only)
+app.get('/config.js', (_req, res) => {
+  const paypalClientId = process.env.PAYPAL_CLIENT_ID || '';
+  const priceUsd = Number(process.env.REPORT_PRICE_USD || 19);
+  const googleClientId = process.env.GOOGLE_CLIENT_ID || '';
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  res.send(`window.WAYZO_PUBLIC_CONFIG = { PAYPAL_CLIENT_ID: ${JSON.stringify(paypalClientId)}, REPORT_PRICE_USD: ${JSON.stringify(priceUsd)}, GOOGLE_CLIENT_ID: ${JSON.stringify(googleClientId)} };`);
+});
+
 /* Uploads */
 const multerUpload = multer({ dest: UPLOADS, limits: { fileSize: 10 * 1024 * 1024, files: 10 } });
 app.post('/api/upload', multerUpload.array('files', 10), (req, res) => {
@@ -212,6 +222,9 @@ function localPlanMarkdown(input) {
 - **Evening:** Family dinner. [Reviews](reviews:${destination} gluten free dinner)
 `.trim(), destination);
 }
+function containsDaySections(md = "") {
+  try { return /(^|\n)\s*#{0,6}\s*Day\s+\d+/i.test(md); } catch { return false; }
+}
 /* OpenAI (optional) */
 const client = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 async function generatePlanWithAI(payload) {
@@ -250,15 +263,24 @@ async function generatePlanWithAI(payload) {
 **REQUIRED SECTIONS:**
 - 🎯 **Trip Overview** - Quick facts and highlights
 - 💰 **Budget Breakdown** - Detailed cost analysis per person
+<<<<<<< HEAD
 - 🗺️ **Getting Around** - Transportation tips and maps
 - 🏨 **Accommodation** - Hotel recommendations with links (family-friendly if applicable)
 - 🍽️ **Dining Guide** - Restaurant suggestions considering dietary restrictions
 - 🎭 **Daily Itineraries** - Hour-by-hour plans for each day
 - 🎫 **Must-See Attractions** - Top sights with booking links
+=======
+- 🗺️ **Getting Around** - Transportation tips and maps with [Map](map:...)
+- 🏨 **Accommodation** - 3–5 hotel options (Budget/Mid/Luxury) with [Book](book:...), [Reviews](reviews:...)
+- 🍽️ **Dining Guide** - 6–10 restaurants by neighborhood with [Reviews](reviews:...)
+- 🎭 **Daily Itineraries** - Hour-by-hour plans per day with [Tickets](tickets:...), [Map](map:...)
+- 🎫 **Must-See Attractions** - 8–12 sights with [Tickets](tickets:...)
+- 🧳 **Don't Forget List** - 8–12 packing/reminders tailored to destination and season
+>>>>>>> staging
 - 🛡️ **Travel Tips** - Local customs, safety, and practical advice
 - 📱 **Useful Apps** - Mobile apps for the destination
 - 🚨 **Emergency Info** - Important contacts and healthcare
-- 🖼️ **Image Ideas** - Provide 3–6 realistic image prompts and a short collage description (use Markdown images with token links like: ![Title](image:query))
+- 🖼️ **Image Ideas** - 3–6 realistic image prompts and a short collage description (use Markdown images with token links like: ![Title](image:query))
 
 **FORMATTING:**
 - Use emojis and clear headings
@@ -335,7 +357,10 @@ Create the most amazing, detailed, and useful trip plan possible!`;
     
     // Enhance the markdown with better formatting
     md = linkifyTokens(md, destination);
-    md = ensureDaySections(md, nDays, start);
+    // Only add fallback structured day sections if missing to prevent duplicates
+    if (!containsDaySections(md)) {
+      md = ensureDaySections(md, nDays, start);
+    }
     
     // Add a beautiful header if not present
     if (!md.includes('# ')) {
@@ -350,6 +375,7 @@ Create the most amazing, detailed, and useful trip plan possible!`;
 }
 /* API */
 app.post('/api/preview', (req, res) => {
+<<<<<<< HEAD
   console.log('Preview request received:', req.body); // Debug
   const payload = req.body || {};
   payload.budget = normalizeBudget(payload.budget, payload.currency);
@@ -368,8 +394,34 @@ app.post('/api/preview', (req, res) => {
   const dateMode = payload.dateMode || 'exact';
   
   const teaser_html = `
+=======
+  try {
+    console.log('Preview request received:', req.body); // Debug
+    const payload = req.body || {};
+    const currency = payload.currency || 'USD';
+    const budgetNum = Number(payload.budget || 0);
+    const level = payload.level || 'mid';
+    const destination = (payload.destination || 'your destination').toString();
+    const adults = Number(payload.adults || 2);
+    const children = Number(payload.children || 0);
+    const totalTravelers = Math.max(1, adults + children);
+
+    // Normalize budget safely
+    payload.budget = normalizeBudget(budgetNum, currency);
+
+    // Duration handling (supports flexible dates)
+    const nDays = payload.flexibleDates && Number(payload.flexibleDates.duration)
+      ? Number(payload.flexibleDates.duration)
+      : daysBetween(payload.start, payload.end);
+
+    const style = level === 'luxury' ? 'Luxury' : level === 'budget' ? 'Budget' : 'Mid-range';
+    const aff = affiliatesFor(destination);
+    const id = uid();
+
+    const teaser_html = `
+>>>>>>> staging
     <div class="preview-teaser">
-      <h3>🎯 ${destination} Trip Preview</h3>
+      <h3>🎯 ${escapeHtml(destination)} Trip Preview</h3>
       <div class="preview-stats">
         <div class="stat">
           <span class="stat-label">Duration</span>
@@ -377,15 +429,19 @@ app.post('/api/preview', (req, res) => {
         </div>
         <div class="stat">
           <span class="stat-label">Style</span>
-          <span class="stat-value">${style}</span>
+          <span class="stat-value">${escapeHtml(style)}</span>
         </div>
         <div class="stat">
           <span class="stat-label">Travelers</span>
+<<<<<<< HEAD
           <span class="stat-value">${adults} adults${children > 0 ? ` + ${children} children` : ''}</span>
+=======
+          <span class="stat-value">${adults} adults${children ? ` + ${children} children` : ''}</span>
+>>>>>>> staging
         </div>
         <div class="stat">
           <span class="stat-label">Budget</span>
-          <span class="stat-value">$${budget.toLocaleString()}</span>
+          <span class="stat-value">$${Number(budgetNum || 0).toLocaleString()}</span>
         </div>
         ${from !== 'your location' ? `
         <div class="stat">
@@ -401,7 +457,7 @@ app.post('/api/preview', (req, res) => {
         ` : ''}
       </div>
       <p class="preview-description">
-        Ready to create your personalized ${nDays}-day ${style.toLowerCase()} adventure in ${destination}? 
+        Ready to create your personalized ${nDays}-day ${style.toLowerCase()} adventure in ${escapeHtml(destination)}?
         Our AI will craft a detailed itinerary with hotels, activities, dining, and insider tips.
         ${children > 0 ? 'We\'ll include family-friendly activities and accommodations suitable for children.' : ''}
       </p>
@@ -419,15 +475,20 @@ app.post('/api/preview', (req, res) => {
         <strong>Click "Generate full plan" to create your complete itinerary!</strong>
       </p>
     </div>
-  `;
-  
-  res.json({ id, teaser_html, affiliates: aff, version: VERSION });
+    `;
+
+    res.json({ id, teaser_html, affiliates: aff, version: VERSION });
+  } catch (e) {
+    console.error('Preview endpoint error:', e);
+    res.status(200).json({ id: uid(), teaser_html: '<p class="error">Unable to build preview right now.</p>', affiliates: {}, version: VERSION });
+  }
 });
 
 app.post('/api/plan', async (req, res) => {
   console.log('Plan request received:', req.body); // Debug
   try {
     const payload = req.body || {};
+    payload.currency = payload.currency || 'USD';
     payload.budget = normalizeBudget(payload.budget, payload.currency);
     const id = uid();
     const markdown = await generatePlanWithAI(payload);
@@ -525,6 +586,7 @@ app.get('/api/plan/:id/pdf', (req, res) => {
   }
   const saved = JSON.parse(row.payload || '{}');
   const d = saved?.data || {};
+  d.currency = d.currency || 'USD';
   const md = saved?.markdown || '';
   const htmlBody = marked.parse(md);
   const style = d.level === "luxury" ? "Luxury" : d.level === "budget" ? "Budget" : "Mid-range";
@@ -532,6 +594,7 @@ app.get('/api/plan/:id/pdf', (req, res) => {
   const days = daysBetween(d.start, d.end);
   const pppd = perPersonPerDay(normalizeBudget(d.budget, d.currency), days, Math.max(1, (d.adults || 0) + (d.children || 0)));
   const traveler = travelerLabel(d.adults || 0, d.children || 0);
+  const cur = d.currency || 'USD';
   const base = `${req.protocol}://${req.get('host')}`;
   const pdfUrl = `${base}/api/plan/${id}/pdf`;
   const icsUrl = `${base}/api/plan/${id}/ics`;
@@ -565,7 +628,7 @@ app.get('/api/plan/:id/pdf', (req, res) => {
     <span class="chip"><b>Destination:</b> ${escapeHtml(d.destination || 'Trip')}</span>
     <span class="chip"><b>Travelers:</b> ${traveler}</span>
     <span class="chip"><b>Style:</b> ${style}${d.prefs ? ` · ${escapeHtml(d.prefs)}` : ""}</span>
-    <span class="chip"><b>Budget:</b> ${normalizeBudget(d.budget, d.currency)} ${d.currency} (${pppd}/day/person)</span>
+    <span class="chip"><b>Budget:</b> ${normalizeBudget(d.budget, cur)} ${cur} (${pppd}/day/person)</span>
     <span class="chip"><b>Season:</b> ${season}</span>
   </div>
 </header>
@@ -603,6 +666,43 @@ app.get('/api/plan/:id/ics', (_req, res) => {
   res.setHeader('Content-Disposition', `attachment; filename="wayzo-${id}.ics"`);
   res.send(ics);
 });
+// Legal pages - must be defined before the catch-all route
+app.get('/privacy', (_req, res) => {
+  const privacyFile = path.join(FRONTEND, 'privacy.html');
+  if (fs.existsSync(privacyFile)) {
+    res.sendFile(privacyFile);
+  } else {
+    res.status(404).send('Privacy Policy not found');
+  }
+});
+
+app.get('/terms', (_req, res) => {
+  const termsFile = path.join(FRONTEND, 'terms.html');
+  if (fs.existsSync(termsFile)) {
+    res.sendFile(termsFile);
+  } else {
+    res.status(404).send('Terms & Conditions not found');
+  }
+});
+
+app.get('/cookies', (_req, res) => {
+  const cookiesFile = path.join(FRONTEND, 'cookies.html');
+  if (fs.existsSync(cookiesFile)) {
+    res.sendFile(cookiesFile);
+  } else {
+    res.status(404).send('Cookie Policy not found');
+  }
+});
+
+app.get('/contact', (_req, res) => {
+  const contactFile = path.join(FRONTEND, 'contact.html');
+  if (fs.existsSync(contactFile)) {
+    res.sendFile(contactFile);
+  } else {
+    res.status(404).send('Contact page not found');
+  }
+});
+
 /* SPA Catch-All */
 app.get(/^\/(?!api\/).*/, (_req, res) => {
   res.setHeader('X-Wayzo-Version', VERSION);
@@ -628,3 +728,47 @@ function escapeHtml(s = "") {
     '"': "&quot;"
   }[m]));
 }
+
+// Event tracking endpoint
+app.post('/api/track', (req, res) => {
+  try {
+    const eventData = req.body || {};
+    console.log('Event tracked:', eventData);
+    // Store event in database for analytics
+    const eventId = uid();
+    db.prepare(`
+      INSERT INTO events (id, event_type, user_id, data, created_at) 
+      VALUES (?, ?, ?, ?, ?)
+    `).run(
+      eventId,
+      eventData.event || 'unknown',
+      eventData.userId || 'anonymous',
+      JSON.stringify(eventData),
+      new Date().toISOString()
+    );
+    res.json({ success: true, eventId });
+  } catch (e) {
+    console.warn('Event tracking error (non-fatal):', e);
+    // Never fail client flows due to analytics
+    res.json({ success: false });
+  }
+});
+
+// Payment confirmation (basic logging; extend with validation)
+app.post('/api/pay/confirm', (req, res) => {
+  const { orderID, total, currency } = req.body || {};
+  console.log('Payment confirmed:', { orderID, total, currency });
+  try {
+    const eventId = uid();
+    db.prepare(`
+      INSERT INTO events (id, event_type, user_id, data, created_at)
+      VALUES (?, 'payment_confirmed', ?, ?, ?)
+    `).run(
+      eventId,
+      'anonymous',
+      JSON.stringify({ orderID, total, currency }),
+      new Date().toISOString()
+    );
+  } catch (e) { console.warn('Payment event log failed:', e); }
+  res.json({ success: true, orderID });
+});
