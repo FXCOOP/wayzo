@@ -154,6 +154,9 @@ function localPlanMarkdown(input) {
 - **Evening:** Family dinner. [Reviews](reviews:${destination} gluten free dinner)
 `.trim(), destination);
 }
+function containsDaySections(md = "") {
+  try { return /(^|\n)##\s*Day\s+\d+/i.test(md); } catch { return false; }
+}
 /* OpenAI (optional) */
 const client = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 async function generatePlanWithAI(payload) {
@@ -244,7 +247,10 @@ Create the most amazing, detailed, and useful trip plan possible!`;
     
     // Enhance the markdown with better formatting
     md = linkifyTokens(md, destination);
-    md = ensureDaySections(md, nDays, start);
+    // Only add fallback structured day sections if missing to prevent duplicates
+    if (!containsDaySections(md)) {
+      md = ensureDaySections(md, nDays, start);
+    }
     
     // Add a beautiful header if not present
     if (!md.includes('# ')) {
