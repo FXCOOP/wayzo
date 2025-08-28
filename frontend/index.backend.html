@@ -17,7 +17,10 @@
         <span class="brand-badge">WZ</span>
         <span class="brand-name">Wayzo</span>
       </a>
-      <a class="btn btn-cta" href="#planner">Start planning</a>
+      <div class="topbar-actions">
+        <button id="loginBtn" class="btn btn-ghost">Sign In</button>
+        <a class="btn btn-cta" href="#planner">Start planning</a>
+      </div>
     </div>
   </header>
 
@@ -58,12 +61,30 @@
 
         <form id="tripForm" class="form" style="margin-top:12px">
           <div class="field">
+            <span>Traveling from (optional)</span>
+            <input id="from" type="text" name="from" placeholder="e.g., New York, London" />
+            <div class="field-help">Leave empty to use your current location for best deals.</div>
+          </div>
+
+          <div class="field">
             <span>Destination</span>
             <input id="dest" type="text" name="destination" placeholder="e.g., Paris, Tokyo, Bali" required />
             <div class="field-help">Add country for clarity if needed.</div>
           </div>
 
-          <div class="fields-2">
+          <div class="field">
+            <span>Date flexibility</span>
+            <div class="date-flexibility">
+              <label class="chip">
+                <input type="radio" name="dateMode" value="exact" checked /> Exact dates
+              </label>
+              <label class="chip">
+                <input type="radio" name="dateMode" value="flexible" /> Flexible (best prices)
+              </label>
+            </div>
+          </div>
+
+          <div id="exactDates" class="fields-2">
             <div class="field">
               <span>Start date</span>
               <input id="start" type="date" name="start" required />
@@ -74,6 +95,23 @@
             </div>
           </div>
 
+          <div id="flexibleDates" class="fields-2 hidden">
+            <div class="field">
+              <span>Travel month</span>
+              <input id="travelMonth" type="month" name="travelMonth" />
+            </div>
+            <div class="field">
+              <span>Trip duration</span>
+              <select id="duration" name="duration">
+                <option value="3">3 days</option>
+                <option value="5" selected>5 days</option>
+                <option value="7">1 week</option>
+                <option value="10">10 days</option>
+                <option value="14">2 weeks</option>
+              </select>
+            </div>
+          </div>
+
           <div class="fields-2">
             <div class="field">
               <span>Budget (USD)</span>
@@ -81,8 +119,25 @@
             </div>
             <div class="field">
               <span>Travelers</span>
-              <input id="travelers" type="number" min="1" step="1" name="travelers" value="2" required />
+              <div class="travelers-input">
+                <div class="traveler-type">
+                  <label>Adults</label>
+                  <input id="adults" type="number" min="1" max="10" name="adults" value="2" required />
+                </div>
+                <div class="traveler-type">
+                  <label>Children</label>
+                  <input id="children" type="number" min="0" max="8" name="children" value="0" />
+                </div>
+              </div>
             </div>
+          </div>
+
+          <div id="childrenAges" class="field hidden">
+            <span>Children's ages</span>
+            <div id="agesContainer" class="ages-container">
+              <!-- Dynamic age inputs will be added here -->
+            </div>
+            <div class="field-help">Ages help us find age-appropriate activities and accommodations.</div>
           </div>
 
           <fieldset class="field">
@@ -98,9 +153,29 @@
           </div>
 
           <div class="field">
+            <span>Dietary needs (optional)</span>
+            <div class="dietary-options">
+              <label class="chip"><input type="checkbox" name="dietary" value="vegetarian" /> Vegetarian</label>
+              <label class="chip"><input type="checkbox" name="dietary" value="vegan" /> Vegan</label>
+              <label class="chip"><input type="checkbox" name="dietary" value="gluten-free" /> Gluten-free</label>
+              <label class="chip"><input type="checkbox" name="dietary" value="halal" /> Halal</label>
+              <label class="chip"><input type="checkbox" name="dietary" value="kosher" /> Kosher</label>
+              <label class="chip"><input type="checkbox" name="dietary" value="none" checked /> No restrictions</label>
+            </div>
+          </div>
+
+          <div class="field">
             <span>Professional brief (optional)</span>
             <textarea id="brief" name="brief" rows="4" placeholder="Detailed requirements: must-see places, vibe preferences, group details, dining preferences, time constraints, anchor events, rainy-day backups..."></textarea>
             <div class="field-help">This helps us create a more personalized and detailed plan.</div>
+          </div>
+
+          <div class="field">
+            <span>Upload existing plans (optional)</span>
+            <div class="file-upload">
+              <input id="planFiles" type="file" name="planFiles" multiple accept=".pdf,.doc,.docx,.txt" />
+              <div class="field-help">Upload existing itineraries, hotel confirmations, or travel documents for analysis.</div>
+            </div>
           </div>
 
           <div class="actions">
@@ -130,11 +205,87 @@
     </div>
   </main>
 
+  <!-- Analytics Dashboard (Admin only) -->
+  <div id="analyticsPanel" class="analytics-panel hidden">
+    <div class="analytics-header">
+      <h3>Analytics Dashboard</h3>
+      <button id="closeAnalytics" class="btn btn-ghost">×</button>
+    </div>
+    <div class="analytics-content">
+      <div class="analytics-grid">
+        <div class="metric-card">
+          <h4>Total Plans Generated</h4>
+          <div id="totalPlans" class="metric-value">-</div>
+        </div>
+        <div class="metric-card">
+          <h4>Today's Plans</h4>
+          <div id="todayPlans" class="metric-value">-</div>
+        </div>
+        <div class="metric-card">
+          <h4>Affiliate Clicks</h4>
+          <div id="affiliateClicks" class="metric-value">-</div>
+        </div>
+        <div class="metric-card">
+          <h4>Conversion Rate</h4>
+          <div id="conversionRate" class="metric-value">-</div>
+        </div>
+      </div>
+      <div class="analytics-charts">
+        <div class="chart-container">
+          <h4>Plans by Destination</h4>
+          <div id="destinationChart" class="chart"></div>
+        </div>
+        <div class="chart-container">
+          <h4>Revenue by Month</h4>
+          <div id="revenueChart" class="chart"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- FOOTER -->
   <footer class="footer">
     <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>Wayzo</h4>
+          <p>AI-powered trip planning for unforgettable adventures.</p>
+        </div>
+        <div class="footer-section">
+          <h4>Legal</h4>
+          <a href="/privacy">Privacy Policy</a>
+          <a href="/terms">Terms & Conditions</a>
+          <a href="/cookies">Cookie Policy</a>
+        </div>
+        <div class="footer-section">
+          <h4>Support</h4>
+          <a href="/contact">Contact Us</a>
+          <a href="/help">Help Center</a>
+        </div>
+      </div>
       <p class="muted small">© Wayzo. All rights reserved.</p>
     </div>
   </footer>
+
+  <!-- Google OAuth Script -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <!-- Cookie Consent Banner -->
+  <div id="cookieBanner" class="cookie-banner">
+    <div class="cookie-content">
+      <div class="cookie-text">
+        <p>🍪 We use cookies to enhance your experience and analyze site usage. By continuing to use our site, you agree to our use of cookies.</p>
+        <p class="cookie-links">
+          <a href="/cookies">Learn more</a> • 
+          <a href="/privacy">Privacy Policy</a> • 
+          <a href="/terms">Terms & Conditions</a>
+        </p>
+      </div>
+      <div class="cookie-actions">
+        <button id="acceptCookies" class="btn btn-primary">Accept All</button>
+        <button id="rejectCookies" class="btn btn-ghost">Reject Non-Essential</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

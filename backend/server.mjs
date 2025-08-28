@@ -80,6 +80,44 @@ app.get('/', (_req, res) => {
   console.log('Serving index:', INDEX);
   res.sendFile(INDEX);
 });
+
+// Legal pages
+app.get('/privacy', (_req, res) => {
+  const privacyFile = path.join(FRONTEND, 'privacy.html');
+  if (fs.existsSync(privacyFile)) {
+    res.sendFile(privacyFile);
+  } else {
+    res.status(404).send('Privacy Policy not found');
+  }
+});
+
+app.get('/terms', (_req, res) => {
+  const termsFile = path.join(FRONTEND, 'terms.html');
+  if (fs.existsSync(termsFile)) {
+    res.sendFile(termsFile);
+  } else {
+    res.status(404).send('Terms & Conditions not found');
+  }
+});
+
+app.get('/cookies', (_req, res) => {
+  const cookiesFile = path.join(FRONTEND, 'cookies.html');
+  if (fs.existsSync(cookiesFile)) {
+    res.sendFile(cookiesFile);
+  } else {
+    res.status(404).send('Cookie Policy not found');
+  }
+});
+
+app.get('/contact', (_req, res) => {
+  const contactFile = path.join(FRONTEND, 'contact.html');
+  if (fs.existsSync(contactFile)) {
+    res.sendFile(contactFile);
+  } else {
+    res.status(404).send('Contact page not found');
+  }
+});
+
 app.get('/healthz', (_req, res) => res.json({ ok: true, version: VERSION }));
 app.get('/version', (_req, res) => res.json({ version: VERSION }));
 /* Uploads */
@@ -94,10 +132,39 @@ app.post('/api/upload', multerUpload.array('files', 10), (req, res) => {
 /* DB */
 const db = new Database(path.join(ROOT, 'tripmaster.sqlite'));
 db.exec(`CREATE TABLE IF NOT EXISTS plans (id TEXT PRIMARY KEY, created_at TEXT NOT NULL, payload TEXT NOT NULL);`);
+db.exec(`CREATE TABLE IF NOT EXISTS events (id TEXT PRIMARY KEY, event_type TEXT NOT NULL, user_id TEXT, data TEXT, created_at TEXT NOT NULL);`);
 const savePlan = db.prepare('INSERT OR REPLACE INTO plans (id, created_at, payload) VALUES (?, ?, ?)');
 const getPlan = db.prepare('SELECT payload FROM plans WHERE id = ?');
 const nowIso = () => new Date().toISOString();
 const uid = () => (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
+
+// Analytics tracking function
+const trackPlanGeneration = (payload) => {
+  try {
+    const eventId = uid();
+    db.prepare(`
+      INSERT INTO events (id, event_type, user_id, data, created_at) 
+      VALUES (?, ?, ?, ?, ?)
+    `).run(
+      eventId,
+      'plan_generated',
+      'anonymous', // Will be updated when user auth is implemented
+      JSON.stringify({
+        destination: payload.destination,
+        adults: payload.adults,
+        children: payload.children,
+        budget: payload.budget,
+        style: payload.level,
+        dateMode: payload.dateMode,
+        hasDietary: payload.dietary && payload.dietary.length > 0,
+        hasFiles: payload.uploadedFiles && payload.uploadedFiles.length > 0
+      }),
+      new Date().toISOString()
+    );
+  } catch (e) {
+    console.error('Failed to track plan generation:', e);
+  }
+};
 /* Helpers */
 const daysBetween = (a, b) => { if (!a || !b) return 1; const s = new Date(a), e = new Date(b); if (isNaN(s) || isNaN(e)) return 1; return Math.max(1, Math.round((e - s) / 86400000) + 1); };
 const seasonFromDate = (iso = "") => ([12, 1, 2].includes(new Date(iso).getMonth() + 1) ? "Winter" : [3, 4, 5].includes(new Date(iso).getMonth() + 1) ? "Spring" : [6, 7, 8].includes(new Date(iso).getMonth() + 1) ? "Summer" : "Autumn");
@@ -148,24 +215,44 @@ function localPlanMarkdown(input) {
 /* OpenAI (optional) */
 const client = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 async function generatePlanWithAI(payload) {
-  const { destination = '', start = '', end = '', budget = 0, currency = 'USD $', adults = 2, children = 0, level = 'mid', prefs = '', diet = '', professional_brief = '' } = payload || {};
-  const nDays = daysBetween(start, end);
+  const { 
+    destination = '', 
+    start = '', 
+    end = '', 
+    budget = 0, 
+    currency = 'USD $', 
+    adults = 2, 
+    children = 0, 
+    childrenAges = [],
+    level = 'mid', 
+    prefs = '', 
+    dietary = [], 
+    professional_brief = '',
+    from = '',
+    dateMode = 'exact',
+    flexibleDates = null,
+    uploadedFiles = []
+  } = payload || {};
+  
+  const nDays = dateMode === 'flexible' && flexibleDates ? flexibleDates.duration : daysBetween(start, end);
+  const totalTravelers = adults + children;
   
   // Enhanced system prompt for amazing reports
   const sys = `You are Wayzo, an expert AI travel planner. Create AMAZING, DETAILED trip plans that are:
 
-1. **Highly Personalized**: Use the professional brief to tailor everything
+1. **Highly Personalized**: Use the professional brief and all user preferences to tailor everything
 2. **Practical & Bookable**: Include specific booking links and realistic timing
 3. **Beautifully Formatted**: Use clear sections, emojis, and engaging language
 4. **Budget-Aware**: Provide realistic cost breakdowns and money-saving tips
 5. **Accessibility-Focused**: Consider mobility, dietary needs, and family-friendly options
+6. **Family-Oriented**: If children are included, prioritize family-friendly activities and accommodations
 
 **REQUIRED SECTIONS:**
 - 🎯 **Trip Overview** - Quick facts and highlights
-- 💰 **Budget Breakdown** - Detailed cost analysis
+- 💰 **Budget Breakdown** - Detailed cost analysis per person
 - 🗺️ **Getting Around** - Transportation tips and maps
-- 🏨 **Accommodation** - Hotel recommendations with links
-- 🍽️ **Dining Guide** - Restaurant suggestions and food culture
+- 🏨 **Accommodation** - Hotel recommendations with links (family-friendly if applicable)
+- 🍽️ **Dining Guide** - Restaurant suggestions considering dietary restrictions
 - 🎭 **Daily Itineraries** - Hour-by-hour plans for each day
 - 🎫 **Must-See Attractions** - Top sights with booking links
 - 🛡️ **Travel Tips** - Local customs, safety, and practical advice
@@ -183,19 +270,33 @@ async function generatePlanWithAI(payload) {
 
 **STYLE:** Make it exciting, informative, and ready to use!`;
 
-  // Enhanced user prompt with professional brief
+  // Enhanced user prompt with all new fields
   const user = `Create an AMAZING trip plan for:
 
 **Destination:** ${destination}
-**Dates:** ${start} to ${end} (${nDays} days)
-**Travelers:** ${adults} adults${children ? `, ${children} children` : ""}
+${from ? `**Traveling From:** ${from}` : ''}
+**Dates:** ${dateMode === 'flexible' ? `Flexible dates in ${flexibleDates?.month || 'selected month'} for ${nDays} days` : `${start} to ${end} (${nDays} days)`}
+**Travelers:** ${adults} adults${children ? `, ${children} children${childrenAges.length > 0 ? ` (ages: ${childrenAges.join(', ')})` : ''}` : ''}
 **Style:** ${level}${prefs ? ` + ${prefs}` : ""}
-**Budget:** ${budget} ${currency}
-**Dietary Needs:** ${diet || 'No restrictions'}
+**Budget:** ${budget} ${currency} (${Math.round(budget / nDays / totalTravelers)} per person per day)
+${dietary && dietary.length > 0 ? `**Dietary Needs:** ${dietary.join(', ')}` : ''}
 
 ${professional_brief ? `**PROFESSIONAL BRIEF:** ${professional_brief}
 
 Use this detailed brief to create a highly personalized plan that addresses every specific requirement mentioned.` : ''}
+
+${uploadedFiles && uploadedFiles.length > 0 ? `**UPLOADED DOCUMENTS:** User has uploaded ${uploadedFiles.length} document(s) including: ${uploadedFiles.map(f => f.name).join(', ')}. Consider any existing plans or preferences mentioned in these documents when creating the itinerary.` : ''}
+
+**SPECIAL CONSIDERATIONS:**
+${children > 0 ? `- **Family-Friendly Focus**: Include activities suitable for children, family-friendly accommodations, and consider child safety and entertainment
+- **Age-Appropriate Activities**: Tailor activities to the children's ages (${childrenAges.join(', ')})
+- **Flexible Timing**: Include breaks and downtime suitable for families` : ''}
+
+${dietary && dietary.length > 0 ? `- **Dietary Accommodations**: Ensure all restaurant recommendations accommodate ${dietary.join(', ')} dietary needs
+- **Local Cuisine**: Highlight local dishes that fit dietary restrictions` : ''}
+
+${dateMode === 'flexible' ? `- **Flexible Date Optimization**: Suggest the best times within the month for optimal weather, prices, and fewer crowds
+- **Price Optimization**: Focus on getting the best value during the flexible period` : ''}
 
 **Image guidance:** Provide 3–6 realistic image prompts that would look authentic for ${destination} in this season. Use a mix of cityscapes, food, local culture, and nature; each as a Markdown image with token links like ![Title](image:QUERY). Add a short one-line collage idea.
 
@@ -207,6 +308,7 @@ Use this detailed brief to create a highly personalized plan that addresses ever
 - Provide realistic timing and logistics
 - Include money-saving alternatives
 - Make it family-friendly if children are included
+- Consider the starting location (${from || 'user\'s location'}) for flight/transport recommendations
 
 Create the most amazing, detailed, and useful trip plan possible!`;
 
@@ -254,12 +356,16 @@ app.post('/api/preview', (req, res) => {
   const id = uid();
   const aff = affiliatesFor(payload.destination || '');
   
-  // Create an engaging preview
+  // Create an engaging preview with enhanced data
   const destination = payload.destination || 'your destination';
-  const nDays = daysBetween(payload.start, payload.end);
+  const from = payload.from || 'your location';
+  const nDays = payload.flexibleDates ? payload.flexibleDates.duration : daysBetween(payload.start, payload.end);
   const style = payload.level === "luxury" ? "Luxury" : payload.level === "budget" ? "Budget" : "Mid-range";
-  const travelers = payload.travelers || 2;
+  const adults = payload.adults || 2;
+  const children = payload.children || 0;
+  const totalTravelers = adults + children;
   const budget = payload.budget || 0;
+  const dateMode = payload.dateMode || 'exact';
   
   const teaser_html = `
     <div class="preview-teaser">
@@ -275,16 +381,29 @@ app.post('/api/preview', (req, res) => {
         </div>
         <div class="stat">
           <span class="stat-label">Travelers</span>
-          <span class="stat-value">${travelers}</span>
+          <span class="stat-value">${adults} adults${children > 0 ? ` + ${children} children` : ''}</span>
         </div>
         <div class="stat">
           <span class="stat-label">Budget</span>
           <span class="stat-value">$${budget.toLocaleString()}</span>
         </div>
+        ${from !== 'your location' ? `
+        <div class="stat">
+          <span class="stat-label">From</span>
+          <span class="stat-value">${from}</span>
+        </div>
+        ` : ''}
+        ${dateMode === 'flexible' ? `
+        <div class="stat">
+          <span class="stat-label">Date Mode</span>
+          <span class="stat-value">Flexible (best prices)</span>
+        </div>
+        ` : ''}
       </div>
       <p class="preview-description">
         Ready to create your personalized ${nDays}-day ${style.toLowerCase()} adventure in ${destination}? 
         Our AI will craft a detailed itinerary with hotels, activities, dining, and insider tips.
+        ${children > 0 ? 'We\'ll include family-friendly activities and accommodations suitable for children.' : ''}
       </p>
       <div class="preview-features">
         <span class="feature">🗺️ Custom routes</span>
@@ -293,6 +412,8 @@ app.post('/api/preview', (req, res) => {
         <span class="feature">🎫 Activity booking</span>
         <span class="feature">📱 Mobile-friendly</span>
         <span class="feature">📄 PDF export</span>
+        ${children > 0 ? '<span class="feature">👶 Family-friendly</span>' : ''}
+        ${payload.dietary && payload.dietary.length > 0 ? '<span class="feature">🥗 Dietary options</span>' : ''}
       </div>
       <p class="preview-cta">
         <strong>Click "Generate full plan" to create your complete itinerary!</strong>
@@ -302,6 +423,7 @@ app.post('/api/preview', (req, res) => {
   
   res.json({ id, teaser_html, affiliates: aff, version: VERSION });
 });
+
 app.post('/api/plan', async (req, res) => {
   console.log('Plan request received:', req.body); // Debug
   try {
@@ -312,10 +434,86 @@ app.post('/api/plan', async (req, res) => {
     const html = marked.parse(markdown);
     const aff = affiliatesFor(payload.destination);
     savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: payload, markdown }));
+    
+    // Track plan generation for analytics
+    trackPlanGeneration(payload);
+    
     res.json({ id, markdown, html, affiliates: aff, version: VERSION });
   } catch (e) {
     console.error('Plan generation error:', e);
     res.status(500).json({ error: 'Failed to generate plan. Check server logs.', version: VERSION });
+  }
+});
+
+// Analytics endpoints
+app.get('/api/analytics', (req, res) => {
+  try {
+    // Get basic analytics from database
+    const totalPlans = db.prepare('SELECT COUNT(*) as count FROM plans').get().count;
+    const today = new Date().toISOString().split('T')[0];
+    const todayPlans = db.prepare('SELECT COUNT(*) as count FROM plans WHERE DATE(created_at) = ?').get(today).count;
+    
+    // Get destination breakdown
+    const destinations = db.prepare(`
+      SELECT 
+        JSON_EXTRACT(payload, '$.data.destination') as destination,
+        COUNT(*) as count
+      FROM plans 
+      WHERE JSON_EXTRACT(payload, '$.data.destination') IS NOT NULL
+      GROUP BY JSON_EXTRACT(payload, '$.data.destination')
+      ORDER BY count DESC
+      LIMIT 10
+    `).all();
+    
+    const destinationData = {};
+    destinations.forEach(row => {
+      if (row.destination) {
+        destinationData[row.destination] = row.count;
+      }
+    });
+    
+    // Calculate conversion rate (simplified - you can enhance this)
+    const conversionRate = totalPlans > 0 ? Math.round((todayPlans / totalPlans) * 100) : 0;
+    
+    const analytics = {
+      totalPlans,
+      todayPlans,
+      affiliateClicks: 0, // This would come from tracking data
+      conversionRate,
+      destinations: destinationData,
+      revenue: {} // This would come from affiliate tracking
+    };
+    
+    res.json(analytics);
+  } catch (e) {
+    console.error('Analytics error:', e);
+    res.status(500).json({ error: 'Failed to get analytics' });
+  }
+});
+
+// Event tracking endpoint
+app.post('/api/track', (req, res) => {
+  try {
+    const eventData = req.body;
+    console.log('Event tracked:', eventData);
+    
+    // Store event in database for analytics
+    const eventId = uid();
+    db.prepare(`
+      INSERT INTO events (id, event_type, user_id, data, created_at) 
+      VALUES (?, ?, ?, ?, ?)
+    `).run(
+      eventId,
+      eventData.event,
+      eventData.userId || 'anonymous',
+      JSON.stringify(eventData),
+      new Date().toISOString()
+    );
+    
+    res.json({ success: true, eventId });
+  } catch (e) {
+    console.error('Event tracking error:', e);
+    res.status(500).json({ error: 'Failed to track event' });
   }
 });
 app.get('/api/plan/:id/pdf', (req, res) => {
