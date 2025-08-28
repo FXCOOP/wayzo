@@ -68,9 +68,80 @@
           </div>
 
           <div class="field">
-            <span>Destination</span>
-            <input id="dest" type="text" name="destination" placeholder="e.g., Paris, Tokyo, Bali" required />
-            <div class="field-help">Add country for clarity if needed.</div>
+            <span>Trip Type</span>
+            <div class="trip-type-selector">
+              <label class="chip">
+                <input type="radio" name="tripType" value="single" checked />
+                <span class="radio-custom"></span>
+                Single Destination
+              </label>
+              <label class="chip">
+                <input type="radio" name="tripType" value="multi" />
+                <span class="radio-custom"></span>
+                Multi-Destination
+              </label>
+            </div>
+          </div>
+
+          <!-- Single Destination (Default) -->
+          <div id="singleDestination" class="destination-section">
+            <div class="field">
+              <span>Destination</span>
+              <input id="dest" type="text" name="destination" placeholder="e.g., Paris, Tokyo, Bali" required />
+              <div class="field-help">Add country for clarity if needed.</div>
+            </div>
+          </div>
+
+          <!-- Multi-Destination -->
+          <div id="multiDestination" class="destination-section hidden">
+            <div class="multi-destinations">
+              <div class="destination-item" data-index="0">
+                <div class="destination-header">
+                  <h4>Destination 1</h4>
+                  <button type="button" class="btn btn-icon remove-destination" title="Remove destination">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+                <div class="destination-inputs">
+                  <div class="field">
+                    <span>Place Name</span>
+                    <input type="text" name="destinations[0][name]" class="form-input" placeholder="e.g., Rome" required />
+                  </div>
+                  <div class="field">
+                    <span>Country</span>
+                    <input type="text" name="destinations[0][country]" class="form-input" placeholder="e.g., Italy" />
+                  </div>
+                  <div class="fields-2">
+                    <div class="field">
+                      <span>Days to Stay</span>
+                      <input type="number" name="destinations[0][days]" class="form-input" min="1" max="30" value="3" required />
+                    </div>
+                    <div class="field">
+                      <span>Priority Level</span>
+                      <select name="destinations[0][priority]" class="form-input">
+                        <option value="must-see">Must See</option>
+                        <option value="high">High Priority</option>
+                        <option value="medium" selected>Medium Priority</option>
+                        <option value="low">Low Priority</option>
+                        <option value="optional">Optional</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="field">
+                    <span>Special Requirements</span>
+                    <textarea name="destinations[0][requirements]" class="form-input" rows="2" placeholder="Any specific requirements for this destination..."></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="add-destination-section">
+              <button type="button" id="addDestinationBtn" class="btn btn-outline">
+                <i class="fas fa-plus"></i>
+                Add Another Destination
+              </button>
+              <div class="field-help">You can add up to 10 destinations for your trip</div>
+            </div>
           </div>
 
           <div class="field">
