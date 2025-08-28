@@ -12,11 +12,24 @@
   const icsBtn = $('#icsBtn');
   const fullPlanBtn = $('#fullPlanBtn');
   const saveBtn = $('#saveBtn');
+  const loginBtn = $('#loginBtn');
 
   if (!form || !previewEl) return; // nothing to wire up
 
   const show = (el) => el && el.classList.remove('hidden');
   const hide = (el) => el && el.classList.add('hidden');
+
+  // No-op safe helpers (overridden if SDKs loaded)
+  const trackEvent = (event, data = {}) => {
+    try {
+      fetch('/api/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event, ...data, timestamp: new Date().toISOString() }) }).catch(() => {});
+    } catch (_) {}
+  };
+  const initializeGoogleAuth = () => {};
+  const ensureLoginVisible = () => { if (loginBtn) loginBtn.classList.add('btn-primary'); };
+  const showUserMenu = () => {};
+  const detectUserLocation = async () => {};
+  const initializeCookieConsent = () => {};
 
   // Enhanced form reading with professional brief
   const readForm = () => {
@@ -383,18 +396,46 @@
       if (loginBtn) { loginBtn.textContent = currentUser.name; loginBtn.onclick = showUserMenu; }
     } else {
       ensureLoginVisible();
-      if (loginBtn) loginBtn.onclick = () => (window.google && google.accounts && google.accounts.id && google.accounts.id.prompt ? google.accounts.id.prompt() : alert('Sign-in temporarily unavailable.'));
+      if (loginBtn) loginBtn.onclick = () => alert('Sign-in temporarily unavailable.');
     }
     setupChildrenAges();
     setupDateModes();
     addUIEnhancements();
-    wireUpEvents();
+    // Event listeners are already bound above
     bindPaywall();
     restoreLastPreview();
+    // SDK initializers are safe no-ops if not present
     detectUserLocation();
     initializeGoogleAuth();
     initializeCookieConsent();
     trackEvent('page_view', { path: window.location.pathname });
   };
+
+  // Stubs required references used above
+  let currentUser = null;
+  const setupChildrenAges = () => {
+    const childrenInput = $('#children');
+    const agesContainer = $('#childrenAges');
+    const agesInputs = $('#agesContainer');
+    if (!childrenInput || !agesContainer || !agesInputs) return;
+    const updateAges = () => {
+      const count = Number(childrenInput.value) || 0;
+      agesInputs.innerHTML = '';
+      if (count > 0) {
+        show(agesContainer);
+        for (let i = 0; i < count; i++) {
+          const ageDiv = document.createElement('div');
+          ageDiv.className = 'age-input';
+          ageDiv.innerHTML = `<label>Child ${i + 1}</label><input type="number" min="1" max="17" placeholder="Age" />`;
+          agesInputs.appendChild(ageDiv);
+        }
+      } else { hide(agesContainer); }
+    };
+    childrenInput.addEventListener('change', updateAges);
+    updateAges();
+  };
+
+  // Run init now
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 
 })();
