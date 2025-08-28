@@ -405,6 +405,43 @@ app.get('/api/plan/:id/ics', (_req, res) => {
   res.setHeader('Content-Disposition', `attachment; filename="wayzo-${id}.ics"`);
   res.send(ics);
 });
+// Legal pages - must be defined before the catch-all route
+app.get('/privacy', (_req, res) => {
+  const privacyFile = path.join(FRONTEND, 'privacy.html');
+  if (fs.existsSync(privacyFile)) {
+    res.sendFile(privacyFile);
+  } else {
+    res.status(404).send('Privacy Policy not found');
+  }
+});
+
+app.get('/terms', (_req, res) => {
+  const termsFile = path.join(FRONTEND, 'terms.html');
+  if (fs.existsSync(termsFile)) {
+    res.sendFile(termsFile);
+  } else {
+    res.status(404).send('Terms & Conditions not found');
+  }
+});
+
+app.get('/cookies', (_req, res) => {
+  const cookiesFile = path.join(FRONTEND, 'cookies.html');
+  if (fs.existsSync(cookiesFile)) {
+    res.sendFile(cookiesFile);
+  } else {
+    res.status(404).send('Cookie Policy not found');
+  }
+});
+
+app.get('/contact', (_req, res) => {
+  const contactFile = path.join(FRONTEND, 'contact.html');
+  if (fs.existsSync(contactFile)) {
+    res.sendFile(contactFile);
+  } else {
+    res.status(404).send('Contact page not found');
+  }
+});
+
 /* SPA Catch-All */
 app.get(/^\/(?!api\/).*/, (_req, res) => {
   res.setHeader('X-Wayzo-Version', VERSION);
