@@ -511,6 +511,8 @@
     setupDietaryNeeds();
     setupStyleSelection();
     setupReferralSystem();
+    setupAuthentication();
+    setupPersonalCabinet();
   });
 
   // Setup referral system
@@ -551,6 +553,599 @@
         alert('Failed to copy code. Please copy manually: ' + code);
       });
     }
+  };
+
+  // Setup authentication system
+  const setupAuthentication = () => {
+    // Check if user is already authenticated
+    const token = localStorage.getItem('wayzo_token');
+    if (token) {
+      window.wayzoApp.isAuthenticated = true;
+      window.wayzoApp.currentUser = JSON.parse(localStorage.getItem('wayzo_user') || '{}');
+      updateUIForAuthenticatedUser();
+    }
+
+    // Setup auth modal functionality
+    const loginBtn = $('#loginBtn');
+    const authModal = $('#authModal');
+    const closeAuthModal = $('#closeAuthModal');
+    const authTabs = $$('.auth-tab');
+    const authTabContents = $$('.auth-tab-content');
+
+    // Show auth modal when login button is clicked
+    if (loginBtn) {
+      loginBtn.addEventListener('click', () => {
+        showAuthModal();
+      });
+    }
+
+    // Close auth modal
+    if (closeAuthModal) {
+      closeAuthModal.addEventListener('click', () => {
+        hideAuthModal();
+      });
+    }
+
+    // Close modal when clicking outside
+    if (authModal) {
+      authModal.addEventListener('click', (e) => {
+        if (e.target === authModal) {
+          hideAuthModal();
+        }
+      });
+    }
+
+    // Tab switching
+    authTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const targetTab = tab.dataset.tab;
+        switchAuthTab(targetTab);
+      });
+    });
+
+    // Setup form submissions
+    setupAuthForms();
+  };
+
+  // Show authentication modal
+  const showAuthModal = () => {
+    const authModal = $('#authModal');
+    if (authModal) {
+      authModal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+  };
+
+  // Hide authentication modal
+  const hideAuthModal = () => {
+    const authModal = $('#authModal');
+    if (authModal) {
+      authModal.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+  };
+
+  // Switch between auth tabs
+  const switchAuthTab = (targetTab) => {
+    const authTabs = $$('.auth-tab');
+    const authTabContents = $$('.auth-tab-content');
+
+    // Update tab buttons
+    authTabs.forEach(tab => {
+      if (tab.dataset.tab === targetTab) {
+        tab.classList.add('active');
+      } else {
+        tab.classList.remove('active');
+      }
+    });
+
+    // Update tab content
+    authTabContents.forEach(content => {
+      if (content.id === `${targetTab}Tab`) {
+        content.classList.add('active');
+      } else {
+        content.classList.remove('active');
+      }
+    });
+  };
+
+  // Setup authentication forms
+  const setupAuthForms = () => {
+    const signinForm = $('#signinForm');
+    const signupForm = $('#signupForm');
+    const googleSignInBtn = $('#googleSignInBtn');
+    const googleSignUpBtn = $('#googleSignUpBtn');
+
+    // Manual sign in
+    if (signinForm) {
+      signinForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await handleManualSignIn();
+      });
+    }
+
+    // Manual sign up
+    if (signupForm) {
+      signupForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await handleManualSignUp();
+      });
+    }
+
+    // Google sign in
+    if (googleSignInBtn) {
+      googleSignInBtn.addEventListener('click', () => {
+        handleGoogleSignIn();
+      });
+    }
+
+    // Google sign up
+    if (googleSignUpBtn) {
+      googleSignUpBtn.addEventListener('click', () => {
+        handleGoogleSignUp();
+      });
+    }
+  };
+
+  // Handle manual sign in
+  const handleManualSignIn = async () => {
+    const email = $('#signinEmail').value;
+    const password = $('#signinPassword').value;
+
+    try {
+      // In a real app, you'd send this to your backend
+      const user = await mockManualSignIn(email, password);
+      
+      window.wayzoApp.currentUser = user;
+      window.wayzoApp.isAuthenticated = true;
+      localStorage.setItem('wayzo_token', 'manual_token_' + Date.now());
+      localStorage.setItem('wayzo_user', JSON.stringify(user));
+
+      updateUIForAuthenticatedUser();
+      hideAuthModal();
+      showNotification(`Welcome back, ${user.name}!`, 'success');
+    } catch (error) {
+      showNotification('Invalid email or password', 'error');
+    }
+  };
+
+  // Handle manual sign up
+  const handleManualSignUp = async () => {
+    const name = $('#signupName').value;
+    const email = $('#signupEmail').value;
+    const password = $('#signupPassword').value;
+    const confirmPassword = $('#signupConfirmPassword').value;
+    const agreeTerms = $('#agreeTerms').checked;
+
+    if (password !== confirmPassword) {
+      showNotification('Passwords do not match', 'error');
+      return;
+    }
+
+    if (!agreeTerms) {
+      showNotification('Please agree to the terms', 'error');
+      return;
+    }
+
+    try {
+      // In a real app, you'd send this to your backend
+      const user = await mockManualSignUp(name, email, password);
+      
+      window.wayzoApp.currentUser = user;
+      window.wayzoApp.isAuthenticated = true;
+      localStorage.setItem('wayzo_token', 'manual_token_' + Date.now());
+      localStorage.setItem('wayzo_user', JSON.stringify(user));
+
+      updateUIForAuthenticatedUser();
+      hideAuthModal();
+      showNotification(`Welcome to Wayzo, ${user.name}!`, 'success');
+    } catch (error) {
+      showNotification('Failed to create account', 'error');
+    }
+  };
+
+  // Mock manual sign in (replace with real backend)
+  const mockManualSignIn = async (email, password) => {
+    // Simulate API call
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        if (email === 'demo@wayzo.com' && password === 'demo123') {
+          resolve({
+            id: 'manual_user_1',
+            name: 'Demo User',
+            email: email,
+            picture: '/assets/default-avatar.svg'
+          });
+        } else {
+          reject(new Error('Invalid credentials'));
+        }
+      }, 1000);
+    });
+  };
+
+  // Mock manual sign up (replace with real backend)
+  const mockManualSignUp = async (name, email, password) => {
+    // Simulate API call
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          id: 'manual_user_' + Date.now(),
+          name: name,
+          email: email,
+          picture: '/assets/default-avatar.svg'
+        });
+      }, 1000);
+    });
+  };
+
+  // Setup personal cabinet
+  const setupPersonalCabinet = () => {
+    const sidebarItems = $$('.sidebar-item');
+    const cabinetTabs = $$('.cabinet-tab');
+    const createNewPlanBtn = $('#createNewPlanBtn');
+    const copyReferralBtn = $('#copyReferralBtn');
+    const shareBtns = $$('.share-btn');
+    const profileForm = $('#profileForm');
+    const dashboardBtn = $('#dashboardBtn');
+    const myPlansBtn = $('#myPlansBtn');
+    const referralBtn = $('#referralBtn');
+    const billingBtn = $('#billingBtn');
+    const signOutBtn = $('#signOutBtn');
+
+    // Tab switching
+    sidebarItems.forEach(item => {
+      item.addEventListener('click', () => {
+        const targetTab = item.dataset.tab;
+        switchCabinetTab(targetTab);
+      });
+    });
+
+    // Create new plan
+    if (createNewPlanBtn) {
+      createNewPlanBtn.addEventListener('click', () => {
+        showPlanningForm();
+      });
+    }
+
+    // Copy referral link
+    if (copyReferralBtn) {
+      copyReferralBtn.addEventListener('click', () => {
+        copyReferralLink();
+      });
+    }
+
+    // Share buttons
+    shareBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const platform = btn.classList[1];
+        shareReferral(platform);
+      });
+    });
+
+    // Profile form
+    if (profileForm) {
+      profileForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        updateProfile();
+      });
+    }
+
+    // User menu actions
+    if (dashboardBtn) {
+      dashboardBtn.addEventListener('click', () => {
+        switchCabinetTab('overview');
+        toggleUserMenu();
+      });
+    }
+
+    if (myPlansBtn) {
+      myPlansBtn.addEventListener('click', () => {
+        switchCabinetTab('plans');
+        toggleUserMenu();
+      });
+    }
+
+    if (referralBtn) {
+      referralBtn.addEventListener('click', () => {
+        switchCabinetTab('referrals');
+        toggleUserMenu();
+      });
+    }
+
+    if (billingBtn) {
+      billingBtn.addEventListener('click', () => {
+        switchCabinetTab('billing');
+        toggleUserMenu();
+      });
+    }
+
+    if (signOutBtn) {
+      signOutBtn.addEventListener('click', () => {
+        signOut();
+      });
+    }
+  };
+
+  // Switch cabinet tabs
+  const switchCabinetTab = (targetTab) => {
+    const sidebarItems = $$('.sidebar-item');
+    const cabinetTabs = $$('.cabinet-tab');
+
+    // Update sidebar
+    sidebarItems.forEach(item => {
+      if (item.dataset.tab === targetTab) {
+        item.classList.add('active');
+      } else {
+        item.classList.remove('active');
+      }
+    });
+
+    // Update content
+    cabinetTabs.forEach(tab => {
+      if (tab.id === `${targetTab}Tab`) {
+        tab.classList.add('active');
+      } else {
+        tab.classList.remove('active');
+      }
+    });
+  };
+
+  // Show planning form
+  const showPlanningForm = () => {
+    const personalCabinet = $('#personalCabinet');
+    const planningForm = $('#planningForm');
+    
+    if (personalCabinet) personalCabinet.classList.add('hidden');
+    if (planningForm) {
+      planningForm.classList.remove('hidden');
+      planningForm.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  // Update UI for authenticated user
+  const updateUIForAuthenticatedUser = () => {
+    const loginBtn = $('#loginBtn');
+    const userMenu = $('#userMenu');
+    const personalCabinet = $('#personalCabinet');
+    const cabinetUserName = $('#cabinetUserName');
+    const profileName = $('#profileName');
+    const profileEmail = $('#profileEmail');
+
+    if (loginBtn) {
+      loginBtn.innerHTML = `
+        <img src="${window.wayzoApp.currentUser.picture || '/assets/default-avatar.svg'}" alt="Avatar" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 8px;">
+        ${window.wayzoApp.currentUser.name}
+      `;
+      loginBtn.onclick = () => toggleUserMenu();
+    }
+
+    if (cabinetUserName) cabinetUserName.textContent = window.wayzoApp.currentUser.name;
+    if (profileName) profileName.value = window.wayzoApp.currentUser.name;
+    if (profileEmail) profileEmail.value = window.wayzoApp.currentUser.email;
+
+    // Show personal cabinet
+    if (personalCabinet) {
+      personalCabinet.classList.remove('hidden');
+      updateCabinetStats();
+    }
+  };
+
+  // Update cabinet statistics
+  const updateCabinetStats = () => {
+    const totalPlans = $('#totalPlans');
+    const referralCredits = $('#referralCredits');
+    const activePlans = $('#activePlans');
+    const totalReferrals = $('#totalReferrals');
+    const earnedCredits = $('#earnedCredits');
+    const referralLink = $('#referralLink');
+
+    if (totalPlans) totalPlans.textContent = window.wayzoApp.userPlans.length;
+    if (referralCredits) referralCredits.textContent = `$${window.wayzoApp.referralCredits}`;
+    if (activePlans) activePlans.textContent = window.wayzoApp.userPlans.filter(p => p.status === 'paid').length;
+    if (totalReferrals) totalReferrals.textContent = window.wayzoApp.currentUser.referrals || 0;
+    if (earnedCredits) earnedCredits.textContent = `$${window.wayzoApp.referralCredits}`;
+    if (referralLink) referralLink.value = `${window.location.origin}?ref=${window.wayzoApp.currentUser.id}`;
+
+    updatePlansList();
+  };
+
+  // Toggle user menu
+  const toggleUserMenu = () => {
+    const userMenu = $('#userMenu');
+    if (userMenu) {
+      userMenu.classList.toggle('hidden');
+    }
+  };
+
+  // Sign out
+  const signOut = () => {
+    window.wayzoApp.currentUser = null;
+    window.wayzoApp.isAuthenticated = false;
+    localStorage.removeItem('wayzo_token');
+    localStorage.removeItem('wayzo_user');
+
+    const loginBtn = $('#loginBtn');
+    const userMenu = $('#userMenu');
+    const personalCabinet = $('#personalCabinet');
+
+    if (loginBtn) {
+      loginBtn.innerHTML = `
+        <i class="fas fa-user"></i>
+        Sign In
+      `;
+      loginBtn.onclick = () => showAuthModal();
+    }
+
+    if (userMenu) userMenu.classList.add('hidden');
+    if (personalCabinet) personalCabinet.classList.add('hidden');
+
+    showNotification('Signed out successfully', 'success');
+  };
+
+  // Update profile
+  const updateProfile = async () => {
+    const form = $('#profileForm');
+    const formData = new FormData(form);
+    
+    try {
+      // Update user profile
+      window.wayzoApp.currentUser = {
+        ...window.wayzoApp.currentUser,
+        name: formData.get('name'),
+        phone: formData.get('phone'),
+        location: formData.get('location')
+      };
+
+      localStorage.setItem('wayzo_user', JSON.stringify(window.wayzoApp.currentUser));
+      updateUIForAuthenticatedUser();
+      
+      showNotification('Profile updated successfully!', 'success');
+    } catch (error) {
+      console.error('Profile update error:', error);
+      showNotification('Failed to update profile', 'error');
+    }
+  };
+
+  // Add missing functions
+  const handleGoogleSignIn = () => {
+    // This would integrate with Google OAuth
+    showNotification('Google sign-in coming soon!', 'info');
+  };
+
+  const handleGoogleSignUp = () => {
+    // This would integrate with Google OAuth
+    showNotification('Google sign-up coming soon!', 'info');
+  };
+
+  const showNotification = (message, type = 'info') => {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+      <div class="notification-content">
+        <i class="fas fa-${getNotificationIcon(type)}"></i>
+        <span>${message}</span>
+        <button class="notification-close">&times;</button>
+      </div>
+    `;
+
+    document.body.appendChild(notification);
+
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+      notification.remove();
+    }, 5000);
+
+    // Close button functionality
+    const closeBtn = notification.querySelector('.notification-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        notification.remove();
+      });
+    }
+  };
+
+  const getNotificationIcon = (type) => {
+    switch (type) {
+      case 'success': return 'check-circle';
+      case 'error': return 'exclamation-circle';
+      case 'warning': return 'exclamation-triangle';
+      default: return 'info-circle';
+    }
+  };
+
+  // Add missing cabinet functions
+  const updatePlansList = () => {
+    const plansList = $('#plansList');
+    const recentPlansList = $('#recentPlansList');
+    
+    if (!plansList || !recentPlansList) return;
+
+    const plans = window.wayzoApp.userPlans || [];
+    
+    if (plans.length === 0) {
+      plansList.innerHTML = '<p class="no-plans">No plans yet. Start planning your next adventure!</p>';
+      recentPlansList.innerHTML = '<p class="no-plans">No plans yet. Start planning your next adventure!</p>';
+      return;
+    }
+
+    // Render plans
+    const plansHTML = plans.map(plan => `
+      <div class="plan-item">
+        <div class="plan-info">
+          <h4>${plan.destination}</h4>
+          <p>${plan.duration} days • ${plan.style} • $${plan.budget}</p>
+          <span class="plan-status ${plan.status}">${plan.status}</span>
+        </div>
+        <div class="plan-actions">
+          <button class="btn btn-secondary btn-sm">View</button>
+          <button class="btn btn-primary btn-sm">Edit</button>
+        </div>
+      </div>
+    `).join('');
+
+    plansList.innerHTML = plansHTML;
+    recentPlansList.innerHTML = plans.slice(0, 3).map(plan => `
+      <div class="plan-item">
+        <div class="plan-info">
+          <h4>${plan.destination}</h4>
+          <p>${plan.duration} days • ${plan.style} • $${plan.budget}</p>
+        </div>
+      </div>
+    `).join('');
+  };
+
+  const copyReferralLink = () => {
+    const referralLink = $('#referralLink');
+    if (referralLink) {
+      navigator.clipboard.writeText(referralLink.value).then(() => {
+        const copyBtn = $('#copyReferralBtn');
+        if (copyBtn) {
+          copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+          copyBtn.style.background = '#10b981';
+          copyBtn.style.color = 'white';
+          
+          setTimeout(() => {
+            copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+            copyBtn.style.background = '';
+            copyBtn.style.color = '';
+          }, 2000);
+        }
+        showNotification('Referral link copied!', 'success');
+      }).catch(() => {
+        showNotification('Failed to copy link', 'error');
+      });
+    }
+  };
+
+  const shareReferral = (platform) => {
+    const referralLink = $('#referralLink')?.value || '';
+    const message = `Check out Wayzo - AI-powered trip planning! Use my referral link: ${referralLink}`;
+    
+    let shareUrl = '';
+    switch (platform) {
+      case 'share-email':
+        shareUrl = `mailto:?subject=Try Wayzo - AI Trip Planning&body=${encodeURIComponent(message)}`;
+        break;
+      case 'share-whatsapp':
+        shareUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+        break;
+      case 'share-telegram':
+        shareUrl = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent('Check out Wayzo - AI-powered trip planning!')}`;
+        break;
+    }
+    
+    if (shareUrl) {
+      window.open(shareUrl, '_blank');
+    }
+  };
+
+  // Initialize wayzoApp object
+  window.wayzoApp = {
+    isAuthenticated: false,
+    currentUser: null,
+    userPlans: [],
+    referralCredits: 0
   };
 
 })();

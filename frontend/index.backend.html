@@ -227,6 +227,193 @@
     </div>
   </main>
 
+  <!-- Personal Cabinet Section -->
+  <section id="personalCabinet" class="personal-cabinet hidden">
+    <div class="container">
+      <div class="cabinet-header">
+        <h2>Welcome back, <span id="cabinetUserName">User</span>! 👋</h2>
+        <p>Manage your travel plans, referrals, and account settings</p>
+      </div>
+      
+      <div class="cabinet-content">
+        <div class="cabinet-sidebar">
+          <div class="sidebar-menu">
+            <button class="sidebar-item active" data-tab="overview">
+              <i class="fas fa-tachometer-alt"></i>
+              Overview
+            </button>
+            <button class="sidebar-item" data-tab="plans">
+              <i class="fas fa-map-marked-alt"></i>
+              My Plans
+            </button>
+            <button class="sidebar-item" data-tab="referrals">
+              <i class="fas fa-gift"></i>
+              Referrals
+            </button>
+            <button class="sidebar-item" data-tab="billing">
+              <i class="fas fa-credit-card"></i>
+              Billing
+            </button>
+            <button class="sidebar-item" data-tab="profile">
+              <i class="fas fa-user"></i>
+              Profile
+            </button>
+          </div>
+        </div>
+        
+        <div class="cabinet-main">
+          <!-- Overview Tab -->
+          <div id="overviewTab" class="cabinet-tab active">
+            <div class="overview-stats">
+              <div class="stat-card">
+                <div class="stat-icon">
+                  <i class="fas fa-map-marked-alt"></i>
+                </div>
+                <div class="stat-content">
+                  <h3 id="totalPlans">0</h3>
+                  <p>Total Plans</p>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">
+                  <i class="fas fa-gift"></i>
+                </div>
+                <div class="stat-content">
+                  <h3 id="referralCredits">$0</h3>
+                  <p>Referral Credits</p>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">
+                  <i class="fas fa-calendar-check"></i>
+                </div>
+                <div class="stat-content">
+                  <h3 id="activePlans">0</h3>
+                  <p>Active Plans</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="recent-plans">
+              <h3>Recent Plans</h3>
+              <div id="recentPlansList" class="plans-list">
+                <p class="no-plans">No plans yet. Start planning your next adventure!</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Plans Tab -->
+          <div id="plansTab" class="cabinet-tab">
+            <div class="plans-header">
+              <h3>My Travel Plans</h3>
+              <button id="createNewPlanBtn" class="btn btn-primary">
+                <i class="fas fa-plus"></i>
+                Create New Plan
+              </button>
+            </div>
+            <div id="plansList" class="plans-list">
+              <p class="no-plans">No plans yet. Start planning your next adventure!</p>
+            </div>
+          </div>
+          
+          <!-- Referrals Tab -->
+          <div id="referralsTab" class="cabinet-tab">
+            <div class="referral-content">
+              <h3>Refer Friends & Earn $5 Off! 🎁</h3>
+              <p>Share Wayzo with friends and get $5 off your next plan for each successful referral.</p>
+              
+              <div class="referral-stats">
+                <div class="referral-stat">
+                  <span class="stat-number" id="totalReferrals">0</span>
+                  <span class="stat-label">Total Referrals</span>
+                </div>
+                <div class="referral-stat">
+                  <span class="stat-number" id="earnedCredits">$0</span>
+                  <span class="stat-label">Earned Credits</span>
+                </div>
+              </div>
+              
+              <div class="referral-link-section">
+                <label for="referralLink" class="form-label">Your Referral Link</label>
+                <div class="referral-link-input">
+                  <input type="text" id="referralLink" readonly class="form-input">
+                  <button id="copyReferralBtn" class="btn btn-secondary">
+                    <i class="fas fa-copy"></i>
+                    Copy
+                  </button>
+                </div>
+              </div>
+              
+              <div class="share-buttons">
+                <button class="share-btn share-email">
+                  <i class="fas fa-envelope"></i>
+                  Email
+                </button>
+                <button class="share-btn share-whatsapp">
+                  <i class="fab fa-whatsapp"></i>
+                  WhatsApp
+                </button>
+                <button class="share-btn share-telegram">
+                  <i class="fab fa-telegram"></i>
+                  Telegram
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Billing Tab -->
+          <div id="billingTab" class="cabinet-tab">
+            <div class="billing-content">
+              <h3>Billing & Payments</h3>
+              <div class="billing-summary">
+                <div class="billing-card">
+                  <h4>Payment History</h4>
+                  <div id="paymentHistory" class="payment-list">
+                    <p class="no-payments">No payment history yet.</p>
+                  </div>
+                </div>
+                
+                <div class="billing-card">
+                  <h4>Available Credits</h4>
+                  <div class="credits-display">
+                    <span class="credits-amount" id="availableCredits">$0</span>
+                    <p>Use credits for your next plan</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Profile Tab -->
+          <div id="profileTab" class="cabinet-tab">
+            <div class="profile-content">
+              <h3>Profile Settings</h3>
+              <form id="profileForm" class="profile-form">
+                <div class="form-group">
+                  <label for="profileName" class="form-label">Full Name</label>
+                  <input type="text" id="profileName" name="name" class="form-input">
+                </div>
+                <div class="form-group">
+                  <label for="profileEmail" class="form-label">Email</label>
+                  <input type="email" id="profileEmail" name="email" class="form-input" readonly>
+                </div>
+                <div class="form-group">
+                  <label for="profilePhone" class="form-label">Phone (optional)</label>
+                  <input type="tel" id="profilePhone" name="phone" class="form-input">
+                </div>
+                <div class="form-group">
+                  <label for="profileLocation" class="form-label">Location (optional)</label>
+                  <input type="text" id="profileLocation" name="location" class="form-input">
+                </div>
+                <button type="submit" class="btn btn-primary">Update Profile</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- FOOTER -->
   <footer class="footer">
     <div class="container">
@@ -318,5 +505,124 @@
 
   <!-- Google OAuth Script -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <!-- User Menu (Hidden by default) -->
+    <div id="userMenu" class="user-menu hidden">
+        <div class="user-info">
+            <img id="userAvatar" src="/assets/default-avatar.svg" alt="User Avatar" class="user-avatar">
+            <div class="user-details">
+                <span id="userName" class="user-name">User Name</span>
+                <span id="userEmail" class="user-email">user@email.com</span>
+            </div>
+        </div>
+        <div class="user-menu-actions">
+            <button id="dashboardBtn" class="menu-btn">
+                <i class="fas fa-tachometer-alt"></i>
+                Dashboard
+            </button>
+            <button id="myPlansBtn" class="menu-btn">
+                <i class="fas fa-map-marked-alt"></i>
+                My Plans
+            </button>
+            <button id="referralBtn" class="menu-btn">
+                <i class="fas fa-gift"></i>
+                Refer Friends ($5 off!)
+            </button>
+            <button id="billingBtn" class="menu-btn">
+                <i class="fas fa-credit-card"></i>
+                Billing
+            </button>
+            <button id="signOutBtn" class="menu-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                Sign Out
+            </button>
+        </div>
+    </div>
+
+    <!-- Authentication Modal -->
+    <div id="authModal" class="auth-modal hidden">
+        <div class="auth-modal-content">
+            <div class="auth-modal-header">
+                <h3>Welcome to Wayzo</h3>
+                <button id="closeAuthModal" class="close-btn">&times;</button>
+            </div>
+            
+            <div class="auth-tabs">
+                <button class="auth-tab active" data-tab="signin">Sign In</button>
+                <button class="auth-tab" data-tab="signup">Sign Up</button>
+            </div>
+            
+            <!-- Sign In Tab -->
+            <div id="signinTab" class="auth-tab-content active">
+                <div class="auth-options">
+                    <button id="googleSignInBtn" class="btn btn-google">
+                        <i class="fab fa-google"></i>
+                        Continue with Google
+                    </button>
+                    
+                    <div class="auth-divider">
+                        <span>or</span>
+                    </div>
+                    
+                    <form id="signinForm" class="auth-form">
+                        <div class="form-group">
+                            <label for="signinEmail">Email</label>
+                            <input type="email" id="signinEmail" name="email" required class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="signinPassword">Password</label>
+                            <input type="password" id="signinPassword" name="password" required class="form-input">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full">Sign In</button>
+                    </form>
+                    
+                    <div class="auth-links">
+                        <a href="#" id="forgotPasswordLink">Forgot password?</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sign Up Tab -->
+            <div id="signupTab" class="auth-tab-content">
+                <div class="auth-options">
+                    <button id="googleSignUpBtn" class="btn btn-google">
+                        <i class="fab fa-google"></i>
+                        Sign up with Google
+                    </button>
+                    
+                    <div class="auth-divider">
+                        <span>or</span>
+                    </div>
+                    
+                    <form id="signupForm" class="auth-form">
+                        <div class="form-group">
+                            <label for="signupName">Full Name</label>
+                            <input type="text" id="signupName" name="name" required class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="signupEmail">Email</label>
+                            <input type="email" id="signupEmail" name="email" required class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="signupPassword">Password</label>
+                            <input type="password" id="signupPassword" name="password" required class="form-input" minlength="8">
+                        </div>
+                        <div class="form-group">
+                            <label for="signupConfirmPassword">Confirm Password</label>
+                            <input type="password" id="signupConfirmPassword" name="confirmPassword" required class="form-input" minlength="8">
+                        </div>
+                        <div class="form-group checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="agreeTerms" name="agreeTerms" required>
+                                <span class="checkbox-custom"></span>
+                                I agree to the <a href="/terms" target="_blank">Terms of Service</a> and <a href="/privacy" target="_blank">Privacy Policy</a>
+                            </label>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full">Create Account</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
