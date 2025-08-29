@@ -223,7 +223,6 @@
   // Form submission handler
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    console.log('Form submitted! Starting preview generation...');
     
     const data = readForm();
     console.log('Form data:', data);
@@ -253,19 +252,13 @@
       hide(loadingEl);
       show(previewEl);
       
-      // Show action buttons for preview (small report)
+      // Show action buttons
       show(pdfBtn);
       show(icsBtn);
       show(saveBtn);
       
-      // Show full plan button after preview generation
-      show(fullPlanBtn);
-      
       // Track successful preview generation
       trackEvent('preview_generated', { destination: data.destination, budget: data.budget });
-      
-      // Show success notification
-      showNotification('Preview generated successfully! You can now download or generate the full plan.', 'success');
       
     } catch (error) {
       console.error('Preview generation failed:', error);
@@ -282,13 +275,6 @@
 
   // Full plan generation
   fullPlanBtn.addEventListener('click', async () => {
-    // Check if user is authenticated
-    if (!isAuthenticated) {
-      showNotification('Please sign in to access the full trip plan.', 'warning');
-      showAuthModal();
-      return;
-    }
-    
     const data = readForm();
     console.log('Generating full plan for:', data);
     
