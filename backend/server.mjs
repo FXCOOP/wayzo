@@ -403,6 +403,8 @@ app.post('/api/preview', (req, res) => {
     const budgetNum = Number(payload.budget || 0);
     const level = payload.level || 'mid';
     const destination = (payload.destination || 'your destination').toString();
+    const from = payload.from || 'your location';
+    const dateMode = payload.dateMode || 'exact';
     const adults = Number(payload.adults || 2);
     const children = Number(payload.children || 0);
     const totalTravelers = Math.max(1, adults + children);
@@ -413,7 +415,7 @@ app.post('/api/preview', (req, res) => {
     // Duration handling (supports flexible dates)
     const nDays = payload.flexibleDates && Number(payload.flexibleDates.duration)
       ? Number(payload.flexibleDates.duration)
-      : daysBetween(payload.start, payload.end);
+      : (payload.start && payload.end ? daysBetween(payload.start, payload.end) : 5);
 
     const style = level === 'luxury' ? 'Luxury' : level === 'budget' ? 'Budget' : 'Mid-range';
     const aff = affiliatesFor(destination);
