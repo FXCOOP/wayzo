@@ -309,41 +309,64 @@
       const result = await response.json();
       console.log('Full plan result:', result);
       
-      // Don't show the full plan content until payment is completed
-      // Just show a simple converting paywall
-      previewEl.innerHTML = `
-        <div class="paywall-preview">
-          <h3>🔒 Unlock Your Complete ${data.destination} Trip Plan</h3>
-          <p>Your AI-generated itinerary is ready with:</p>
-          <div class="paywall-features">
-            <span>🗺️ Daily Plans</span>
-            <span>🏨 Best Hotels</span>
-            <span>🍽️ Top Restaurants</span>
-            <span>🎫 Activity Bookings</span>
-            <span>💰 Budget Breakdown</span>
-            <span>🖼️ Beautiful Images</span>
+      // Check if user is a test user - bypass payment
+      if (currentUser && currentUser.isTestUser) {
+        // Test user - show full plan immediately without payment
+        previewEl.innerHTML = `
+          <div class="test-user-notice">
+            <h3>🧪 TEST USER MODE - Full Plan Unlocked!</h3>
+            <p>You're signed in as a test user. All features are unlocked for testing purposes.</p>
           </div>
-          <p class="paywall-cta"><strong>Just $19 to unlock everything + best booking deals!</strong></p>
-        </div>
-      `;
-      setAffiliates(data.destination);
-      
-      // Show paywall for conversion
-      show($('#purchaseActions'));
-      // Hide all download buttons until payment
-      hide(pdfBtn);
-      hide(icsBtn);
-      hide($('#excelBtn'));
-      hide($('#shareBtn'));
-      
-      // Initialize PayPal buttons for the paywall
-      setTimeout(() => {
-        if (typeof paypal !== 'undefined') {
-          initializePayPalButtons();
-        } else {
-          bindPaywall();
-        }
-      }, 500);
+          ${result.html}
+        `;
+        setAffiliates(data.destination);
+        
+        // Show all download buttons for test user
+        show(pdfBtn);
+        show(icsBtn);
+        show($('#excelBtn'));
+        show($('#shareBtn'));
+        
+        // Hide paywall for test user
+        hide($('#purchaseActions'));
+        
+        showNotification('🧪 Test user: Full plan unlocked! All features available for testing.', 'info');
+      } else {
+        // Regular user - show paywall
+        previewEl.innerHTML = `
+          <div class="paywall-preview">
+            <h3>🔒 Unlock Your Complete ${data.destination} Trip Plan</h3>
+            <p>Your AI-generated itinerary is ready with:</p>
+            <div class="paywall-features">
+              <span>🗺️ Daily Plans</span>
+              <span>🏨 Best Hotels</span>
+              <span>🍽️ Top Restaurants</span>
+              <span>🎫 Activity Bookings</span>
+              <span>💰 Budget Breakdown</span>
+              <span>🖼️ Beautiful Images</span>
+            </div>
+            <p class="paywall-cta"><strong>Just $19 to unlock everything + best booking deals!</strong></p>
+          </div>
+        `;
+        setAffiliates(data.destination);
+        
+        // Show paywall for conversion
+        show($('#purchaseActions'));
+        // Hide all download buttons until payment
+        hide(pdfBtn);
+        hide(icsBtn);
+        hide($('#excelBtn'));
+        hide($('#shareBtn'));
+        
+        // Initialize PayPal buttons for the paywall
+        setTimeout(() => {
+          if (typeof paypal !== 'undefined') {
+            initializePayPalButtons();
+          } else {
+            bindPaywall();
+          }
+        }, 500);
+      }
       
       // Hide loading
       hide(loadingEl);
@@ -854,7 +877,28 @@ let currentUser = JSON.parse(localStorage.getItem('wayzo_user') || 'null');
   }
 
   function mockManualSignIn(email, password) {
-    // Simulate authentication
+    // Check for test user account
+    if (email === 'test@wayzo.com' && password === 'test123') {
+      // Test user - bypass payment and unlock everything
+      setTimeout(() => {
+        currentUser = {
+          name: 'Test User',
+          email: email,
+          avatar: '/frontend/assets/default-avatar.svg',
+          isTestUser: true
+        };
+        isAuthenticated = true;
+        // Persist authentication
+        localStorage.setItem('wayzo_authenticated', 'true');
+        localStorage.setItem('wayzo_user', JSON.stringify(currentUser));
+        hideAuthModal();
+        updateUIForAuthenticatedUser();
+        showNotification('🎉 Test user signed in! All features unlocked for testing!', 'success');
+      }, 1000);
+      return;
+    }
+    
+    // Regular user authentication
     setTimeout(() => {
       currentUser = {
         name: email.split('@')[0],
@@ -872,7 +916,28 @@ let currentUser = JSON.parse(localStorage.getItem('wayzo_user') || 'null');
   }
 
   function mockManualSignUp(name, email, password) {
-    // Simulate registration
+    // Check for test user account
+    if (email === 'test@wayzo.com' && password === 'test123') {
+      // Test user - bypass payment and unlock everything
+      setTimeout(() => {
+        currentUser = {
+          name: 'Test User',
+          email: email,
+          avatar: '/frontend/assets/default-avatar.svg',
+          isTestUser: true
+        };
+        isAuthenticated = true;
+        // Persist authentication
+        localStorage.setItem('wayzo_authenticated', 'true');
+        localStorage.setItem('wayzo_user', JSON.stringify(currentUser));
+        hideAuthModal();
+        updateUIForAuthenticatedUser();
+        showNotification('🎉 Test user account created! All features unlocked for testing!', 'success');
+      }, 1000);
+      return;
+    }
+    
+    // Regular user registration
     setTimeout(() => {
       currentUser = {
         name: name,

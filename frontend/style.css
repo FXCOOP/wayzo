@@ -2070,3 +2070,26 @@ fieldset.field .chip {
   background: var(--brand-2);
   transform: translateY(-2px);
 }
+
+/* Test User Notice */
+.test-user-notice {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+}
+
+.test-user-notice h3 {
+  margin: 0 0 10px 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.test-user-notice p {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 1rem;
+}
