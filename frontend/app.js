@@ -252,10 +252,13 @@
       hide(loadingEl);
       show(previewEl);
       
-      // Show action buttons
+      // Show action buttons for preview (small report)
       show(pdfBtn);
       show(icsBtn);
       show(saveBtn);
+      
+      // Show full plan button after preview generation
+      show(fullPlanBtn);
       
       // Track successful preview generation
       trackEvent('preview_generated', { destination: data.destination, budget: data.budget });
@@ -275,6 +278,13 @@
 
   // Full plan generation
   fullPlanBtn.addEventListener('click', async () => {
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      showNotification('Please sign in to access the full trip plan.', 'warning');
+      showAuthModal();
+      return;
+    }
+    
     const data = readForm();
     console.log('Generating full plan for:', data);
     
@@ -370,6 +380,9 @@
                 avatar: payload.picture || '/frontend/assets/default-avatar.svg'
               };
               isAuthenticated = true;
+              // Persist authentication
+              localStorage.setItem('wayzo_authenticated', 'true');
+              localStorage.setItem('wayzo_user', JSON.stringify(currentUser));
               hideAuthModal();
               updateUIForAuthenticatedUser();
               showNotification('Google sign-in successful!', 'success');
@@ -412,6 +425,11 @@
     
     // Ensure login is visible
     ensureLoginVisible();
+    
+    // Restore authentication state if user was previously signed in
+    if (isAuthenticated && currentUser) {
+      updateUIForAuthenticatedUser();
+    }
   };
 
   // Setup children ages functionality
@@ -645,8 +663,8 @@
   }
 
   // Authentication System
-  let isAuthenticated = false;
-  let currentUser = null;
+  let isAuthenticated = localStorage.getItem('wayzo_authenticated') === 'true';
+let currentUser = JSON.parse(localStorage.getItem('wayzo_user') || 'null');
 
   function showAuthModal() {
     $('#authModal').classList.remove('hidden');
@@ -696,6 +714,9 @@
         avatar: '/frontend/assets/default-avatar.svg'
       };
       isAuthenticated = true;
+      // Persist authentication
+      localStorage.setItem('wayzo_authenticated', 'true');
+      localStorage.setItem('wayzo_user', JSON.stringify(currentUser));
       hideAuthModal();
       updateUIForAuthenticatedUser();
       showNotification('Successfully signed in!', 'success');
@@ -711,6 +732,9 @@
         avatar: '/frontend/assets/default-avatar.svg'
       };
       isAuthenticated = true;
+      // Persist authentication
+      localStorage.setItem('wayzo_authenticated', 'true');
+      localStorage.setItem('wayzo_user', JSON.stringify(currentUser));
       hideAuthModal();
       updateUIForAuthenticatedUser();
       showNotification('Account created successfully!', 'success');
@@ -779,6 +803,9 @@
   function signOut() {
     isAuthenticated = false;
     currentUser = null;
+    // Clear authentication from localStorage
+    localStorage.removeItem('wayzo_authenticated');
+    localStorage.removeItem('wayzo_user');
     if (loginBtn) loginBtn.classList.remove('hidden');
     if ($('#userMenuBtn')) $('#userMenuBtn').classList.add('hidden');
     if ($('#userMenu')) $('#userMenu').classList.add('hidden');
