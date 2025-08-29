@@ -483,7 +483,6 @@
   window.handleFacebookSignUp = handleFacebookSignUp;
   window.handleAppleSignIn = handleAppleSignIn;
   window.handleAppleSignUp = handleAppleSignUp;
-  window.handleDemoMode = handleDemoMode;
   window.toggleUserMenu = toggleUserMenu;
   window.signOut = signOut;
   window.showDashboard = showDashboard;
@@ -687,18 +686,7 @@
     showNotification('Apple sign-up coming soon!', 'info');
   }
 
-  function handleDemoMode() {
-    currentUser = {
-      name: 'Demo Admin',
-      email: 'demo@wayzo.com',
-      avatar: '/frontend/assets/default-avatar.svg',
-      isAdmin: true
-    };
-    isAuthenticated = true;
-    hideAuthModal();
-    updateUIForAuthenticatedUser();
-    showNotification('Welcome to demo mode! You have admin access.', 'success');
-  }
+  // Demo mode removed
 
   function updateUIForAuthenticatedUser() {
     if (loginBtn) loginBtn.classList.add('hidden');
@@ -1053,14 +1041,8 @@
 
   // Admin Panel Access
   function accessAdminPanel() {
-    // Check if user is admin (demo mode makes you admin)
-    if (currentUser && (currentUser.email === 'demo@wayzo.com' || currentUser.isAdmin)) {
-      // Open admin panel in new tab
-      window.open('/admin.html', '_blank');
-      showNotification('Admin panel opened!', 'success');
-    } else {
-      showNotification('Admin access required. Use demo mode for admin access.', 'warning');
-    }
+    // Always open protected /admin; backend enforces credentials
+    window.open('/admin', '_blank');
   }
 
   // Event Listeners

@@ -45,6 +45,28 @@ app.use(morgan('combined')); // Detailed logging
 app.use(cors());
 app.use(rateLimit({ windowMs: 60_000, limit: 200 }));
 app.use(express.json({ limit: '5mb' }));
+/* Admin basic auth middleware */
+function adminBasicAuth(req, res, next) {
+  const adminUser = process.env.ADMIN_USER;
+  const adminPass = process.env.ADMIN_PASS;
+  if (!adminUser || !adminPass) {
+    return res.status(503).send('Admin is not configured. Set ADMIN_USER and ADMIN_PASS.');
+  }
+  const header = String(req.headers['authorization'] || '');
+  if (!header.startsWith('Basic ')) {
+    res.setHeader('WWW-Authenticate', 'Basic realm="Wayzo Admin"');
+    return res.status(401).send('Authentication required');
+  }
+  try {
+    const decoded = Buffer.from(header.slice(6), 'base64').toString('utf8');
+    const idx = decoded.indexOf(':');
+    const user = decoded.slice(0, idx);
+    const pass = decoded.slice(idx + 1);
+    if (user === adminUser && pass === adminPass) return next();
+  } catch (_) {}
+  res.setHeader('WWW-Authenticate', 'Basic realm="Wayzo Admin"');
+  return res.status(401).send('Invalid credentials');
+}
 /* Static Serving with Proper Headers */
 app.use('/frontend', express.static(FRONTEND, {
   setHeaders: (res, filePath) => {
@@ -116,6 +138,13 @@ app.get('/contact', (_req, res) => {
   } else {
     res.status(404).send('Contact page not found');
   }
+});
+
+// Admin route (protected)
+app.get('/admin', adminBasicAuth, (_req, res) => {
+  const adminFile = path.join(FRONTEND, 'admin.html');
+  if (fs.existsSync(adminFile)) return res.sendFile(adminFile);
+  res.status(404).send('Admin UI not found');
 });
 
 app.get('/healthz', (_req, res) => res.json({ ok: true, version: VERSION }));
