@@ -309,13 +309,29 @@
       const result = await response.json();
       console.log('Full plan result:', result);
       
-      // Display full plan
-      previewEl.innerHTML = result.html;
+      // Don't show the full plan content until payment is completed
+      // Just show the paywall to convert the user
+      previewEl.innerHTML = `
+        <div class="paywall-preview">
+          <h3>🎯 Your ${data.destination} Trip Plan is Ready!</h3>
+          <p>We've generated your complete AI-powered trip itinerary with:</p>
+          <ul>
+            <li>🗺️ Detailed daily plans and routes</li>
+            <li>🏨 Curated hotel recommendations</li>
+            <li>🍽️ Local restaurant guide with reviews</li>
+            <li>🎫 Activity bookings and tickets</li>
+            <li>📱 Mobile-optimized format</li>
+            <li>📊 Complete budget breakdown</li>
+            <li>🖼️ Beautiful destination images</li>
+          </ul>
+          <p><strong>Complete your purchase to unlock the full report!</strong></p>
+        </div>
+      `;
       setAffiliates(data.destination);
       
-      // Show paywall and download options
+      // Show paywall for conversion
       show($('#purchaseActions'));
-      // Hide download buttons until payment is completed
+      // Hide all download buttons until payment
       hide(pdfBtn);
       hide(icsBtn);
       hide($('#excelBtn'));
