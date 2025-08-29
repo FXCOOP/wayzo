@@ -589,8 +589,8 @@
         <button type="button" class="btn-icon remove-destination" onclick="removeDestination(this)">×</button>
       </div>
       <div class="destination-inputs">
-        <input type="text" name="destinations[${destinationCount - 1}][place]" placeholder="e.g., Paris, France" required />
-        <input type="number" name="destinations[${destinationCount - 1}][days]" min="1" max="30" placeholder="Days to stay" required />
+        <input type="text" name="destinations[${destinationCount - 1}][place]" placeholder="e.g., Paris, France" data-required />
+        <input type="number" name="destinations[${destinationCount - 1}][days]" min="1" max="30" placeholder="Days to stay" data-required />
         <select name="destinations[${destinationCount - 1}][priority]">
           <option value="must-see">Must See</option>
           <option value="high">High Priority</option>
@@ -635,14 +635,39 @@
       if (selectedType === 'single') {
         singleDestination.classList.remove('hidden');
         multiDestination.classList.add('hidden');
+        
+        // Disable validation for multi-destination fields when hidden
+        const multiInputs = multiDestination.querySelectorAll('input, select, textarea');
+        multiInputs.forEach(input => {
+          input.required = false;
+          input.disabled = true;
+        });
+        
+        // Enable validation for single destination field
+        const singleInputs = singleDestination.querySelectorAll('input, select, textarea');
+        singleInputs.forEach(input => {
+          if (input.hasAttribute('data-required')) {
+            input.required = true;
+          }
+        });
       } else {
         singleDestination.classList.remove('hidden');
         multiDestination.classList.remove('hidden');
-        // Update form validation
-        const singleInputs = singleDestination.querySelectorAll('input[required]');
-        const multiInputs = multiDestination.querySelectorAll('input[required]');
-        singleInputs.forEach(input => input.required = false);
-        multiInputs.forEach(input => input.required = true);
+        
+        // Enable validation for multi-destination fields
+        const multiInputs = multiDestination.querySelectorAll('input, select, textarea');
+        multiInputs.forEach(input => {
+          if (input.hasAttribute('data-required')) {
+            input.required = true;
+          }
+          input.disabled = false;
+        });
+        
+        // Disable validation for single destination field when multi is selected
+        const singleInputs = singleDestination.querySelectorAll('input, select, textarea');
+        singleInputs.forEach(input => {
+          input.required = false;
+        });
       }
     };
 

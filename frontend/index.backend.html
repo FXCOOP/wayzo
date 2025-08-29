@@ -99,7 +99,7 @@
 
           <div id="singleDestination" class="field">
             <span>Destination</span>
-            <input id="dest" type="text" name="destination" placeholder="e.g., Paris, Tokyo, Bali" required />
+            <input id="dest" type="text" name="destination" placeholder="e.g., Paris, Tokyo, Bali" data-required />
             <div class="field-help">Add country for clarity if needed.</div>
           </div>
 
@@ -112,8 +112,8 @@
                   <button type="button" class="btn-icon remove-destination" onclick="removeDestination(this)">×</button>
                 </div>
                 <div class="destination-inputs">
-                  <input type="text" name="destinations[0][place]" placeholder="e.g., Paris, France" required />
-                  <input type="number" name="destinations[0][days]" min="1" max="30" placeholder="Days to stay" required />
+                  <input type="text" name="destinations[0][place]" placeholder="e.g., Paris, France" data-required />
+                  <input type="number" name="destinations[0][days]" min="1" max="30" placeholder="Days to stay" data-required />
                   <select name="destinations[0][priority]">
                     <option value="must-see">Must See</option>
                     <option value="high">High Priority</option>
