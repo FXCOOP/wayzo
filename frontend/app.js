@@ -1085,6 +1085,51 @@
     window.open('/admin', '_blank');
   }
 
+  // Show referral modal
+  window.showReferralModal = function() {
+    const modal = document.createElement('div');
+    modal.className = 'referral-modal';
+    modal.innerHTML = `
+      <div class="referral-modal-content">
+        <div class="referral-modal-header">
+          <h3>Share Wayzo & Earn Rewards</h3>
+          <button class="btn-close" onclick="this.closest('.referral-modal').remove()">×</button>
+        </div>
+        <div class="referral-modal-body">
+          <p>Share your referral code with friends and family. For every successful referral, you'll earn $5 off your next trip plan!</p>
+          <div class="referral-stats">
+            <div class="stat">
+              <span class="stat-number">8</span>
+              <span class="stat-label">Total Referrals</span>
+            </div>
+            <div class="stat">
+              <span class="stat-number">$40</span>
+              <span class="stat-label">Total Earnings</span>
+            </div>
+            <div class="share-options">
+              <h4>Share via:</h4>
+              <div class="share-buttons">
+                <button class="share-btn social" onclick="shareReferral('facebook')">
+                  <i class="fab fa-facebook-f"></i> Facebook
+                </button>
+                <button class="share-btn social" onclick="shareReferral('twitter')">
+                  <i class="fab fa-twitter"></i> Twitter
+                </button>
+                <button class="share-btn social" onclick="shareReferral('whatsapp')">
+                  <i class="fab fa-whatsapp"></i> WhatsApp
+                </button>
+                <button class="share-btn social" onclick="shareReferral('email')">
+                  <i class="fas fa-envelope"></i> Email
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  };
+
   // Event Listeners
   function setupEventListeners() {
     // Login button

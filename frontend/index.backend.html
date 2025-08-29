@@ -315,32 +315,139 @@
   <footer class="footer">
     <div class="container">
       <div class="footer-content">
-        <div class="footer-section">
-          <h4>Wayzo</h4>
-          <p>AI-powered trip planning for unforgettable adventures.</p>
+        <div class="footer-section main-section">
+          <div class="footer-brand">
+            <div class="brand-logo">
+              <span class="brand-badge">WZ</span>
+              <span class="brand-name">Wayzo</span>
+            </div>
+            <p class="brand-description">AI-powered trip planning for unforgettable adventures. Discover, plan, and book your perfect journey with intelligent recommendations.</p>
+            <div class="social-links">
+              <a href="#" class="social-link" aria-label="Facebook">
+                <i class="fab fa-facebook-f"></i>
+              </a>
+              <a href="#" class="social-link" aria-label="Twitter">
+                <i class="fab fa-twitter"></i>
+              </a>
+              <a href="#" class="social-link" aria-label="Instagram">
+                <i class="fab fa-instagram"></i>
+              </a>
+              <a href="#" class="social-link" aria-label="LinkedIn">
+                <i class="fab fa-linkedin-in"></i>
+              </a>
+              <a href="#" class="social-link" aria-label="YouTube">
+                <i class="fab fa-youtube"></i>
+              </a>
+            </div>
+          </div>
         </div>
+        
         <div class="footer-section">
-          <h4>Legal</h4>
-          <a href="/privacy">Privacy Policy</a>
-          <a href="/terms">Terms & Conditions</a>
-          <a href="/cookies">Cookie Policy</a>
+          <h4>Product</h4>
+          <ul class="footer-links">
+            <li><a href="#features">Features</a></li>
+            <li><a href="#destinations">Destinations</a></li>
+            <li><a href="#pricing">Pricing</a></li>
+            <li><a href="#enterprise">Enterprise</a></li>
+            <li><a href="#api">API Access</a></li>
+            <li><a href="#integrations">Integrations</a></li>
+          </ul>
         </div>
+        
+        <div class="footer-section">
+          <h4>Company</h4>
+          <ul class="footer-links">
+            <li><a href="/about">About Us</a></li>
+            <li><a href="/careers">Careers</a></li>
+            <li><a href="/press">Press & Media</a></li>
+            <li><a href="/partners">Partnerships</a></li>
+            <li><a href="/investors">Investors</a></li>
+            <li><a href="/blog">Blog & News</a></li>
+          </ul>
+        </div>
+        
         <div class="footer-section">
           <h4>Support</h4>
-          <a href="/contact">Contact Us</a>
-          <a href="/help">Help Center</a>
+          <ul class="footer-links">
+            <li><a href="/help">Help Center</a></li>
+            <li><a href="/contact">Contact Us</a></li>
+            <li><a href="/status">System Status</a></li>
+            <li><a href="/feedback">Feedback</a></li>
+            <li><a href="/community">Community</a></li>
+            <li><a href="/developers">Developer Docs</a></li>
+          </ul>
         </div>
+        
         <div class="footer-section">
-          <h4>Refer Friends</h4>
-          <p>Share Wayzo and earn $5 off your next plan!</p>
+          <h4>Legal & Privacy</h4>
+          <ul class="footer-links">
+            <li><a href="/privacy">Privacy Policy</a></li>
+            <li><a href="/terms">Terms of Service</a></li>
+            <li><a href="/cookies">Cookie Policy</a></li>
+            <li><a href="/gdpr">GDPR Compliance</a></li>
+            <li><a href="/accessibility">Accessibility</a></li>
+            <li><a href="/security">Security</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer-section">
+          <h4>Referral Program</h4>
+          <p class="referral-info">Share Wayzo and earn $5 off your next plan!</p>
           <div class="referral-display">
-            <span class="referral-label">Your code:</span>
-            <span class="referral-code" id="userReferralCode">WAYZO123</span>
-            <button class="btn btn-small" onclick="copyReferralCode()">Copy</button>
+            <div class="referral-code-container">
+              <span class="referral-label">Your Referral Code:</span>
+              <div class="referral-code-wrapper">
+                <span class="referral-code" id="userReferralCode">WAYZO123</span>
+                <button class="copy-btn" onclick="copyReferralCode()" title="Copy code">
+                  <i class="fas fa-copy"></i>
+                </button>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-small" onclick="showReferralModal()">
+              <i class="fas fa-share-alt"></i> Share Now
+            </button>
           </div>
         </div>
       </div>
-      <p class="muted small">© Wayzo. All rights reserved.</p>
+      
+      <div class="footer-bottom">
+        <div class="footer-bottom-content">
+          <div class="footer-bottom-left">
+            <p class="copyright">© 2025 Wayzo. All rights reserved.</p>
+            <div class="footer-bottom-links">
+              <a href="/sitemap">Sitemap</a>
+              <span class="separator">•</span>
+              <a href="/accessibility">Accessibility</a>
+              <span class="separator">•</span>
+              <a href="/sustainability">Sustainability</a>
+            </div>
+          </div>
+          <div class="footer-bottom-right">
+            <div class="language-selector-footer">
+              <select class="footer-language-select" onchange="changeLanguage(this.value)">
+                <option value="en">🇺🇸 English</option>
+                <option value="es">🇪🇸 Español</option>
+                <option value="fr">🇫🇷 Français</option>
+                <option value="de">🇩🇪 Deutsch</option>
+                <option value="it">🇮🇹 Italiano</option>
+                <option value="pt">🇵🇹 Português</option>
+                <option value="ru">🇷🇺 Русский</option>
+                <option value="zh">🇨🇳 中文</option>
+                <option value="ja">🇯🇵 日本語</option>
+                <option value="ko">🇰🇷 한국어</option>
+              </select>
+            </div>
+            <div class="footer-badges">
+              <span class="badge security-badge">
+                <i class="fas fa-shield-alt"></i> SSL Secured
+              </span>
+              <span class="badge gdpr-badge">
+                <i class="fas fa-user-shield"></i> GDPR Compliant
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </footer>
 
