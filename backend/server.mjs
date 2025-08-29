@@ -186,12 +186,25 @@ Diet: ${diet}`;
 }
 /* API */
 app.post('/api/preview', (req, res) => {
-  console.log('Preview request received:', req.body); // Debug
+  console.log('Preview request received:', req.body);
   const payload = req.body || {};
   payload.budget = normalizeBudget(payload.budget, payload.currency);
   const id = uid();
   const aff = affiliatesFor(payload.destination || '');
-  const teaser_html = google.com`
+  const destination = String(payload.destination || 'Your destination');
+  const start = String(payload.start || 'start');
+  const end = String(payload.end || 'end');
+  const level = String(payload.level || 'mid');
+  const style = level === "luxury" ? "Luxury" : level === "budget" ? "Budget" : "Mid-range";
+  const pppd = perPersonPerDay(payload.budget || 0, daysBetween(start, end), Math.max(1, (payload.adults || 0) + (payload.children || 0)));
+  const traveler = travelerLabel(payload.adults || 0, payload.children || 0);
+  const teaser_html = `
+<div class="summary">
+  <span class="chip"><b>Destination:</b> ${escapeHtml(destination)}</span>
+  <span class="chip"><b>Dates:</b> ${escapeHtml(start)} → ${escapeHtml(end)}</span>
+  <span class="chip"><b>Travelers:</b> ${escapeHtml(traveler)}</span>
+  <span class="chip"><b>Style:</b> ${escapeHtml(style)}${payload.prefs ? ` · ${escapeHtml(payload.prefs)}` : ""}</span>
+  <span class="chip"><b>Budget:</b> ${payload.budget} ${escapeHtml(payload.currency || '')} (${pppd}/day/person)</span>
 </div>`;
   res.json({ id, teaser_html, affiliates: aff, version: VERSION });
 });
@@ -262,7 +275,7 @@ app.get('/api/plan/:id/pdf', (req, res) => {
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(html);
 });
-app.get('/api/plan/:id/ics', (_req, res) => {
+app.get('/api/plan/:id/ics', (req, res) => {
   const { id } = req.params;
   const row = getPlan.get(id);
   if (!row) return res.status(404).json({ error: 'Plan not found' });
@@ -270,11 +283,21 @@ app.get('/api/plan/:id/ics', (_req, res) => {
   const md = saved.markdown || '';
   const dest = saved?.data?.destination || 'Trip';
   const events = [];
-  const rx = /^## Day (\d+)(?::\s*(.+))?$/gm;
+  const rx = /^### Day (\d+)\s*(?:[—-]\s*(.+))?/gm;
+  const startIso = saved?.data?.start || null;
+  const startDate = startIso ? new Date(startIso) : null;
   let m;
   while ((m = rx.exec(md))) {
-    const title = (m[2] || `Day ${m[1]}`).trim();
-    const date = m[3] || saved?.data?.start || null;
+    const dayNumber = Number(m[1] || 1);
+    const title = (m[2] || `Day ${dayNumber}`).trim();
+    let date = null;
+    if (startDate && !isNaN(startDate)) {
+      const d = new Date(startDate);
+      d.setDate(d.getDate() + Math.max(0, dayNumber - 1));
+      date = d.toISOString().slice(0, 10);
+    } else if (startIso) {
+      date = String(startIso).slice(0, 10);
+    }
     if (date) events.push({ title, date, start: '09:00', end: '11:00' });
   }
   const ics = buildIcs(id, events, { destination: dest });
