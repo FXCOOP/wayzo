@@ -152,7 +152,11 @@
     const q = encodeURIComponent(dest || '');
     const set = (id, url) => { 
       const a = $(id); 
-      if (a) a.href = url; 
+      if (a) {
+        a.href = url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+      }
     };
     
     // Set affiliate links
@@ -169,11 +173,11 @@
       <div class="affiliate-section">
         <h3>Book your trip:</h3>
         <div class="affiliate-links">
-          <a id="flightsLink" href="${links.flights}" target="_blank" class="affiliate-link">✈️ Flights</a>
-          <a id="hotelsLink" href="${links.hotels}" target="_blank" class="affiliate-link">🏨 Hotels</a>
-          <a id="activitiesLink" href="${links.activities}" target="_blank" class="affiliate-link">🎟️ Activities</a>
-          <a id="carsLink" href="${links.cars}" target="_blank" class="affiliate-link">🚗 Cars</a>
-          <a id="reviewsLink" href="${links.reviews}" target="_blank" class="affiliate-link">⭐ Reviews</a>
+          <a id="flightsLink" href="${links.flights}" target="_blank" rel="noopener noreferrer" class="affiliate-link">✈️ Flights</a>
+          <a id="hotelsLink" href="${links.hotels}" target="_blank" rel="noopener noreferrer" class="affiliate-link">🏨 Hotels</a>
+          <a id="activitiesLink" href="${links.activities}" target="_blank" rel="noopener noreferrer" class="affiliate-link">🎟️ Activities</a>
+          <a id="carsLink" href="${links.cars}" target="_blank" rel="noopener noreferrer" class="affiliate-link">🚗 Cars</a>
+          <a id="reviewsLink" href="${links.reviews}" target="_blank" rel="noopener noreferrer" class="affiliate-link">⭐ Reviews</a>
         </div>
       </div>
     `;
@@ -218,6 +222,47 @@
     } else {
       showNotification('No saved preview found', 'info');
     }
+  };
+
+  // Save full plan to localStorage for "Get Back" functionality
+  const saveFullPlan = (planHtml, destination) => {
+    const planData = {
+      html: planHtml,
+      timestamp: new Date().toISOString(),
+      destination: destination,
+      type: 'full_plan'
+    };
+    localStorage.setItem('wayzo_last_full_plan', JSON.stringify(planData));
+  };
+
+  // Restore full plan from localStorage
+  const restoreFullPlan = () => {
+    const planData = localStorage.getItem('wayzo_last_full_plan');
+    if (planData) {
+      try {
+        const data = JSON.parse(planData);
+        if (data.type === 'full_plan') {
+          previewEl.innerHTML = data.html;
+          setAffiliates(data.destination);
+          
+          // Show all download buttons
+          show(pdfBtn);
+          show(icsBtn);
+          show($('#excelBtn'));
+          show($('#shareBtn'));
+          
+          // Hide paywall
+          hide($('#purchaseActions'));
+          
+          show(previewEl);
+          showNotification('Full plan restored!', 'success');
+          return true;
+        }
+      } catch (error) {
+        console.error('Error restoring full plan:', error);
+      }
+    }
+    return false;
   };
 
   // Form submission handler
@@ -292,9 +337,36 @@
     const data = readForm();
     console.log('Generating full plan for:', data);
     
-    // Show loading
+    // Show cool loading animation for full plan
     hide(previewEl);
     show(loadingEl);
+    
+    // Show cool trip planning animation
+    loadingEl.innerHTML = `
+      <div class="trip-planning-animation">
+        <div class="animation-container">
+          <div class="plane-flying">✈️</div>
+          <div class="hotel-building">🏨</div>
+          <div class="restaurant-icon">🍽️</div>
+          <div class="activity-icon">🎫</div>
+          <div class="loading-text">
+            <h3>🎯 Creating Your Amazing Trip Plan!</h3>
+            <p>Our AI is crafting the perfect itinerary for your ${data.destination} adventure...</p>
+            <div class="progress-bar">
+              <div class="progress-fill"></div>
+            </div>
+            <div class="loading-steps">
+              <span class="step active">📍 Planning routes</span>
+              <span class="step">🏨 Finding hotels</span>
+              <span class="step">🍽️ Selecting restaurants</span>
+              <span class="step">🎫 Booking activities</span>
+              <span class="step">💰 Calculating budget</span>
+              <span class="step">🖼️ Generating images</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
     
     try {
       // Call plan API
@@ -330,6 +402,9 @@
         // Hide paywall for test user
         hide($('#purchaseActions'));
         
+        // Save full plan for "Get Back" functionality
+        saveFullPlan(result.html, data.destination);
+        
         showNotification('🧪 Test user: Full plan unlocked! All features available for testing.', 'info');
       } else {
         // Regular user - show paywall
@@ -349,6 +424,10 @@
           </div>
         `;
         setAffiliates(data.destination);
+        
+        // Store full plan content for payment success
+        localStorage.setItem('wayzo_pending_full_plan', result.html);
+        localStorage.setItem('wayzo_pending_destination', data.destination);
         
         // Show paywall for conversion
         show($('#purchaseActions'));
@@ -403,6 +482,30 @@
     if (actions && !actions.querySelector('.btn-ghost[onclick="restoreLastPreview()"]')) {
       actions.appendChild(restoreBtn);
     }
+    
+    // Check if full plan is available and show "Get Back" button
+    checkAndShowGetBackButton();
+  };
+
+  // Check if full plan is available and show "Get Back" button
+  const checkAndShowGetBackButton = () => {
+    const fullPlanData = localStorage.getItem('wayzo_last_full_plan');
+    const getBackSection = $('#getBackSection');
+    
+    if (fullPlanData && getBackSection) {
+      try {
+        const data = JSON.parse(fullPlanData);
+        if (data.type === 'full_plan') {
+          getBackSection.style.display = 'block';
+        } else {
+          getBackSection.style.display = 'none';
+        }
+      } catch (error) {
+        getBackSection.style.display = 'none';
+      }
+    } else if (getBackSection) {
+      getBackSection.style.display = 'none';
+    }
   };
 
   // Bind paywall functionality
@@ -453,6 +556,23 @@
         onApprove: function(data, actions) {
           return actions.order.capture().then(function(details) {
             console.log('Payment completed:', details);
+            
+            // Get the full plan content from the paywall
+            const fullPlanContent = localStorage.getItem('wayzo_pending_full_plan');
+            const destination = localStorage.getItem('wayzo_pending_destination');
+            
+            if (fullPlanContent) {
+              // Show the full plan content
+              previewEl.innerHTML = fullPlanContent;
+              setAffiliates(destination);
+              
+              // Save full plan for "Get Back" functionality
+              saveFullPlan(fullPlanContent, destination);
+              
+              // Clear pending plan data
+              localStorage.removeItem('wayzo_pending_full_plan');
+              localStorage.removeItem('wayzo_pending_destination');
+            }
             
             // Hide paywall and show download options
             hide($('#purchaseActions'));
