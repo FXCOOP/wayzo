@@ -2239,3 +2239,32 @@ fieldset.field .chip {
   font-size: 1rem;
   margin: 0;
 }
+
+/* Trip Report Image Styling */
+.trip-report img,
+#preview img {
+  max-width: 400px !important;
+  width: 100% !important;
+  height: 300px !important;
+  object-fit: cover !important;
+  border-radius: 12px !important;
+  margin: 20px auto !important;
+  display: block !important;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.12) !important;
+  transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+.trip-report img:hover,
+#preview img:hover {
+  transform: scale(1.02) !important;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+}
+
+/* Responsive images for mobile */
+@media (max-width: 768px) {
+  .trip-report img,
+  #preview img {
+    max-width: 100% !important;
+    height: 250px !important;
+  }
+}

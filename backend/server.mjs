@@ -405,18 +405,23 @@ ${dietary && dietary.length > 0 ? `- **Dietary Accommodations**: Ensure all rest
 ${dateMode === 'flexible' ? `- **Flexible Date Optimization**: Suggest the best times within the month for optimal weather, prices, and fewer crowds
 - **Price Optimization**: Focus on getting the best value during the flexible period` : ''}
 
-**CRITICAL - IMAGE GENERATION:** You MUST include 6-8 beautiful, realistic images throughout your report using this exact format:
+**CRITICAL - IMAGE GENERATION:** You MUST include 6-8 beautiful, destination-specific images throughout your report using this exact format:
 
-1. **Cityscape/Overview**: ![${destination} Cityscape](image:${destination} city skyline view)
-2. **Local Food**: ![Local Cuisine](image:${destination} traditional food dishes)
-3. **Cultural Site**: ![Cultural Heritage](image:${destination} main cultural landmark)
-4. **Nature/Landscape**: ![Natural Beauty](image:${destination} natural landscape scenery)
-5. **Local Life**: ![Local Culture](image:${destination} local people daily life)
-6. **Architecture**: ![Architecture](image:${destination} beautiful buildings architecture)
-7. **Activity**: ![Activities](image:${destination} popular tourist activities)
-8. **Collage**: ![${destination} Experience](image:${destination} travel experience collage)
+1. **Cityscape/Overview**: ![${destination} Cityscape](image:${destination} city skyline)
+2. **Local Food**: ![${destination} Cuisine](image:${destination} traditional food)
+3. **Cultural Site**: ![${destination} Landmark](image:${destination} main landmark)
+4. **Nature/Landscape**: ![${destination} Nature](image:${destination} natural beauty)
+5. **Local Life**: ![${destination} Culture](image:${destination} local people)
+6. **Architecture**: ![${destination} Architecture](image:${destination} beautiful buildings)
+7. **Activity**: ![${destination} Activities](image:${destination} tourist activities)
+8. **Experience**: ![${destination} Experience](image:${destination} travel experience)
 
-**IMPORTANT:** Place these images strategically throughout your report - after the overview, in the dining section, with attractions, etc. Each image should enhance the content it accompanies.
+**IMPORTANT:** 
+- Place these images strategically throughout your report
+- Each image should be specific to ${destination}, not generic
+- Use descriptive alt text that includes the destination name
+- Position images after relevant content sections
+- Make sure images enhance the reading experience
 
 **Requirements:**
 - Make it feel like a premium travel guide
