@@ -375,8 +375,84 @@
 
   // Bind paywall functionality
   const bindPaywall = () => {
-    // Show PayPal buttons after full plan generation
-    console.log('Paywall functionality ready');
+    // Wait for PayPal SDK to load
+    if (typeof paypal !== 'undefined') {
+      console.log('PayPal SDK loaded, initializing buttons');
+      initializePayPalButtons();
+    } else {
+      // Retry after a delay
+      setTimeout(bindPaywall, 1000);
+    }
+  };
+
+  // Initialize PayPal buttons
+  const initializePayPalButtons = () => {
+    try {
+      // Check if PayPal SDK is loaded
+      if (typeof paypal === 'undefined') {
+        console.error('PayPal SDK not loaded');
+        showPayPalFallback();
+        return;
+      }
+
+      paypal.Buttons({
+        createOrder: function(data, actions) {
+          return actions.order.create({
+            purchase_units: [{
+              amount: {
+                value: '19.00'
+              },
+              description: 'Complete Trip Report - AI Generated Itinerary'
+            }]
+          });
+        },
+        onApprove: function(data, actions) {
+          return actions.order.capture().then(function(details) {
+            console.log('Payment completed:', details);
+            
+            // Hide paywall and show download options
+            hide($('#purchaseActions'));
+            show($('#pdfBtn'));
+            show($('#icsBtn'));
+            show($('#excelBtn'));
+            show($('#shareBtn'));
+            
+            // Show success message
+            showNotification('Payment successful! Your trip report is now unlocked.', 'success');
+            
+            // Track successful payment
+            trackEvent('payment_successful', { 
+              amount: '19.00', 
+              orderId: data.orderID 
+            });
+          });
+        },
+        onError: function(err) {
+          console.error('PayPal error:', err);
+          showNotification('Payment failed. Please try again.', 'error');
+        }
+      }).render('#paypal-buttons');
+      
+      console.log('PayPal buttons rendered successfully');
+      hide($('#paypal-fallback'));
+      
+    } catch (error) {
+      console.error('Failed to initialize PayPal buttons:', error);
+      showPayPalFallback();
+    }
+  };
+
+  // Show PayPal fallback
+  const showPayPalFallback = () => {
+    hide($('#paypal-buttons'));
+    show($('#paypal-fallback'));
+  };
+
+  // Retry PayPal initialization
+  window.retryPayPal = () => {
+    hide($('#paypal-fallback'));
+    show($('#paypal-buttons'));
+    bindPaywall();
   };
 
   // Initialize Google Auth from config

@@ -304,6 +304,10 @@
           </div>
           <div id="paypal-button-container" class="paypal-container">
             <div id="paypal-buttons"></div>
+            <div id="paypal-fallback" class="paypal-fallback hidden">
+              <p>PayPal is currently unavailable</p>
+              <button class="btn btn-primary" onclick="retryPayPal()">Retry Payment</button>
+            </div>
             <p class="purchase-note">Secure payment via PayPal • Instant access after payment</p>
           </div>
         </div>
@@ -783,6 +787,9 @@
     </div>
   </section>
 
+  <!-- PayPal SDK -->
+  <script src="https://www.paypal.com/sdk/js?client-id=test&currency=USD" async></script>
+  
   <!-- Google OAuth Script -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </body>
