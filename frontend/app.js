@@ -224,6 +224,13 @@
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     
+    // Check if user is authenticated for preview
+    if (!isAuthenticated) {
+      showNotification('Please sign in to generate trip previews.', 'warning');
+      showAuthModal();
+      return;
+    }
+    
     const data = readForm();
     console.log('Form data:', data);
     
@@ -275,6 +282,13 @@
 
   // Full plan generation
   fullPlanBtn.addEventListener('click', async () => {
+    // Check if user is authenticated for full plan
+    if (!isAuthenticated) {
+      showNotification('Please sign in to access the full trip plan.', 'warning');
+      showAuthModal();
+      return;
+    }
+    
     const data = readForm();
     console.log('Generating full plan for:', data);
     
@@ -301,10 +315,11 @@
       
       // Show paywall and download options
       show($('#purchaseActions'));
-      show(pdfBtn);
-      show(icsBtn);
-      show($('#excelBtn'));
-      show($('#shareBtn'));
+      // Hide download buttons until payment is completed
+      hide(pdfBtn);
+      hide(icsBtn);
+      hide($('#excelBtn'));
+      hide($('#shareBtn'));
       
       // Hide loading
       hide(loadingEl);
@@ -1016,16 +1031,12 @@ let currentUser = JSON.parse(localStorage.getItem('wayzo_user') || 'null');
       </html>
     `;
     
-    // Create blob and download
-    const blob = new Blob([pdfContent], { type: 'text/html' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'wayzo-trip-plan.html';
-    a.click();
-    window.URL.revokeObjectURL(url);
+    // Open PDF content in new window/tab
+    const newWindow = window.open('', '_blank');
+    newWindow.document.write(pdfContent);
+    newWindow.document.close();
     
-    showNotification('PDF download started!', 'success');
+    showNotification('PDF opened in new tab!', 'success');
   }
 
   function downloadICS() {

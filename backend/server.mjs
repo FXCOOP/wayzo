@@ -491,13 +491,17 @@ app.post('/api/plan', async (req, res) => {
     const id = uid();
     const markdown = await generatePlanWithAI(payload);
     const html = marked.parse(markdown);
+    
+    // Process image tokens and other links in the HTML
+    const processedHtml = linkifyTokens(html, payload.destination);
+    
     const aff = affiliatesFor(payload.destination);
     savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: payload, markdown }));
     
     // Track plan generation for analytics
     trackPlanGeneration(payload);
     
-    res.json({ id, markdown, html, affiliates: aff, version: VERSION });
+    res.json({ id, markdown, html: processedHtml, affiliates: aff, version: VERSION });
   } catch (e) {
     console.error('Plan generation error:', e);
     res.status(500).json({ error: 'Failed to generate plan. Check server logs.', version: VERSION });
