@@ -147,13 +147,43 @@ app.get('/admin', adminBasicAuth, (_req, res) => {
   res.status(404).send('Admin UI not found');
 });
 
-// Dashboard route
+// Dashboard routes
 app.get('/dashboard', (req, res) => {
   res.setHeader('X-Wayzo-Version', VERSION);
   const dashboardPath = path.join(FRONTEND, 'dashboard.html');
   if (!fs.existsSync(dashboardPath)) {
     return res.status(404).send('Dashboard not found');
   }
+  res.sendFile(dashboardPath);
+});
+
+app.get('/dashboard/plans', (req, res) => {
+  res.setHeader('X-Wayzo-Version', VERSION);
+  const dashboardPath = path.join(FRONTEND, 'dashboard.html');
+  if (!fs.existsSync(dashboardPath)) {
+    return res.status(404).send('Dashboard not found');
+  }
+  // Add query parameter to open plans tab
+  res.sendFile(dashboardPath);
+});
+
+app.get('/dashboard/referrals', (req, res) => {
+  res.setHeader('X-Wayzo-Version', VERSION);
+  const dashboardPath = path.join(FRONTEND, 'dashboard.html');
+  if (!fs.existsSync(dashboardPath)) {
+    return res.status(404).send('Dashboard not found');
+  }
+  // Add query parameter to open referrals tab
+  res.sendFile(dashboardPath);
+});
+
+app.get('/dashboard/billing', (req, res) => {
+  res.setHeader('X-Wayzo-Version', VERSION);
+  const dashboardPath = path.join(FRONTEND, 'dashboard.html');
+  if (!fs.existsSync(dashboardPath)) {
+    return res.status(404).send('Dashboard not found');
+  }
+  // Add query parameter to open billing tab
   res.sendFile(dashboardPath);
 });
 
@@ -167,6 +197,30 @@ app.get('/config.js', (_req, res) => {
   const googleClientId = process.env.GOOGLE_CLIENT_ID || '';
   res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
   res.send(`window.WAYZO_PUBLIC_CONFIG = { PAYPAL_CLIENT_ID: ${JSON.stringify(paypalClientId)}, REPORT_PRICE_USD: ${JSON.stringify(priceUsd)}, GOOGLE_CLIENT_ID: ${JSON.stringify(googleClientId)} };`);
+});
+
+// PayPal config endpoint
+app.get('/paypal-config.js', (_req, res) => {
+  const paypalClientId = process.env.PAYPAL_CLIENT_ID || '';
+  const paypalMode = process.env.PAYPAL_MODE || 'sandbox';
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  res.send(`
+    if (window.WAYZO_PUBLIC_CONFIG && window.WAYZO_PUBLIC_CONFIG.PAYPAL_CLIENT_ID) {
+      // Load PayPal SDK with real client ID
+      const script = document.createElement('script');
+      script.src = 'https://www.paypal.com/sdk/js?client-id=' + window.WAYZO_PUBLIC_CONFIG.PAYPAL_CLIENT_ID + '&currency=USD';
+      script.async = true;
+      script.onload = function() {
+        console.log('PayPal SDK loaded with real client ID');
+        if (window.initializePayPalButtons) {
+          window.initializePayPalButtons();
+        }
+      };
+      document.head.appendChild(script);
+    } else {
+      console.error('PayPal client ID not configured');
+    }
+  `);
 });
 
 /* Uploads */

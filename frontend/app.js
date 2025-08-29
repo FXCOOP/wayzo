@@ -386,7 +386,7 @@
   };
 
   // Initialize PayPal buttons
-  const initializePayPalButtons = () => {
+  window.initializePayPalButtons = () => {
     try {
       // Check if PayPal SDK is loaded
       if (typeof paypal === 'undefined') {

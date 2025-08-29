@@ -4,7 +4,41 @@ document.addEventListener('DOMContentLoaded', function() {
     loadDashboardData();
     loadUserInfo();
     setupEventListeners();
+    
+    // Check URL to open specific tab
+    const urlPath = window.location.pathname;
+    if (urlPath.includes('/plans')) {
+        openTab('plans');
+    } else if (urlPath.includes('/referrals')) {
+        openTab('referrals');
+    } else if (urlPath.includes('/billing')) {
+        openTab('billing');
+    } else {
+        openTab('overview');
+    }
 });
+
+// Function to open specific tab
+function openTab(tabName) {
+    // Hide all tabs
+    const allTabs = document.querySelectorAll('.cabinet-tab');
+    allTabs.forEach(tab => tab.classList.remove('active'));
+    
+    // Show selected tab
+    const selectedTab = document.getElementById(tabName + 'Tab');
+    if (selectedTab) {
+        selectedTab.classList.add('active');
+    }
+    
+    // Update navigation
+    const allNavItems = document.querySelectorAll('.sidebar-item');
+    allNavItems.forEach(item => item.classList.remove('active'));
+    
+    const selectedNav = document.querySelector(`[onclick="switchCabinetTab('${tabName}')"]`);
+    if (selectedNav) {
+        selectedNav.classList.add('active');
+    }
+}
 
 // Load dashboard data from backend
 async function loadDashboardData() {

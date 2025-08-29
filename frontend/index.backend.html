@@ -605,15 +605,15 @@
       <a href="/dashboard" class="menu-btn" target="_blank">
         <i class="fas fa-chart-line"></i> Dashboard
       </a>
-      <button class="menu-btn" onclick="showMyPlans()">
+      <a href="/dashboard/plans" class="menu-btn" target="_blank">
         <i class="fas fa-map"></i> My Plans
-      </button>
-      <button class="menu-btn" onclick="showReferrals()">
+      </a>
+      <a href="/dashboard/referrals" class="menu-btn" target="_blank">
         <i class="fas fa-share-alt"></i> Refer Friends
-      </button>
-      <button class="menu-btn" onclick="showBilling()">
+      </a>
+      <a href="/dashboard/billing" class="menu-btn" target="_blank">
         <i class="fas fa-credit-card"></i> Billing
-      </button>
+      </a>
       <button class="menu-btn admin-only" onclick="accessAdminPanel()" style="display: none;">
         <i class="fas fa-cog"></i> Admin Panel
       </button>
@@ -787,8 +787,9 @@
     </div>
   </section>
 
-  <!-- PayPal SDK -->
-  <script src="https://www.paypal.com/sdk/js?client-id=test&currency=USD" async></script>
+  <!-- PayPal Config -->
+  <script src="/config.js"></script>
+  <script src="/paypal-config.js"></script>
   
   <!-- Google OAuth Script -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
