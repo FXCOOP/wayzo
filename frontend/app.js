@@ -242,8 +242,12 @@
       previewEl.innerHTML = result.html;
       setAffiliates(data.destination);
       
-      // Show paywall
+      // Show paywall and download options
       show($('#purchaseActions'));
+      show(pdfBtn);
+      show(icsBtn);
+      show($('#excelBtn'));
+      show($('#shareBtn'));
       
       // Hide loading
       hide(loadingEl);
@@ -284,7 +288,7 @@
 
   // Bind paywall functionality
   const bindPaywall = () => {
-    // Placeholder for paywall functionality
+    // Show PayPal buttons after full plan generation
     console.log('Paywall functionality ready');
   };
 
@@ -686,8 +690,6 @@
     showNotification('Apple sign-up coming soon!', 'info');
   }
 
-  // Demo mode removed
-
   function updateUIForAuthenticatedUser() {
     if (loginBtn) loginBtn.classList.add('hidden');
     if ($('#userMenuBtn')) {
@@ -703,6 +705,11 @@
     if (adminBtn) {
       adminBtn.style.display = currentUser.isAdmin ? 'block' : 'none';
     }
+    
+    // Auto-open cabinet after successful sign-in
+    setTimeout(() => {
+      showDashboard();
+    }, 500);
   }
 
   function toggleUserMenu() {
@@ -840,69 +847,45 @@
 
   // Language Management
   function changeLanguage(language) {
-    // Real language switching functionality
-    const languages = {
-      en: 'English',
-      es: 'Español',
-      fr: 'Français',
-      de: 'Deutsch',
-      it: 'Italiano',
-      pt: 'Português',
-      ru: 'Русский',
-      zh: '中文',
-      ja: '日本語',
-      ko: '한국어'
-    };
-    
-    // Update page content based on language
-    updatePageLanguage(language);
-    
-    showNotification(`Language changed to ${languages[language]}`, 'success');
-    localStorage.setItem('wayzo_language', language);
-  }
-
-  // Update page content based on language
-  function updatePageLanguage(language) {
-    // Update form labels and placeholders
-    const translations = {
-      en: {
-        'Traveling from (optional)': 'Traveling from (optional)',
-        'Destination': 'Destination',
-        'Budget': 'Budget',
-        'Travelers': 'Travelers',
-        'Generate preview': 'Generate preview',
-        'Generate full plan': 'Generate full plan'
-      },
-      es: {
-        'Traveling from (optional)': 'Viajando desde (opcional)',
-        'Destination': 'Destino',
-        'Budget': 'Presupuesto',
-        'Travelers': 'Viajeros',
-        'Generate preview': 'Generar vista previa',
-        'Generate full plan': 'Generar plan completo'
-      },
-      fr: {
-        'Traveling from (optional)': 'Voyageant depuis (optionnel)',
-        'Destination': 'Destination',
-        'Budget': 'Budget',
-        'Travelers': 'Voyageurs',
-        'Generate preview': 'Générer l\'aperçu',
-        'Generate full plan': 'Générer le plan complet'
-      }
-      // Add more languages as needed
-    };
-
-    const langData = translations[language] || translations.en;
-    
-    // Update form labels
-    Object.keys(langData).forEach(key => {
-      const elements = document.querySelectorAll(`span:contains("${key}")`);
-      elements.forEach(el => {
-        if (el.textContent === key) {
-          el.textContent = langData[key];
-        }
+    // Use the translations from translations.js
+    if (window.WayzoTranslations && window.WayzoTranslations[language]) {
+      const translations = window.WayzoTranslations[language];
+      
+      // Update form labels
+      const labelMappings = [
+        { selector: 'span:contains("Traveling from (optional)")', key: 'travelingFrom' },
+        { selector: 'span:contains("Destination")', key: 'destination' },
+        { selector: 'span:contains("Budget")', key: 'budget' },
+        { selector: 'span:contains("Travelers")', key: 'travelers' },
+        { selector: 'span:contains("Generate preview")', key: 'generatePreview' },
+        { selector: 'span:contains("Generate full plan")', key: 'generateFullPlan' },
+        { selector: 'span:contains("Trip Type")', key: 'tripType' },
+        { selector: 'span:contains("Single Destination")', key: 'singleDestination' },
+        { selector: 'span:contains("Multi-Destination")', key: 'multiDestination' }
+      ];
+      
+      labelMappings.forEach(mapping => {
+        const elements = document.querySelectorAll(mapping.selector);
+        elements.forEach(el => {
+          if (el.textContent && translations[mapping.key]) {
+            el.textContent = translations[mapping.key];
+          }
+        });
       });
-    });
+      
+      // Update button texts
+      const previewBtn = document.getElementById('previewBtn');
+      const fullPlanBtn = document.getElementById('fullPlanBtn');
+      if (previewBtn && translations.generatePreview) {
+        previewBtn.textContent = translations.generatePreview;
+      }
+      if (fullPlanBtn && translations.generateFullPlan) {
+        fullPlanBtn.textContent = translations.generateFullPlan;
+      }
+    }
+    
+    showNotification(`Language changed to ${language}`, 'success');
+    localStorage.setItem('wayzo_language', language);
   }
 
   // Download and Export Functions

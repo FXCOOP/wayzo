@@ -1391,6 +1391,103 @@ fieldset.field .chip {
   }
 }
 
+/* Purchase Section Styles */
+.purchase-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.purchase-header h3 {
+  color: var(--brand);
+  margin-bottom: 8px;
+  font-size: 24px;
+}
+
+.purchase-description {
+  color: var(--muted);
+  font-size: 16px;
+}
+
+.purchase-options {
+  margin-bottom: 24px;
+}
+
+.purchase-option {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 2px solid var(--brand);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 16px;
+}
+
+.option-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.option-icon {
+  font-size: 32px;
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-2) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.option-details {
+  flex: 1;
+}
+
+.option-details h4 {
+  margin: 0 0 4px 0;
+  color: var(--ink);
+  font-size: 20px;
+}
+
+.option-details p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.option-price {
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-2) 100%);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.option-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.option-features .feature {
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--brand);
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.paypal-container {
+  text-align: center;
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 12px;
+}
+
+.purchase-note {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
 /* Responsive Design for New Features */
 @media (max-width: 768px) {
   .cabinet-sidebar {

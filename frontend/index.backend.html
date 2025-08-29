@@ -8,6 +8,7 @@
   <link rel="icon" type="image/svg+xml" href="/frontend/favicon.svg" />
   <link rel="stylesheet" href="/frontend/style.css" />
   <script src="/config.js"></script>
+  <script src="/frontend/translations.js"></script>
   <script src="/frontend/app.js" defer></script>
 </head>
 <body>
@@ -277,8 +278,34 @@
           <button id="shareBtn" class="btn btn-ghost hidden" onclick="sharePlan()">📤 Share Plan</button>
         </div>
         <div class="actions" id="purchaseActions">
-          <div id="paypal-button-container" class="hidden"></div>
-          <div id="purchaseNote" class="muted small hidden">Unlock full report for $19 via PayPal.</div>
+          <div class="purchase-header">
+            <h3>🔓 Unlock Full Report</h3>
+            <p class="purchase-description">Get your complete AI-generated trip plan with detailed itineraries, booking links, and insider tips.</p>
+          </div>
+          <div class="purchase-options">
+            <div class="purchase-option">
+              <div class="option-header">
+                <span class="option-icon">📄</span>
+                <div class="option-details">
+                  <h4>Complete Trip Report</h4>
+                  <p>Full itinerary with daily plans, restaurants, activities, and booking links</p>
+                </div>
+                <div class="option-price">$19</div>
+              </div>
+              <div class="option-features">
+                <span class="feature">🗺️ Detailed daily itineraries</span>
+                <span class="feature">🏨 Hotel recommendations</span>
+                <span class="feature">🍽️ Restaurant guide</span>
+                <span class="feature">🎫 Activity bookings</span>
+                <span class="feature">📱 Mobile-friendly format</span>
+                <span class="feature">📊 Budget breakdown</span>
+              </div>
+            </div>
+          </div>
+          <div id="paypal-button-container" class="paypal-container">
+            <div id="paypal-buttons"></div>
+            <p class="purchase-note">Secure payment via PayPal • Instant access after payment</p>
+          </div>
         </div>
       </section>
     </div>
