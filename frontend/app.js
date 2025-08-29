@@ -336,6 +336,15 @@
       hide($('#excelBtn'));
       hide($('#shareBtn'));
       
+      // Initialize PayPal buttons for the paywall
+      setTimeout(() => {
+        if (typeof paypal !== 'undefined') {
+          initializePayPalButtons();
+        } else {
+          bindPaywall();
+        }
+      }, 500);
+      
       // Hide loading
       hide(loadingEl);
       show(previewEl);
