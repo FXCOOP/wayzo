@@ -291,23 +291,48 @@
   // Initialize Google Auth from config
   const initGoogleFromConfig = () => {
     try {
+      const clientId = (window.WAYZO_PUBLIC_CONFIG && window.WAYZO_PUBLIC_CONFIG.GOOGLE_CLIENT_ID) || window.GOOGLE_CLIENT_ID;
+      if (!clientId) {
+        console.warn('GOOGLE_CLIENT_ID missing. Google Sign-In disabled.');
+        return;
+      }
       if (window.google && window.google.accounts && window.google.accounts.id) {
-        // Initialize Google Sign-In
         google.accounts.id.initialize({
-          client_id: window.GOOGLE_CLIENT_ID || 'your-google-client-id.apps.googleusercontent.com',
-          callback: (response) => {
-            console.log('Google Sign-In response:', response);
-            // Handle Google sign-in response
-            showNotification('Google sign-in successful!', 'success');
+          client_id: clientId,
+          callback: (credentialResponse) => {
+            try {
+              const jwt = credentialResponse.credential;
+              const payload = JSON.parse(atob(jwt.split('.')[1]));
+              currentUser = {
+                name: payload.name || payload.given_name || 'Google User',
+                email: payload.email,
+                avatar: payload.picture || '/frontend/assets/default-avatar.svg'
+              };
+              isAuthenticated = true;
+              hideAuthModal();
+              updateUIForAuthenticatedUser();
+              showNotification('Google sign-in successful!', 'success');
+            } catch (e) {
+              console.error('GSI parse error', e);
+              showNotification('Google sign-in failed to parse.', 'error');
+            }
           }
         });
-        
-        // Render button if present
-        if (loginBtn) {
-          google.accounts.id.renderButton(loginBtn, { theme: 'outline', size: 'large' });
+
+        // Render buttons inside modal containers if present
+        const signInContainer = document.getElementById('gsiSignInContainer');
+        if (signInContainer) {
+          google.accounts.id.renderButton(signInContainer, { theme: 'outline', size: 'large', width: 280 });
         }
+        const signUpContainer = document.getElementById('gsiSignUpContainer');
+        if (signUpContainer) {
+          google.accounts.id.renderButton(signUpContainer, { theme: 'outline', size: 'large', width: 280 });
+        }
+
+        // Optionally show One Tap prompt
+        try { google.accounts.id.prompt(); } catch (_) {}
       }
-    } catch (_) {}
+    } catch (e) { console.warn('initGoogleFromConfig error', e); }
   };
 
   // Main initialization
