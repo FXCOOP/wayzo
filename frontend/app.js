@@ -29,7 +29,64 @@
   const ensureLoginVisible = () => { if (loginBtn) loginBtn.classList.add('btn-primary'); };
   const showUserMenu = () => {};
   const detectUserLocation = async () => {};
-  const initializeCookieConsent = () => {};
+  
+  // Cookie Consent Management
+  const initializeCookieConsent = () => {
+    const cookieBanner = document.getElementById('cookieBanner');
+    const acceptBtn = document.getElementById('acceptCookies');
+    const rejectBtn = document.getElementById('rejectCookies');
+    
+    if (!cookieBanner || !acceptBtn || !rejectBtn) return;
+    
+    // Check if user has already made a choice
+    const cookieChoice = localStorage.getItem('wayzo_cookie_choice');
+    if (cookieChoice) {
+      cookieBanner.style.display = 'none';
+      return;
+    }
+    
+    // Show banner if no choice made
+    cookieBanner.style.display = 'flex';
+    
+    // Accept all cookies
+    acceptBtn.addEventListener('click', () => {
+      localStorage.setItem('wayzo_cookie_choice', 'accepted');
+      localStorage.setItem('wayzo_cookies_analytics', 'true');
+      localStorage.setItem('wayzo_cookies_marketing', 'true');
+      localStorage.setItem('wayzo_cookies_essential', 'true');
+      cookieBanner.style.display = 'none';
+      
+      // Enable analytics and marketing cookies
+      enableAnalyticsCookies();
+      showNotification('All cookies accepted. Thank you for helping us improve!', 'success');
+    });
+    
+    // Reject non-essential cookies
+    rejectBtn.addEventListener('click', () => {
+      localStorage.setItem('wayzo_cookie_choice', 'rejected');
+      localStorage.setItem('wayzo_cookies_analytics', 'false');
+      localStorage.setItem('wayzo_cookies_marketing', 'false');
+      localStorage.setItem('wayzo_cookies_essential', 'true');
+      cookieBanner.style.display = 'none';
+      
+      // Only enable essential cookies
+      showNotification('Only essential cookies enabled. Some features may be limited.', 'info');
+    });
+  };
+  
+  // Enable analytics cookies
+  const enableAnalyticsCookies = () => {
+    // Initialize Google Analytics if available
+    if (window.gtag) {
+      window.gtag('consent', 'update', {
+        'analytics_storage': 'granted',
+        'ad_storage': 'granted'
+      });
+    }
+    
+    // Enable other tracking
+    console.log('Analytics cookies enabled');
+  };
 
   // Enhanced form reading with professional brief
   const readForm = () => {
