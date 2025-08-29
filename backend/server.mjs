@@ -147,6 +147,16 @@ app.get('/admin', adminBasicAuth, (_req, res) => {
   res.status(404).send('Admin UI not found');
 });
 
+// Dashboard route
+app.get('/dashboard', (req, res) => {
+  res.setHeader('X-Wayzo-Version', VERSION);
+  const dashboardPath = path.join(FRONTEND, 'dashboard.html');
+  if (!fs.existsSync(dashboardPath)) {
+    return res.status(404).send('Dashboard not found');
+  }
+  res.sendFile(dashboardPath);
+});
+
 app.get('/healthz', (_req, res) => res.json({ ok: true, version: VERSION }));
 app.get('/version', (_req, res) => res.json({ version: VERSION }));
 
