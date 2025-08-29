@@ -223,6 +223,7 @@
   // Form submission handler
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    console.log('Form submitted! Starting preview generation...');
     
     const data = readForm();
     console.log('Form data:', data);
@@ -262,6 +263,9 @@
       
       // Track successful preview generation
       trackEvent('preview_generated', { destination: data.destination, budget: data.budget });
+      
+      // Show success notification
+      showNotification('Preview generated successfully! You can now download or generate the full plan.', 'success');
       
     } catch (error) {
       console.error('Preview generation failed:', error);
@@ -787,10 +791,8 @@ let currentUser = JSON.parse(localStorage.getItem('wayzo_user') || 'null');
       adminBtn.style.display = currentUser.isAdmin ? 'block' : 'none';
     }
     
-    // Auto-open cabinet after successful sign-in
-    setTimeout(() => {
-      showDashboard();
-    }, 500);
+    // Cabinet is now available but doesn't auto-open
+    // User can access it via the user menu when they want to
   }
 
   function toggleUserMenu() {
