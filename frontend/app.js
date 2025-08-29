@@ -396,12 +396,24 @@
 
   // Initialize PayPal buttons
   window.initializePayPalButtons = () => {
+    // Prevent multiple initializations
+    if (window.paypalInitialized) {
+      console.log('PayPal buttons already initialized, skipping...');
+      return;
+    }
+
     try {
       // Check if PayPal SDK is loaded
       if (typeof paypal === 'undefined') {
         console.error('PayPal SDK not loaded');
         showPayPalFallback();
         return;
+      }
+
+      // Clear existing PayPal buttons to prevent duplicates
+      const paypalContainer = document.getElementById('paypal-buttons');
+      if (paypalContainer) {
+        paypalContainer.innerHTML = '';
       }
 
       paypal.Buttons({
@@ -426,6 +438,9 @@
             show($('#excelBtn'));
             show($('#shareBtn'));
             
+            // Reset PayPal initialization flag for future use
+            window.paypalInitialized = false;
+            
             // Show success message
             showNotification('Payment successful! Your trip report is now unlocked.', 'success');
             
@@ -444,6 +459,9 @@
       
       console.log('PayPal buttons rendered successfully');
       hide($('#paypal-fallback'));
+      
+      // Mark as initialized to prevent duplicates
+      window.paypalInitialized = true;
       
     } catch (error) {
       console.error('Failed to initialize PayPal buttons:', error);
