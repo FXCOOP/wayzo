@@ -1311,35 +1311,168 @@ let currentUser = JSON.parse(localStorage.getItem('wayzo_user') || 'null');
       return;
     }
     
-    // Create PDF content
-    const pdfContent = `
+    // Create printable version content
+    const printableContent = `
       <html>
         <head>
-          <title>Wayzo Trip Plan</title>
+          <title>Wayzo Trip Plan - Printable Version</title>
+          <meta charset="UTF-8">
           <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            .header { text-align: center; margin-bottom: 30px; }
-            .content { line-height: 1.6; }
+            @media print {
+              body { margin: 0; padding: 20px; }
+              .no-print { display: none !important; }
+            }
+            body { 
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+              margin: 20px; 
+              line-height: 1.6;
+              color: #333;
+            }
+            .header { 
+              text-align: center; 
+              margin-bottom: 30px; 
+              padding: 20px;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              border-radius: 15px;
+            }
+            .header h1 { margin: 0; font-size: 2.5rem; }
+            .header p { margin: 10px 0 0 0; opacity: 0.9; }
+            .content { 
+              background: white; 
+              padding: 30px; 
+              border-radius: 15px;
+              box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            }
+            .download-section {
+              text-align: center;
+              margin: 20px 0;
+              padding: 20px;
+              background: #f8f9fa;
+              border-radius: 10px;
+              border: 2px dashed #dee2e6;
+            }
+            .download-btn {
+              background: #007bff;
+              color: white;
+              padding: 12px 24px;
+              border: none;
+              border-radius: 8px;
+              font-size: 16px;
+              cursor: pointer;
+              margin: 10px;
+              text-decoration: none;
+              display: inline-block;
+            }
+            .download-btn:hover {
+              background: #0056b3;
+              transform: translateY(-2px);
+              box-shadow: 0 5px 15px rgba(0,123,255,0.3);
+            }
+            .print-btn {
+              background: #28a745;
+              color: white;
+              padding: 12px 24px;
+              border: none;
+              border-radius: 8px;
+              font-size: 16px;
+              cursor: pointer;
+              margin: 10px;
+            }
+            .print-btn:hover {
+              background: #1e7e34;
+            }
+            .back-btn {
+              background: #6c757d;
+              color: white;
+              padding: 12px 24px;
+              border: none;
+              border-radius: 8px;
+              font-size: 16px;
+              cursor: pointer;
+              margin: 10px;
+              text-decoration: none;
+              display: inline-block;
+            }
+            .back-btn:hover {
+              background: #545b62;
+            }
+            img { max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0; }
+            .affiliate-section { margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px; }
+            .affiliate-links { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; }
+            .affiliate-link { 
+              background: #007bff; 
+              color: white; 
+              padding: 10px 20px; 
+              border-radius: 25px; 
+              text-decoration: none;
+              transition: all 0.3s ease;
+            }
+            .affiliate-link:hover { background: #0056b3; transform: translateY(-2px); }
           </style>
         </head>
         <body>
           <div class="header">
             <h1>🚀 Wayzo Trip Plan</h1>
-            <p>Generated on ${new Date().toLocaleDateString()}</p>
+            <p>Printable Version - Generated on ${new Date().toLocaleDateString()}</p>
           </div>
+          
+          <div class="download-section no-print">
+            <h3>📄 Trip Plan Options</h3>
+            <button class="download-btn" onclick="window.print()">🖨️ Print Plan</button>
+            <button class="download-btn" onclick="downloadDirectPDF()">📥 Download PDF</button>
+            <a href="javascript:window.close()" class="back-btn">🔙 Close & Return</a>
+          </div>
+          
           <div class="content">
             ${content}
           </div>
+          
+          <script>
+            function downloadDirectPDF() {
+              // Create a more comprehensive PDF download
+              const content = document.querySelector('.content').innerHTML;
+              const pdfContent = \`
+                <html>
+                  <head>
+                    <title>Wayzo Trip Plan - ${new Date().toLocaleDateString()}</title>
+                    <style>
+                      body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+                      .header { text-align: center; margin-bottom: 30px; padding: 20px; background: #f0f0f0; }
+                      img { max-width: 100%; height: auto; }
+                    </style>
+                  </head>
+                  <body>
+                    <div class="header">
+                      <h1>🚀 Wayzo Trip Plan</h1>
+                      <p>Generated on ${new Date().toLocaleDateString()}</p>
+                    </div>
+                    <div class="content">\${content}</div>
+                  </body>
+                </html>
+              \`;
+              
+              const blob = new Blob([pdfContent], { type: 'text/html' });
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = 'wayzo-trip-plan.html';
+              a.click();
+              window.URL.revokeObjectURL(url);
+              
+              alert('Trip plan downloaded! Open the HTML file in your browser and use Print to PDF for best results.');
+            }
+          </script>
         </body>
       </html>
     `;
     
-    // Open PDF content in new window/tab
+    // Open printable version in new window/tab
     const newWindow = window.open('', '_blank');
-    newWindow.document.write(pdfContent);
+    newWindow.document.write(printableContent);
     newWindow.document.close();
     
-    showNotification('PDF opened in new tab!', 'success');
+    showNotification('Printable version opened in new tab!', 'success');
   }
 
   function downloadICS() {

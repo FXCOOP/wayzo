@@ -373,7 +373,7 @@ async function generatePlanWithAI(payload) {
 - Add [Book](book:query) for booking links
 - Use [Reviews](reviews:query) for recommendations
 - Include [Tickets](tickets:query) for attractions
-- Include 3–6 inline images using token links: ![Title](image:QUERY)
+- **MANDATORY:** Include 6-8 beautiful images using token links: ![Title](image:QUERY) - this is REQUIRED for every report
 
 **STYLE:** Make it exciting, informative, and ready to use!`;
 
@@ -405,7 +405,18 @@ ${dietary && dietary.length > 0 ? `- **Dietary Accommodations**: Ensure all rest
 ${dateMode === 'flexible' ? `- **Flexible Date Optimization**: Suggest the best times within the month for optimal weather, prices, and fewer crowds
 - **Price Optimization**: Focus on getting the best value during the flexible period` : ''}
 
-**Image guidance:** Provide 3–6 realistic image prompts that would look authentic for ${destination} in this season. Use a mix of cityscapes, food, local culture, and nature; each as a Markdown image with token links like ![Title](image:QUERY). Add a short one-line collage idea.
+**CRITICAL - IMAGE GENERATION:** You MUST include 6-8 beautiful, realistic images throughout your report using this exact format:
+
+1. **Cityscape/Overview**: ![${destination} Cityscape](image:${destination} city skyline view)
+2. **Local Food**: ![Local Cuisine](image:${destination} traditional food dishes)
+3. **Cultural Site**: ![Cultural Heritage](image:${destination} main cultural landmark)
+4. **Nature/Landscape**: ![Natural Beauty](image:${destination} natural landscape scenery)
+5. **Local Life**: ![Local Culture](image:${destination} local people daily life)
+6. **Architecture**: ![Architecture](image:${destination} beautiful buildings architecture)
+7. **Activity**: ![Activities](image:${destination} popular tourist activities)
+8. **Collage**: ![${destination} Experience](image:${destination} travel experience collage)
+
+**IMPORTANT:** Place these images strategically throughout your report - after the overview, in the dining section, with attractions, etc. Each image should enhance the content it accompanies.
 
 **Requirements:**
 - Make it feel like a premium travel guide
