@@ -1,581 +1,796 @@
-// ====== WAYZO ADMIN DASHBOARD ======
+// Wayzo Enterprise Admin - Professional BI Dashboard JavaScript
 
 (function() {
-    'use strict';
+  'use strict';
 
-    // DOM Elements
-    const $ = (sel) => document.querySelector(sel);
-    const $$ = (sel) => document.querySelectorAll(sel);
+  // Global variables
+  let currentSection = 'dashboard';
+  let dashboardData = {};
+  let charts = {};
+  let realTimeUpdates = null;
 
-    // Admin State
-    let currentSection = 'dashboard';
-    let charts = {};
+  // Initialize admin dashboard
+  function initAdmin() {
+    setupNavigation();
+    loadDashboardData();
+    initializeCharts();
+    setupRealTimeUpdates();
+    setupEventListeners();
+    loadMockData();
+  }
 
-    // Initialize Admin Dashboard
-    document.addEventListener('DOMContentLoaded', () => {
-        initializeAdminDashboard();
-        setupNavigation();
-        setupCharts();
-        loadMockData();
-        setupEventListeners();
+  // Setup navigation
+  function setupNavigation() {
+    const navLinks = document.querySelectorAll('.nav-link');
+    navLinks.forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetSection = link.getAttribute('href').substring(1);
+        switchSection(targetSection);
+      });
+    });
+  }
+
+  // Switch between sections
+  function switchSection(sectionName) {
+    // Hide all sections
+    document.querySelectorAll('.admin-section').forEach(section => {
+      section.classList.remove('active');
     });
 
-    // Initialize Admin Dashboard
-    const initializeAdminDashboard = () => {
-        console.log('Initializing Wayzo Admin Dashboard...');
-        
-        // Set active section
-        showSection('dashboard');
-        
-        // Initialize metrics
-        updateMetrics();
-        
-        // Load recent activity
-        loadRecentActivity();
+    // Remove active class from all nav links
+    document.querySelectorAll('.nav-link').forEach(link => {
+      link.classList.remove('active');
+    });
+
+    // Show target section
+    const targetSection = document.getElementById(sectionName);
+    if (targetSection) {
+      targetSection.classList.add('active');
+    }
+
+    // Add active class to nav link
+    const activeLink = document.querySelector(`[href="#${sectionName}"]`);
+    if (activeLink) {
+      activeLink.classList.add('active');
+    }
+
+    currentSection = sectionName;
+    
+    // Load section-specific data
+    switch(sectionName) {
+      case 'dashboard':
+        loadDashboardData();
+        break;
+      case 'analytics':
+        loadAnalyticsData();
+        break;
+      case 'users':
+        loadUsersData();
+        break;
+      case 'trips':
+        loadTripsData();
+        break;
+      case 'revenue':
+        loadRevenueData();
+        break;
+      case 'marketing':
+        loadMarketingData();
+        break;
+      case 'integrations':
+        loadIntegrationsData();
+        break;
+      case 'reports':
+        loadReportsData();
+        break;
+      case 'tasks':
+        loadTasksData();
+        break;
+      case 'logs':
+        loadLogsData();
+        break;
+      case 'settings':
+        loadSettingsData();
+        break;
+    }
+  }
+
+  // Load dashboard data
+  function loadDashboardData() {
+    // Simulate API call
+    setTimeout(() => {
+      updateKPIs();
+      updateMainChart();
+      updateGeoChart();
+      updateActivityFeed();
+    }, 500);
+  }
+
+  // Update KPIs
+  function updateKPIs() {
+    const kpiData = {
+      totalUsers: '12,847',
+      totalTrips: '8,923',
+      totalRevenue: '$156,432',
+      conversionRate: '3.2%'
     };
 
-    // Setup Navigation
-    const setupNavigation = () => {
-        const navLinks = $$('.nav-link');
-        
-        navLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const targetSection = link.getAttribute('href').substring(1);
-                showSection(targetSection);
-                
-                // Update active nav item
-                $$('.nav-item').forEach(item => item.classList.remove('active'));
-                link.closest('.nav-item').classList.add('active');
-            });
+    Object.keys(kpiData).forEach(key => {
+      const element = document.getElementById(key);
+      if (element) {
+        element.textContent = kpiData[key];
+      }
+    });
+  }
+
+  // Initialize charts
+  function initializeCharts() {
+    initializeMainChart();
+    initializeGeoChart();
+    initializeAnalyticsCharts();
+  }
+
+  // Initialize main chart
+  function initializeMainChart() {
+    const chartContainer = document.getElementById('mainChart');
+    if (!chartContainer) return;
+
+    const options = {
+      series: [{
+        name: 'Revenue',
+        data: [31000, 40000, 28000, 51000, 42000, 82000, 56000, 81000, 56000, 55000, 40000, 30000]
+      }, {
+        name: 'Users',
+        data: [11000, 32000, 45000, 32000, 34000, 32000, 34000, 56000, 76000, 55000, 67000, 83000]
+      }],
+      chart: {
+        height: 350,
+        type: 'area',
+        toolbar: {
+          show: false
+        },
+        zoom: {
+          enabled: false
+        }
+      },
+      dataLabels: {
+        enabled: false
+      },
+      stroke: {
+        curve: 'smooth',
+        width: 2
+      },
+      colors: ['#1e40af', '#10b981'],
+      fill: {
+        type: 'gradient',
+        gradient: {
+          opacityFrom: 0.6,
+          opacityTo: 0.1,
+        }
+      },
+      xaxis: {
+        categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+      },
+      yaxis: {
+        labels: {
+          formatter: function (value) {
+            return '$' + value.toLocaleString();
+          }
+        }
+      },
+      tooltip: {
+        x: {
+          format: 'MMM'
+        },
+        y: {
+          formatter: function (value) {
+            return '$' + value.toLocaleString();
+          }
+        }
+      }
+    };
+
+    charts.mainChart = new ApexCharts(chartContainer, options);
+    charts.mainChart.render();
+  }
+
+  // Initialize geographic chart
+  function initializeGeoChart() {
+    const chartContainer = document.getElementById('geoChart');
+    if (!chartContainer) return;
+
+    const options = {
+      series: [44, 55, 13, 43, 22],
+      chart: {
+        width: 380,
+        type: 'pie',
+      },
+      labels: ['United States', 'United Kingdom', 'Canada', 'Australia', 'Germany'],
+      responsive: [{
+        breakpoint: 480,
+        options: {
+          chart: {
+            width: 200
+          },
+          legend: {
+            position: 'bottom'
+          }
+        }
+      }],
+      colors: ['#1e40af', '#10b981', '#f59e0b', '#ef4444', '#06b6d4']
+    };
+
+    charts.geoChart = new ApexCharts(chartContainer, options);
+    charts.geoChart.render();
+  }
+
+  // Initialize analytics charts
+  function initializeAnalyticsCharts() {
+    // User Behavior Chart
+    const userBehaviorContainer = document.getElementById('userBehaviorChart');
+    if (userBehaviorContainer) {
+      const options = {
+        series: [{
+          name: 'Page Views',
+          data: [400, 430, 448, 470, 540, 580, 690, 1100, 1200, 1380]
+        }],
+        chart: {
+          type: 'bar',
+          height: 250,
+          toolbar: { show: false }
+        },
+        colors: ['#1e40af'],
+        plotOptions: {
+          bar: {
+            borderRadius: 4,
+            horizontal: true,
+          }
+        },
+        dataLabels: {
+          enabled: false
+        },
+        xaxis: {
+          categories: ['Home', 'Search', 'Results', 'Details', 'Booking', 'Payment', 'Confirmation', 'Profile', 'History', 'Support'],
+        }
+      };
+      charts.userBehavior = new ApexCharts(userBehaviorContainer, options);
+      charts.userBehavior.render();
+    }
+
+    // Funnel Chart
+    const funnelContainer = document.getElementById('funnelChart');
+    if (funnelContainer) {
+      const options = {
+        series: [{
+          name: 'Users',
+          data: [100, 85, 72, 58, 42, 28, 15]
+        }],
+        chart: {
+          type: 'bar',
+          height: 250,
+          toolbar: { show: false }
+        },
+        colors: ['#1e40af'],
+        plotOptions: {
+          bar: {
+            borderRadius: 0,
+            horizontal: true,
+            distributed: true,
+            barHeight: '80%',
+          }
+        },
+        dataLabels: {
+          enabled: true,
+          textAnchor: 'start',
+          style: {
+            colors: ['#fff']
+          },
+          formatter: function (val, opt) {
+            return opt.w.globals.labels[opt.dataPointIndex] + ': ' + val
+          },
+          offsetX: 0
+        },
+        xaxis: {
+          categories: ['Visit Site', 'Search Destinations', 'View Results', 'Generate Plan', 'Preview Plan', 'Purchase Full Plan', 'Complete Trip'],
+        },
+        yaxis: {
+          labels: {
+            show: false
+          }
+        },
+        legend: {
+          show: false
+        }
+      };
+      charts.funnel = new ApexCharts(funnelContainer, options);
+      charts.funnel.render();
+    }
+
+    // Seasonal Trends Chart
+    const seasonalContainer = document.getElementById('seasonalChart');
+    if (seasonalContainer) {
+      const options = {
+        series: [{
+          name: 'Bookings',
+          data: [31, 40, 28, 51, 42, 109, 100]
+        }, {
+          name: 'Revenue',
+          data: [11, 32, 45, 32, 34, 52, 41]
+        }],
+        chart: {
+          height: 250,
+          type: 'area',
+          toolbar: { show: false }
+        },
+        dataLabels: {
+          enabled: false
+        },
+        stroke: {
+          curve: 'smooth'
+        },
+        colors: ['#1e40af', '#10b981'],
+        xaxis: {
+          type: 'datetime',
+          categories: ['2018-09-19T00:00:00.000Z', '2018-09-19T01:30:00.000Z', '2018-09-19T02:30:00.000Z', '2018-09-19T03:30:00.000Z', '2018-09-19T04:30:00.000Z', '2018-09-19T05:30:00.000Z', '2018-09-19T06:30:00.000Z']
+        },
+        tooltip: {
+          x: {
+            format: 'dd/MM/yy HH:mm'
+          },
+        },
+      };
+      charts.seasonal = new ApexCharts(seasonalContainer, options);
+      charts.seasonal.render();
+    }
+
+    // Destination Revenue Chart
+    const destinationContainer = document.getElementById('destinationRevenueChart');
+    if (destinationContainer) {
+      const options = {
+        series: [{
+          name: 'Revenue',
+          data: [400, 430, 448, 470, 540, 580, 690, 1100, 1200, 1380]
+        }],
+        chart: {
+          type: 'bar',
+          height: 250,
+          toolbar: { show: false }
+        },
+        colors: ['#1e40af'],
+        plotOptions: {
+          bar: {
+            borderRadius: 4,
+            horizontal: true,
+          }
+        },
+        dataLabels: {
+          enabled: false
+        },
+        xaxis: {
+          categories: ['Paris', 'Tokyo', 'New York', 'London', 'Rome', 'Barcelona', 'Amsterdam', 'Bangkok', 'Sydney', 'Dubai'],
+        }
+      };
+      charts.destinationRevenue = new ApexCharts(destinationContainer, options);
+      charts.destinationRevenue.render();
+    }
+  }
+
+  // Update main chart
+  function updateMainChart() {
+    if (charts.mainChart) {
+      // Update chart data based on selected metric
+      const chartBtns = document.querySelectorAll('.chart-btn');
+      chartBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          chartBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          
+          const chartType = btn.dataset.chart;
+          updateChartData(chartType);
         });
-    };
+      });
+    }
+  }
 
-    // Show Section
-    const showSection = (sectionId) => {
-        // Hide all sections
-        $$('.admin-section').forEach(section => {
-            section.classList.remove('active');
-        });
+  // Update chart data
+  function updateChartData(chartType) {
+    if (!charts.mainChart) return;
+
+    let newData = [];
+    let newCategories = [];
+    let newColors = [];
+
+    switch(chartType) {
+      case 'revenue':
+        newData = [{
+          name: 'Revenue',
+          data: [31000, 40000, 28000, 51000, 42000, 82000, 56000, 81000, 56000, 55000, 40000, 30000]
+        }];
+        newColors = ['#1e40af'];
+        break;
+      case 'users':
+        newData = [{
+          name: 'Users',
+          data: [11000, 32000, 45000, 32000, 34000, 32000, 34000, 56000, 76000, 55000, 67000, 83000]
+        }];
+        newColors = ['#10b981'];
+        break;
+      case 'trips':
+        newData = [{
+          name: 'Trips',
+          data: [2100, 3200, 4500, 3200, 3400, 3200, 3400, 5600, 7600, 5500, 6700, 8300]
+        }];
+        newColors = ['#f59e0b'];
+        break;
+    }
+
+    charts.mainChart.updateOptions({
+      series: newData,
+      colors: newColors
+    });
+  }
+
+  // Update geographic chart
+  function updateGeoChart() {
+    // Chart updates can be added here
+  }
+
+  // Update activity feed
+  function updateActivityFeed() {
+    const activityFeed = document.getElementById('activityFeed');
+    if (!activityFeed) return;
+
+    const activities = [
+      {
+        type: 'user',
+        message: 'New user registered: john.doe@email.com',
+        time: '2 minutes ago',
+        icon: 'fas fa-user-plus'
+      },
+      {
+        type: 'trip',
+        message: 'Trip plan generated for Paris, France',
+        time: '5 minutes ago',
+        icon: 'fas fa-map-marked-alt'
+      },
+      {
+        type: 'revenue',
+        message: 'Payment received: $19.00 for full trip plan',
+        time: '8 minutes ago',
+        icon: 'fas fa-dollar-sign'
+      },
+      {
+        type: 'system',
+        message: 'System backup completed successfully',
+        time: '15 minutes ago',
+        icon: 'fas fa-shield-alt'
+      }
+    ];
+
+    activityFeed.innerHTML = activities.map(activity => `
+      <div class="activity-item ${activity.type}">
+        <div class="activity-icon">
+          <i class="${activity.icon}"></i>
+        </div>
+        <div class="activity-content">
+          <div class="activity-message">${activity.message}</div>
+          <div class="activity-time">${activity.time}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Setup real-time updates
+  function setupRealTimeUpdates() {
+    // Simulate real-time data updates
+    realTimeUpdates = setInterval(() => {
+      updateActivityFeed();
+      updateRandomKPI();
+    }, 30000); // Update every 30 seconds
+  }
+
+  // Update random KPI
+  function updateRandomKPI() {
+    const kpis = ['totalUsers', 'totalTrips', 'totalRevenue', 'conversionRate'];
+    const randomKPI = kpis[Math.floor(Math.random() * kpis.length)];
+    
+    // Simulate small changes
+    const element = document.getElementById(randomKPI);
+    if (element) {
+      element.classList.add('updating');
+      setTimeout(() => {
+        element.classList.remove('updating');
+      }, 1000);
+    }
+  }
+
+  // Load mock data for different sections
+  function loadMockData() {
+    // This would normally come from API calls
+    dashboardData = {
+      users: {
+        total: 12847,
+        active: 10234,
+        premium: 2341,
+        newThisMonth: 1234
+      },
+      trips: {
+        total: 8923,
+        completed: 7234,
+        inProgress: 1234,
+        cancelled: 455
+      },
+      revenue: {
+        total: 156432,
+        thisMonth: 23456,
+        lastMonth: 19876,
+        growth: 15.2
+      }
+    };
+  }
+
+  // Load section-specific data
+  function loadAnalyticsData() {
+    // Analytics data loading logic
+    console.log('Loading analytics data...');
+  }
+
+  function loadUsersData() {
+    const userTableBody = document.getElementById('userTableBody');
+    if (!userTableBody) return;
+
+    const mockUsers = [
+      {
+        name: 'John Doe',
+        email: 'john.doe@email.com',
+        status: 'Active',
+        trips: 12,
+        revenue: '$156',
+        lastActive: '2 hours ago'
+      },
+      {
+        name: 'Jane Smith',
+        email: 'jane.smith@email.com',
+        status: 'Premium',
+        trips: 8,
+        revenue: '$89',
+        lastActive: '1 day ago'
+      },
+      {
+        name: 'Mike Johnson',
+        email: 'mike.j@email.com',
+        status: 'Active',
+        trips: 5,
+        revenue: '$67',
+        lastActive: '3 days ago'
+      }
+    ];
+
+    userTableBody.innerHTML = mockUsers.map(user => `
+      <tr>
+        <td>
+          <div class="user-info">
+            <img src="/frontend/assets/default-avatar.svg" alt="${user.name}" class="user-avatar-small">
+            <span>${user.name}</span>
+          </div>
+        </td>
+        <td>${user.email}</td>
+        <td><span class="status-badge status-${user.status.toLowerCase()}">${user.status}</span></td>
+        <td>${user.trips}</td>
+        <td>${user.revenue}</td>
+        <td>${user.lastActive}</td>
+        <td>
+          <div class="action-buttons">
+            <button class="btn btn-sm btn-primary">Edit</button>
+            <button class="btn btn-sm btn-ghost">View</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function loadTripsData() {
+    // Trip analytics data loading
+    console.log('Loading trips data...');
+  }
+
+  function loadRevenueData() {
+    // Revenue data loading
+    console.log('Loading revenue data...');
+  }
+
+  function loadMarketingData() {
+    // Marketing data loading
+    console.log('Loading marketing data...');
+  }
+
+  function loadIntegrationsData() {
+    // Integrations data loading
+    console.log('Loading integrations data...');
+  }
+
+  function loadReportsData() {
+    // Reports data loading
+    console.log('Loading reports data...');
+  }
+
+  function loadTasksData() {
+    const taskList = document.getElementById('taskList');
+    if (!taskList) return;
+
+    const mockTasks = [
+      {
+        title: 'Optimize conversion funnel',
+        assignee: 'Marketing Team',
+        priority: 'High',
+        dueDate: '2025-09-15',
+        status: 'In Progress'
+      },
+      {
+        title: 'Implement new payment gateway',
+        assignee: 'Development Team',
+        priority: 'Medium',
+        dueDate: '2025-09-20',
+        status: 'Pending'
+      },
+      {
+        title: 'Update user onboarding flow',
+        assignee: 'UX Team',
+        priority: 'High',
+        dueDate: '2025-09-10',
+        status: 'Completed'
+      }
+    ];
+
+    taskList.innerHTML = mockTasks.map(task => `
+      <div class="task-item">
+        <div class="task-header">
+          <h4>${task.title}</h4>
+          <span class="task-priority ${task.priority.toLowerCase()}">${task.priority}</span>
+        </div>
+        <div class="task-details">
+          <span><i class="fas fa-user"></i> ${task.assignee}</span>
+          <span><i class="fas fa-calendar"></i> ${task.dueDate}</span>
+          <span class="task-status ${task.status.toLowerCase()}">${task.status}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function loadLogsData() {
+    const logTableBody = document.getElementById('logTableBody');
+    if (!logTableBody) return;
+
+    const mockLogs = [
+      {
+        timestamp: '2025-08-29 14:30:22',
+        level: 'INFO',
+        message: 'User authentication successful',
+        user: 'john.doe@email.com',
+        actions: 'View Details'
+      },
+      {
+        timestamp: '2025-08-29 14:28:15',
+        level: 'WARNING',
+        message: 'API rate limit approaching',
+        user: 'System',
+        actions: 'Monitor'
+      },
+      {
+        timestamp: '2025-08-29 14:25:43',
+        level: 'ERROR',
+        message: 'Payment gateway timeout',
+        user: 'payment.service',
+        actions: 'Investigate'
+      }
+    ];
+
+    logTableBody.innerHTML = mockLogs.map(log => `
+      <tr class="log-row log-${log.level.toLowerCase()}">
+        <td>${log.timestamp}</td>
+        <td><span class="log-level log-level-${log.level.toLowerCase()}">${log.level}</span></td>
+        <td>${log.message}</td>
+        <td>${log.user}</td>
+        <td>${log.actions}</td>
+      </tr>
+    `).join('');
+  }
+
+  function loadSettingsData() {
+    // Settings data loading
+    console.log('Loading settings data...');
+  }
+
+  // Setup event listeners
+  function setupEventListeners() {
+    // Time range selector
+    const timeRange = document.getElementById('timeRange');
+    if (timeRange) {
+      timeRange.addEventListener('change', (e) => {
+        loadDashboardData();
+      });
+    }
+
+    // Logout button
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        if (confirm('Are you sure you want to logout?')) {
+          window.location.href = '/';
+        }
+      });
+    }
+
+    // Chart controls
+    setupChartControls();
+  }
+
+  // Setup chart controls
+  function setupChartControls() {
+    // Chart button controls
+    const chartBtns = document.querySelectorAll('.chart-btn');
+    chartBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        chartBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
         
-        // Show target section
-        const targetSection = $(`#${sectionId}`);
-        if (targetSection) {
-            targetSection.classList.add('active');
-            currentSection = sectionId;
-            
-            // Load section-specific data
-            loadSectionData(sectionId);
-        }
-    };
+        const chartType = btn.dataset.chart;
+        updateChartData(chartType);
+      });
+    });
+  }
 
-    // Load Section Data
-    const loadSectionData = (sectionId) => {
-        switch(sectionId) {
-            case 'users':
-                loadUsersData();
-                break;
-            case 'analytics':
-                loadAnalyticsData();
-                break;
-            case 'logs':
-                loadSystemLogs();
-                break;
-            case 'settings':
-                loadSettings();
-                break;
-        }
-    };
+  // Global functions for HTML onclick handlers
+  window.refreshDashboard = function() {
+    loadDashboardData();
+  };
 
-    // Setup Charts
-    const setupCharts = () => {
-        // User Growth Chart
-        const userGrowthCtx = $('#userGrowthChart');
-        if (userGrowthCtx) {
-            charts.userGrowth = new Chart(userGrowthCtx, {
-                type: 'line',
-                data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                    datasets: [{
-                        label: 'New Users',
-                        data: [120, 190, 300, 500, 200, 300],
-                        borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: '#e2e8f0'
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        }
-                    }
-                }
-            });
-        }
+  window.generateReport = function(type) {
+    console.log(`Generating ${type} report...`);
+    // This would normally trigger report generation
+    alert(`${type.charAt(0).toUpperCase() + type.slice(1)} report generation started. You will receive an email when ready.`);
+  };
 
-        // Revenue Chart
-        const revenueCtx = $('#revenueChart');
-        if (revenueCtx) {
-            charts.revenue = new Chart(revenueCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                    datasets: [{
-                        label: 'Revenue',
-                        data: [12000, 19000, 30000, 50000, 20000, 30000],
-                        backgroundColor: '#10b981',
-                        borderRadius: 8
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: '#e2e8f0'
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        }
-                    }
-                }
-            });
-        }
-    };
+  window.addTask = function() {
+    const taskName = prompt('Enter task name:');
+    if (taskName) {
+      const taskList = document.getElementById('taskList');
+      if (taskList) {
+        const newTask = document.createElement('div');
+        newTask.className = 'task-item';
+        newTask.innerHTML = `
+          <div class="task-header">
+            <h4>${taskName}</h4>
+            <span class="task-priority medium">Medium</span>
+          </div>
+          <div class="task-details">
+            <span><i class="fas fa-user"></i> Unassigned</span>
+            <span><i class="fas fa-calendar"></i> ${new Date().toISOString().split('T')[0]}</span>
+            <span class="task-status pending">Pending</span>
+          </div>
+        `;
+        taskList.appendChild(newTask);
+      }
+    }
+  };
 
-    // Load Mock Data
-    const loadMockData = () => {
-        // Mock metrics data
-        const mockMetrics = {
-            totalUsers: 15420,
-            totalTrips: 8920,
-            totalRevenue: 125000,
-            conversionRate: 3.2
-        };
+  window.exportLogs = function() {
+    console.log('Exporting logs...');
+    alert('Log export started. You will receive an email when ready.');
+  };
 
-        // Update metrics display
-        Object.keys(mockMetrics).forEach(key => {
-            const element = $(`#${key}`);
-            if (element) {
-                element.textContent = key === 'totalRevenue' ? `$${mockMetrics[key].toLocaleString()}` : mockMetrics[key].toLocaleString();
-            }
-        });
-    };
+  // Initialize when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAdmin);
+  } else {
+    initAdmin();
+  }
 
-    // Load Recent Activity
-    const loadRecentActivity = () => {
-        const activityContainer = $('#recentActivity');
-        if (!activityContainer) return;
-
-        const mockActivities = [
-            {
-                type: 'user',
-                message: 'New user registered: john.doe@email.com',
-                time: '2 minutes ago',
-                icon: 'fas fa-user-plus'
-            },
-            {
-                type: 'trip',
-                message: 'Trip plan created: Paris Adventure (5 days)',
-                time: '5 minutes ago',
-                icon: 'fas fa-map-marked-alt'
-            },
-            {
-                type: 'payment',
-                message: 'Payment received: $19.99 from user@example.com',
-                time: '12 minutes ago',
-                icon: 'fas fa-credit-card'
-            },
-            {
-                type: 'system',
-                message: 'System backup completed successfully',
-                time: '1 hour ago',
-                icon: 'fas fa-database'
-            }
-        ];
-
-        const activitiesHTML = mockActivities.map(activity => `
-            <div class="activity-item">
-                <div class="activity-icon">
-                    <i class="${activity.icon}"></i>
-                </div>
-                <div class="activity-content">
-                    <p class="activity-message">${activity.message}</p>
-                    <span class="activity-time">${activity.time}</span>
-                </div>
-            </div>
-        `).join('');
-
-        activityContainer.innerHTML = activitiesHTML;
-    };
-
-    // Load Users Data
-    const loadUsersData = () => {
-        const usersTableBody = $('#usersTableBody');
-        if (!usersTableBody) return;
-
-        const mockUsers = [
-            {
-                name: 'John Doe',
-                email: 'john.doe@email.com',
-                status: 'active',
-                role: 'user',
-                joined: '2024-01-15'
-            },
-            {
-                name: 'Jane Smith',
-                email: 'jane.smith@email.com',
-                status: 'active',
-                role: 'premium',
-                joined: '2024-01-10'
-            },
-            {
-                name: 'Bob Johnson',
-                email: 'bob.johnson@email.com',
-                status: 'inactive',
-                role: 'user',
-                joined: '2024-01-05'
-            }
-        ];
-
-        const usersHTML = mockUsers.map(user => `
-            <tr>
-                <td>
-                    <div class="user-info">
-                        <img src="/assets/default-avatar.svg" alt="${user.name}" class="user-avatar-small">
-                        <span>${user.name}</span>
-                    </div>
-                </td>
-                <td>${user.email}</td>
-                <td>
-                    <span class="status-badge status-${user.status}">${user.status}</span>
-                </td>
-                <td>
-                    <span class="role-badge role-${user.role}">${user.role}</span>
-                </td>
-                <td>${user.joined}</td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="btn btn-sm btn-secondary">Edit</button>
-                        <button class="btn btn-sm btn-danger">Suspend</button>
-                    </div>
-                </td>
-            </tr>
-        `).join('');
-
-        usersTableBody.innerHTML = usersHTML;
-    };
-
-    // Load Analytics Data
-    const loadAnalyticsData = () => {
-        // Geographic Distribution Chart
-        const geoCtx = $('#geoChart');
-        if (geoCtx && !charts.geo) {
-            charts.geo = new Chart(geoCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['United States', 'United Kingdom', 'Germany', 'France', 'Canada'],
-                    datasets: [{
-                        data: [45, 20, 15, 12, 8],
-                        backgroundColor: [
-                            '#3b82f6',
-                            '#10b981',
-                            '#f59e0b',
-                            '#ef4444',
-                            '#8b5cf6'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-                }
-            });
-        }
-
-        // Popular Destinations Chart
-        const destinationsCtx = $('#destinationsChart');
-        if (destinationsCtx && !charts.destinations) {
-            charts.destinations = new Chart(destinationsCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['Paris', 'Tokyo', 'New York', 'London', 'Rome'],
-                    datasets: [{
-                        label: 'Trip Plans',
-                        data: [120, 98, 85, 76, 65],
-                        backgroundColor: '#10b981'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    }
-                }
-            });
-        }
-    };
-
-    // Load System Logs
-    const loadSystemLogs = () => {
-        const logsTableBody = $('#logsTableBody');
-        if (!logsTableBody) return;
-
-        const mockLogs = [
-            {
-                timestamp: '2024-01-27 14:30:25',
-                level: 'info',
-                source: 'UserService',
-                message: 'User authentication successful',
-                details: 'User ID: 12345, IP: 192.168.1.100'
-            },
-            {
-                timestamp: '2024-01-27 14:28:15',
-                level: 'warning',
-                source: 'PaymentService',
-                message: 'Payment processing delayed',
-                details: 'Transaction ID: TXN-789, Reason: Network timeout'
-            },
-            {
-                timestamp: '2024-01-27 14:25:42',
-                level: 'error',
-                source: 'EmailService',
-                message: 'Failed to send welcome email',
-                details: 'User ID: 12345, Error: SMTP connection failed'
-            }
-        ];
-
-        const logsHTML = mockLogs.map(log => `
-            <tr class="log-row log-${log.level}">
-                <td>${log.timestamp}</td>
-                <td>
-                    <span class="log-level log-level-${log.level}">${log.level}</span>
-                </td>
-                <td>${log.source}</td>
-                <td>${log.message}</td>
-                <td>
-                    <button class="btn btn-sm btn-secondary" onclick="showLogDetails('${log.details}')">
-                        View Details
-                    </button>
-                </td>
-            </tr>
-        `).join('');
-
-        logsTableBody.innerHTML = logsHTML;
-    };
-
-    // Load Settings
-    const loadSettings = () => {
-        // Settings are already populated in HTML
-        console.log('Settings loaded');
-    };
-
-    // Setup Event Listeners
-    const setupEventListeners = () => {
-        // Logout button
-        const logoutBtn = $('#logoutBtn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', () => {
-                if (confirm('Are you sure you want to logout?')) {
-                    window.location.href = '/index.backend.html';
-                }
-            });
-        }
-
-        // User search
-        const userSearch = $('#userSearch');
-        if (userSearch) {
-            userSearch.addEventListener('input', (e) => {
-                filterUsers(e.target.value);
-            });
-        }
-
-        // User filters
-        const userStatusFilter = $('#userStatusFilter');
-        const userRoleFilter = $('#userRoleFilter');
-        
-        if (userStatusFilter) {
-            userStatusFilter.addEventListener('change', () => {
-                applyUserFilters();
-            });
-        }
-        
-        if (userRoleFilter) {
-            userRoleFilter.addEventListener('change', () => {
-                applyUserFilters();
-            });
-        }
-
-        // Export users
-        const exportUsersBtn = $('#exportUsers');
-        if (exportUsersBtn) {
-            exportUsersBtn.addEventListener('click', () => {
-                exportUsersData();
-            });
-        }
-
-        // Refresh logs
-        const refreshLogsBtn = $('#refreshLogs');
-        if (refreshLogsBtn) {
-            refreshLogsBtn.addEventListener('click', () => {
-                loadSystemLogs();
-            });
-        }
-
-        // Chart period selectors
-        const userGrowthPeriod = $('#userGrowthPeriod');
-        const revenuePeriod = $('#revenuePeriod');
-        
-        if (userGrowthPeriod) {
-            userGrowthPeriod.addEventListener('change', () => {
-                updateUserGrowthChart(userGrowthPeriod.value);
-            });
-        }
-        
-        if (revenuePeriod) {
-            revenuePeriod.addEventListener('change', () => {
-                updateRevenueChart(revenuePeriod.value);
-            });
-        }
-    };
-
-    // Filter Users
-    const filterUsers = (searchTerm) => {
-        const rows = $$('#usersTableBody tr');
-        
-        rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            const matches = text.includes(searchTerm.toLowerCase());
-            row.style.display = matches ? '' : 'none';
-        });
-    };
-
-    // Apply User Filters
-    const applyUserFilters = () => {
-        const statusFilter = $('#userStatusFilter').value;
-        const roleFilter = $('#userRoleFilter').value;
-        
-        const rows = $$('#usersTableBody tr');
-        
-        rows.forEach(row => {
-            const status = row.querySelector('.status-badge').textContent;
-            const role = row.querySelector('.role-badge').textContent;
-            
-            const statusMatch = !statusFilter || status === statusFilter;
-            const roleMatch = !roleFilter || role === roleFilter;
-            
-            row.style.display = (statusMatch && roleMatch) ? '' : 'none';
-        });
-    };
-
-    // Export Users Data
-    const exportUsersData = () => {
-        // Mock export functionality
-        const csvContent = 'Name,Email,Status,Role,Joined\n' +
-            'John Doe,john.doe@email.com,active,user,2024-01-15\n' +
-            'Jane Smith,jane.smith@email.com,active,premium,2024-01-10\n' +
-            'Bob Johnson,bob.johnson@email.com,inactive,user,2024-01-05';
-        
-        const blob = new Blob([csvContent], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'wayzo-users.csv';
-        a.click();
-        window.URL.revokeObjectURL(url);
-        
-        alert('Users data exported successfully!');
-    };
-
-    // Update User Growth Chart
-    const updateUserGrowthChart = (period) => {
-        if (charts.userGrowth) {
-            // Mock data based on period
-            const data = period === '7' ? [20, 25, 30, 35, 40, 45, 50] :
-                        period === '90' ? [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000] :
-                        [120, 190, 300, 500, 200, 300];
-            
-            charts.userGrowth.data.datasets[0].data = data;
-            charts.userGrowth.update();
-        }
-    };
-
-    // Update Revenue Chart
-    const updateRevenueChart = (period) => {
-        if (charts.revenue) {
-            // Mock data based on period
-            const data = period === '7' ? [2000, 2500, 3000, 3500, 4000, 4500, 5000] :
-                        period === '90' ? [10000, 15000, 20000, 25000, 30000, 35000, 40000, 45000, 50000, 55000] :
-                        [12000, 19000, 30000, 50000, 20000, 30000];
-            
-            charts.revenue.data.datasets[0].data = data;
-            charts.revenue.update();
-        }
-    };
-
-    // Update Metrics
-    const updateMetrics = () => {
-        // Metrics are updated in loadMockData()
-        console.log('Metrics updated');
-    };
-
-    // Global Functions
-    window.generateReport = (type) => {
-        const reportTypes = {
-            'bi': 'Business Intelligence Report',
-            'users': 'User Analytics Report',
-            'trips': 'Trip Planning Report',
-            'financial': 'Financial Report'
-        };
-        
-        alert(`Generating ${reportTypes[type]}...\nThis would typically generate a PDF or Excel file with comprehensive data.`);
-    };
-
-    window.showLogDetails = (details) => {
-        alert(`Log Details:\n\n${details}`);
-    };
-
-    // Export functions for external use
-    window.WayzoAdmin = {
-        showSection,
-        loadSectionData,
-        updateMetrics,
-        generateReport
-    };
+  // Cleanup on page unload
+  window.addEventListener('beforeunload', () => {
+    if (realTimeUpdates) {
+      clearInterval(realTimeUpdates);
+    }
+  });
 
 })();

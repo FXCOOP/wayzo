@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wayzo Admin Dashboard - Back Office Management</title>
+    <title>Wayzo Enterprise Admin - Professional BI Dashboard</title>
     <link rel="stylesheet" href="/frontend/style.css">
     <link rel="stylesheet" href="/frontend/admin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.3/dist/lightweight-charts.umd.js"></script>
 </head>
 <body>
     <!-- Admin Header -->
@@ -17,12 +18,12 @@
         <div class="admin-header-content">
             <div class="admin-brand">
                 <span class="brand-badge">WZ</span>
-                <span class="brand-name">Wayzo Admin</span>
-                <span class="admin-badge">Enterprise</span>
+                <span class="brand-name">Wayzo Enterprise</span>
+                <span class="admin-badge">Professional BI</span>
             </div>
             <div class="admin-actions">
                 <div class="admin-user">
-                    <img src="/assets/default-avatar.svg" alt="Admin" class="admin-avatar">
+                    <img src="/frontend/assets/default-avatar.svg" alt="Admin" class="admin-avatar">
                     <span class="admin-name">System Administrator</span>
                     <i class="fas fa-chevron-down"></i>
                 </div>
@@ -41,31 +42,55 @@
                 <li class="nav-item active">
                     <a href="#dashboard" class="nav-link">
                         <i class="fas fa-tachometer-alt"></i>
-                        <span>Dashboard</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#users" class="nav-link">
-                        <i class="fas fa-users"></i>
-                        <span>Users</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#trips" class="nav-link">
-                        <i class="fas fa-map-marked-alt"></i>
-                        <span>Trips</span>
+                        <span>Executive Dashboard</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="#analytics" class="nav-link">
                         <i class="fas fa-chart-line"></i>
-                        <span>Analytics</span>
+                        <span>Advanced Analytics</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#users" class="nav-link">
+                        <i class="fas fa-users"></i>
+                        <span>User Management</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#trips" class="nav-link">
+                        <i class="fas fa-map-marked-alt"></i>
+                        <span>Trip Analytics</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#revenue" class="nav-link">
+                        <i class="fas fa-dollar-sign"></i>
+                        <span>Revenue & Finance</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#marketing" class="nav-link">
+                        <i class="fas fa-bullhorn"></i>
+                        <span>Marketing & Growth</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#integrations" class="nav-link">
+                        <i class="fas fa-plug"></i>
+                        <span>Integrations</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="#reports" class="nav-link">
                         <i class="fas fa-file-alt"></i>
-                        <span>Reports</span>
+                        <span>Reports & BI</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#tasks" class="nav-link">
+                        <i class="fas fa-tasks"></i>
+                        <span>Tasks & KPIs</span>
                     </a>
                 </li>
                 <li class="nav-item">
@@ -86,227 +111,339 @@
 
     <!-- Main Admin Content -->
     <main class="admin-main">
-        <!-- Dashboard Section -->
+        <!-- Executive Dashboard Section -->
         <section id="dashboard" class="admin-section active">
             <div class="admin-section-header">
-                <h1>System Dashboard</h1>
-                <p>Real-time overview of Wayzo platform performance</p>
+                <h1>Executive Dashboard</h1>
+                <p>Real-time overview of Wayzo platform performance and business metrics</p>
+                <div class="dashboard-controls">
+                    <select id="timeRange" class="time-selector">
+                        <option value="7d">Last 7 Days</option>
+                        <option value="30d" selected>Last 30 Days</option>
+                        <option value="90d">Last 90 Days</option>
+                        <option value="1y">Last Year</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="refreshDashboard()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
             </div>
 
-            <!-- Key Metrics -->
-            <div class="metrics-grid">
-                <div class="metric-card">
-                    <div class="metric-icon">
+            <!-- Key Performance Indicators -->
+            <div class="kpi-grid">
+                <div class="kpi-card primary">
+                    <div class="kpi-icon">
                         <i class="fas fa-users"></i>
                     </div>
-                    <div class="metric-content">
-                        <h3 id="totalUsers">0</h3>
-                        <p>Total Users</p>
-                        <span class="metric-change positive">+12.5%</span>
+                    <div class="kpi-content">
+                        <div class="kpi-number" id="totalUsers">-</div>
+                        <div class="kpi-label">Total Users</div>
+                        <div class="kpi-change positive" id="userGrowth">+12.5%</div>
                     </div>
                 </div>
-
-                <div class="metric-card">
-                    <div class="metric-icon">
+                <div class="kpi-card success">
+                    <div class="kpi-icon">
                         <i class="fas fa-map-marked-alt"></i>
                     </div>
-                    <div class="metric-content">
-                        <h3 id="totalTrips">0</h3>
-                        <p>Trips Created</p>
-                        <span class="metric-change positive">+8.3%</span>
+                    <div class="kpi-content">
+                        <div class="kpi-number" id="totalTrips">-</div>
+                        <div class="kpi-label">Trips Generated</div>
+                        <div class="kpi-change positive" id="tripGrowth">+8.3%</div>
                     </div>
                 </div>
-
-                <div class="metric-card">
-                    <div class="metric-icon">
+                <div class="kpi-card warning">
+                    <div class="kpi-icon">
                         <i class="fas fa-dollar-sign"></i>
                     </div>
-                    <div class="metric-content">
-                        <h3 id="totalRevenue">$0</h3>
-                        <p>Revenue (MTD)</p>
-                        <span class="metric-change positive">+15.2%</span>
+                    <div class="kpi-content">
+                        <div class="kpi-number" id="totalRevenue">-</div>
+                        <div class="kpi-label">Total Revenue</div>
+                        <div class="kpi-change positive" id="revenueGrowth">+15.2%</div>
                     </div>
                 </div>
-
-                <div class="metric-card">
-                    <div class="metric-icon">
+                <div class="kpi-card info">
+                    <div class="kpi-icon">
                         <i class="fas fa-chart-line"></i>
                     </div>
-                    <div class="metric-content">
-                        <h3 id="conversionRate">0%</h3>
-                        <p>Conversion Rate</p>
-                        <span class="metric-change negative">-2.1%</span>
+                    <div class="kpi-content">
+                        <div class="kpi-number" id="conversionRate">-</div>
+                        <div class="kpi-label">Conversion Rate</div>
+                        <div class="kpi-change positive" id="conversionGrowth">+2.1%</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Charts Row -->
+            <!-- Advanced Charts Row -->
             <div class="charts-row">
-                <div class="chart-card">
+                <div class="chart-container large">
                     <div class="chart-header">
-                        <h3>User Growth</h3>
+                        <h3>Revenue Growth & User Acquisition</h3>
                         <div class="chart-controls">
-                            <select id="userGrowthPeriod" class="chart-select">
-                                <option value="7">Last 7 days</option>
-                                <option value="30" selected>Last 30 days</option>
-                                <option value="90">Last 90 days</option>
-                            </select>
+                            <button class="chart-btn active" data-chart="revenue">Revenue</button>
+                            <button class="chart-btn" data-chart="users">Users</button>
+                            <button class="chart-btn" data-chart="trips">Trips</button>
                         </div>
                     </div>
-                    <canvas id="userGrowthChart"></canvas>
+                    <div id="mainChart" class="chart"></div>
                 </div>
-
-                <div class="chart-card">
+                <div class="chart-container">
                     <div class="chart-header">
-                        <h3>Revenue Trends</h3>
-                        <div class="chart-controls">
-                            <select id="revenuePeriod" class="chart-select">
-                                <option value="7">Last 7 days</option>
-                                <option value="30" selected>Last 30 days</option>
-                                <option value="90">Last 90 days</option>
-                            </select>
-                        </div>
+                        <h3>Geographic Distribution</h3>
                     </div>
-                    <canvas id="revenueChart"></canvas>
+                    <div id="geoChart" class="chart"></div>
                 </div>
             </div>
 
-            <!-- Recent Activity -->
+            <!-- Real-time Activity Feed -->
             <div class="activity-section">
-                <div class="activity-header">
-                    <h3>Recent Activity</h3>
-                    <button class="btn btn-secondary" id="viewAllActivity">View All</button>
+                <div class="section-header">
+                    <h3>Real-time Activity</h3>
+                    <span class="live-indicator">● LIVE</span>
                 </div>
-                <div class="activity-list" id="recentActivity">
-                    <!-- Activity items will be populated here -->
+                <div class="activity-feed" id="activityFeed">
+                    <!-- Activity items will be populated dynamically -->
                 </div>
             </div>
         </section>
 
-        <!-- Users Section -->
+        <!-- Advanced Analytics Section -->
+        <section id="analytics" class="admin-section">
+            <div class="admin-section-header">
+                <h1>Advanced Analytics</h1>
+                <p>Deep dive into user behavior, trip patterns, and business intelligence</p>
+            </div>
+
+            <!-- Analytics Grid -->
+            <div class="analytics-grid">
+                <div class="analytics-card">
+                    <h3>User Behavior Analysis</h3>
+                    <div id="userBehaviorChart" class="chart"></div>
+                </div>
+                <div class="analytics-card">
+                    <h3>Trip Completion Funnel</h3>
+                    <div id="funnelChart" class="chart"></div>
+                </div>
+                <div class="analytics-card">
+                    <h3>Seasonal Trends</h3>
+                    <div id="seasonalChart" class="chart"></div>
+                </div>
+                <div class="analytics-card">
+                    <h3>Revenue by Destination</h3>
+                    <div id="destinationRevenueChart" class="chart"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- User Management Section -->
         <section id="users" class="admin-section">
             <div class="admin-section-header">
                 <h1>User Management</h1>
-                <p>Manage user accounts, permissions, and access control</p>
+                <p>Comprehensive user analytics and management tools</p>
             </div>
 
-            <div class="users-controls">
-                <div class="search-box">
-                    <input type="text" id="userSearch" placeholder="Search users..." class="search-input">
-                    <i class="fas fa-search"></i>
-                </div>
-                <div class="user-filters">
-                    <select id="userStatusFilter" class="filter-select">
-                        <option value="">All Status</option>
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                        <option value="suspended">Suspended</option>
-                    </select>
-                    <select id="userRoleFilter" class="filter-select">
-                        <option value="">All Roles</option>
-                        <option value="user">User</option>
-                        <option value="premium">Premium</option>
-                        <option value="admin">Admin</option>
-                    </select>
-                </div>
-                <button class="btn btn-primary" id="exportUsers">
-                    <i class="fas fa-download"></i>
-                    Export Users
-                </button>
+            <!-- User Filters -->
+            <div class="user-filters">
+                <input type="text" placeholder="Search users..." class="search-input">
+                <select class="filter-select">
+                    <option value="">All Users</option>
+                    <option value="active">Active</option>
+                    <option value="premium">Premium</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+                <button class="btn btn-primary">Export Users</button>
             </div>
 
-            <div class="users-table-container">
-                <table class="admin-table" id="usersTable">
+            <!-- User Table -->
+            <div class="user-table-container">
+                <table class="user-table">
                     <thead>
                         <tr>
                             <th>User</th>
                             <th>Email</th>
                             <th>Status</th>
-                            <th>Role</th>
-                            <th>Joined</th>
+                            <th>Trips</th>
+                            <th>Revenue</th>
+                            <th>Last Active</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="usersTableBody">
-                        <!-- User rows will be populated here -->
+                    <tbody id="userTableBody">
+                        <!-- User rows will be populated dynamically -->
                     </tbody>
                 </table>
             </div>
         </section>
 
-        <!-- Analytics Section -->
-        <section id="analytics" class="admin-section">
+        <!-- Trip Analytics Section -->
+        <section id="trips" class="admin-section">
             <div class="admin-section-header">
-                <h1>Advanced Analytics</h1>
-                <p>Deep insights into user behavior and platform performance</p>
+                <h1>Trip Analytics</h1>
+                <p>Comprehensive analysis of trip generation and user preferences</p>
             </div>
 
-            <div class="analytics-grid">
-                <div class="analytics-card">
-                    <h3>Geographic Distribution</h3>
-                    <canvas id="geoChart"></canvas>
+            <!-- Trip Metrics -->
+            <div class="trip-metrics">
+                <div class="metric-card">
+                    <h4>Popular Destinations</h4>
+                    <div id="popularDestinations" class="metric-content"></div>
                 </div>
-
-                <div class="analytics-card">
-                    <h3>Popular Destinations</h3>
-                    <canvas id="destinationsChart"></canvas>
+                <div class="metric-card">
+                    <h4>Budget Distribution</h4>
+                    <div id="budgetDistribution" class="metric-content"></div>
                 </div>
-
-                <div class="analytics-card">
-                    <h3>User Engagement</h3>
-                    <canvas id="engagementChart"></canvas>
-                </div>
-
-                <div class="analytics-card">
-                    <h3>Conversion Funnel</h3>
-                    <canvas id="funnelChart"></canvas>
+                <div class="metric-card">
+                    <h4>Trip Duration Patterns</h4>
+                    <div id="durationPatterns" class="metric-content"></div>
                 </div>
             </div>
         </section>
 
-        <!-- Reports Section -->
-        <section id="reports" class="admin-section">
+        <!-- Revenue & Finance Section -->
+        <section id="revenue" class="admin-section">
             <div class="admin-section-header">
-                <h1>Reports & Insights</h1>
-                <p>Generate comprehensive reports and business intelligence</p>
+                <h1>Revenue & Finance</h1>
+                <p>Financial performance and revenue analytics</p>
             </div>
 
-            <div class="reports-grid">
-                <div class="report-card">
-                    <div class="report-icon">
-                        <i class="fas fa-chart-pie"></i>
-                    </div>
-                    <h3>Business Intelligence Report</h3>
-                    <p>Comprehensive analysis of platform performance, user behavior, and revenue metrics</p>
-                    <button class="btn btn-primary" onclick="generateReport('bi')">Generate Report</button>
+            <!-- Revenue Charts -->
+            <div class="revenue-charts">
+                <div class="chart-container">
+                    <h3>Monthly Revenue</h3>
+                    <div id="monthlyRevenueChart" class="chart"></div>
                 </div>
+                <div class="chart-container">
+                    <h3>Revenue by Source</h3>
+                    <div id="revenueSourceChart" class="chart"></div>
+                </div>
+            </div>
+        </section>
 
-                <div class="report-card">
-                    <div class="report-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <h3>User Analytics Report</h3>
-                    <p>Detailed user behavior analysis, demographics, and engagement patterns</p>
-                    <button class="btn btn-primary" onclick="generateReport('users')">Generate Report</button>
-                </div>
+        <!-- Marketing & Growth Section -->
+        <section id="marketing" class="admin-section">
+            <div class="admin-section-header">
+                <h1>Marketing & Growth</h1>
+                <p>Marketing performance and growth metrics</p>
+            </div>
 
-                <div class="report-card">
-                    <div class="report-icon">
-                        <i class="fas fa-map-marked-alt"></i>
-                    </div>
-                    <h3>Trip Planning Report</h3>
-                    <p>Analysis of trip planning patterns, popular destinations, and seasonal trends</p>
-                    <button class="btn btn-primary" onclick="generateReport('trips')">Generate Report</button>
+            <!-- Marketing Metrics -->
+            <div class="marketing-metrics">
+                <div class="metric-card">
+                    <h4>Referral Performance</h4>
+                    <div id="referralMetrics" class="metric-content"></div>
                 </div>
+                <div class="metric-card">
+                    <h4>Conversion Funnel</h4>
+                    <div id="conversionFunnel" class="metric-content"></div>
+                </div>
+            </div>
+        </section>
 
-                <div class="report-card">
-                    <div class="report-icon">
-                        <i class="fas fa-dollar-sign"></i>
+        <!-- Integrations Section -->
+        <section id="integrations" class="admin-section">
+            <div class="admin-section-header">
+                <h1>Integrations & APIs</h1>
+                <p>Third-party integrations and API performance</p>
+            </div>
+
+            <!-- Integration Status -->
+            <div class="integration-grid">
+                <div class="integration-card">
+                    <div class="integration-header">
+                        <i class="fab fa-google"></i>
+                        <h4>Google Analytics</h4>
+                        <span class="status active">Active</span>
                     </div>
-                    <h3>Financial Report</h3>
-                    <p>Revenue analysis, cost breakdown, and profitability metrics</p>
-                    <button class="btn btn-primary" onclick="generateReport('financial')">Generate Report</button>
+                    <p>User behavior tracking and conversion analytics</p>
+                    <div class="integration-metrics">
+                        <span>Events: 1,234</span>
+                        <span>Users: 567</span>
+                    </div>
                 </div>
+                <div class="integration-card">
+                    <div class="integration-header">
+                        <i class="fab fa-stripe"></i>
+                        <h4>Stripe Payments</h4>
+                        <span class="status active">Active</span>
+                    </div>
+                    <p>Payment processing and revenue tracking</p>
+                    <div class="integration-metrics">
+                        <span>Transactions: 89</span>
+                        <span>Success Rate: 98.5%</span>
+                    </div>
+                </div>
+                <div class="integration-card">
+                    <div class="integration-header">
+                        <i class="fab fa-mailchimp"></i>
+                        <h4>Mailchimp</h4>
+                        <span class="status pending">Pending</span>
+                    </div>
+                    <p>Email marketing and automation</p>
+                    <button class="btn btn-small">Configure</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Reports & BI Section -->
+        <section id="reports" class="admin-section">
+            <div class="admin-section-header">
+                <h1>Reports & Business Intelligence</h1>
+                <p>Generate professional reports for stakeholders and investors</p>
+            </div>
+
+            <!-- Report Templates -->
+            <div class="report-templates">
+                <div class="report-template">
+                    <h4>Executive Summary</h4>
+                    <p>High-level business performance overview</p>
+                    <button class="btn btn-primary" onclick="generateReport('executive')">Generate</button>
+                </div>
+                <div class="report-template">
+                    <h4>Investor Report</h4>
+                    <p>Financial performance and growth metrics</p>
+                    <button class="btn btn-primary" onclick="generateReport('investor')">Generate</button>
+                </div>
+                <div class="report-template">
+                    <h4>Marketing Analysis</h4>
+                    <p>User acquisition and conversion analysis</p>
+                    <button class="btn btn-primary" onclick="generateReport('marketing')">Generate</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tasks & KPIs Section -->
+        <section id="tasks" class="admin-section">
+            <div class="admin-section-header">
+                <h1>Tasks & KPIs</h1>
+                <p>Track team performance and key performance indicators</p>
+            </div>
+
+            <!-- KPI Dashboard -->
+            <div class="kpi-dashboard">
+                <div class="kpi-card">
+                    <h4>User Acquisition</h4>
+                    <div class="kpi-value">1,234</div>
+                    <div class="kpi-target">Target: 1,500</div>
+                    <div class="kpi-progress">
+                        <div class="progress-bar" style="width: 82%"></div>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <h4>Revenue Growth</h4>
+                    <div class="kpi-value">+15.2%</div>
+                    <div class="kpi-target">Target: +12%</div>
+                    <div class="kpi-progress">
+                        <div class="progress-bar" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Task Management -->
+            <div class="task-management">
+                <h3>Team Tasks</h3>
+                <div class="task-list" id="taskList">
+                    <!-- Tasks will be populated dynamically -->
+                </div>
+                <button class="btn btn-primary" onclick="addTask()">Add Task</button>
             </div>
         </section>
 
@@ -314,48 +451,37 @@
         <section id="logs" class="admin-section">
             <div class="admin-section-header">
                 <h1>System Logs</h1>
-                <p>Monitor system performance, errors, and security events</p>
+                <p>Monitor system performance and troubleshoot issues</p>
             </div>
 
-            <div class="logs-controls">
-                <div class="log-filters">
-                    <select id="logLevelFilter" class="filter-select">
-                        <option value="">All Levels</option>
-                        <option value="error">Error</option>
-                        <option value="warning">Warning</option>
-                        <option value="info">Info</option>
-                        <option value="debug">Debug</option>
-                    </select>
-                    <select id="logTimeFilter" class="filter-select">
-                        <option value="1">Last Hour</option>
-                        <option value="24" selected>Last 24 Hours</option>
-                        <option value="168">Last Week</option>
-                        <option value="720">Last Month</option>
-                    </select>
-                </div>
-                <button class="btn btn-secondary" id="refreshLogs">
-                    <i class="fas fa-sync-alt"></i>
-                    Refresh
-                </button>
+            <!-- Log Filters -->
+            <div class="log-filters">
+                <select class="log-level-filter">
+                    <option value="">All Levels</option>
+                    <option value="error">Errors</option>
+                    <option value="warning">Warnings</option>
+                    <option value="info">Info</option>
+                </select>
+                <input type="text" placeholder="Search logs..." class="log-search">
+                <button class="btn btn-ghost" onclick="exportLogs()">Export Logs</button>
             </div>
 
-            <div class="logs-container">
-                <div class="logs-table-container">
-                    <table class="admin-table" id="logsTable">
-                        <thead>
-                            <tr>
-                                <th>Timestamp</th>
-                                <th>Level</th>
-                                <th>Source</th>
-                                <th>Message</th>
-                                <th>Details</th>
-                            </tr>
-                        </thead>
-                        <tbody id="logsTableBody">
-                            <!-- Log entries will be populated here -->
-                        </tbody>
-                    </table>
-                </div>
+            <!-- Log Table -->
+            <div class="log-table-container">
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Level</th>
+                            <th>Message</th>
+                            <th>User</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logTableBody">
+                        <!-- Log rows will be populated dynamically -->
+                    </tbody>
+                </table>
             </div>
         </section>
 
@@ -363,37 +489,24 @@
         <section id="settings" class="admin-section">
             <div class="admin-section-header">
                 <h1>System Settings</h1>
-                <p>Configure platform settings, integrations, and system parameters</p>
+                <p>Configure platform settings and integrations</p>
             </div>
 
+            <!-- Settings Forms -->
             <div class="settings-grid">
                 <div class="settings-card">
-                    <h3>General Settings</h3>
+                    <h4>General Settings</h4>
                     <form class="settings-form">
                         <div class="form-group">
                             <label>Platform Name</label>
                             <input type="text" value="Wayzo" class="form-input">
                         </div>
                         <div class="form-group">
-                            <label>Maintenance Mode</label>
-                            <label class="switch">
-                                <input type="checkbox" id="maintenanceMode">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                        <div class="form-group">
                             <label>Default Language</label>
                             <select class="form-input">
-                                <option value="en" selected>English</option>
+                                <option value="en">English</option>
                                 <option value="es">Spanish</option>
                                 <option value="fr">French</option>
-                                <option value="de">German</option>
-                                <option value="it">Italian</option>
-                                <option value="pt">Portuguese</option>
-                                <option value="ru">Russian</option>
-                                <option value="zh">Chinese</option>
-                                <option value="ja">Japanese</option>
-                                <option value="ko">Korean</option>
                             </select>
                         </div>
                         <button type="submit" class="btn btn-primary">Save Changes</button>
@@ -401,50 +514,15 @@
                 </div>
 
                 <div class="settings-card">
-                    <h3>Security Settings</h3>
+                    <h4>API Configuration</h4>
                     <form class="settings-form">
                         <div class="form-group">
-                            <label>Two-Factor Authentication</label>
-                            <label class="switch">
-                                <input type="checkbox" id="twoFactorAuth" checked>
-                                <span class="slider"></span>
-                            </label>
+                            <label>OpenAI API Key</label>
+                            <input type="password" placeholder="sk-..." class="form-input">
                         </div>
-                        <div class="form-group">
-                            <label>Session Timeout (minutes)</label>
-                            <input type="number" value="30" min="5" max="480" class="form-input">
-                        </div>
-                        <div class="form-group">
-                            <label>Password Policy</label>
-                            <select class="form-input">
-                                <option value="low">Low (6+ characters)</option>
-                                <option value="medium" selected>Medium (8+ characters, mixed case)</option>
-                                <option value="high">High (10+ characters, symbols required)</option>
-                            </select>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Save Changes</button>
-                    </form>
-                </div>
-
-                <div class="settings-card">
-                    <h3>Integration Settings</h3>
-                    <form class="settings-form">
                         <div class="form-group">
                             <label>Google Analytics ID</label>
-                            <input type="text" placeholder="GA-XXXXXXXXX" class="form-input">
-                        </div>
-                        <div class="form-group">
-                            <label>Stripe API Key</label>
-                            <input type="password" placeholder="sk_test_..." class="form-input">
-                        </div>
-                        <div class="form-group">
-                            <label>Email Service</label>
-                            <select class="form-input">
-                                <option value="sendgrid">SendGrid</option>
-                                <option value="mailgun">Mailgun</option>
-                                <option value="ses">AWS SES</option>
-                                <option value="smtp">SMTP</option>
-                            </select>
+                            <input type="text" placeholder="G-XXXXXXXXXX" class="form-input">
                         </div>
                         <button type="submit" class="btn btn-primary">Save Changes</button>
                     </form>
@@ -453,7 +531,7 @@
         </section>
     </main>
 
-    <!-- Admin Scripts -->
-    <script src="admin.js"></script>
+    <!-- Scripts -->
+    <script src="/frontend/admin.js"></script>
 </body>
 </html>
