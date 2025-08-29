@@ -382,7 +382,11 @@
       console.log('Full plan result:', result);
       
       // Check if user is a test user - bypass payment
+      console.log('Current user:', currentUser);
+      console.log('Is test user?', currentUser && currentUser.isTestUser);
+      
       if (currentUser && currentUser.isTestUser) {
+        console.log('🧪 Test user detected - bypassing payment!');
         // Test user - show full plan immediately without payment
         previewEl.innerHTML = `
           <div class="test-user-notice">
@@ -506,6 +510,17 @@
     } else if (getBackSection) {
       getBackSection.style.display = 'none';
     }
+  };
+
+  // Debug function to check authentication status
+  window.checkAuthStatus = () => {
+    console.log('=== AUTHENTICATION STATUS ===');
+    console.log('isAuthenticated:', isAuthenticated);
+    console.log('currentUser:', currentUser);
+    console.log('localStorage wayzo_authenticated:', localStorage.getItem('wayzo_authenticated'));
+    console.log('localStorage wayzo_user:', localStorage.getItem('wayzo_user'));
+    console.log('Is test user?', currentUser && currentUser.isTestUser);
+    console.log('============================');
   };
 
   // Bind paywall functionality
