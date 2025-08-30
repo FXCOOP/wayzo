@@ -513,6 +513,30 @@
     
     // Check if full plan is available and show "Get Back" button
     checkAndShowGetBackButton();
+    
+    // Setup image error handling
+    setupImageErrorHandling();
+  };
+
+  // Setup image error handling and fallbacks
+  const setupImageErrorHandling = () => {
+    // Handle image loading errors
+    document.addEventListener('error', function(e) {
+      if (e.target.tagName === 'IMG') {
+        console.log('Image failed to load:', e.target.src);
+        // Replace failed image with a placeholder
+        e.target.style.display = 'none';
+        const placeholder = document.createElement('div');
+        placeholder.className = 'image-placeholder';
+        placeholder.innerHTML = `
+          <div class="placeholder-content">
+            <span class="placeholder-icon">🖼️</span>
+            <p>Image loading...</p>
+          </div>
+        `;
+        e.target.parentNode.insertBefore(placeholder, e.target);
+      }
+    }, true);
   };
 
   // Check if full plan is available and show "Get Back" button
