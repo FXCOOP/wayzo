@@ -16,15 +16,25 @@ export function affiliatesFor(dest = '') {
     cars:      ()      => `https://www.rentalcars.com/SearchResults.do?destination=${q}`,
     insurance: ()      => `https://www.worldnomads.com/`,
     reviews:   (term) => `https://www.tripadvisor.com/Search?q=${encodeURIComponent(term || dest)}`,
-    image:     (term) => `https://source.unsplash.com/400x300/?${encodeURIComponent(term || dest)},travel,landmark&fit=crop&w=400&h=300`,
+    image:     (term) => `https://picsum.photos/400/300?random=${Math.floor(Math.random() * 1000)}`,
   };
 }
 export function linkifyTokens(markdown = '', dest = '') {
   const aff = affiliatesFor(dest);
-  return (markdown || '')
+  console.log('Processing markdown for destination:', dest);
+  console.log('Image function:', aff.image);
+  
+  const processed = (markdown || '')
     .replace(/\[(Map)\]\(map:([^)]+)\)/gi,        (_m, _t, q) => `[Map](${aff.maps(q.trim())})`)
     .replace(/\[(Book)\]\(book:([^)]+)\)/gi,      (_m, _t, q) => `[Book](${aff.hotels(q.trim())})`)
     .replace(/\[(Tickets)\]\(tickets:([^)]+)\)/gi,(_m, _t, q) => `[Tickets](${aff.activities(q.trim())})`)
     .replace(/\[(Reviews)\]\(reviews:([^)]+)\)/gi,(_m, _t, q) => `[Reviews](${aff.reviews(q.trim())})`)
-    .replace(/!\[([^\]]*)\]\(image:([^)]+)\)/gi,  (_m, alt, q) => `![${alt || 'Photo'}](${aff.image(q.trim())})`);
+    .replace(/!\[([^\]]*)\]\(image:([^)]+)\)/gi,  (_m, alt, q) => {
+      const imageUrl = aff.image(q.trim());
+      console.log('Generated image URL:', imageUrl, 'for query:', q.trim());
+      return `![${alt || 'Photo'}](${imageUrl})`;
+    });
+  
+  console.log('Processed markdown length:', processed.length);
+  return processed;
 }
