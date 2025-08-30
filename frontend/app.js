@@ -269,12 +269,15 @@
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    // Check if user is authenticated for preview
+    // Check if user is authenticated for preview (test users bypass this)
     if (!isAuthenticated) {
       showNotification('Please sign in to generate trip previews.', 'warning');
       showAuthModal();
       return;
     }
+    
+    // Test users get enhanced preview with all features
+    const isTestUser = currentUser && currentUser.isTestUser;
     
     const data = readForm();
     console.log('Form data:', data);
@@ -304,10 +307,31 @@
       hide(loadingEl);
       show(previewEl);
       
-      // Show action buttons
-      show(pdfBtn);
-      show(icsBtn);
-      show(saveBtn);
+      // Show action buttons (test users get enhanced preview)
+      if (isTestUser) {
+        // Test users get enhanced preview with all features
+        show(pdfBtn);
+        show(icsBtn);
+        show($('#excelBtn'));
+        show($('#shareBtn'));
+        show(saveBtn);
+        
+        // Add test user notice for enhanced preview
+        const testUserNotice = document.createElement('div');
+        testUserNotice.className = 'test-user-notice';
+        testUserNotice.innerHTML = `
+          <h3>🧪 TEST USER - Enhanced Preview!</h3>
+          <p>You're signed in as a test user. This preview includes all premium features and download options.</p>
+        `;
+        previewEl.insertBefore(testUserNotice, previewEl.firstChild);
+        
+        showNotification('🧪 Test user: Enhanced preview with all features unlocked!', 'info');
+      } else {
+        // Regular users get basic preview
+        show(pdfBtn);
+        show(icsBtn);
+        show(saveBtn);
+      }
       
       // Track successful preview generation
       trackEvent('preview_generated', { destination: data.destination, budget: data.budget });
@@ -521,6 +545,42 @@
     console.log('localStorage wayzo_user:', localStorage.getItem('wayzo_user'));
     console.log('Is test user?', currentUser && currentUser.isTestUser);
     console.log('============================');
+  };
+
+  // Helper function to check if user is test user
+  const isTestUser = () => {
+    return currentUser && currentUser.isTestUser;
+  };
+
+  // Test user gets access to all premium features
+  const unlockAllFeaturesForTestUser = () => {
+    if (isTestUser()) {
+      // Show all download buttons
+      show(pdfBtn);
+      show(icsBtn);
+      show($('#excelBtn'));
+      show($('#shareBtn'));
+      
+      // Hide any paywalls or restrictions
+      hide($('#purchaseActions'));
+      
+      // Show test user notice
+      showNotification('🧪 Test user: All premium features unlocked!', 'info');
+      
+      return true;
+    }
+    return false;
+  };
+
+  // Global function for test users to unlock all features
+  window.unlockAllFeatures = () => {
+    if (isTestUser()) {
+      unlockAllFeaturesForTestUser();
+      return true;
+    } else {
+      showNotification('This feature is only available for test users.', 'warning');
+      return false;
+    }
   };
 
   // Bind paywall functionality
@@ -1133,6 +1193,12 @@ let currentUser = JSON.parse(localStorage.getItem('wayzo_user') || 'null');
     const adminBtn = document.querySelector('.admin-only');
     if (adminBtn) {
       adminBtn.style.display = currentUser.isAdmin ? 'block' : 'none';
+    }
+    
+    // Test users get immediate access to all features
+    if (isTestUser()) {
+      unlockAllFeaturesForTestUser();
+      showNotification('🎉 Test user signed in! All premium features are now unlocked for testing!', 'success');
     }
     
     // Cabinet is now available but doesn't auto-open
