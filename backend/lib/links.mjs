@@ -16,7 +16,7 @@ export function affiliatesFor(dest = '') {
     cars:      ()      => `https://www.rentalcars.com/SearchResults.do?destination=${q}`,
     insurance: ()      => `https://www.worldnomads.com/`,
     reviews:   (term) => `https://www.tripadvisor.com/Search?q=${encodeURIComponent(term || dest)}`,
-    image:     (term) => `https://picsum.photos/400/300?random=${Math.floor(Math.random() * 1000)}`,
+    image:     (term) => `https://source.unsplash.com/400x300/?${encodeURIComponent(term || dest)}`,
   };
 }
 export function linkifyTokens(markdown = '', dest = '') {
@@ -32,7 +32,10 @@ export function linkifyTokens(markdown = '', dest = '') {
     .replace(/!\[([^\]]*)\]\(image:([^)]+)\)/gi,  (_m, alt, q) => {
       const imageUrl = aff.image(q.trim());
       console.log('Generated image URL:', imageUrl, 'for query:', q.trim());
-      return `![${alt || 'Photo'}](${imageUrl})`;
+      
+      // Add error handling for images
+      const imgTag = `![${alt || 'Photo'}](${imageUrl})`;
+      return imgTag;
     });
   
   console.log('Processed markdown length:', processed.length);

@@ -422,6 +422,11 @@ ${dateMode === 'flexible' ? `- **Flexible Date Optimization**: Suggest the best 
 - Use descriptive alt text that includes the destination name
 - Position images after relevant content sections
 - Make sure images enhance the reading experience
+- **CRITICAL**: Use specific, searchable terms for images:
+  - For landmarks: use exact names (e.g., "Eiffel Tower Paris", "Brandenburg Gate Berlin")
+  - For food: use local dish names (e.g., "Croissant Paris", "Currywurst Berlin")
+  - For activities: use specific activities (e.g., "Cycling Amsterdam", "Hiking Swiss Alps")
+  - For culture: use local terms (e.g., "Japanese Temple", "Italian Piazza")
 
 **Requirements:**
 - Make it feel like a premium travel guide

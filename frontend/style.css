@@ -2254,6 +2254,38 @@ fieldset.field .chip {
   transition: transform 0.3s ease, box-shadow 0.3s ease !important;
 }
 
+/* Image error handling */
+.trip-report img:error,
+#preview img:error {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: white !important;
+  font-size: 1.2rem !important;
+  font-weight: 600 !important;
+  text-align: center !important;
+}
+
+/* Image loading placeholder */
+.trip-report img[src*="unsplash"],
+#preview img[src*="unsplash"] {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  position: relative;
+}
+
+.trip-report img[src*="unsplash"]::before,
+#preview img[src*="unsplash"]::before {
+  content: "🖼️ Loading...";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 1rem;
+  z-index: 1;
+}
+
 .trip-report img:hover,
 #preview img:hover {
   transform: scale(1.02) !important;
