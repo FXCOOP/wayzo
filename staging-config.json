@@ -1,0 +1,46 @@
+{
+  "staging": {
+    "frontend": {
+      "url": "https://wayzo-staging.vercel.app",
+      "environment": "staging",
+      "branch": "staging"
+    },
+    "backend": {
+      "url": "https://wayzo-backend-staging.onrender.com",
+      "environment": "staging",
+      "database": "wayzo-staging.sqlite"
+    }
+  },
+  "production": {
+    "frontend": {
+      "url": "https://wayzo.com",
+      "environment": "production",
+      "branch": "main"
+    },
+    "backend": {
+      "url": "https://api.wayzo.com",
+      "environment": "production",
+      "database": "wayzo-production.sqlite"
+    }
+  },
+  "deployment": {
+    "staging": {
+      "auto_deploy": true,
+      "require_approval": false,
+      "environment_variables": {
+        "NODE_ENV": "staging",
+        "OPENAI_API_KEY": "staging_key",
+        "ORIGIN": "https://wayzo-staging.vercel.app"
+      }
+    },
+    "production": {
+      "auto_deploy": false,
+      "require_approval": true,
+      "environment_variables": {
+        "NODE_ENV": "production",
+        "OPENAI_API_KEY": "production_key",
+        "ORIGIN": "https://wayzo.com"
+      }
+    }
+  }
+}
