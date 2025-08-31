@@ -1,0 +1,45 @@
+services:
+  - type: web
+    name: wayzo-backend
+    env: node
+    plan: starter
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: ORIGIN
+        value: https://wayzo-frontend.onrender.com
+    healthCheckPath: /healthz
+    autoDeploy: true
+
+  - type: web
+    name: wayzo-frontend
+    env: static
+    buildCommand: echo "Static site - no build needed"
+    staticPublishPath: ./frontend
+    routes:
+      - type: rewrite
+        source: /
+        destination: /index.backend.html
+      - type: rewrite
+        source: /pro
+        destination: /pro.html
+    headers:
+      - path: "*.css"
+        name: Cache-Control
+        value: "public, max-age=31536000, immutable"
+      - path: "*.js"
+        name: Cache-Control
+        value: "public, max-age=31536000, immutable"
+      - path: "*.{jpg,jpeg,png,gif,svg,webp}"
+        name: Cache-Control
+        value: "public, max-age=31536000, immutable"
