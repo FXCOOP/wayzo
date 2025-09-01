@@ -7,6 +7,54 @@
   <meta name="mapbox-key" content="">
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css" rel="stylesheet">
   <link rel="stylesheet" href="/frontend/style.css">
+  <style>
+    /* Enhanced image handling styles */
+    .image-placeholder { 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      background: #f5f7fb; 
+      border: 1px dashed #cbd5e1; 
+      border-radius: 12px; 
+      min-height: 220px; 
+      margin: 8px 0; 
+    }
+    .image-placeholder .placeholder-content { 
+      text-align: center; 
+      color: #64748b; 
+    }
+    .image-loaded + .image-placeholder { 
+      display: none !important; 
+    }
+    .hidden { 
+      display: none !important; 
+    }
+    .done { 
+      text-decoration: line-through; 
+      color: #64748b; 
+    }
+    .status-pending { 
+      color: #b45309; 
+      font-weight: 600; 
+    }
+    .status-total { 
+      color: #0f766e; 
+      font-weight: 700; 
+    }
+    
+    /* Print friendliness */
+    @media print {
+      a[href^="http"]::after { 
+        content: " (" attr(href) ")"; 
+        font-size: 10px; 
+        color: #475569; 
+      }
+      img, table, h2, h3 { 
+        break-inside: avoid; 
+        page-break-inside: avoid; 
+      }
+    }
+  </style>
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.js"></script>
 </head>
 <body>

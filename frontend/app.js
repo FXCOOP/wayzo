@@ -123,55 +123,48 @@ function setPreviewHTML(html = '') {
     previewBox.innerHTML = html || '<div class="muted">Enter your trip details and generate a plan to see a detailed itinerary here.</div>';
     previewBox.classList.add('markdown'); // Apply rich styles
     
-    // Enhanced image handling with multiple fallbacks
+    // Enhanced image handling with proper placeholder pattern
     previewBox.querySelectorAll('img[src*="unsplash.com"], img[src*="source.unsplash.com"]').forEach((img, index) => {
+      // Create proper placeholder structure
+      const placeholder = document.createElement('div');
+      placeholder.className = 'image-placeholder';
+      placeholder.innerHTML = `
+        <div class="placeholder-content">
+          <strong>${img.alt || 'Travel Image'}</strong><br>
+          Loading preview…
+        </div>
+      `;
+      
+      // Insert placeholder before image
+      img.parentNode?.insertBefore(placeholder, img);
+      
+      // Style the image properly
       img.loading = 'lazy';
+      img.decoding = 'async';
       img.style.maxWidth = '100%';
       img.style.height = 'auto';
       img.style.borderRadius = '8px';
+      img.style.margin = '8px 0';
       
-      let fallbackAttempts = 0;
-      const maxFallbacks = 3;
-      
-      const handleImageError = () => {
-        fallbackAttempts++;
-        console.warn(`Image failed to load (attempt ${fallbackAttempts}):`, img.src);
-        
-        if (fallbackAttempts === 1) {
-          // First fallback: try a more generic search
-          const originalSrc = img.src;
-          const urlParams = new URLSearchParams(originalSrc.split('?')[1]);
-          const query = urlParams.get('query') || urlParams.toString();
-          const destination = query.split(' ')[0]; // Get first word as destination
-          img.src = `https://source.unsplash.com/1600x900/?${encodeURIComponent(destination)}`;
-        } else if (fallbackAttempts === 2) {
-          // Second fallback: generic travel image
-          img.src = `https://source.unsplash.com/1600x900/?travel,vacation`;
-        } else if (fallbackAttempts >= maxFallbacks) {
-          // Final fallback: placeholder or hide
-          const placeholder = document.createElement('div');
-          placeholder.className = 'image-placeholder';
-          placeholder.style.cssText = 'background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); height: 200px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 500;';
-          placeholder.textContent = '📸 Image not available';
-          img.parentNode?.replaceChild(placeholder, img);
-        }
+      // Handle image load/error
+      const reveal = () => {
+        img.classList.add('image-loaded');
+        placeholder.classList.add('hidden');
       };
       
-      img.onerror = handleImageError;
-      
-      // Add loading indicator
-      const loadingDiv = document.createElement('div');
-      loadingDiv.className = 'image-loading';
-      loadingDiv.style.cssText = 'background: #f1f5f9; height: 200px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #64748b;';
-      loadingDiv.textContent = 'Loading image...';
-      
-      img.style.display = 'none';
-      img.parentNode?.insertBefore(loadingDiv, img);
-      
-      img.onload = () => {
-        img.style.display = 'block';
-        loadingDiv.remove();
+      const fail = () => {
+        placeholder.querySelector('.placeholder-content').innerHTML = `
+          <strong>Image Unavailable</strong><br>
+          Check URL or network connection
+        `;
       };
+      
+      if (img.complete) {
+        if (img.naturalWidth > 0) reveal(); else fail();
+      } else {
+        img.addEventListener('load', reveal, { once: true });
+        img.addEventListener('error', fail, { once: true });
+      }
     });
     
     // Handle checklist items - make them interactive
@@ -188,6 +181,20 @@ function setPreviewHTML(html = '') {
           }
         });
       }
+    });
+    
+    // Handle budget table checkboxes
+    previewBox.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+      checkbox.addEventListener('change', (e) => {
+        const row = e.target.closest('tr');
+        if (row) {
+          row.classList.toggle('done', e.target.checked);
+          const status = row.querySelector('.status-pending');
+          if (status) {
+            status.textContent = e.target.checked ? 'Done' : 'Pending';
+          }
+        }
+      });
     });
     
     previewBox.querySelectorAll('#map').forEach(place => {

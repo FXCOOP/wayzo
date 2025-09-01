@@ -142,9 +142,16 @@ Here's a detailed cost analysis to keep your budget on track:
 
 ## 🗺️ Getting Around
 **Transportation Tips:**
+${destination.toLowerCase().includes('santorini') ? `
+- **Flights:** Check Ryanair and Wizz Air for budget-friendly flights from Tel Aviv to Santorini (JTR airport)
+- **Local Transport:** Use KTEL buses to get around the island. Buses are cheap and frequent in summer. Pay the conductor in cash.
+- **ATV Rental:** Consider renting an ATV for more flexibility and adventure!
+- **Walking:** Many attractions are within walking distance in each village
+` : `
 - Local public transport is your best friend for budget-friendly travel
 - Consider day passes for unlimited rides
 - Walking between nearby attractions saves money and gives you local insights
+`}
 
 [Map](map:${destination} public transportation routes)
 
@@ -205,10 +212,21 @@ ${nDays > 3 ? `### Day 4: Nature & Relaxation
 ---
 
 ## 🎫 Must-See Attractions
+${destination.toLowerCase().includes('santorini') ? `
+- **Oia Castle** - Stunning sunset views (public viewpoint, no tickets needed)
+- **Red Beach** - Famous for its unique color (viewpoint only - officially unsafe for swimming)
+- **Perissa/Perivolos Beach** - Black sand beaches perfect for swimming
+- **Akrotiri Archaeological Site** - Explore ancient ruins [Tickets](tickets:${destination} akrotiri)
+- **Santo Wines** - Experience local winemaking (book sunset slots ahead)
+- **Fira's Caldera** - Beautiful views of the sea
+- **Ancient Thera** - Explore the ruins on the mountain
+- **Museum of Prehistoric Thera** - Learn about Santorini's history [Tickets](tickets:${destination} museum)
+` : `
 - **Top Landmark** - Iconic must-visit site [Tickets](tickets:${destination} landmark)
 - **Cultural Heritage** - Museums and historic sites [Reviews](reviews:${destination} museum)
 - **Natural Beauty** - Parks, beaches, or scenic viewpoints [Map](map:${destination} scenic viewpoints)
 - **Local Experiences** - Markets, neighborhoods, authentic activities
+`}
 
 ![${destination} cityscape](image:${destination} cityscape architecture buildings)
 
@@ -297,6 +315,13 @@ QUALITY STANDARDS:
 - Write with confidence and local expertise - no generic advice
 - Include seasonal considerations and weather-specific tips
 - Add estimated travel times between locations
+
+DESTINATION-SPECIFIC ACCURACY (SANTORINI):
+- Red Beach: Officially unsafe/inaccessible beyond barriers → list as "viewpoint only", recommend Perissa/Perivolos for swimming
+- Oia Castle: Public viewpoint → do NOT add "Tickets" links
+- Santo Wines: Mention sunset slots fill fast, suggest booking ahead
+- KTEL buses: Pay conductor in cash, frequent summer service
+- If hours/tickets may vary, say "check current hours just before visiting"
 
 Make this feel like a premium travel guide worth €200, not a generic AI response.`;
 
@@ -400,28 +425,111 @@ app.get('/api/plan/:id/pdf', (req, res) => {
   header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid var(--border);flex-wrap:wrap}
   .logo{display:flex;gap:10px;align-items:center}
   .badge{width:28px;height:28px;border-radius:8px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:700}
-  .pill{border:1px solid var(--border);background:var(--accent);padding:.25rem .6rem;border-radius:999px;font-size:12px}
-  .summary{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 10px 0}
-  .summary .chip{border:1px solid var(--border);background:#fff;border-radius:999px;padding:.25rem .6rem;font-size:12px}
-  .actions{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 14px}
-  .actions a{color:#0f172a;text-decoration:none;border-bottom:1px dotted rgba(2,6,23,.25)}
-  .facts{background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px;margin:8px 0}
-  img{max-width:100%;height:auto;border-radius:10px}
-  table{border-collapse:collapse;width:100%}
-  th,td{border:1px solid var(--border);padding:.45rem .55rem;text-align:left}
-  thead th{background:var(--accent)}
-  footer{margin-top:24px;color:var(--muted);font-size:12px}
+  .test-user-notice{background:var(--accent);padding:8px 12px;border-radius:8px;margin-bottom:16px;font-size:14px;color:var(--muted)}
+  h1{font-size:28px;font-weight:700;margin:0 0 16px 0;color:var(--ink)}
+  h2{font-size:24px;font-weight:600;margin:32px 0 16px 0;color:var(--ink);border-bottom:1px solid var(--border);padding-bottom:8px}
+  h3{font-size:20px;font-weight:600;margin:24px 0 12px 0;color:var(--ink)}
+  p{margin:0 0 16px 0;line-height:1.6}
+  ul,ol{margin:0 0 16px 0;padding-left:24px}
+  li{margin:0 0 8px 0;line-height:1.5}
+  table{border-collapse:collapse;width:100%;margin:16px 0;font-size:14px}
+  th,td{padding:12px;text-align:left;border-bottom:1px solid var(--border)}
+  th{background:var(--accent);font-weight:600;color:var(--ink)}
+  tr:hover{background:var(--accent)}
+  a{color:var(--brand);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .chip{display:inline-block;background:var(--accent);padding:4px 8px;border-radius:4px;font-size:12px;margin:2px}
+  .muted{color:var(--muted);font-size:14px}
+  .summary{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+  .summary .chip{background:var(--accent);padding:6px 12px;font-size:14px}
+  
+  /* Better placeholder styling */
+  .image-placeholder { 
+    display:flex; align-items:center; justify-content:center; 
+    background:#f5f7fb; border:1px dashed #cbd5e1; border-radius:12px; 
+    min-height:220px; margin:8px 0; 
+  }
+  .image-placeholder .placeholder-content { text-align:center; color:#64748b; }
+  .image-loaded + .image-placeholder { display:none !important; }
+  .hidden { display:none !important; }
+
+  /* Toggling styles */
+  .done { text-decoration: line-through; color:#64748b; }
+  .status-pending { color:#b45309; font-weight:600; }
+  .status-total { color:#0f766e; font-weight:700; }
+
+  /* Print friendliness */
+  @media print {
+    body { color: #0f172a; }
+    a[href^="http"]::after { content: " (" attr(href) ")"; font-size: 10px; color:#475569; }
+    .header, .test-user-notice { break-inside: avoid; }
+    img, table, h2, h3 { break-inside: avoid; page-break-inside: avoid; }
+  }
 </style>
-</head><body>
+</head>
+<body>
 <header>
+  <div class="logo">
+    <div class="badge">W</div>
+    <div>
+      <strong>Wayzo Trip Plan</strong><br>
+      <span class="muted">Generated on ${new Date().toLocaleDateString()}</span>
+    </div>
+  </div>
+  <div class="muted">
+    <a href="${pdfUrl}">📄 PDF</a> • 
+    <a href="${icsUrl}">📅 Calendar</a> • 
+    <a href="${shareX}">📤 Share</a>
+  </div>
 </header>
-<div class="summary">
-  <span class="chip"><b>Travelers:</b> ${traveler}</span>
-  <span class="chip"><b>Style:</b> ${style}${d.prefs ? ` · ${escapeHtml(d.prefs)}` : ""}</span>
-  <span class="chip"><b>Budget:</b> ${normalizeBudget(d.budget, d.currency)} ${d.currency} (${pppd}/day/person)</span>
-  <span class="chip"><b>Season:</b> ${season}</span>
+
+<div class="test-user-notice">
+  🧪 TEST USER MODE - Full Plan Unlocked!<br>
+  You're signed in as a test user. All features are unlocked for testing purposes.
 </div>
-</body></html>`;
+
+${htmlBody}
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Unhide images and wire up placeholders
+  document.querySelectorAll('.image-placeholder + img').forEach((img) => {
+    const placeholder = img.previousElementSibling;
+    const reveal = () => {
+      img.classList.add('image-loaded');
+      if (placeholder) placeholder.classList.add('hidden');
+    };
+    const fail = () => {
+      if (placeholder) {
+        const p = placeholder.querySelector('p');
+        if (p) p.textContent = 'Image unavailable (check URL or network)';
+      }
+    };
+    if (img.complete) {
+      // Image already in cache
+      if (img.naturalWidth > 0) reveal(); else fail();
+    } else {
+      img.addEventListener('load', reveal, { once: true });
+      img.addEventListener('error', fail, { once: true });
+    }
+  });
+
+  // Define toggle helpers to avoid console errors
+  window.toggleBudgetItem = (el) => {
+    const row = el.closest('tr');
+    if (!row) return;
+    row.classList.toggle('done', el.checked);
+    const status = row.querySelector('.status-pending');
+    if (status) status.textContent = el.checked ? 'Done' : 'Pending';
+  };
+  window.toggleItem = (el) => {
+    const label = el.nextElementSibling;
+    if (label) label.classList.toggle('done', el.checked);
+  };
+});
+</script>
+</body>
+</html>`;
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(html);
 });
