@@ -2002,8 +2002,8 @@ let currentUser = JSON.parse(localStorage.getItem('wayzo_user') || 'null');
         img.style.maxWidth = '100%';
         img.style.height = 'auto';
         
-        // Add loading state
-        img.style.opacity = '0';
+        // Don't set opacity to 0 initially - show images immediately
+        img.style.opacity = '1';
         
         // Handle successful load
         img.onload = () => {
@@ -2049,9 +2049,10 @@ let currentUser = JSON.parse(localStorage.getItem('wayzo_user') || 'null');
       const widgetContainers = document.querySelectorAll('.widget-content');
       console.log('Found widget containers:', widgetContainers.length);
       
+      let alternativeContainers = [];
       if (widgetContainers.length === 0) {
         // Try alternative selectors
-        const alternativeContainers = document.querySelectorAll('.affiliate-widget .widget-content, div[class*="widget"]');
+        alternativeContainers = document.querySelectorAll('.affiliate-widget .widget-content, div[class*="widget"]');
         console.log('Found alternative containers:', alternativeContainers.length);
         
         alternativeContainers.forEach((container, index) => {
@@ -2063,6 +2064,14 @@ let currentUser = JSON.parse(localStorage.getItem('wayzo_user') || 'null');
           console.log(`Processing widget container ${index + 1}`);
           processWidgetContainer(container, index);
         });
+      }
+      
+      // If still no widgets found, try again after a longer delay
+      if (widgetContainers.length === 0 && alternativeContainers.length === 0) {
+        setTimeout(() => {
+          console.log('Retrying widget initialization...');
+          initializeWidgets();
+        }, 1000);
       }
       
       console.log('Widget rendering initialized');
