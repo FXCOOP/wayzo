@@ -611,7 +611,7 @@ Create the most amazing, detailed, and useful trip plan possible!`;
     }
     
     // Add affiliate widgets
-    const widgets = getWidgetsForDestination(destination, level, interests);
+    const widgets = getWidgetsForDestination(destination, level, []);
     const widgetHTML = generateWidgetHTML(widgets);
     md += '\n\n' + widgetHTML;
     
