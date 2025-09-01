@@ -800,7 +800,23 @@ app.post('/api/plan', async (req, res) => {
 function injectWidgetsIntoSections(html, widgets) {
   let modifiedHtml = html;
   
-  // Find flight widget
+  // First, completely remove ALL widgets from the Don't Forget List section
+  modifiedHtml = modifiedHtml.replace(
+    /(<h2>🧳 Don't Forget List<\/h2>.*?<div class="dont-forget-list">)(.*?)(<h3>🧳 Don't Forget List<\/h3>.*?<\/div>\s*<\/div>)/gs,
+    (match, before, middle, after) => {
+      // Remove all section-widget divs from the middle part
+      const cleanedMiddle = middle.replace(/<div class="section-widget"[^>]*>.*?<\/div>\s*<\/div>\s*<\/div>/gs, '');
+      return before + cleanedMiddle + after;
+    }
+  );
+  
+  // Also remove any widgets that might be outside the dont-forget-list div
+  modifiedHtml = modifiedHtml.replace(
+    /(<h2>🧳 Don't Forget List<\/h2>.*?)<div class="section-widget"[^>]*>.*?<\/div>\s*<\/div>\s*<\/div>(.*?<h3>🧳 Don't Forget List<\/h3>)/gs,
+    '$1$2'
+  );
+  
+  // Now inject widgets into their proper sections
   const flightWidget = widgets.find(w => w.category === 'flights');
   if (flightWidget) {
     const flightWidgetHTML = `
@@ -883,34 +899,6 @@ function injectWidgetsIntoSections(html, widgets) {
       `$1${esimWidgetHTML}$2`
     );
   }
-  
-  // Remove any widgets that might have been placed in the "Don't Forget List" section
-  modifiedHtml = modifiedHtml.replace(
-    /<div class="section-widget"[^>]*>.*?<\/div>\s*<\/div>\s*<\/div>/gs,
-    ''
-  );
-  
-  // Remove widgets from inside the "Don't Forget List" section specifically
-  modifiedHtml = modifiedHtml.replace(
-    /(<h2>🧳 Don't Forget List<\/h2>.*?<div class="dont-forget-list">.*?)<div class="section-widget"[^>]*>.*?<\/div>\s*<\/div>\s*<\/div>(.*?<\/div>\s*<\/div>)/gs,
-    '$1$2'
-  );
-  
-  // More aggressive removal of widgets from Don't Forget List
-  modifiedHtml = modifiedHtml.replace(
-    /(<h2>🧳 Don't Forget List<\/h2>.*?<div class="dont-forget-list">)(.*?)(<h3>🧳 Don't Forget List<\/h3>.*?<\/div>\s*<\/div>)/gs,
-    (match, before, widgets, after) => {
-      // Remove all section-widget divs from the middle part
-      const cleanedWidgets = widgets.replace(/<div class="section-widget"[^>]*>.*?<\/div>\s*<\/div>\s*<\/div>/gs, '');
-      return before + cleanedWidgets + after;
-    }
-  );
-  
-  // Final cleanup - remove any remaining widgets from Don't Forget List
-  modifiedHtml = modifiedHtml.replace(
-    /(<h2>🧳 Don't Forget List<\/h2>.*?<div class="dont-forget-list">.*?)<div class="section-widget"[^>]*>.*?<\/div>\s*<\/div>\s*<\/div>(.*?<\/div>\s*<\/div>)/gs,
-    '$1$2'
-  );
   
   // Add remaining widgets at the end if not placed
   const placedWidgets = [flightWidget, hotelWidget, carWidget, esimWidget].filter(Boolean);
