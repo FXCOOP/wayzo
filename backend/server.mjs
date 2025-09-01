@@ -16,6 +16,7 @@ import { normalizeBudget, computeBudget } from './lib/budget.mjs';
 import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
+import { getWidgetsForDestination, generateWidgetHTML } from './lib/widgets.mjs';
 const VERSION = 'staging-v24';
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
@@ -266,6 +267,15 @@ ${children > 0 ? '☐ Kid-friendly entertainment and snacks  ' : ''}
 ---
 
 Get ready for an unforgettable experience in ${destination}! Enjoy the culture, cuisine, and countless memories waiting to be made. Safe travels! 🌅✈️
+
+---
+
+## 🚀 Book Your Trip Essentials
+
+${(() => {
+  const widgets = getWidgetsForDestination(destination, level, interests);
+  return generateWidgetHTML(widgets);
+})()}
 `.trim(), destination);
 }
 /* OpenAI (optional) */
@@ -333,7 +343,9 @@ Style: ${level}${prefs ? ` + ${prefs}` : ""}${interests_text}
 Budget: ${budget} ${currency}
 Diet: ${diet}
 
-Create a detailed ${nDays}-day travel plan that feels authentic and locally-inspired. Include specific restaurant names, exact attractions, realistic timing, and practical costs. Make it feel like it was written by someone who knows ${destination} intimately.`;
+Create a detailed ${nDays}-day travel plan that feels authentic and locally-inspired. Include specific restaurant names, exact attractions, realistic timing, and practical costs. Make it feel like it was written by someone who knows ${destination} intimately.
+
+IMPORTANT: At the end of your response, add a section called "🚀 Book Your Trip Essentials" with relevant booking widgets for this destination.`;
   if (!client) {
     console.warn('OpenAI API key not set, using local fallback');
     let md = localPlanMarkdown(payload);
@@ -353,6 +365,12 @@ Create a detailed ${nDays}-day travel plan that feels authentic and locally-insp
     }
     md = linkifyTokens(md, destination);
     md = ensureDaySections(md, nDays, start);
+    
+    // Add affiliate widgets
+    const widgets = getWidgetsForDestination(destination, level, interests);
+    const widgetHTML = generateWidgetHTML(widgets);
+    md += '\n\n' + widgetHTML;
+    
     return md;
   } catch (e) {
     console.error('OpenAI API error:', e);

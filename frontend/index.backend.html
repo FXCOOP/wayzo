@@ -54,6 +54,74 @@
         page-break-inside: avoid; 
       }
     }
+    
+    /* Affiliate Widgets Styling */
+    .affiliate-widgets-section {
+      margin: 32px 0;
+      padding: 24px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 12px;
+      color: white;
+    }
+    
+    .affiliate-widgets-section h3 {
+      margin: 0 0 16px 0;
+      font-size: 20px;
+      font-weight: 600;
+    }
+    
+    .widgets-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    
+    .affiliate-widget {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 16px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .widget-header h4 {
+      margin: 0 0 8px 0;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    
+    .widget-header p {
+      margin: 0 0 12px 0;
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    
+    .widget-content {
+      min-height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .widget-content iframe {
+      width: 100%;
+      min-height: 200px;
+      border: none;
+      border-radius: 6px;
+    }
+    
+    /* Mobile responsiveness for widgets */
+    @media (max-width: 768px) {
+      .widgets-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .affiliate-widgets-section {
+        padding: 16px;
+        margin: 24px 0;
+      }
+    }
   </style>
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.js"></script>
 </head>
