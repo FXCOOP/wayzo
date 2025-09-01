@@ -1962,6 +1962,17 @@
     updateUIForAuthenticatedUser();
   };
 
+  // Global function to clear test user and require manual signup
+  window.clearTestUser = () => {
+    console.log('🧹 Clearing test user state - requiring manual signup');
+    currentUser = null;
+    isAuthenticated = false;
+    localStorage.removeItem('wayzo_authenticated');
+    localStorage.removeItem('wayzo_user');
+    updateUIForAuthenticatedUser();
+    showNotification('Test user cleared. Please sign up manually.', 'info');
+  };
+
   // Enhanced checklist functionality with widget integration
   window.toggleItem = (checkbox) => {
     const item = checkbox.closest('.dont-forget-item');
@@ -2059,13 +2070,26 @@
       const travelImages = Array.from(images).filter(img => {
         const src = img.src || '';
         const alt = img.alt || '';
+        const parentText = img.parentElement?.textContent || '';
+        
+        // Check if this is likely a travel image
         return src.includes('unsplash') || 
                src.includes('picsum') || 
                src.includes('placeholder') ||
+               src.includes('image:') ||
                alt.includes('Santorini') ||
                alt.includes('Greece') ||
                alt.includes('travel') ||
-               alt.includes('Image');
+               alt.includes('Image') ||
+               alt.includes('Cityscape') ||
+               alt.includes('Food') ||
+               alt.includes('Culture') ||
+               alt.includes('Nature') ||
+               alt.includes('Architecture') ||
+               alt.includes('Activity') ||
+               alt.includes('Experience') ||
+               parentText.includes('Image loading') ||
+               parentText.includes('🖼️');
       });
       
       console.log('Found travel images:', travelImages.length);
