@@ -359,6 +359,16 @@ Create a detailed ${nDays}-day travel plan that feels authentic and locally-insp
     return localPlanMarkdown(payload); // Fallback
   }
 }
+/* Health check for Render */
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    version: VERSION,
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
 /* API */
 app.post('/api/preview', (req, res) => {
   console.log('Preview request received:', req.body);
