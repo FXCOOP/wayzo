@@ -368,31 +368,145 @@ async function generatePlanWithAI(payload) {
 - 🖼️ **Image Ideas** - 3–6 realistic image prompts and a short collage description (use Markdown images with token links like: ![Title](image:query))
 
 **BUDGET BREAKDOWN FORMAT:**
-Create a detailed budget table like this:
-| Item | Cost per Person (€) | Total (€) |
-|------|-------------------|------------|
-| Flights (From to Destination) | 150 | 300 |
-| Accommodation (X nights) | 150 | 300 |
-| Food (3 meals/day) | 25 | 150 |
-| Transportation (local travel) | 30 | 60 |
-| Activities & Attractions | 80 | 160 |
-| Miscellaneous | 10 | 20 |
-| **Total** | **€250** | **€500** |
+Create a detailed budget table like this with proper HTML:
+<table class="budget-table">
+<thead>
+<tr>
+<th>Item</th>
+<th>Cost per Person (€)</th>
+<th>Total (€)</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<div class="budget-checkbox">
+<input type="checkbox" id="budget1" onchange="toggleBudgetItem(this)">
+<label for="budget1">Flights (From to Destination)</label>
+</div>
+</td>
+<td>150</td>
+<td>300</td>
+<td><span class="status-pending">Pending</span></td>
+</tr>
+<tr>
+<td>
+<div class="budget-checkbox">
+<input type="checkbox" id="budget2" onchange="toggleBudgetItem(this)">
+<label for="budget2">Accommodation (X nights)</label>
+</div>
+</td>
+<td>150</td>
+<td>300</td>
+<td><span class="status-pending">Pending</span></td>
+</tr>
+<tr>
+<td>
+<div class="budget-checkbox">
+<input type="checkbox" id="budget3" onchange="toggleBudgetItem(this)">
+<label for="budget3">Food (3 meals/day)</label>
+</div>
+</td>
+<td>25</td>
+<td>150</td>
+<td><span class="status-pending">Pending</span></td>
+</tr>
+<tr>
+<td>
+<div class="budget-checkbox">
+<input type="checkbox" id="budget4" onchange="toggleBudgetItem(this)">
+<label for="budget4">Transportation (local travel)</label>
+</div>
+</td>
+<td>30</td>
+<td>60</td>
+<td><span class="status-pending">Pending</span></td>
+</tr>
+<tr>
+<td>
+<div class="budget-checkbox">
+<input type="checkbox" id="budget5" onchange="toggleBudgetItem(this)">
+<label for="budget5">Activities & Attractions</label>
+</div>
+</td>
+<td>80</td>
+<td>160</td>
+<td><span class="status-pending">Pending</span></td>
+</tr>
+<tr>
+<td>
+<div class="budget-checkbox">
+<input type="checkbox" id="budget6" onchange="toggleBudgetItem(this)">
+<label for="budget6">Miscellaneous</label>
+</div>
+</td>
+<td>10</td>
+<td>20</td>
+<td><span class="status-pending">Pending</span></td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td><strong>€250</strong></td>
+<td><strong>€500</strong></td>
+<td><span class="status-total">Total</span></td>
+</tr>
+</tbody>
+</table>
 
 **DON'T FORGET LIST FORMAT:**
-Create a checklist like this:
-- [ ] Passport and travel documents
-- [ ] Travel insurance
-- [ ] Local currency
-- [ ] Power adapter
-- [ ] Comfortable walking shoes
-- [ ] Camera/phone charger
-- [ ] Medications and first aid
-- [ ] Weather-appropriate clothing
-- [ ] eSIM or local SIM card
-- [ ] Local guide contact info
-- [ ] Car rental confirmation (if applicable)
-- [ ] Restaurant reservations
+Create a checklist like this with proper HTML checkboxes:
+<div class="dont-forget-list">
+<h3>🧳 Don't Forget List</h3>
+<div class="dont-forget-item">
+<input type="checkbox" id="item1" onchange="toggleItem(this)">
+<label for="item1">Passport and travel documents</label>
+</div>
+<div class="dont-forget-item">
+<input type="checkbox" id="item2" onchange="toggleItem(this)">
+<label for="item2">Travel insurance</label>
+</div>
+<div class="dont-forget-item">
+<input type="checkbox" id="item3" onchange="toggleItem(this)">
+<label for="item3">Local currency (Euros)</label>
+</div>
+<div class="dont-forget-item">
+<input type="checkbox" id="item4" onchange="toggleItem(this)">
+<label for="item4">Power adapter</label>
+</div>
+<div class="dont-forget-item">
+<input type="checkbox" id="item5" onchange="toggleItem(this)">
+<label for="item5">Comfortable walking shoes</label>
+</div>
+<div class="dont-forget-item">
+<input type="checkbox" id="item6" onchange="toggleItem(this)">
+<label for="item6">Camera/phone charger</label>
+</div>
+<div class="dont-forget-item">
+<input type="checkbox" id="item7" onchange="toggleItem(this)">
+<label for="item7">Medications and first aid</label>
+</div>
+<div class="dont-forget-item">
+<input type="checkbox" id="item8" onchange="toggleItem(this)">
+<label for="item8">Weather-appropriate clothing</label>
+</div>
+<div class="dont-forget-item">
+<input type="checkbox" id="item9" onchange="toggleItem(this)">
+<label for="item9">eSIM or local SIM card</label>
+</div>
+<div class="dont-forget-item">
+<input type="checkbox" id="item10" onchange="toggleItem(this)">
+<label for="item10">Local guide contact info</label>
+</div>
+<div class="dont-forget-item">
+<input type="checkbox" id="item11" onchange="toggleItem(this)">
+<label for="item11">Restaurant reservations</label>
+</div>
+<div class="dont-forget-item">
+<input type="checkbox" id="item12" onchange="toggleItem(this)">
+<label for="item12">Swimwear for beaches</label>
+</div>
+</div>
 
 **FORMATTING:**
 - Use emojis and clear headings

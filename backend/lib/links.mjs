@@ -16,7 +16,17 @@ export function affiliatesFor(dest = '') {
     cars:      ()      => `https://www.rentalcars.com/SearchResults.do?destination=${q}`,
     insurance: ()      => `https://www.worldnomads.com/`,
     reviews:   (term) => `https://www.tripadvisor.com/Search?q=${encodeURIComponent(term || dest)}`,
-    image:     (term) => `https://source.unsplash.com/400x300/?${encodeURIComponent(term || dest)},travel`,
+    image:     (term) => {
+      // Use multiple image sources for better reliability
+      const query = encodeURIComponent(term || dest);
+      const sources = [
+        `https://source.unsplash.com/400x300/?${query},travel`,
+        `https://picsum.photos/400/300?random=${Math.floor(Math.random() * 1000)}`,
+        `https://via.placeholder.com/400x300/2563eb/ffffff?text=${query}`,
+      ];
+      // Return the first source (Unsplash) as primary, with fallbacks
+      return sources[0];
+    },
   };
 }
 export function linkifyTokens(markdown = '', dest = '') {

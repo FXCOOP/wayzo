@@ -450,6 +450,9 @@
       previewEl.innerHTML = result.teaser_html;
       setAffiliates(data.destination);
       
+      // Initialize image handling
+      initializeImageHandling();
+      
       // Show preview and hide loading
       hide(loadingEl);
       show(previewEl);
@@ -568,6 +571,9 @@
         `;
         setAffiliates(data.destination);
         
+        // Initialize image handling
+        initializeImageHandling();
+        
         // Show all download buttons for test user
         show(pdfBtn);
         show(icsBtn);
@@ -599,6 +605,9 @@
           </div>
         `;
         setAffiliates(data.destination);
+        
+        // Initialize image handling for any preview images
+        initializeImageHandling();
         
         // Store full plan content for payment success
         localStorage.setItem('wayzo_pending_full_plan', result.html);
@@ -1925,5 +1934,80 @@ let currentUser = JSON.parse(localStorage.getItem('wayzo_user') || 'null');
     setupStyleSelection();
     setupReferralSystem();
   });
+
+  // Global function for easy test user login
+  window.loginAsTestUser = () => {
+    console.log('🧪 Manual test user login triggered');
+    currentUser = {
+      name: 'Test User',
+      email: 'test@wayzo.com',
+      avatar: '/frontend/assets/default-avatar.svg',
+      isTestUser: true
+    };
+    isAuthenticated = true;
+    localStorage.setItem('wayzo_authenticated', 'true');
+    localStorage.setItem('wayzo_user', JSON.stringify(currentUser));
+    updateUIForAuthenticatedUser();
+  };
+
+  // Checkbox functionality for Don't Forget List
+  window.toggleItem = (checkbox) => {
+    const item = checkbox.closest('.dont-forget-item');
+    if (checkbox.checked) {
+      item.classList.add('checked');
+      showNotification('✅ Item marked as done!', 'success');
+    } else {
+      item.classList.remove('checked');
+      showNotification('📝 Item unchecked', 'info');
+    }
+  };
+
+  // Checkbox functionality for Budget Items
+  window.toggleBudgetItem = (checkbox) => {
+    const row = checkbox.closest('tr');
+    const statusCell = row.querySelector('td:last-child span');
+    
+    if (checkbox.checked) {
+      statusCell.textContent = 'Completed';
+      statusCell.className = 'status-completed';
+      row.style.backgroundColor = '#f0fdf4';
+      showNotification('✅ Budget item completed!', 'success');
+    } else {
+      statusCell.textContent = 'Pending';
+      statusCell.className = 'status-pending';
+      row.style.backgroundColor = '';
+      showNotification('📝 Budget item marked as pending', 'info');
+    }
+  };
+
+  // Image error handling and fallback
+  window.handleImageError = (img) => {
+    const originalSrc = img.src;
+    const fallbackSrcs = [
+      `https://picsum.photos/400/300?random=${Math.floor(Math.random() * 1000)}`,
+      `https://via.placeholder.com/400x300/2563eb/ffffff?text=Travel+Image`,
+      `https://via.placeholder.com/400x300/22c55e/ffffff?text=Destination+Photo`
+    ];
+    
+    // Try next fallback source
+    const currentIndex = fallbackSrcs.findIndex(src => originalSrc.includes(src)) || -1;
+    const nextIndex = (currentIndex + 1) % fallbackSrcs.length;
+    
+    img.src = fallbackSrcs[nextIndex];
+    img.onerror = null; // Prevent infinite loop
+    
+    console.log('Image fallback:', { original: originalSrc, fallback: img.src });
+  };
+
+  // Initialize image error handling for all images in the report
+  window.initializeImageHandling = () => {
+    const images = document.querySelectorAll('.markdown img, #preview img');
+    images.forEach(img => {
+      img.onerror = () => handleImageError(img);
+      img.style.borderRadius = '8px';
+      img.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+      img.style.transition = 'transform 0.3s ease';
+    });
+  };
 
 })();
