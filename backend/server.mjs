@@ -610,11 +610,6 @@ Create the most amazing, detailed, and useful trip plan possible!`;
       md = ensureDaySections(md, nDays, start);
     }
     
-    // Add affiliate widgets
-    const widgets = getWidgetsForDestination(destination, level, []);
-    const widgetHTML = generateWidgetHTML(widgets);
-    md += '\n\n' + widgetHTML;
-    
     // Add a beautiful header if not present
     if (!md.includes('# ')) {
       md = `# 🗺️ ${destination} — Your Perfect Trip\n\n${md}`;
@@ -729,13 +724,18 @@ app.post('/api/plan', async (req, res) => {
     // Then convert to HTML
     const html = marked.parse(processedMarkdown);
     
+    // Add affiliate widgets AFTER HTML conversion
+    const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
+    const widgetHTML = generateWidgetHTML(widgets);
+    const finalHTML = html + '\n\n' + widgetHTML;
+    
     const aff = affiliatesFor(payload.destination);
     savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: payload, markdown }));
     
     // Track plan generation for analytics
     trackPlanGeneration(payload);
     
-    res.json({ id, markdown, html: html, affiliates: aff, version: VERSION });
+    res.json({ id, markdown, html: finalHTML, affiliates: aff, version: VERSION });
   } catch (e) {
     console.error('Plan generation error:', e);
     res.status(500).json({ error: 'Failed to generate plan. Check server logs.', version: VERSION });
