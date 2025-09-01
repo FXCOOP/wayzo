@@ -99,6 +99,9 @@
     data.duration = Number(data.duration || 5);
     data.currency = data.currency || 'USD';
     
+    // Add autocomplete functionality for destination fields
+    initializeAutocomplete();
+    
     if (data.dateMode === 'flexible') {
       data.flexibleDates = { month: data.travelMonth, duration: data.duration };
       delete data.start; delete data.end;
@@ -132,6 +135,150 @@
     }
     
     return data;
+  };
+
+  // Autocomplete functionality for cities
+  const initializeAutocomplete = () => {
+    const destinationInput = document.getElementById('dest');
+    const fromInput = document.getElementById('from');
+    
+    if (destinationInput) {
+      destinationInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase();
+        if (query.length > 2) {
+          showCitySuggestions(destinationInput, query);
+        } else {
+          hideCitySuggestions(destinationInput);
+        }
+      });
+    }
+    
+    if (fromInput) {
+      fromInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase();
+        if (query.length > 2) {
+          showCitySuggestions(fromInput, query);
+        } else {
+          hideCitySuggestions(fromInput);
+        }
+      });
+    }
+  };
+
+  // Popular cities database for autocomplete
+  const popularCities = [
+    'Paris, France', 'London, UK', 'New York, USA', 'Tokyo, Japan', 'Rome, Italy',
+    'Barcelona, Spain', 'Amsterdam, Netherlands', 'Berlin, Germany', 'Prague, Czech Republic',
+    'Vienna, Austria', 'Budapest, Hungary', 'Krakow, Poland', 'Warsaw, Poland',
+    'Stockholm, Sweden', 'Copenhagen, Denmark', 'Oslo, Norway', 'Helsinki, Finland',
+    'Reykjavik, Iceland', 'Dublin, Ireland', 'Edinburgh, UK', 'Glasgow, UK',
+    'Manchester, UK', 'Liverpool, UK', 'Birmingham, UK', 'Bristol, UK',
+    'Madrid, Spain', 'Seville, Spain', 'Valencia, Spain', 'Granada, Spain',
+    'Milan, Italy', 'Florence, Italy', 'Venice, Italy', 'Naples, Italy',
+    'Santorini, Greece', 'Athens, Greece', 'Thessaloniki, Greece', 'Rhodes, Greece',
+    'Istanbul, Turkey', 'Cappadocia, Turkey', 'Antalya, Turkey', 'Bodrum, Turkey',
+    'Dubai, UAE', 'Abu Dhabi, UAE', 'Doha, Qatar', 'Kuwait City, Kuwait',
+    'Tel Aviv, Israel', 'Jerusalem, Israel', 'Haifa, Israel', 'Eilat, Israel',
+    'Cairo, Egypt', 'Alexandria, Egypt', 'Luxor, Egypt', 'Aswan, Egypt',
+    'Marrakech, Morocco', 'Fez, Morocco', 'Casablanca, Morocco', 'Tangier, Morocco',
+    'Cape Town, South Africa', 'Johannesburg, South Africa', 'Durban, South Africa',
+    'Nairobi, Kenya', 'Mombasa, Kenya', 'Kigali, Rwanda', 'Dar es Salaam, Tanzania',
+    'Mumbai, India', 'Delhi, India', 'Bangalore, India', 'Chennai, India',
+    'Kolkata, India', 'Hyderabad, India', 'Pune, India', 'Ahmedabad, India',
+    'Bangkok, Thailand', 'Phuket, Thailand', 'Chiang Mai, Thailand', 'Krabi, Thailand',
+    'Singapore', 'Kuala Lumpur, Malaysia', 'Penang, Malaysia', 'Langkawi, Malaysia',
+    'Jakarta, Indonesia', 'Bali, Indonesia', 'Yogyakarta, Indonesia', 'Surabaya, Indonesia',
+    'Manila, Philippines', 'Cebu, Philippines', 'Boracay, Philippines', 'Palawan, Philippines',
+    'Ho Chi Minh City, Vietnam', 'Hanoi, Vietnam', 'Da Nang, Vietnam', 'Hoi An, Vietnam',
+    'Phnom Penh, Cambodia', 'Siem Reap, Cambodia', 'Battambang, Cambodia',
+    'Vientiane, Laos', 'Luang Prabang, Laos', 'Vang Vieng, Laos',
+    'Yangon, Myanmar', 'Mandalay, Myanmar', 'Bagan, Myanmar', 'Inle Lake, Myanmar',
+    'Beijing, China', 'Shanghai, China', 'Guangzhou, China', 'Shenzhen, China',
+    'Hong Kong', 'Macau', 'Taipei, Taiwan', 'Kaohsiung, Taiwan',
+    'Seoul, South Korea', 'Busan, South Korea', 'Jeju, South Korea', 'Daegu, South Korea',
+    'Osaka, Japan', 'Kyoto, Japan', 'Yokohama, Japan', 'Nagoya, Japan',
+    'Sydney, Australia', 'Melbourne, Australia', 'Brisbane, Australia', 'Perth, Australia',
+    'Adelaide, Australia', 'Gold Coast, Australia', 'Cairns, Australia',
+    'Auckland, New Zealand', 'Wellington, New Zealand', 'Queenstown, New Zealand',
+    'Toronto, Canada', 'Vancouver, Canada', 'Montreal, Canada', 'Calgary, Canada',
+    'Mexico City, Mexico', 'Cancun, Mexico', 'Guadalajara, Mexico', 'Monterrey, Mexico',
+    'Buenos Aires, Argentina', 'Cordoba, Argentina', 'Mendoza, Argentina',
+    'Sao Paulo, Brazil', 'Rio de Janeiro, Brazil', 'Brasilia, Brazil', 'Salvador, Brazil',
+    'Lima, Peru', 'Cusco, Peru', 'Arequipa, Peru', 'Machu Picchu, Peru',
+    'Santiago, Chile', 'Valparaiso, Chile', 'Puerto Varas, Chile',
+    'Bogota, Colombia', 'Medellin, Colombia', 'Cartagena, Colombia', 'Cali, Colombia',
+    'Quito, Ecuador', 'Guayaquil, Ecuador', 'Galapagos Islands, Ecuador',
+    'Caracas, Venezuela', 'Maracaibo, Venezuela', 'Valencia, Venezuela'
+  ];
+
+  const showCitySuggestions = (input, query) => {
+    // Remove existing suggestions
+    hideCitySuggestions(input);
+    
+    // Filter cities based on query
+    const suggestions = popularCities.filter(city => 
+      city.toLowerCase().includes(query)
+    ).slice(0, 8); // Limit to 8 suggestions
+    
+    if (suggestions.length === 0) return;
+    
+    // Create suggestions container
+    const suggestionsContainer = document.createElement('div');
+    suggestionsContainer.className = 'city-suggestions';
+    suggestionsContainer.style.cssText = `
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      z-index: 1000;
+      max-height: 200px;
+      overflow-y: auto;
+    `;
+    
+    // Add suggestions
+    suggestions.forEach(city => {
+      const suggestion = document.createElement('div');
+      suggestion.className = 'city-suggestion';
+      suggestion.style.cssText = `
+        padding: 8px 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 14px;
+      `;
+      suggestion.textContent = city;
+      
+      suggestion.addEventListener('mouseenter', () => {
+        suggestion.style.backgroundColor = '#f8fafc';
+      });
+      
+      suggestion.addEventListener('mouseleave', () => {
+        suggestion.style.backgroundColor = 'white';
+      });
+      
+      suggestion.addEventListener('click', () => {
+        input.value = city;
+        hideCitySuggestions(input);
+        input.focus();
+      });
+      
+      suggestionsContainer.appendChild(suggestion);
+    });
+    
+    // Position the container
+    input.parentNode.style.position = 'relative';
+    input.parentNode.appendChild(suggestionsContainer);
+  };
+
+  const hideCitySuggestions = (input) => {
+    const existing = input.parentNode.querySelector('.city-suggestions');
+    if (existing) {
+      existing.remove();
+    }
   };
 
   // Ensure radio click toggles reliably
@@ -781,6 +928,9 @@
     addUIEnhancements();
     initGoogleFromConfig();
     bindPaywall();
+    
+    // Initialize autocomplete
+    initializeAutocomplete();
     
     // Initialize cookie consent
     initializeCookieConsent();

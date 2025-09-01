@@ -355,17 +355,44 @@ async function generatePlanWithAI(payload) {
 
 **REQUIRED SECTIONS:**
 - 🎯 **Trip Overview** - Quick facts and highlights
-- 💰 **Budget Breakdown** - Detailed cost analysis per person
+- 💰 **Budget Breakdown** - Detailed cost analysis per person with checkboxes for tracking
 - 🗺️ **Getting Around** - Transportation tips and maps with [Map](map:...)
 - 🏨 **Accommodation** - 3–5 hotel options (Budget/Mid/Luxury) with [Book](book:...), [Reviews](reviews:...)
 - 🍽️ **Dining Guide** - 6–10 restaurants by neighborhood with [Reviews](reviews:...)
 - 🎭 **Daily Itineraries** - Hour-by-hour plans per day with [Tickets](tickets:...), [Map](map:...)
 - 🎫 **Must-See Attractions** - 8–12 sights with [Tickets](tickets:...)
-- 🧳 **Don't Forget List** - 8–12 packing/reminders tailored to destination and season
+- 🧳 **Don't Forget List** - 8–12 packing/reminders with checkboxes for tracking
 - 🛡️ **Travel Tips** - Local customs, safety, and practical advice
 - 📱 **Useful Apps** - Mobile apps for the destination
 - 🚨 **Emergency Info** - Important contacts and healthcare
 - 🖼️ **Image Ideas** - 3–6 realistic image prompts and a short collage description (use Markdown images with token links like: ![Title](image:query))
+
+**BUDGET BREAKDOWN FORMAT:**
+Create a detailed budget table like this:
+| Item | Cost per Person (€) | Total (€) |
+|------|-------------------|------------|
+| Flights (From to Destination) | 150 | 300 |
+| Accommodation (X nights) | 150 | 300 |
+| Food (3 meals/day) | 25 | 150 |
+| Transportation (local travel) | 30 | 60 |
+| Activities & Attractions | 80 | 160 |
+| Miscellaneous | 10 | 20 |
+| **Total** | **€250** | **€500** |
+
+**DON'T FORGET LIST FORMAT:**
+Create a checklist like this:
+- [ ] Passport and travel documents
+- [ ] Travel insurance
+- [ ] Local currency
+- [ ] Power adapter
+- [ ] Comfortable walking shoes
+- [ ] Camera/phone charger
+- [ ] Medications and first aid
+- [ ] Weather-appropriate clothing
+- [ ] eSIM or local SIM card
+- [ ] Local guide contact info
+- [ ] Car rental confirmation (if applicable)
+- [ ] Restaurant reservations
 
 **FORMATTING:**
 - Use emojis and clear headings
