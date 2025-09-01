@@ -2058,43 +2058,16 @@
     console.log('Image fallback:', { original: originalSrc, fallback: img.src });
   };
 
-  // Initialize image error handling for all images in the report
+    // Initialize image error handling for all images in the report
   window.initializeImageHandling = () => {
     // Wait a bit for the DOM to be ready
     setTimeout(() => {
-      // Use more comprehensive selectors to find ALL images
-      const images = document.querySelectorAll('img');
-      console.log('Found total images:', images.length);
+      // Find ALL images on the page
+      const allImages = document.querySelectorAll('img');
+      console.log('Found total images:', allImages.length);
       
-      // Filter for travel-related images
-      const travelImages = Array.from(images).filter(img => {
-        const src = img.src || '';
-        const alt = img.alt || '';
-        const parentText = img.parentElement?.textContent || '';
-        
-        // Check if this is likely a travel image
-        return src.includes('unsplash') || 
-               src.includes('picsum') || 
-               src.includes('placeholder') ||
-               src.includes('image:') ||
-               alt.includes('Santorini') ||
-               alt.includes('Greece') ||
-               alt.includes('travel') ||
-               alt.includes('Image') ||
-               alt.includes('Cityscape') ||
-               alt.includes('Food') ||
-               alt.includes('Culture') ||
-               alt.includes('Nature') ||
-               alt.includes('Architecture') ||
-               alt.includes('Activity') ||
-               alt.includes('Experience') ||
-               parentText.includes('Image loading') ||
-               parentText.includes('🖼️');
-      });
-      
-      console.log('Found travel images:', travelImages.length);
-      
-      travelImages.forEach((img, index) => {
+      // Process every single image
+      allImages.forEach((img, index) => {
         console.log(`Processing image ${index + 1}:`, img.src, img.alt);
         
         // Set initial styles
@@ -2103,8 +2076,6 @@
         img.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
         img.style.maxWidth = '100%';
         img.style.height = 'auto';
-        
-        // Don't set opacity to 0 initially - show images immediately
         img.style.opacity = '1';
         
         // Handle successful load
@@ -2117,116 +2088,150 @@
         img.onerror = () => {
           console.log('❌ Image failed to load:', img.src);
           handleImageError(img);
-          img.style.opacity = '1'; // Show fallback image
+          img.style.opacity = '1';
         };
         
-        // Add hover effect
-        img.addEventListener('mouseenter', () => {
-          img.style.transform = 'scale(1.02)';
+        // Add hover effects
+        img.addEventListener('mouseenter', () => { 
+          img.style.transform = 'scale(1.02)'; 
+        });
+        img.addEventListener('mouseleave', () => { 
+          img.style.transform = 'scale(1)'; 
         });
         
-        img.addEventListener('mouseleave', () => {
-          img.style.transform = 'scale(1)';
-        });
-        
-        // Force load if already cached
+        // Check if image is already loaded (cached)
         if (img.complete) {
-          if (img.naturalWidth > 0) {
-            img.style.opacity = '1';
-            console.log('✅ Image already loaded (cached):', img.src);
-          } else {
-            img.onerror();
+          if (img.naturalWidth > 0) { 
+            img.style.opacity = '1'; 
+            console.log('✅ Image already loaded (cached):', img.src); 
+          } else { 
+            img.onerror(); 
           }
         }
         
-        // Force reload if src contains 'image:' token
+        // AGGRESSIVE IMAGE FIXING - Handle all possible cases
+        
+        // Case 1: Images with 'image:' token
         if (img.src.includes('image:')) {
           const query = img.src.replace('image:', '').trim();
-          // Use specific Santorini queries for better results
-          let unsplashQuery = query;
-          if (query.toLowerCase().includes('santorini')) {
-            // Map generic queries to specific Santorini queries
-            if (query.toLowerCase().includes('cityscape') || query.toLowerCase().includes('city skyline')) {
-              unsplashQuery = 'Santorini sunset Oia Greece';
-            } else if (query.toLowerCase().includes('cuisine') || query.toLowerCase().includes('traditional food')) {
-              unsplashQuery = 'Greek food Santorini taverna';
-            } else if (query.toLowerCase().includes('landmark')) {
-              unsplashQuery = 'Santorini white buildings caldera';
-            } else if (query.toLowerCase().includes('nature') || query.toLowerCase().includes('natural beauty')) {
-              unsplashQuery = 'Santorini beaches volcanic';
-            } else if (query.toLowerCase().includes('culture') || query.toLowerCase().includes('local people')) {
-              unsplashQuery = 'Santorini culture local people';
-            } else if (query.toLowerCase().includes('architecture') || query.toLowerCase().includes('beautiful buildings')) {
-              unsplashQuery = 'Santorini architecture blue domes';
-            } else if (query.toLowerCase().includes('activities') || query.toLowerCase().includes('tourist activities')) {
-              unsplashQuery = 'Santorini activities wine tasting';
-            } else if (query.toLowerCase().includes('experience') || query.toLowerCase().includes('travel experience')) {
-              unsplashQuery = 'Santorini experience travel';
-            }
-          }
+          let unsplashQuery = getSantoriniQuery(query);
           const unsplashUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(unsplashQuery)}`;
-          console.log('🔄 Converting image token to Unsplash URL:', query, '→', unsplashQuery, '→', unsplashUrl);
+          console.log('🔄 Converting image token:', query, '→', unsplashQuery, '→', unsplashUrl);
           img.src = unsplashUrl;
+          return;
         }
         
-                // Also check for images with "Image loading..." text nearby
+        // Case 2: Images with "Image loading..." text nearby
         const parentText = img.parentElement?.textContent || '';
         if (parentText.includes('Image loading') && !img.src.includes('unsplash') && !img.src.includes('picsum')) {
-          // Find the most relevant Santorini image based on context
-          let contextQuery = 'Santorini Greece';
-          if (parentText.includes('sunset') || parentText.includes('Oia')) {
-            contextQuery = 'Santorini sunset Oia Greece';
-          } else if (parentText.includes('food') || parentText.includes('cuisine')) {
-            contextQuery = 'Greek food Santorini taverna';
-          } else if (parentText.includes('beach') || parentText.includes('volcanic')) {
-            contextQuery = 'Santorini beaches volcanic';
-          } else if (parentText.includes('architecture') || parentText.includes('blue dome')) {
-            contextQuery = 'Santorini architecture blue domes';
-          } else if (parentText.includes('wine') || parentText.includes('tasting')) {
-            contextQuery = 'Santorini activities wine tasting';
-          } else if (parentText.includes('culture') || parentText.includes('local')) {
-            contextQuery = 'Santorini culture local people';
-          } else if (parentText.includes('experience') || parentText.includes('travel')) {
-            contextQuery = 'Santorini experience travel';
-          }
-          
+          let contextQuery = getContextQuery(parentText);
           const unsplashUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(contextQuery)}`;
           console.log('🔄 Converting context-based image:', contextQuery, '→', unsplashUrl);
           img.src = unsplashUrl;
+          return;
         }
         
-        // Force load any image that's not loading properly
+        // Case 3: Images with empty or invalid src
         if (!img.src || img.src === '' || img.src.includes('data:') || img.src.includes('blob:')) {
           const altText = img.alt || '';
-          let fallbackQuery = 'Santorini Greece';
-          
-          if (altText.includes('Cityscape') || altText.includes('Overview')) {
-            fallbackQuery = 'Santorini sunset Oia Greece';
-          } else if (altText.includes('Food') || altText.includes('Cuisine')) {
-            fallbackQuery = 'Greek food Santorini taverna';
-          } else if (altText.includes('Landmark') || altText.includes('Cultural')) {
-            fallbackQuery = 'Santorini white buildings caldera';
-          } else if (altText.includes('Nature') || altText.includes('Landscape')) {
-            fallbackQuery = 'Santorini beaches volcanic';
-          } else if (altText.includes('Culture') || altText.includes('Local')) {
-            fallbackQuery = 'Santorini culture local people';
-          } else if (altText.includes('Architecture')) {
-            fallbackQuery = 'Santorini architecture blue domes';
-          } else if (altText.includes('Activity') || altText.includes('Activities')) {
-            fallbackQuery = 'Santorini activities wine tasting';
-          } else if (altText.includes('Experience')) {
-            fallbackQuery = 'Santorini experience travel';
-          }
-          
+          let fallbackQuery = getFallbackQuery(altText);
           const fallbackUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(fallbackQuery)}`;
           console.log('🔄 Loading fallback image:', fallbackQuery, '→', fallbackUrl);
           img.src = fallbackUrl;
+          return;
+        }
+        
+        // Case 4: Images that are not loading (no src attribute or broken)
+        if (!img.src || img.src === 'undefined' || img.src === 'null') {
+          const altText = img.alt || '';
+          let fallbackQuery = getFallbackQuery(altText);
+          const fallbackUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(fallbackQuery)}`;
+          console.log('🔄 Loading missing image:', fallbackQuery, '→', fallbackUrl);
+          img.src = fallbackUrl;
+          return;
+        }
+        
+        // Case 5: Force reload any image that might be broken
+        if (img.src && !img.src.includes('unsplash') && !img.src.includes('picsum') && !img.src.includes('placeholder')) {
+          const altText = img.alt || '';
+          if (altText.includes('Santorini') || altText.includes('Greece') || altText.includes('Image')) {
+            let fallbackQuery = getFallbackQuery(altText);
+            const fallbackUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(fallbackQuery)}`;
+            console.log('🔄 Force loading image:', fallbackQuery, '→', fallbackUrl);
+            img.src = fallbackUrl;
+          }
         }
       });
       
-      console.log('Image handling initialized for', travelImages.length, 'images');
+      console.log('Image handling initialized for', allImages.length, 'images');
     }, 100);
   };
+  
+  // Helper function to get Santorini-specific queries
+  function getSantoriniQuery(query) {
+    if (query.toLowerCase().includes('santorini')) {
+      if (query.toLowerCase().includes('cityscape') || query.toLowerCase().includes('city skyline')) {
+        return 'Santorini sunset Oia Greece';
+      } else if (query.toLowerCase().includes('cuisine') || query.toLowerCase().includes('traditional food')) {
+        return 'Greek food Santorini taverna';
+      } else if (query.toLowerCase().includes('landmark')) {
+        return 'Santorini white buildings caldera';
+      } else if (query.toLowerCase().includes('nature') || query.toLowerCase().includes('natural beauty')) {
+        return 'Santorini beaches volcanic';
+      } else if (query.toLowerCase().includes('culture') || query.toLowerCase().includes('local people')) {
+        return 'Santorini culture local people';
+      } else if (query.toLowerCase().includes('architecture') || query.toLowerCase().includes('beautiful buildings')) {
+        return 'Santorini architecture blue domes';
+      } else if (query.toLowerCase().includes('activities') || query.toLowerCase().includes('tourist activities')) {
+        return 'Santorini activities wine tasting';
+      } else if (query.toLowerCase().includes('experience') || query.toLowerCase().includes('travel experience')) {
+        return 'Santorini experience travel';
+      }
+    }
+    return query;
+  }
+  
+  // Helper function to get context-based queries
+  function getContextQuery(parentText) {
+    if (parentText.includes('sunset') || parentText.includes('Oia')) {
+      return 'Santorini sunset Oia Greece';
+    } else if (parentText.includes('food') || parentText.includes('cuisine')) {
+      return 'Greek food Santorini taverna';
+    } else if (parentText.includes('beach') || parentText.includes('volcanic')) {
+      return 'Santorini beaches volcanic';
+    } else if (parentText.includes('architecture') || parentText.includes('blue dome')) {
+      return 'Santorini architecture blue domes';
+    } else if (parentText.includes('wine') || parentText.includes('tasting')) {
+      return 'Santorini activities wine tasting';
+    } else if (parentText.includes('culture') || parentText.includes('local')) {
+      return 'Santorini culture local people';
+    } else if (parentText.includes('experience') || parentText.includes('travel')) {
+      return 'Santorini experience travel';
+    }
+    return 'Santorini Greece';
+  }
+  
+  // Helper function to get fallback queries
+  function getFallbackQuery(altText) {
+    if (altText.includes('Cityscape') || altText.includes('Overview')) {
+      return 'Santorini sunset Oia Greece';
+    } else if (altText.includes('Food') || altText.includes('Cuisine')) {
+      return 'Greek food Santorini taverna';
+    } else if (altText.includes('Landmark') || altText.includes('Cultural')) {
+      return 'Santorini white buildings caldera';
+    } else if (altText.includes('Nature') || altText.includes('Landscape')) {
+      return 'Santorini beaches volcanic';
+    } else if (altText.includes('Culture') || altText.includes('Local')) {
+      return 'Santorini culture local people';
+    } else if (altText.includes('Architecture')) {
+      return 'Santorini architecture blue domes';
+    } else if (altText.includes('Activity') || altText.includes('Activities')) {
+      return 'Santorini activities wine tasting';
+    } else if (altText.includes('Experience')) {
+      return 'Santorini experience travel';
+    }
+    return 'Santorini Greece';
+  }
 
   // Initialize widget rendering
   window.initializeWidgets = () => {

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Handling Test</title>
+    <style>
+        img { 
+            max-width: 300px; 
+            height: auto; 
+            border-radius: 8px;
+            margin: 10px;
+        }
+        .test-section { margin: 20px 0; padding: 10px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>Image Handling Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Image with 'image:' token</h2>
+        <img src="image:Santorini city skyline" alt="Santorini, Greece Cityscape">
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 2: Image with "Image loading..." text nearby</h2>
+        <div>
+            🖼️ Image loading... Santorini, Greece Cuisine
+            <img src="" alt="Santorini, Greece Cuisine">
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 3: Empty src image</h2>
+        <img src="" alt="Santorini, Greece Landmark">
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 4: Broken image</h2>
+        <img src="broken-url" alt="Santorini, Greece Nature">
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 5: Image with context</h2>
+        <div>
+            Sunset in Oia 🖼️ Image loading...
+            <img src="" alt="Santorini, Greece Experience">
+        </div>
+    </div>
+
+    <script>
+        // Copy the image handling logic here for testing
+        function getSantoriniQuery(query) {
+            if (query.toLowerCase().includes('santorini')) {
+                if (query.toLowerCase().includes('cityscape') || query.toLowerCase().includes('city skyline')) {
+                    return 'Santorini sunset Oia Greece';
+                } else if (query.toLowerCase().includes('cuisine') || query.toLowerCase().includes('traditional food')) {
+                    return 'Greek food Santorini taverna';
+                } else if (query.toLowerCase().includes('landmark')) {
+                    return 'Santorini white buildings caldera';
+                } else if (query.toLowerCase().includes('nature') || query.toLowerCase().includes('natural beauty')) {
+                    return 'Santorini beaches volcanic';
+                } else if (query.toLowerCase().includes('culture') || query.toLowerCase().includes('local people')) {
+                    return 'Santorini culture local people';
+                } else if (query.toLowerCase().includes('architecture') || query.toLowerCase().includes('beautiful buildings')) {
+                    return 'Santorini architecture blue domes';
+                } else if (query.toLowerCase().includes('activities') || query.toLowerCase().includes('tourist activities')) {
+                    return 'Santorini activities wine tasting';
+                } else if (query.toLowerCase().includes('experience') || query.toLowerCase().includes('travel experience')) {
+                    return 'Santorini experience travel';
+                }
+            }
+            return query;
+        }
+        
+        function getContextQuery(parentText) {
+            if (parentText.includes('sunset') || parentText.includes('Oia')) {
+                return 'Santorini sunset Oia Greece';
+            } else if (parentText.includes('food') || parentText.includes('cuisine')) {
+                return 'Greek food Santorini taverna';
+            } else if (parentText.includes('beach') || parentText.includes('volcanic')) {
+                return 'Santorini beaches volcanic';
+            } else if (parentText.includes('architecture') || parentText.includes('blue dome')) {
+                return 'Santorini architecture blue domes';
+            } else if (parentText.includes('wine') || parentText.includes('tasting')) {
+                return 'Santorini activities wine tasting';
+            } else if (parentText.includes('culture') || parentText.includes('local')) {
+                return 'Santorini culture local people';
+            } else if (parentText.includes('experience') || parentText.includes('travel')) {
+                return 'Santorini experience travel';
+            }
+            return 'Santorini Greece';
+        }
+        
+        function getFallbackQuery(altText) {
+            if (altText.includes('Cityscape') || altText.includes('Overview')) {
+                return 'Santorini sunset Oia Greece';
+            } else if (altText.includes('Food') || altText.includes('Cuisine')) {
+                return 'Greek food Santorini taverna';
+            } else if (altText.includes('Landmark') || altText.includes('Cultural')) {
+                return 'Santorini white buildings caldera';
+            } else if (altText.includes('Nature') || altText.includes('Landscape')) {
+                return 'Santorini beaches volcanic';
+            } else if (altText.includes('Culture') || altText.includes('Local')) {
+                return 'Santorini culture local people';
+            } else if (altText.includes('Architecture')) {
+                return 'Santorini architecture blue domes';
+            } else if (altText.includes('Activity') || altText.includes('Activities')) {
+                return 'Santorini activities wine tasting';
+            } else if (altText.includes('Experience')) {
+                return 'Santorini experience travel';
+            }
+            return 'Santorini Greece';
+        }
+
+        // Test the image handling
+        document.addEventListener('DOMContentLoaded', () => {
+            const allImages = document.querySelectorAll('img');
+            console.log('Found images:', allImages.length);
+            
+            allImages.forEach((img, index) => {
+                console.log(`Processing image ${index + 1}:`, img.src, img.alt);
+                
+                // Case 1: Images with 'image:' token
+                if (img.src.includes('image:')) {
+                    const query = img.src.replace('image:', '').trim();
+                    let unsplashQuery = getSantoriniQuery(query);
+                    const unsplashUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(unsplashQuery)}`;
+                    console.log('🔄 Converting image token:', query, '→', unsplashQuery, '→', unsplashUrl);
+                    img.src = unsplashUrl;
+                    return;
+                }
+                
+                // Case 2: Images with "Image loading..." text nearby
+                const parentText = img.parentElement?.textContent || '';
+                if (parentText.includes('Image loading') && !img.src.includes('unsplash') && !img.src.includes('picsum')) {
+                    let contextQuery = getContextQuery(parentText);
+                    const unsplashUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(contextQuery)}`;
+                    console.log('🔄 Converting context-based image:', contextQuery, '→', unsplashUrl);
+                    img.src = unsplashUrl;
+                    return;
+                }
+                
+                // Case 3: Images with empty or invalid src
+                if (!img.src || img.src === '' || img.src.includes('data:') || img.src.includes('blob:')) {
+                    const altText = img.alt || '';
+                    let fallbackQuery = getFallbackQuery(altText);
+                    const fallbackUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(fallbackQuery)}`;
+                    console.log('🔄 Loading fallback image:', fallbackQuery, '→', fallbackUrl);
+                    img.src = fallbackUrl;
+                    return;
+                }
+                
+                // Case 4: Images that are not loading (no src attribute or broken)
+                if (!img.src || img.src === 'undefined' || img.src === 'null') {
+                    const altText = img.alt || '';
+                    let fallbackQuery = getFallbackQuery(altText);
+                    const fallbackUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(fallbackQuery)}`;
+                    console.log('🔄 Loading missing image:', fallbackQuery, '→', fallbackUrl);
+                    img.src = fallbackUrl;
+                    return;
+                }
+                
+                // Case 5: Force reload any image that might be broken
+                if (img.src && !img.src.includes('unsplash') && !img.src.includes('picsum') && !img.src.includes('placeholder')) {
+                    const altText = img.alt || '';
+                    if (altText.includes('Santorini') || altText.includes('Greece') || altText.includes('Image')) {
+                        let fallbackQuery = getFallbackQuery(altText);
+                        const fallbackUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(fallbackQuery)}`;
+                        console.log('🔄 Force loading image:', fallbackQuery, '→', fallbackUrl);
+                        img.src = fallbackUrl;
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
