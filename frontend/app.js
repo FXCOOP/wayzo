@@ -2002,12 +2002,27 @@ let currentUser = JSON.parse(localStorage.getItem('wayzo_user') || 'null');
   window.initializeImageHandling = () => {
     // Wait a bit for the DOM to be ready
     setTimeout(() => {
-      const images = document.querySelectorAll('img[src*="unsplash.com"], img[src*="source.unsplash.com"], img[src*="picsum.photos"], img[src*="via.placeholder.com"]');
+      // Use more comprehensive selectors to find ALL images
+      const images = document.querySelectorAll('img');
+      console.log('Found total images:', images.length);
       
-      console.log('Found images:', images.length);
+      // Filter for travel-related images
+      const travelImages = Array.from(images).filter(img => {
+        const src = img.src || '';
+        const alt = img.alt || '';
+        return src.includes('unsplash') || 
+               src.includes('picsum') || 
+               src.includes('placeholder') ||
+               alt.includes('Santorini') ||
+               alt.includes('Greece') ||
+               alt.includes('travel') ||
+               alt.includes('Image');
+      });
       
-      images.forEach((img, index) => {
-        console.log(`Processing image ${index + 1}:`, img.src);
+      console.log('Found travel images:', travelImages.length);
+      
+      travelImages.forEach((img, index) => {
+        console.log(`Processing image ${index + 1}:`, img.src, img.alt);
         
         // Set initial styles
         img.style.borderRadius = '8px';
@@ -2052,7 +2067,7 @@ let currentUser = JSON.parse(localStorage.getItem('wayzo_user') || 'null');
         }
       });
       
-      console.log('Image handling initialized for', images.length, 'images');
+      console.log('Image handling initialized for', travelImages.length, 'images');
     }, 100);
   };
 
@@ -2060,28 +2075,43 @@ let currentUser = JSON.parse(localStorage.getItem('wayzo_user') || 'null');
   window.initializeWidgets = () => {
     // Wait a bit for the DOM to be ready
     setTimeout(() => {
-      const widgetContainers = document.querySelectorAll('.widget-content');
-      console.log('Found widget containers:', widgetContainers.length);
+      // Try multiple selectors to find widget containers
+      const selectors = [
+        '.widget-content',
+        '.affiliate-widget .widget-content',
+        'div[class*="widget"]',
+        '.affiliate-widgets-section .widget-content',
+        'script[src*="tpwdgt.com"]'
+      ];
       
-      let alternativeContainers = [];
-      if (widgetContainers.length === 0) {
-        // Try alternative selectors
-        alternativeContainers = document.querySelectorAll('.affiliate-widget .widget-content, div[class*="widget"]');
-        console.log('Found alternative containers:', alternativeContainers.length);
-        
-        alternativeContainers.forEach((container, index) => {
-          console.log(`Processing alternative container ${index + 1}`);
-          processWidgetContainer(container, index);
-        });
-      } else {
-        widgetContainers.forEach((container, index) => {
-          console.log(`Processing widget container ${index + 1}`);
-          processWidgetContainer(container, index);
-        });
-      }
+      let widgetContainers = [];
+      let scripts = [];
+      
+      // Try each selector
+      selectors.forEach(selector => {
+        const found = document.querySelectorAll(selector);
+        console.log(`Selector "${selector}" found:`, found.length);
+        widgetContainers = widgetContainers.concat(Array.from(found));
+      });
+      
+      // Also find all scripts that look like widgets
+      const allScripts = document.querySelectorAll('script[src*="tpwdgt.com"]');
+      console.log('Found tpwdgt scripts:', allScripts.length);
+      
+      // Process widget containers
+      widgetContainers.forEach((container, index) => {
+        console.log(`Processing widget container ${index + 1}:`, container.className);
+        processWidgetContainer(container, index);
+      });
+      
+      // Process standalone scripts
+      allScripts.forEach((script, index) => {
+        console.log(`Processing standalone script ${index + 1}:`, script.src);
+        processStandaloneScript(script, index);
+      });
       
       // If still no widgets found, try again after a longer delay
-      if (widgetContainers.length === 0 && alternativeContainers.length === 0) {
+      if (widgetContainers.length === 0 && allScripts.length === 0) {
         setTimeout(() => {
           console.log('Retrying widget initialization...');
           initializeWidgets();
@@ -2099,25 +2129,35 @@ let currentUser = JSON.parse(localStorage.getItem('wayzo_user') || 'null');
     
     scripts.forEach((script, scriptIndex) => {
       console.log(`Processing script ${scriptIndex + 1}:`, script.src);
-      
-      // Create a new script element to execute the widget
-      const newScript = document.createElement('script');
-      newScript.src = script.src;
-      newScript.async = script.async;
-      newScript.charset = script.charset;
-      
-      // Add error handling
-      newScript.onerror = () => {
-        console.log('❌ Widget script failed to load:', script.src);
-      };
-      
-      newScript.onload = () => {
-        console.log('✅ Widget script loaded successfully:', script.src);
-      };
-      
-      // Replace the old script with the new one
-      script.parentNode.replaceChild(newScript, script);
+      processScript(script, scriptIndex);
     });
+  }
+
+  // Helper function to process standalone scripts
+  function processStandaloneScript(script, index) {
+    console.log(`Processing standalone script ${index + 1}:`, script.src);
+    processScript(script, index);
+  }
+
+  // Helper function to process any script
+  function processScript(script, index) {
+    // Create a new script element to execute the widget
+    const newScript = document.createElement('script');
+    newScript.src = script.src;
+    newScript.async = script.async;
+    newScript.charset = script.charset;
+    
+    // Add error handling
+    newScript.onerror = () => {
+      console.log('❌ Widget script failed to load:', script.src);
+    };
+    
+    newScript.onload = () => {
+      console.log('✅ Widget script loaded successfully:', script.src);
+    };
+    
+    // Replace the old script with the new one
+    script.parentNode.replaceChild(newScript, script);
   }
 
   // Define missing toggle functions
