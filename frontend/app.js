@@ -2168,6 +2168,32 @@
           console.log('🔄 Converting image token to Unsplash URL:', query, '→', unsplashQuery, '→', unsplashUrl);
           img.src = unsplashUrl;
         }
+        
+        // Also check for images with "Image loading..." text nearby
+        const parentText = img.parentElement?.textContent || '';
+        if (parentText.includes('Image loading') && !img.src.includes('unsplash') && !img.src.includes('picsum')) {
+          // Find the most relevant Santorini image based on context
+          let contextQuery = 'Santorini Greece';
+          if (parentText.includes('sunset') || parentText.includes('Oia')) {
+            contextQuery = 'Santorini sunset Oia Greece';
+          } else if (parentText.includes('food') || parentText.includes('cuisine')) {
+            contextQuery = 'Greek food Santorini taverna';
+          } else if (parentText.includes('beach') || parentText.includes('volcanic')) {
+            contextQuery = 'Santorini beaches volcanic';
+          } else if (parentText.includes('architecture') || parentText.includes('blue dome')) {
+            contextQuery = 'Santorini architecture blue domes';
+          } else if (parentText.includes('wine') || parentText.includes('tasting')) {
+            contextQuery = 'Santorini activities wine tasting';
+          } else if (parentText.includes('culture') || parentText.includes('local')) {
+            contextQuery = 'Santorini culture local people';
+          } else if (parentText.includes('experience') || parentText.includes('travel')) {
+            contextQuery = 'Santorini experience travel';
+          }
+          
+          const unsplashUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(contextQuery)}`;
+          console.log('🔄 Converting context-based image:', contextQuery, '→', unsplashUrl);
+          img.src = unsplashUrl;
+        }
       });
       
       console.log('Image handling initialized for', travelImages.length, 'images');

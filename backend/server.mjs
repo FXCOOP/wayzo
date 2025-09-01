@@ -597,7 +597,7 @@ ${dateMode === 'flexible' ? `- **Flexible Date Optimization**: Suggest the best 
 - Make it feel like a real, actionable itinerary
 - Include relevant booking widgets within each day's activities
 
-**Requirements:**
+**REPORT QUALITY REQUIREMENTS:**
 - Make it feel like a premium travel guide
 - Include specific neighborhood recommendations
 - Add local insider tips and hidden gems
@@ -606,6 +606,9 @@ ${dateMode === 'flexible' ? `- **Flexible Date Optimization**: Suggest the best 
 - Include money-saving alternatives
 - Make it family-friendly if children are included
 - Consider the starting location (${from || 'user\'s location'}) for flight/transport recommendations
+- Use engaging, descriptive language
+- Include practical tips and local customs
+- Make the report visually appealing with proper formatting
 
 Create the most amazing, detailed, and useful trip plan possible!`;
 
@@ -786,9 +789,9 @@ function injectWidgetsIntoSections(html, widgets) {
         </div>
       </div>
     `;
-    // Inject into "Getting Around" section
+    // Inject into "Getting Around" section AFTER the content
     modifiedHtml = modifiedHtml.replace(
-      /(🗺️ Getting Around.*?)(<h3>|<\/div>)/s,
+      /(🗺️ Getting Around.*?)(<h3>🏨|<h3>🍽️|<h3>🎭|<h3>🎫|<h3>🧳|<h3>🛡️|<h3>📱|<h3>🚨|<h3>🖼️)/s,
       `$1${flightWidgetHTML}$2`
     );
   }
@@ -807,9 +810,9 @@ function injectWidgetsIntoSections(html, widgets) {
         </div>
       </div>
     `;
-    // Inject into "Accommodation" section
+    // Inject into "Accommodation" section AFTER the content
     modifiedHtml = modifiedHtml.replace(
-      /(🏨 Accommodation.*?)(<h3>|<\/div>)/s,
+      /(🏨 Accommodation.*?)(<h3>🍽️|<h3>🎭|<h3>🎫|<h3>🧳|<h3>🛡️|<h3>📱|<h3>🚨|<h3>🖼️)/s,
       `$1${hotelWidgetHTML}$2`
     );
   }
@@ -828,9 +831,9 @@ function injectWidgetsIntoSections(html, widgets) {
         </div>
       </div>
     `;
-    // Inject into "Getting Around" section after flight widget
+    // Inject into "Getting Around" section AFTER the content
     modifiedHtml = modifiedHtml.replace(
-      /(🗺️ Getting Around.*?)(<h3>|<\/div>)/s,
+      /(🗺️ Getting Around.*?)(<h3>🏨|<h3>🍽️|<h3>🎭|<h3>🎫|<h3>🧳|<h3>🛡️|<h3>📱|<h3>🚨|<h3>🖼️)/s,
       `$1${carWidgetHTML}$2`
     );
   }
@@ -849,9 +852,9 @@ function injectWidgetsIntoSections(html, widgets) {
         </div>
       </div>
     `;
-    // Inject into "Useful Apps" section
+    // Inject into "Useful Apps" section AFTER the content
     modifiedHtml = modifiedHtml.replace(
-      /(📱 Useful Apps.*?)(<h3>|<\/div>)/s,
+      /(📱 Useful Apps.*?)(<h3>🚨|<h3>🖼️)/s,
       `$1${esimWidgetHTML}$2`
     );
   }
