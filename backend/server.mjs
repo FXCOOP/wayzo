@@ -775,6 +775,12 @@ app.post('/api/plan', async (req, res) => {
     ).replace(
       /(Day \d+ — Open Exploration.*?Book\s*)+/gs,
       ''
+    ).replace(
+      /(<h3>Day \d+ — Open Exploration.*?<\/ul>\s*)+/gs,
+      ''
+    ).replace(
+      /(### Day \d+ — Open Exploration.*?Book<\/a><\/li>\s*<\/ul>\s*)+/gs,
+      ''
     );
     
     const aff = affiliatesFor(payload.destination);
@@ -898,6 +904,12 @@ function injectWidgetsIntoSections(html, widgets) {
       const cleanedWidgets = widgets.replace(/<div class="section-widget"[^>]*>.*?<\/div>\s*<\/div>\s*<\/div>/gs, '');
       return before + cleanedWidgets + after;
     }
+  );
+  
+  // Final cleanup - remove any remaining widgets from Don't Forget List
+  modifiedHtml = modifiedHtml.replace(
+    /(<h2>🧳 Don't Forget List<\/h2>.*?<div class="dont-forget-list">.*?)<div class="section-widget"[^>]*>.*?<\/div>\s*<\/div>\s*<\/div>(.*?<\/div>\s*<\/div>)/gs,
+    '$1$2'
   );
   
   // Add remaining widgets at the end if not placed
