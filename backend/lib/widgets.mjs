@@ -101,3 +101,5 @@ function generateWidgetHTML(widgets, placement = 'inline') {
     </div>
   `;
 }
+
+export { AFFILIATE_WIDGETS, getWidgetsForDestination, generateWidgetHTML };
