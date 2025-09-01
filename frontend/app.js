@@ -2161,6 +2161,16 @@
             img.src = fallbackUrl;
           }
         }
+        
+        // Case 6: Force load any image with "Image loading..." in alt text
+        if (img.alt && img.alt.includes('Image loading')) {
+          const altText = img.alt || '';
+          let fallbackQuery = getFallbackQuery(altText);
+          const fallbackUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(fallbackQuery)}`;
+          console.log('🔄 Force loading from alt text:', fallbackQuery, '→', fallbackUrl);
+          img.src = fallbackUrl;
+          return;
+        }
       });
       
       console.log('Image handling initialized for', allImages.length, 'images');

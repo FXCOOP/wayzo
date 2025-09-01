@@ -580,6 +580,18 @@ ${dateMode === 'flexible' ? `- **Flexible Date Optimization**: Suggest the best 
   - "Santorini culture local people"
   - "Santorini experience travel"
 
+**DAILY ITINERARIES REQUIREMENT:**
+- Create detailed, specific daily itineraries for each day
+- DO NOT use generic "Open Exploration" or placeholder text
+- Each day should have specific activities, times, and locations
+- Include specific restaurant names and attraction names
+- Make it feel like a real, actionable itinerary
+- Include relevant booking widgets within each day's activities
+- **CRITICAL**: Each day must be unique and specific to the destination
+- **CRITICAL**: Include exact times, restaurant names, and attraction names
+- **CRITICAL**: Make it family-friendly if children are included
+- **CRITICAL**: Consider the starting location (${from || 'user\'s location'}) for flight/transport recommendations
+
 **WIDGET INTEGRATION REQUIREMENTS:**
 - DO NOT place widgets in the "Don't Forget List" section
 - Place relevant booking widgets within their appropriate sections
@@ -589,14 +601,6 @@ ${dateMode === 'flexible' ? `- **Flexible Date Optimization**: Suggest the best 
 - Add eSIM widget in the "Useful Apps" or "Don't Forget List" section
 - Add airport transfers widget in the "Getting Around" section
 - Make widgets feel natural and integrated into the content flow
-
-**DAILY ITINERARIES REQUIREMENT:**
-- Create detailed, specific daily itineraries for each day
-- DO NOT use generic "Open Exploration" or placeholder text
-- Each day should have specific activities, times, and locations
-- Include specific restaurant names and attraction names
-- Make it feel like a real, actionable itinerary
-- Include relevant booking widgets within each day's activities
 
 **REPORT QUALITY REQUIREMENTS:**
 - Make it feel like a premium travel guide
@@ -610,6 +614,8 @@ ${dateMode === 'flexible' ? `- **Flexible Date Optimization**: Suggest the best 
 - Use engaging, descriptive language
 - Include practical tips and local customs
 - Make the report visually appealing with proper formatting
+- **CRITICAL**: DO NOT duplicate content or show generic placeholders
+- **CRITICAL**: Each section should be unique and specific to the destination
 
 Create the most amazing, detailed, and useful trip plan possible!`;
 
@@ -759,13 +765,19 @@ app.post('/api/plan', async (req, res) => {
     const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
     const finalHTML = injectWidgetsIntoSections(html, widgets);
     
+    // Remove any duplicate content that might have been generated
+    const cleanedHTML = finalHTML.replace(
+      /(Day \d+ — Open Exploration.*?Evening: Sunset viewpoint & dinner\. Map · Book\s*)+/gs,
+      ''
+    );
+    
     const aff = affiliatesFor(payload.destination);
     savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: payload, markdown }));
     
     // Track plan generation for analytics
     trackPlanGeneration(payload);
     
-    res.json({ id, markdown, html: finalHTML, affiliates: aff, version: VERSION });
+    res.json({ id, markdown, html: cleanedHTML, affiliates: aff, version: VERSION });
   } catch (e) {
     console.error('Plan generation error:', e);
     res.status(500).json({ error: 'Failed to generate plan. Check server logs.', version: VERSION });
@@ -859,6 +871,12 @@ function injectWidgetsIntoSections(html, widgets) {
       `$1${esimWidgetHTML}$2`
     );
   }
+  
+  // Remove any widgets that might have been placed in the "Don't Forget List" section
+  modifiedHtml = modifiedHtml.replace(
+    /<div class="section-widget"[^>]*>.*?<\/div>\s*<\/div>\s*<\/div>/gs,
+    ''
+  );
   
   // Add remaining widgets at the end if not placed
   const placedWidgets = [flightWidget, hotelWidget, carWidget, esimWidget].filter(Boolean);
