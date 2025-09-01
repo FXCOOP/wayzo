@@ -2169,7 +2169,7 @@
           img.src = unsplashUrl;
         }
         
-        // Also check for images with "Image loading..." text nearby
+                // Also check for images with "Image loading..." text nearby
         const parentText = img.parentElement?.textContent || '';
         if (parentText.includes('Image loading') && !img.src.includes('unsplash') && !img.src.includes('picsum')) {
           // Find the most relevant Santorini image based on context
@@ -2193,6 +2193,34 @@
           const unsplashUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(contextQuery)}`;
           console.log('🔄 Converting context-based image:', contextQuery, '→', unsplashUrl);
           img.src = unsplashUrl;
+        }
+        
+        // Force load any image that's not loading properly
+        if (!img.src || img.src === '' || img.src.includes('data:') || img.src.includes('blob:')) {
+          const altText = img.alt || '';
+          let fallbackQuery = 'Santorini Greece';
+          
+          if (altText.includes('Cityscape') || altText.includes('Overview')) {
+            fallbackQuery = 'Santorini sunset Oia Greece';
+          } else if (altText.includes('Food') || altText.includes('Cuisine')) {
+            fallbackQuery = 'Greek food Santorini taverna';
+          } else if (altText.includes('Landmark') || altText.includes('Cultural')) {
+            fallbackQuery = 'Santorini white buildings caldera';
+          } else if (altText.includes('Nature') || altText.includes('Landscape')) {
+            fallbackQuery = 'Santorini beaches volcanic';
+          } else if (altText.includes('Culture') || altText.includes('Local')) {
+            fallbackQuery = 'Santorini culture local people';
+          } else if (altText.includes('Architecture')) {
+            fallbackQuery = 'Santorini architecture blue domes';
+          } else if (altText.includes('Activity') || altText.includes('Activities')) {
+            fallbackQuery = 'Santorini activities wine tasting';
+          } else if (altText.includes('Experience')) {
+            fallbackQuery = 'Santorini experience travel';
+          }
+          
+          const fallbackUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(fallbackQuery)}`;
+          console.log('🔄 Loading fallback image:', fallbackQuery, '→', fallbackUrl);
+          img.src = fallbackUrl;
         }
       });
       

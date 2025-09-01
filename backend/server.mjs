@@ -581,6 +581,7 @@ ${dateMode === 'flexible' ? `- **Flexible Date Optimization**: Suggest the best 
   - "Santorini experience travel"
 
 **WIDGET INTEGRATION REQUIREMENTS:**
+- DO NOT place widgets in the "Don't Forget List" section
 - Place relevant booking widgets within their appropriate sections
 - Add flight search widget in the "Getting Around" section
 - Add hotel booking widget in the "Accommodation" section
