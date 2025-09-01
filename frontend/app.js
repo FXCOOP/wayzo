@@ -1965,24 +1965,6 @@ let currentUser = JSON.parse(localStorage.getItem('wayzo_user') || 'null');
     }
   };
 
-  // Checkbox functionality for Budget Items
-  window.toggleBudgetItem = (checkbox) => {
-    const row = checkbox.closest('tr');
-    const statusCell = row.querySelector('td:last-child span');
-    
-    if (checkbox.checked) {
-      statusCell.textContent = 'Completed';
-      statusCell.className = 'status-completed';
-      row.style.backgroundColor = '#f0fdf4';
-      showNotification('✅ Budget item completed!', 'success');
-    } else {
-      statusCell.textContent = 'Pending';
-      statusCell.className = 'status-pending';
-      row.style.backgroundColor = '';
-      showNotification('📝 Budget item marked as pending', 'info');
-    }
-  };
-
   // Image error handling and fallback
   window.handleImageError = (img) => {
     const originalSrc = img.src;
@@ -2067,37 +2049,82 @@ let currentUser = JSON.parse(localStorage.getItem('wayzo_user') || 'null');
       const widgetContainers = document.querySelectorAll('.widget-content');
       console.log('Found widget containers:', widgetContainers.length);
       
-      widgetContainers.forEach((container, index) => {
-        console.log(`Processing widget container ${index + 1}`);
+      if (widgetContainers.length === 0) {
+        // Try alternative selectors
+        const alternativeContainers = document.querySelectorAll('.affiliate-widget .widget-content, div[class*="widget"]');
+        console.log('Found alternative containers:', alternativeContainers.length);
         
-        const scripts = container.querySelectorAll('script');
-        console.log(`Found ${scripts.length} scripts in container ${index + 1}`);
-        
-        scripts.forEach((script, scriptIndex) => {
-          console.log(`Processing script ${scriptIndex + 1}:`, script.src);
-          
-          // Create a new script element to execute the widget
-          const newScript = document.createElement('script');
-          newScript.src = script.src;
-          newScript.async = script.async;
-          newScript.charset = script.charset;
-          
-          // Add error handling
-          newScript.onerror = () => {
-            console.log('❌ Widget script failed to load:', script.src);
-          };
-          
-          newScript.onload = () => {
-            console.log('✅ Widget script loaded successfully:', script.src);
-          };
-          
-          // Replace the old script with the new one
-          script.parentNode.replaceChild(newScript, script);
+        alternativeContainers.forEach((container, index) => {
+          console.log(`Processing alternative container ${index + 1}`);
+          processWidgetContainer(container, index);
         });
-      });
+      } else {
+        widgetContainers.forEach((container, index) => {
+          console.log(`Processing widget container ${index + 1}`);
+          processWidgetContainer(container, index);
+        });
+      }
       
       console.log('Widget rendering initialized');
-    }, 200);
+    }, 500); // Increased delay to ensure DOM is fully ready
+  };
+
+  // Helper function to process widget containers
+  function processWidgetContainer(container, index) {
+    const scripts = container.querySelectorAll('script');
+    console.log(`Found ${scripts.length} scripts in container ${index + 1}`);
+    
+    scripts.forEach((script, scriptIndex) => {
+      console.log(`Processing script ${scriptIndex + 1}:`, script.src);
+      
+      // Create a new script element to execute the widget
+      const newScript = document.createElement('script');
+      newScript.src = script.src;
+      newScript.async = script.async;
+      newScript.charset = script.charset;
+      
+      // Add error handling
+      newScript.onerror = () => {
+        console.log('❌ Widget script failed to load:', script.src);
+      };
+      
+      newScript.onload = () => {
+        console.log('✅ Widget script loaded successfully:', script.src);
+      };
+      
+      // Replace the old script with the new one
+      script.parentNode.replaceChild(newScript, script);
+    });
+  }
+
+  // Define missing toggle functions
+  window.toggleItem = (checkbox) => {
+    const label = checkbox.nextElementSibling;
+    if (checkbox.checked) {
+      label.classList.add('checked');
+      showNotification('✅ Item checked off!', 'success');
+    } else {
+      label.classList.remove('checked');
+      showNotification('📝 Item unchecked', 'info');
+    }
+  };
+
+  // Checkbox functionality for Budget Items
+  window.toggleBudgetItem = (checkbox) => {
+    const row = checkbox.closest('tr');
+    const statusCell = row.querySelector('td:last-child span');
+    
+    if (checkbox.checked) {
+      statusCell.textContent = 'Completed';
+      statusCell.className = 'status-completed';
+      row.style.backgroundColor = '#f0fdf4';
+      showNotification('✅ Budget item completed!', 'success');
+    } else {
+      statusCell.textContent = 'Pending';
+      statusCell.className = 'status-pending';
+      row.style.backgroundColor = '';
+      showNotification('📝 Budget item marked as pending', 'info');
+    }
   };
 
 })();
