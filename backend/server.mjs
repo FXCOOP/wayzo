@@ -769,6 +769,12 @@ app.post('/api/plan', async (req, res) => {
     const cleanedHTML = finalHTML.replace(
       /(Day \d+ — Open Exploration.*?Evening: Sunset viewpoint & dinner\. Map · Book\s*)+/gs,
       ''
+    ).replace(
+      /(Open Exploration.*?Map · Book\s*)+/gs,
+      ''
+    ).replace(
+      /(Day \d+ — Open Exploration.*?Book\s*)+/gs,
+      ''
     );
     
     const aff = affiliatesFor(payload.destination);
@@ -876,6 +882,12 @@ function injectWidgetsIntoSections(html, widgets) {
   modifiedHtml = modifiedHtml.replace(
     /<div class="section-widget"[^>]*>.*?<\/div>\s*<\/div>\s*<\/div>/gs,
     ''
+  );
+  
+  // Remove widgets from inside the "Don't Forget List" section specifically
+  modifiedHtml = modifiedHtml.replace(
+    /(<h2>🧳 Don't Forget List<\/h2>.*?<div class="dont-forget-list">.*?)<div class="section-widget"[^>]*>.*?<\/div>\s*<\/div>\s*<\/div>(.*?<\/div>\s*<\/div>)/gs,
+    '$1$2'
   );
   
   // Add remaining widgets at the end if not placed
