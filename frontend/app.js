@@ -574,6 +574,9 @@
         // Initialize image handling
         initializeImageHandling();
         
+        // Initialize widget rendering
+        initializeWidgets();
+        
         // Show all download buttons for test user
         show(pdfBtn);
         show(icsBtn);
@@ -2001,13 +2004,57 @@ let currentUser = JSON.parse(localStorage.getItem('wayzo_user') || 'null');
 
   // Initialize image error handling for all images in the report
   window.initializeImageHandling = () => {
-    const images = document.querySelectorAll('.markdown img, #preview img');
+    const images = document.querySelectorAll('img[src*="unsplash.com"], img[src*="source.unsplash.com"], img[src*="picsum.photos"], img[src*="via.placeholder.com"]');
     images.forEach(img => {
-      img.onerror = () => handleImageError(img);
+      // Add loading state
+      img.style.opacity = '0';
+      img.style.transition = 'opacity 0.3s ease';
+      
+      img.onload = () => {
+        img.style.opacity = '1';
+        console.log('Image loaded successfully:', img.src);
+      };
+      
+      img.onerror = () => {
+        handleImageError(img);
+        img.style.opacity = '1'; // Show fallback image
+      };
+      
       img.style.borderRadius = '8px';
       img.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-      img.style.transition = 'transform 0.3s ease';
+      img.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+      
+      // Add hover effect
+      img.addEventListener('mouseenter', () => {
+        img.style.transform = 'scale(1.02)';
+      });
+      
+      img.addEventListener('mouseleave', () => {
+        img.style.transform = 'scale(1)';
+      });
     });
+    
+    console.log('Image handling initialized for', images.length, 'images');
+  };
+
+  // Initialize widget rendering
+  window.initializeWidgets = () => {
+    const widgetContainers = document.querySelectorAll('.widget-content');
+    widgetContainers.forEach(container => {
+      const scripts = container.querySelectorAll('script');
+      scripts.forEach(script => {
+        // Create a new script element to execute the widget
+        const newScript = document.createElement('script');
+        newScript.src = script.src;
+        newScript.async = script.async;
+        newScript.charset = script.charset;
+        
+        // Replace the old script with the new one
+        script.parentNode.replaceChild(newScript, script);
+      });
+    });
+    
+    console.log('Widget rendering initialized');
   };
 
 })();
