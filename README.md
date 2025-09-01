@@ -22,6 +22,11 @@ All-in-one kit to launch an AI-powered travel planning web service.
    npm i
    npm run dev
    ```
+   
+   **API Configuration:**
+   - Set `OPENAI_API_KEY` for OpenAI GPT (recommended: gpt-4o-mini or gpt-4)
+   - Alternatively, you can use ChatGPT API by setting the same OpenAI key
+   - The system includes enhanced prompts for destination-specific, high-quality travel plans
 2. **Frontend**
    - For local demo: open `frontend/index.html`
    - For full flow: serve `frontend/index.backend.html` from same origin as backend (or configure CORS)

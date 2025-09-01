@@ -122,10 +122,74 @@ function setPreviewHTML(html = '') {
   if (previewBox) {
     previewBox.innerHTML = html || '<div class="muted">Enter your trip details and generate a plan to see a detailed itinerary here.</div>';
     previewBox.classList.add('markdown'); // Apply rich styles
-    previewBox.querySelectorAll('img[src^="https://unsplash.com"]').forEach(img => {
+    
+    // Enhanced image handling with multiple fallbacks
+    previewBox.querySelectorAll('img[src*="unsplash.com"], img[src*="source.unsplash.com"]').forEach((img, index) => {
       img.loading = 'lazy';
-      img.onerror = () => { try { img.src = '/frontend/placeholder.jpg'; } catch {} };
+      img.style.maxWidth = '100%';
+      img.style.height = 'auto';
+      img.style.borderRadius = '8px';
+      
+      let fallbackAttempts = 0;
+      const maxFallbacks = 3;
+      
+      const handleImageError = () => {
+        fallbackAttempts++;
+        console.warn(`Image failed to load (attempt ${fallbackAttempts}):`, img.src);
+        
+        if (fallbackAttempts === 1) {
+          // First fallback: try a more generic search
+          const originalSrc = img.src;
+          const urlParams = new URLSearchParams(originalSrc.split('?')[1]);
+          const query = urlParams.get('query') || urlParams.toString();
+          const destination = query.split(' ')[0]; // Get first word as destination
+          img.src = `https://source.unsplash.com/1600x900/?${encodeURIComponent(destination)}`;
+        } else if (fallbackAttempts === 2) {
+          // Second fallback: generic travel image
+          img.src = `https://source.unsplash.com/1600x900/?travel,vacation`;
+        } else if (fallbackAttempts >= maxFallbacks) {
+          // Final fallback: placeholder or hide
+          const placeholder = document.createElement('div');
+          placeholder.className = 'image-placeholder';
+          placeholder.style.cssText = 'background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); height: 200px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 500;';
+          placeholder.textContent = '📸 Image not available';
+          img.parentNode?.replaceChild(placeholder, img);
+        }
+      };
+      
+      img.onerror = handleImageError;
+      
+      // Add loading indicator
+      const loadingDiv = document.createElement('div');
+      loadingDiv.className = 'image-loading';
+      loadingDiv.style.cssText = 'background: #f1f5f9; height: 200px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #64748b;';
+      loadingDiv.textContent = 'Loading image...';
+      
+      img.style.display = 'none';
+      img.parentNode?.insertBefore(loadingDiv, img);
+      
+      img.onload = () => {
+        img.style.display = 'block';
+        loadingDiv.remove();
+      };
     });
+    
+    // Handle checklist items - make them interactive
+    previewBox.querySelectorAll('li').forEach(li => {
+      const text = li.textContent?.trim();
+      if (text && (text.includes('☐') || text.includes('□') || text.includes('◻️'))) {
+        li.style.cursor = 'pointer';
+        li.style.userSelect = 'none';
+        li.addEventListener('click', () => {
+          if (li.textContent?.includes('☐')) {
+            li.innerHTML = li.innerHTML.replace('☐', '✅');
+          } else if (li.textContent?.includes('✅')) {
+            li.innerHTML = li.innerHTML.replace('✅', '☐');
+          }
+        });
+      }
+    });
+    
     previewBox.querySelectorAll('#map').forEach(place => {
       place.innerHTML = '<div>Map loading...</div>';
     });

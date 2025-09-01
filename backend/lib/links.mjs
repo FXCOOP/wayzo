@@ -16,7 +16,12 @@ export function affiliatesFor(dest = '') {
     cars:      ()      => `https://www.rentalcars.com/SearchResults.do?destination=${q}`,
     insurance: ()      => `https://www.worldnomads.com/`,
     reviews:   (term) => `https://www.tripadvisor.com/Search?q=${encodeURIComponent(term || dest)}`,
-    image:     (term) => `https://source.unsplash.com/featured/?${encodeURIComponent(term || dest)}`,
+    image:     (term) => {
+      // Enhanced image search with fallback and better terms
+      const searchTerm = term || dest;
+      const enhancedTerm = searchTerm.includes(dest) ? searchTerm : `${dest} ${searchTerm}`;
+      return `https://source.unsplash.com/1600x900/?${encodeURIComponent(enhancedTerm)}`;
+    },
   };
 }
 export function linkifyTokens(markdown = '', dest = '') {

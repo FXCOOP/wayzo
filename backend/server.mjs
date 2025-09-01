@@ -105,60 +105,210 @@ const travelerLabel = (ad = 2, ch = 0) => ch > 0 ? `Family (${ad} adult${ad === 
 const perPersonPerDay = (t = 0, d = 1, tr = 1) => Math.round((Number(t) || 0) / Math.max(1, d) / Math.max(1, tr));
 /* Local Fallback Plan */
 function localPlanMarkdown(input) {
-  const { destination = 'Your destination', start = 'start', end = 'end', budget = 1500, adults = 2, children = 0, level = 'mid', prefs = '', diet = '', currency = 'USD $' } = input || {};
+  const { destination = 'Your destination', start = 'start', end = 'end', budget = 1500, adults = 2, children = 0, level = 'mid', prefs = '', diet = '', currency = 'USD $', interests = [] } = input || {};
   const nDays = daysBetween(start, end);
   const b = computeBudget(budget, nDays, level, Math.max(1, adults + children));
   const style = level === "luxury" ? "Luxury" : level === "budget" ? "Budget" : "Mid-range";
   const pppd = perPersonPerDay(budget, nDays, Math.max(1, adults + children));
+  
   return linkifyTokens(`
-# ${destination} — ${start} → ${end}
-![City hero](image:${destination} skyline)
+# 🌴 Amazing ${destination} Trip Plan
+
+![${destination} hero view](image:${destination} sunset skyline panoramic view)
+
+## 🎯 Trip Overview
+Welcome to your dream getaway to ${destination}! This ${nDays}-day adventure is perfectly tailored for ${travelerLabel(adults, children)} seeking a ${style.toLowerCase()} experience.
+
+**Travel Dates:** ${start} - ${end}
 **Travelers:** ${travelerLabel(adults, children)}
-**Style:** ${style}${prefs ? ` · ${prefs}` : ""}
+**Style:** ${style}${prefs ? ` · ${prefs}` : ""}${interests.length > 0 ? ` · Interests: ${interests.join(', ')}` : ""}
 **Budget:** ${budget} ${currency} (${pppd}/day/person)
 **Season:** ${seasonFromDate(start)}
+
 ---
-## Quick Facts
-- **Language:** English (tourism friendly)
-- **Currency:** ${currency}
-- **Voltage:** 230V, Type C/E plugs (adapter may be required)
-- **Tipping:** 5–10% in restaurants (optional)
+
+## 💰 Budget Breakdown
+Here's a detailed cost analysis to keep your budget on track:
+
+| Item | Cost per Person | Total | Status |
+|------|----------------|-------|--------|
+| 🏨 Accommodation (${nDays-1} nights) | ${b.stay.perDay} | ${b.stay.total} | Pending |
+| 🍽️ Food (3 meals/day) | ${b.food.perDay} | ${b.food.total} | Pending |
+| 🚌 Transportation (local travel) | ${Math.round(b.transit.total/Math.max(1, adults + children))} | ${b.transit.total} | Pending |
+| 🎭 Activities & Attractions | ${Math.round(b.act.total/Math.max(1, adults + children))} | ${b.act.total} | Pending |
+| **Total** | **${Math.round((budget)/Math.max(1, adults + children))}** | **${budget}** | **Total** |
+
 ---
-## Budget breakdown (rough)
-- Stay: **${b.stay.total}** (~${b.stay.perDay}/day)
-- Food: **${b.food.total}** (~${b.food.perDay}/person/day)
-- Activities: **${b.act.total}** (~${b.act.perDay}/day)
-- Transit: **${b.transit.total}** (~${b.transit.perDay}/day)
+
+## 🗺️ Getting Around
+**Transportation Tips:**
+- Local public transport is your best friend for budget-friendly travel
+- Consider day passes for unlimited rides
+- Walking between nearby attractions saves money and gives you local insights
+
+[Map](map:${destination} public transportation routes)
+
 ---
-## Day-by-Day Plan
-### Day 1 — Arrival & Relaxation (${start})
-- **Morning:** Arrive and check-in. [Map](map:${destination} airport to hotel) — shortest route to the hotel.
-- **Afternoon:** Pool or easy walk near hotel. [Reviews](reviews:${destination} family friendly cafe)
-- **Evening:** Dinner close-by. [Book](book:${destination} dinner)
-### Day 2 — Downtown Exploration
-- **Morning:** Top lookout. [Tickets](tickets:${destination} tower) — pre-book to skip lines.
-- **Afternoon:** Popular museum. [Tickets](tickets:${destination} museum)
-- **Evening:** Waterfront stroll. [Map](map:${destination} waterfront)
-### Day 3 — Nature & Parks
-- **Morning:** Park or island ferry. [Tickets](tickets:${destination} ferry)
-- **Afternoon:** Picnic + playgrounds. [Map](map:${destination} best picnic spots)
-- **Evening:** Family dinner. [Reviews](reviews:${destination} gluten free dinner)
+
+## 🏨 Accommodation
+Here are some great accommodation options in ${destination}:
+
+**${style} Options:**
+- Prime location with great reviews [Book](book:${destination} ${style} hotel)
+- Local neighborhood gems [Reviews](reviews:${destination} local accommodation)
+- Central area for easy access [Map](map:${destination} hotel district)
+
+---
+
+## 🍽️ Dining Guide
+Explore the local cuisine at these amazing spots:
+
+![${destination} traditional cuisine](image:${destination} traditional food local dishes)
+
+- **Local specialties** - Try the region's signature dishes [Reviews](reviews:${destination} traditional restaurant)
+- **Budget-friendly eats** - Street food and local markets [Map](map:${destination} food market)
+- **Fine dining** - Special occasion restaurants [Book](book:${destination} fine dining)
+${diet ? `- **${diet} options** - Restaurants accommodating your dietary needs [Reviews](reviews:${destination} ${diet} restaurant)` : ''}
+
+---
+
+## 🎭 Daily Itineraries
+
+### Day 1: Arrival and First Impressions (${start})
+- **Morning:** Arrive and check-in. [Map](map:${destination} airport to hotel)
+- **Afternoon:** Explore the neighborhood, get oriented
+- **Evening:** Welcome dinner with local cuisine [Reviews](reviews:${destination} welcome dinner)
+
+### Day 2: Main Attractions
+- **Morning:** Visit the top landmark [Tickets](tickets:${destination} main attraction)
+- **Afternoon:** Explore historic district [Map](map:${destination} historic center)
+- **Evening:** Sunset viewing and dinner [Reviews](reviews:${destination} sunset spot)
+
+![${destination} famous landmark](image:${destination} famous landmark architecture)
+
+### Day 3: Cultural Immersion
+- **Morning:** Museum or cultural site [Tickets](tickets:${destination} museum)
+- **Afternoon:** Local market and shopping [Map](map:${destination} local market)
+- **Evening:** Traditional entertainment [Reviews](reviews:${destination} cultural show)
+
+${nDays > 3 ? `### Day 4: Nature & Relaxation
+- **Morning:** Park, beach, or nature excursion [Map](map:${destination} nature park)
+- **Afternoon:** Leisure time and relaxation
+- **Evening:** Farewell dinner [Book](book:${destination} farewell dinner)
+
+![${destination} nature views](image:${destination} nature landscape beach)` : ''}
+
+### Day ${nDays}: Departure
+- **Morning:** Last-minute shopping or easy sightseeing
+- **Afternoon:** Check out and head to departure point
+
+---
+
+## 🎫 Must-See Attractions
+- **Top Landmark** - Iconic must-visit site [Tickets](tickets:${destination} landmark)
+- **Cultural Heritage** - Museums and historic sites [Reviews](reviews:${destination} museum)
+- **Natural Beauty** - Parks, beaches, or scenic viewpoints [Map](map:${destination} scenic viewpoints)
+- **Local Experiences** - Markets, neighborhoods, authentic activities
+
+![${destination} cityscape](image:${destination} cityscape architecture buildings)
+
+---
+
+## 🧳 Don't Forget List
+🧳 **Packing Checklist**
+
+☐ Passport and travel documents  
+☐ Travel insurance  
+☐ Local currency or travel cards  
+☐ Power adapter for electronics  
+☐ Comfortable walking shoes  
+☐ Camera/phone charger  
+☐ Medications and first aid  
+☐ Weather-appropriate clothing  
+☐ eSIM or local SIM card  
+☐ Emergency contact information  
+${diet ? '☐ Dietary restriction cards/translations  ' : ''}
+${children > 0 ? '☐ Kid-friendly entertainment and snacks  ' : ''}
+
+---
+
+## 🛡️ Travel Tips
+- **Local Customs:** Research basic etiquette and common phrases
+- **Safety:** Keep copies of important documents; know emergency numbers
+- **Money:** Notify your bank of travel plans; have backup payment methods
+- **Health:** Check if any vaccinations are needed
+
+---
+
+## 🚨 Emergency Info
+- **Local Emergency Services:** Research local emergency numbers
+- **Healthcare:** Know the nearest hospital and pharmacy locations
+- **Embassy:** Keep your country's embassy contact information handy
+
+---
+
+Get ready for an unforgettable experience in ${destination}! Enjoy the culture, cuisine, and countless memories waiting to be made. Safe travels! 🌅✈️
 `.trim(), destination);
 }
 /* OpenAI (optional) */
 const client = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 async function generatePlanWithAI(payload) {
-  const { destination = '', start = '', end = '', budget = 0, currency = 'USD $', adults = 2, children = 0, level = 'mid', prefs = '', diet = '' } = payload || {};
+  const { destination = '', start = '', end = '', budget = 0, currency = 'USD $', adults = 2, children = 0, level = 'mid', prefs = '', diet = '', interests = [] } = payload || {};
   const nDays = daysBetween(start, end);
-  const sys = `Return Markdown ONLY.
-Sections:
-Use token links: [Map](map:query) [Tickets](tickets:query) [Book](book:query) [Reviews](reviews:query).`;
+  
+  const sys = `You are Wayzo AI, a world-class travel planning expert specializing in ${destination}. Create comprehensive, personalized travel itineraries that rival the best travel planners.
+
+CORE REQUIREMENTS:
+- Return ONLY Markdown content formatted exactly like a professional travel guide
+- Include specific restaurant names, exact attractions, realistic costs, and detailed timing
+- Add relevant images using syntax: ![Description](image:specific search term)
+- Use booking links: [Map](map:query) [Tickets](tickets:query) [Book](book:query) [Reviews](reviews:query)
+- Focus on authentic local experiences that only locals would know
+- Include practical tips, real costs in local currency, and insider logistics
+
+IMAGE STRATEGY:
+- Add 6-10 stunning, destination-specific images strategically placed
+- Use highly specific search terms: "${destination} sunset oia castle", "${destination} blue dome church", "${destination} santorini seafood taverna", "${destination} caldera view terrace"
+- Hero image: panoramic destination view
+- Food image: local cuisine plated beautifully  
+- Landmark images: iconic architecture/views
+- Activity images: people enjoying experiences
+- Nature images: beaches, landscapes, sunsets
+
+CONTENT STRUCTURE & TONE:
+Create a plan that reads like it was written by someone who has lived in ${destination} for years:
+
+1. **Engaging Overview** - Start with "🌴 Amazing [Destination] Trip Plan" and compelling description
+2. **Smart Budget Table** - Realistic costs with pending status checkboxes  
+3. **Transportation Mastery** - Specific airline names, bus routes, local transport hacks
+4. **Accommodation by District** - Real hotel names with price ranges and booking links
+5. **Restaurant Guide** - Actual restaurant names, signature dishes, price ranges, reviews
+6. **Daily Itineraries** - Hour-by-hour plans with specific venues and realistic timing
+7. **Must-See Attractions** - Real attraction names, ticket prices, insider tips
+8. **Interactive Packing List** - Use ☐ checkboxes for interactive items
+9. **Local Insider Tips** - Cultural nuances, hidden gems, money-saving tricks
+10. **Practical Info** - Emergency contacts, useful apps, local customs
+
+QUALITY STANDARDS:
+- Every restaurant/hotel/attraction mentioned should be a real place
+- Include specific costs in euros (€) for European destinations  
+- Add "| Reviews" and "| Book" links after venue mentions
+- Use emojis strategically for visual appeal and section breaks
+- Write with confidence and local expertise - no generic advice
+- Include seasonal considerations and weather-specific tips
+- Add estimated travel times between locations
+
+Make this feel like a premium travel guide worth €200, not a generic AI response.`;
+
+  const interests_text = interests && interests.length > 0 ? ` Interests: ${interests.join(', ')}` : '';
   const user = `Destination: ${destination}
 Dates: ${start} to ${end} (${nDays} days)
 Party: ${adults} adults${children ? `, ${children} children` : ""}
-Style: ${level}${prefs ? ` + ${prefs}` : ""}
+Style: ${level}${prefs ? ` + ${prefs}` : ""}${interests_text}
 Budget: ${budget} ${currency}
-Diet: ${diet}`;
+Diet: ${diet}
+
+Create a detailed ${nDays}-day travel plan that feels authentic and locally-inspired. Include specific restaurant names, exact attractions, realistic timing, and practical costs. Make it feel like it was written by someone who knows ${destination} intimately.`;
   if (!client) {
     console.warn('OpenAI API key not set, using local fallback');
     let md = localPlanMarkdown(payload);
