@@ -2004,57 +2004,100 @@ let currentUser = JSON.parse(localStorage.getItem('wayzo_user') || 'null');
 
   // Initialize image error handling for all images in the report
   window.initializeImageHandling = () => {
-    const images = document.querySelectorAll('img[src*="unsplash.com"], img[src*="source.unsplash.com"], img[src*="picsum.photos"], img[src*="via.placeholder.com"]');
-    images.forEach(img => {
-      // Add loading state
-      img.style.opacity = '0';
-      img.style.transition = 'opacity 0.3s ease';
+    // Wait a bit for the DOM to be ready
+    setTimeout(() => {
+      const images = document.querySelectorAll('img[src*="unsplash.com"], img[src*="source.unsplash.com"], img[src*="picsum.photos"], img[src*="via.placeholder.com"]');
       
-      img.onload = () => {
-        img.style.opacity = '1';
-        console.log('Image loaded successfully:', img.src);
-      };
+      console.log('Found images:', images.length);
       
-      img.onerror = () => {
-        handleImageError(img);
-        img.style.opacity = '1'; // Show fallback image
-      };
-      
-      img.style.borderRadius = '8px';
-      img.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-      img.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
-      
-      // Add hover effect
-      img.addEventListener('mouseenter', () => {
-        img.style.transform = 'scale(1.02)';
+      images.forEach((img, index) => {
+        console.log(`Processing image ${index + 1}:`, img.src);
+        
+        // Set initial styles
+        img.style.borderRadius = '8px';
+        img.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+        img.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+        img.style.maxWidth = '100%';
+        img.style.height = 'auto';
+        
+        // Add loading state
+        img.style.opacity = '0';
+        
+        // Handle successful load
+        img.onload = () => {
+          img.style.opacity = '1';
+          console.log('✅ Image loaded successfully:', img.src);
+        };
+        
+        // Handle load error
+        img.onerror = () => {
+          console.log('❌ Image failed to load:', img.src);
+          handleImageError(img);
+          img.style.opacity = '1'; // Show fallback image
+        };
+        
+        // Add hover effect
+        img.addEventListener('mouseenter', () => {
+          img.style.transform = 'scale(1.02)';
+        });
+        
+        img.addEventListener('mouseleave', () => {
+          img.style.transform = 'scale(1)';
+        });
+        
+        // Force load if already cached
+        if (img.complete) {
+          if (img.naturalWidth > 0) {
+            img.style.opacity = '1';
+            console.log('✅ Image already loaded (cached):', img.src);
+          } else {
+            img.onerror();
+          }
+        }
       });
       
-      img.addEventListener('mouseleave', () => {
-        img.style.transform = 'scale(1)';
-      });
-    });
-    
-    console.log('Image handling initialized for', images.length, 'images');
+      console.log('Image handling initialized for', images.length, 'images');
+    }, 100);
   };
 
   // Initialize widget rendering
   window.initializeWidgets = () => {
-    const widgetContainers = document.querySelectorAll('.widget-content');
-    widgetContainers.forEach(container => {
-      const scripts = container.querySelectorAll('script');
-      scripts.forEach(script => {
-        // Create a new script element to execute the widget
-        const newScript = document.createElement('script');
-        newScript.src = script.src;
-        newScript.async = script.async;
-        newScript.charset = script.charset;
+    // Wait a bit for the DOM to be ready
+    setTimeout(() => {
+      const widgetContainers = document.querySelectorAll('.widget-content');
+      console.log('Found widget containers:', widgetContainers.length);
+      
+      widgetContainers.forEach((container, index) => {
+        console.log(`Processing widget container ${index + 1}`);
         
-        // Replace the old script with the new one
-        script.parentNode.replaceChild(newScript, script);
+        const scripts = container.querySelectorAll('script');
+        console.log(`Found ${scripts.length} scripts in container ${index + 1}`);
+        
+        scripts.forEach((script, scriptIndex) => {
+          console.log(`Processing script ${scriptIndex + 1}:`, script.src);
+          
+          // Create a new script element to execute the widget
+          const newScript = document.createElement('script');
+          newScript.src = script.src;
+          newScript.async = script.async;
+          newScript.charset = script.charset;
+          
+          // Add error handling
+          newScript.onerror = () => {
+            console.log('❌ Widget script failed to load:', script.src);
+          };
+          
+          newScript.onload = () => {
+            console.log('✅ Widget script loaded successfully:', script.src);
+          };
+          
+          // Replace the old script with the new one
+          script.parentNode.replaceChild(newScript, script);
+        });
       });
-    });
-    
-    console.log('Widget rendering initialized');
+      
+      console.log('Widget rendering initialized');
+    }, 200);
   };
 
 })();
