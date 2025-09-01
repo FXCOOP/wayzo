@@ -110,39 +110,189 @@ function localPlanMarkdown(input) {
   const b = computeBudget(budget, nDays, level, Math.max(1, adults + children));
   const style = level === "luxury" ? "Luxury" : level === "budget" ? "Budget" : "Mid-range";
   const pppd = perPersonPerDay(budget, nDays, Math.max(1, adults + children));
+  
   return linkifyTokens(`
-# ${destination} — ${start} → ${end}
-![City hero](image:${destination} skyline)
+# 🌟 ${destination} — ${start} → ${end}
+![${destination} skyline](image:${destination} cityscape)
+
 **Travelers:** ${travelerLabel(adults, children)}
 **Style:** ${style}${prefs ? ` · ${prefs}` : ""}
 **Budget:** ${budget} ${currency} (${pppd}/day/person)
 **Season:** ${seasonFromDate(start)}
+
 ---
-## Quick Facts
-- **Language:** English (tourism friendly)
-- **Currency:** ${currency}
-- **Voltage:** 230V, Type C/E plugs (adapter may be required)
-- **Tipping:** 5–10% in restaurants (optional)
+
+## 🎯 Trip Overview
+Welcome to your unforgettable journey to ${destination}! This ${nDays}-day trip offers a perfect blend of adventure, culture, and relaxation, tailored specifically for your preferences and budget.
+
+**Highlights:**
+- Explore the most iconic attractions and hidden gems
+- Experience authentic local cuisine and culture
+- Enjoy comfortable accommodations within your budget
+- Create lasting memories with your travel companions
+
+![${destination} overview](image:${destination} overview)
+
 ---
-## Budget breakdown (rough)
-- Stay: **${b.stay.total}** (~${b.stay.perDay}/day)
-- Food: **${b.food.total}** (~${b.food.perDay}/person/day)
-- Activities: **${b.act.total}** (~${b.act.perDay}/day)
-- Transit: **${b.transit.total}** (~${b.transit.perDay}/day)
+
+## 💰 Budget Breakdown
+Here's a detailed cost analysis to keep your trip within budget. All prices are in ${currency}.
+
+| Item | Cost per Person (${currency}) | Total (${currency}) | Status |
+|------|-------------------------------|---------------------|---------|
+| Flights | ${Math.round(b.transit.total / 2)} | ${b.transit.total} | Pending |
+| Accommodation (${nDays - 1} nights) | ${Math.round(b.stay.total / Math.max(1, adults + children))} | ${b.stay.total} | Pending |
+| Food (3 meals/day) | ${Math.round(b.food.total / Math.max(1, adults + children))} | ${b.food.total} | Pending |
+| Transportation (local travel) | ${Math.round(b.transit.total / 2)} | ${b.transit.total} | Pending |
+| Activities & Attractions | ${Math.round(b.act.total / Math.max(1, adults + children))} | ${b.act.total} | Pending |
+| Miscellaneous | ${Math.round(budget * 0.05)} | ${Math.round(budget * 0.05)} | Pending |
+| **Total** | **${Math.round(budget / Math.max(1, adults + children))}** | **${budget}** | **Total** |
+
 ---
-## Day-by-Day Plan
-### Day 1 — Arrival & Relaxation (${start})
-- **Morning:** Arrive and check-in. [Map](map:${destination} airport to hotel) — shortest route to the hotel.
-- **Afternoon:** Pool or easy walk near hotel. [Reviews](reviews:${destination} family friendly cafe)
-- **Evening:** Dinner close-by. [Book](book:${destination} dinner)
-### Day 2 — Downtown Exploration
-- **Morning:** Top lookout. [Tickets](tickets:${destination} tower) — pre-book to skip lines.
-- **Afternoon:** Popular museum. [Tickets](tickets:${destination} museum)
-- **Evening:** Waterfront stroll. [Map](map:${destination} waterfront)
-### Day 3 — Nature & Parks
-- **Morning:** Park or island ferry. [Tickets](tickets:${destination} ferry)
-- **Afternoon:** Picnic + playgrounds. [Map](map:${destination} best picnic spots)
-- **Evening:** Family dinner. [Reviews](reviews:${destination} gluten free dinner)
+
+## 🗺️ Getting Around
+**Transportation Tips:**
+- **Flights:** Book your flights well in advance for the best deals. [Search Flights](flights:${destination})
+- **Local Transport:** Use public transportation for affordable travel around the city
+- **Maps:** [${destination} Map](map:${destination} map)
+
+![${destination} transportation](image:${destination} transportation)
+
+---
+
+## 🏨 Accommodation
+**${style} Options:**
+
+**Option 1: ${destination} Central Hotel**
+- Price: ${Math.round(b.stay.perDay)}/night
+- [Book](book:${destination} hotel) | [Reviews](reviews:${destination} hotel)
+- Central location with easy access to attractions
+
+**Option 2: ${destination} Comfort Inn**
+- Price: ${Math.round(b.stay.perDay * 0.8)}/night  
+- [Book](book:${destination} budget hotel) | [Reviews](reviews:${destination} budget hotel)
+- Budget-friendly option with good amenities
+
+**Option 3: ${destination} Luxury Resort**
+- Price: ${Math.round(b.stay.perDay * 2)}/night
+- [Book](book:${destination} luxury hotel) | [Reviews](reviews:${destination} luxury hotel)
+- Premium experience with top-notch service
+
+![${destination} accommodation](image:${destination} accommodation)
+
+---
+
+## 🍽️ Dining Guide
+Explore local flavors at these recommended restaurants:
+
+**Traditional Local Cuisine:**
+- **${destination} Taverna** - Authentic local dishes
+  - Location: City Center
+  - [Reviews](reviews:${destination} traditional restaurant)
+
+**Modern Dining:**
+- **${destination} Bistro** - Contemporary cuisine
+  - Location: Downtown
+  - [Reviews](reviews:${destination} modern restaurant)
+
+**Budget-Friendly:**
+- **${destination} Cafe** - Casual dining
+  - Location: Near attractions
+  - [Reviews](reviews:${destination} cafe)
+
+![${destination} cuisine](image:${destination} cuisine)
+
+---
+
+## 🎭 Daily Itineraries
+
+### Day 1 — Arrival & Orientation (${start})
+- **Morning:** Arrive in ${destination}, check into your hotel
+- **Afternoon:** Explore the city center, visit main attractions
+- **Evening:** Enjoy dinner at a local restaurant
+- **Highlights:** [Map](map:${destination} city center), [Book](book:${destination} dinner)
+
+### Day 2 — Cultural Exploration
+- **Morning:** Visit museums and historical sites
+- **Afternoon:** Local market exploration
+- **Evening:** Cultural performance or show
+- **Highlights:** [Tickets](tickets:${destination} museum), [Map](map:${destination} market)
+
+### Day 3 — Nature & Adventure
+- **Morning:** Outdoor activities or nature walks
+- **Afternoon:** Relaxation and local experiences
+- **Evening:** Sunset viewing and photography
+- **Highlights:** [Tickets](tickets:${destination} outdoor activities), [Map](map:${destination} nature spots)
+
+![${destination} activities](image:${destination} activities)
+
+---
+
+## 🎫 Must-See Attractions
+- **Main Attraction:** The most iconic site in ${destination}
+  - [Tickets](tickets:${destination} main attraction)
+- **Cultural Site:** Important historical location
+  - [Tickets](tickets:${destination} cultural site)
+- **Natural Wonder:** Beautiful natural landscape
+  - [Tickets](tickets:${destination} natural site)
+- **Local Experience:** Authentic local activity
+  - [Tickets](tickets:${destination} local experience)
+
+![${destination} landmarks](image:${destination} landmarks)
+
+---
+
+## 🧳 Don't Forget List
+- Passport and travel documents
+- Travel insurance
+- Local currency
+- Power adapter
+- Comfortable walking shoes
+- Camera/phone charger
+- Medications and first aid
+- Weather-appropriate clothing
+- eSIM or local SIM card
+- Local guide contact info
+
+---
+
+## 🛡️ Travel Tips
+**Local Customs:** Respect local traditions and customs
+**Safety:** ${destination} is generally safe, but always be aware of your surroundings
+**Best Time to Visit:** ${seasonFromDate(start)} offers ideal weather conditions
+**Money-Saving Tips:** Book activities in advance and use public transportation
+
+---
+
+## 📱 Useful Apps
+- **Google Maps:** Navigate easily around the city
+- **TripAdvisor:** Find restaurant reviews and activities
+- **Local Transport App:** Check public transportation schedules
+
+---
+
+## 🚨 Emergency Info
+**Emergency Services:** Dial local emergency number
+**Local Hospitals:** ${destination} Hospital
+**Pharmacy:** Available in city center
+
+---
+
+## 🖼️ Image Ideas
+To visualize your ${destination} adventure:
+
+**Cityscape/Overview:** ![${destination} cityscape](image:${destination} cityscape)
+**Local Food:** ![${destination} food](image:${destination} food)
+**Cultural Site:** ![${destination} culture](image:${destination} culture)
+**Nature/Landscape:** ![${destination} nature](image:${destination} nature)
+**Local Life:** ![${destination} local life](image:${destination} local life)
+**Architecture:** ![${destination} architecture](image:${destination} architecture)
+**Activity:** ![${destination} activities](image:${destination} activities)
+**Experience:** ![${destination} experience](image:${destination} experience)
+
+---
+
+Prepare for an incredible journey filled with adventure, culture, and breathtaking views in ${destination}! Safe travels! 🌟✨
 `.trim(), destination);
 }
 /* OpenAI (optional) */
@@ -150,34 +300,237 @@ const client = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPE
 async function generatePlanWithAI(payload) {
   const { destination = '', start = '', end = '', budget = 0, currency = 'USD $', adults = 2, children = 0, level = 'mid', prefs = '', diet = '' } = payload || {};
   const nDays = daysBetween(start, end);
-  const sys = `Return Markdown ONLY.
-Sections:
-Use token links: [Map](map:query) [Tickets](tickets:query) [Book](book:query) [Reviews](reviews:query).`;
+  
+  const sys = `You are an expert travel planner creating detailed, accurate, and personalized trip itineraries. 
+
+CRITICAL REQUIREMENTS:
+1. ACCURACY: Provide only factual, up-to-date information about destinations
+2. PERSONALIZATION: Tailor recommendations to the specific budget, style, and preferences
+3. STRUCTURE: Use the exact markdown format provided below
+4. IMAGES: Include relevant destination-specific images using the image:token format
+5. LINKS: Use token links for maps, tickets, bookings, and reviews
+6. BUDGET: Ensure all recommendations fit within the specified budget
+7. ACCESSIBILITY: Consider accessibility needs and provide inclusive recommendations
+
+MARKDOWN TEMPLATE:
+# 🌟 [Destination] — [Start Date] → [End Date]
+![Destination skyline](image:[destination] cityscape)
+
+**Travelers:** [Number and type]
+**Style:** [Budget/Mid-range/Luxury] · [Preferences]
+**Budget:** [Amount] [Currency] ([Per day/person])
+**Season:** [Season]
+
+---
+
+## 🎯 Trip Overview
+[2-3 sentences welcoming travelers and highlighting key aspects of the trip]
+
+**Highlights:**
+- [Specific highlight 1]
+- [Specific highlight 2] 
+- [Specific highlight 3]
+- [Specific highlight 4]
+
+![Destination overview](image:[destination] overview)
+
+---
+
+## 💰 Budget Breakdown
+Here's a detailed cost analysis to keep your trip within budget. All prices are in [Currency].
+
+| Item | Cost per Person ([Currency]) | Total ([Currency]) | Status |
+|------|-------------------------------|---------------------|---------|
+| Flights | [Amount] | [Amount] | Pending |
+| Accommodation ([X] nights) | [Amount] | [Amount] | Pending |
+| Food (3 meals/day) | [Amount] | [Amount] | Pending |
+| Transportation (local travel) | [Amount] | [Amount] | Pending |
+| Activities & Attractions | [Amount] | [Amount] | Pending |
+| Miscellaneous | [Amount] | [Amount] | Pending |
+| **Total** | **[Amount]** | **[Budget]** | **Total** |
+
+---
+
+## 🗺️ Getting Around
+**Transportation Tips:**
+- **Flights:** [Specific flight booking advice]
+- **Local Transport:** [Local transportation options]
+- **Maps:** [Destination Map](map:[destination] map)
+
+![Destination transportation](image:[destination] transportation)
+
+---
+
+## 🏨 Accommodation
+**[Style] Options:**
+
+**[Option 1 Name]**
+- Price: [Amount]/night
+- [Book](book:[destination] [hotel type]) | [Reviews](reviews:[destination] [hotel type])
+- [Brief description]
+
+**[Option 2 Name]**
+- Price: [Amount]/night
+- [Book](book:[destination] [hotel type]) | [Reviews](reviews:[destination] [hotel type])
+- [Brief description]
+
+**[Option 3 Name]**
+- Price: [Amount]/night
+- [Book](book:[destination] [hotel type]) | [Reviews](reviews:[destination] [hotel type])
+- [Brief description]
+
+![Destination accommodation](image:[destination] accommodation)
+
+---
+
+## 🍽️ Dining Guide
+Explore local flavors at these recommended restaurants:
+
+**[Category 1]:**
+- **[Restaurant Name]** - [Description]
+  - Location: [Area]
+  - [Reviews](reviews:[destination] [restaurant type])
+
+**[Category 2]:**
+- **[Restaurant Name]** - [Description]
+  - Location: [Area]
+  - [Reviews](reviews:[destination] [restaurant type])
+
+**[Category 3]:**
+- **[Restaurant Name]** - [Description]
+  - Location: [Area]
+  - [Reviews](reviews:[destination] [restaurant type])
+
+![Destination cuisine](image:[destination] cuisine)
+
+---
+
+## 🎭 Daily Itineraries
+
+### Day 1 — [Theme] ([Date])
+- **Morning:** [Specific activity]
+- **Afternoon:** [Specific activity]
+- **Evening:** [Specific activity]
+- **Highlights:** [Map](map:[destination] [location]), [Book](book:[destination] [activity])
+
+### Day 2 — [Theme]
+- **Morning:** [Specific activity]
+- **Afternoon:** [Specific activity]
+- **Evening:** [Specific activity]
+- **Highlights:** [Tickets](tickets:[destination] [activity]), [Map](map:[destination] [location])
+
+### Day 3 — [Theme]
+- **Morning:** [Specific activity]
+- **Afternoon:** [Specific activity]
+- **Evening:** [Specific activity]
+- **Highlights:** [Tickets](tickets:[destination] [activity]), [Map](map:[destination] [location])
+
+![Destination activities](image:[destination] activities)
+
+---
+
+## 🎫 Must-See Attractions
+- **[Attraction Name]:** [Brief description]
+  - [Tickets](tickets:[destination] [attraction])
+- **[Attraction Name]:** [Brief description]
+  - [Tickets](tickets:[destination] [attraction])
+- **[Attraction Name]:** [Brief description]
+  - [Tickets](tickets:[destination] [attraction])
+- **[Attraction Name]:** [Brief description]
+  - [Tickets](tickets:[destination] [attraction])
+
+![Destination landmarks](image:[destination] landmarks)
+
+---
+
+## 🧳 Don't Forget List
+- Passport and travel documents
+- Travel insurance
+- Local currency
+- Power adapter
+- Comfortable walking shoes
+- Camera/phone charger
+- Medications and first aid
+- Weather-appropriate clothing
+- eSIM or local SIM card
+- Local guide contact info
+
+---
+
+## 🛡️ Travel Tips
+**Local Customs:** [Specific local customs]
+**Safety:** [Safety information]
+**Best Time to Visit:** [Seasonal advice]
+**Money-Saving Tips:** [Budget tips]
+
+---
+
+## 📱 Useful Apps
+- **[App Name]:** [Purpose]
+- **[App Name]:** [Purpose]
+- **[App Name]:** [Purpose]
+
+---
+
+## 🚨 Emergency Info
+**Emergency Services:** [Emergency number]
+**Local Hospitals:** [Hospital information]
+**Pharmacy:** [Pharmacy information]
+
+---
+
+## 🖼️ Image Ideas
+To visualize your [destination] adventure:
+
+**Cityscape/Overview:** ![Destination cityscape](image:[destination] cityscape)
+**Local Food:** ![Destination food](image:[destination] food)
+**Cultural Site:** ![Destination culture](image:[destination] culture)
+**Nature/Landscape:** ![Destination nature](image:[destination] nature)
+**Local Life:** ![Destination local life](image:[destination] local life)
+**Architecture:** ![Destination architecture](image:[destination] architecture)
+**Activity:** ![Destination activities](image:[destination] activities)
+**Experience:** ![Destination experience](image:[destination] experience)
+
+---
+
+Prepare for an incredible journey filled with adventure, culture, and breathtaking views in [destination]! Safe travels! 🌟✨
+
+IMPORTANT: Replace all [placeholders] with specific, accurate information. Use only factual data and realistic recommendations.`;
+
   const user = `Destination: ${destination}
 Dates: ${start} to ${end} (${nDays} days)
 Party: ${adults} adults${children ? `, ${children} children` : ""}
 Style: ${level}${prefs ? ` + ${prefs}` : ""}
 Budget: ${budget} ${currency}
-Diet: ${diet}`;
+Diet: ${diet}
+
+Create a detailed, accurate, and personalized travel plan following the exact template above. Ensure all recommendations are realistic and fit within the budget. Include specific, destination-relevant information.`;
+
   if (!client) {
     console.warn('OpenAI API key not set, using local fallback');
     let md = localPlanMarkdown(payload);
     md = ensureDaySections(md, nDays, start);
     return md;
   }
+
   try {
     const resp = await client.chat.completions.create({
       model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-      temperature: 0.6,
+      temperature: 0.3, // Lower temperature for more consistent, accurate output
+      max_tokens: 4000,
       messages: [{ role: "system", content: sys }, { role: "user", content: user }],
     });
+    
     let md = resp.choices?.[0]?.message?.content?.trim() || "";
     if (!md) {
       console.warn('OpenAI response empty, using fallback');
       md = localPlanMarkdown(payload);
     }
+    
+    // Post-process the markdown for consistency
     md = linkifyTokens(md, destination);
     md = ensureDaySections(md, nDays, start);
+    
     return md;
   } catch (e) {
     console.error('OpenAI API error:', e);
@@ -214,8 +567,12 @@ app.post('/api/plan', async (req, res) => {
     const payload = req.body || {};
     payload.budget = normalizeBudget(payload.budget, payload.currency);
     const id = uid();
-    const markdown = await generatePlanWithAI(payload);
-    const html = marked.parse(markdown);
+    const markdown = await generatePlanWithQualityCheck(payload);
+    let html = marked.parse(markdown);
+    
+    // Insert contextual widgets
+    html = await insertContextualWidgets(html, payload.destination);
+    
     const aff = affiliatesFor(payload.destination);
     savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: payload, markdown }));
     res.json({ id, markdown, html, affiliates: aff, version: VERSION });
@@ -329,4 +686,174 @@ function escapeHtml(s = "") {
     ">": "&gt;",
     '"': "&quot;"
   }[m]));
+}
+
+// Add contextual widget placement function
+async function insertContextualWidgets(html, destination = '') {
+  const { generateContextualWidgets } = await import('./lib/links.mjs');
+  
+  // Define widget insertion points
+  const widgetPoints = {
+    'accommodation': {
+      after: /<h2[^>]*>.*?🏨.*?Accommodation.*?<\/h2>/i,
+      section: 'accommodation'
+    },
+    'transportation': {
+      after: /<h2[^>]*>.*?🗺️.*?Getting Around.*?<\/h2>/i,
+      section: 'transportation'
+    },
+    'activities': {
+      after: /<h2[^>]*>.*?🎫.*?Must-See Attractions.*?<\/h2>/i,
+      section: 'activities'
+    },
+    'connectivity': {
+      after: /<h2[^>]*>.*?📱.*?Useful Apps.*?<\/h2>/i,
+      section: 'connectivity'
+    }
+  };
+  
+  let modifiedHtml = html;
+  
+  // Insert widgets at appropriate locations
+  for (const [key, config] of Object.entries(widgetPoints)) {
+    const widgetData = generateContextualWidgets(config.section, destination);
+    if (widgetData) {
+      const widgetHtml = generateWidgetHTML(widgetData);
+      modifiedHtml = modifiedHtml.replace(
+        config.after,
+        `$&${widgetHtml}`
+      );
+    }
+  }
+  
+  return modifiedHtml;
+}
+
+function generateWidgetHTML(widgetData) {
+  if (!widgetData || !widgetData.widgets) return '';
+  
+  let html = `
+<div class="affiliate-widgets-section">
+  <h3>${widgetData.title}</h3>
+  <div class="widgets-grid">`;
+  
+  widgetData.widgets.forEach(widget => {
+    html += `
+    <div class="affiliate-widget" data-category="${widget.type}" data-placement="contextual">
+      <div class="widget-header">
+        <h4>${widget.title}</h4>
+        <p>${widget.description}</p>
+      </div>
+      <div class="widget-content">
+        <script async src="${widget.script}" charset="utf-8"></script>
+      </div>
+    </div>`;
+  });
+  
+  html += `
+  </div>
+</div>`;
+  
+  return html;
+}
+
+// Quality assurance and validation functions
+function validatePlanQuality(markdown, payload) {
+  const issues = [];
+  const warnings = [];
+  
+  // Check for required sections
+  const requiredSections = [
+    'Trip Overview',
+    'Budget Breakdown', 
+    'Getting Around',
+    'Accommodation',
+    'Dining Guide',
+    'Daily Itineraries',
+    'Must-See Attractions',
+    'Don\'t Forget List',
+    'Travel Tips',
+    'Useful Apps',
+    'Emergency Info'
+  ];
+  
+  requiredSections.forEach(section => {
+    if (!markdown.includes(section)) {
+      issues.push(`Missing required section: ${section}`);
+    }
+  });
+  
+  // Check for images
+  const imageCount = (markdown.match(/!\[.*?\]\(image:/g) || []).length;
+  if (imageCount < 5) {
+    warnings.push(`Low image count: ${imageCount} images found`);
+  }
+  
+  // Check for links
+  const linkCount = (markdown.match(/\[.*?\]\(.*?\)/g) || []).length;
+  if (linkCount < 10) {
+    warnings.push(`Low link count: ${linkCount} links found`);
+  }
+  
+  // Check for budget accuracy
+  const budget = payload.budget || 0;
+  const nDays = daysBetween(payload.start, payload.end);
+  const travelers = Math.max(1, (payload.adults || 0) + (payload.children || 0));
+  const perDayPerPerson = budget / nDays / travelers;
+  
+  if (perDayPerPerson < 50) {
+    warnings.push(`Very low budget per day per person: $${perDayPerPerson}`);
+  }
+  
+  // Check for destination specificity
+  const destination = payload.destination || '';
+  if (!markdown.toLowerCase().includes(destination.toLowerCase())) {
+    issues.push(`Destination ${destination} not mentioned in plan`);
+  }
+  
+  return { issues, warnings, score: Math.max(0, 100 - (issues.length * 10) - (warnings.length * 5)) };
+}
+
+// Enhanced plan generation with quality checks
+async function generatePlanWithQualityCheck(payload) {
+  let attempts = 0;
+  const maxAttempts = 3;
+  let bestPlan = null;
+  let bestScore = 0;
+  
+  while (attempts < maxAttempts) {
+    try {
+      const markdown = await generatePlanWithAI(payload);
+      const validation = validatePlanQuality(markdown, payload);
+      
+      console.log(`Plan attempt ${attempts + 1} - Score: ${validation.score}`);
+      console.log('Issues:', validation.issues);
+      console.log('Warnings:', validation.warnings);
+      
+      if (validation.score > bestScore) {
+        bestScore = validation.score;
+        bestPlan = markdown;
+      }
+      
+      // If we have a high-quality plan, use it
+      if (validation.score >= 80 && validation.issues.length === 0) {
+        console.log('High-quality plan generated, using it');
+        return markdown;
+      }
+      
+      attempts++;
+    } catch (error) {
+      console.error(`Plan generation attempt ${attempts + 1} failed:`, error);
+      attempts++;
+    }
+  }
+  
+  // If all attempts failed, use fallback
+  if (!bestPlan) {
+    console.log('All attempts failed, using local fallback');
+    return localPlanMarkdown(payload);
+  }
+  
+  console.log(`Using best plan with score: ${bestScore}`);
+  return bestPlan;
 }
