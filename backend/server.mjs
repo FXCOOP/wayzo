@@ -345,7 +345,7 @@ async function generatePlanWithAI(payload) {
   const totalTravelers = adults + children;
   
   // Enhanced system prompt for amazing reports
-  const sys = `You are Wayzo, an expert AI travel planner specializing in ${destination}. Create AMAZING, DETAILED trip plans that are:
+  const sys = `You are Wayzo, an expert AI travel planner. Create AMAZING, DETAILED trip plans that are:
 
 1. **Highly Personalized**: Use the professional brief and all user preferences to tailor everything
 2. **Practical & Bookable**: Include specific booking links and realistic timing
@@ -367,13 +367,6 @@ async function generatePlanWithAI(payload) {
 - 📱 **Useful Apps** - Mobile apps for the destination
 - 🚨 **Emergency Info** - Important contacts and healthcare
 - 🖼️ **Image Ideas** - 3–6 realistic image prompts and a short collage description (use Markdown images with token links like: ![Title](image:query))
-
-**DESTINATION-SPECIFIC ACCURACY (SANTORINI):**
-- Red Beach: Officially unsafe/inaccessible beyond barriers → list as "viewpoint only", recommend Perissa/Perivolos for swimming
-- Oia Castle: Public viewpoint → do NOT add "Tickets" links
-- Santo Wines: Mention sunset slots fill fast, suggest booking ahead
-- KTEL buses: Pay conductor in cash, frequent summer service
-- If hours/tickets may vary, say "check current hours just before visiting"
 
 **BUDGET BREAKDOWN FORMAT:**
 Create a detailed budget table like this with proper HTML:
