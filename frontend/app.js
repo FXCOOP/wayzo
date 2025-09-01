@@ -28,6 +28,7 @@
       avatar: '/frontend/assets/default-avatar.svg',
       isTestUser: true
     }));
+    console.log('✅ Test user set in localStorage');
   }
 
   const show = (el) => el && el.classList.remove('hidden');
@@ -572,6 +573,7 @@
       // Check if user is a test user - bypass payment
       console.log('Current user:', currentUser);
       console.log('Is test user?', currentUser && currentUser.isTestUser);
+      console.log('User object details:', JSON.stringify(currentUser, null, 2));
       
       if (currentUser && currentUser.isTestUser) {
         console.log('🧪 Test user detected - bypassing payment!');
@@ -1230,7 +1232,9 @@
 
   // Authentication System
   let isAuthenticated = localStorage.getItem('wayzo_authenticated') === 'true';
-let currentUser = JSON.parse(localStorage.getItem('wayzo_user') || 'null');
+  let currentUser = JSON.parse(localStorage.getItem('wayzo_user') || 'null');
+  
+  console.log('🔍 User initialization:', { isAuthenticated, currentUser });
 
   function showAuthModal() {
     $('#authModal').classList.remove('hidden');
