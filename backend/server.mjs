@@ -580,12 +580,22 @@ ${dateMode === 'flexible' ? `- **Flexible Date Optimization**: Suggest the best 
   - "Santorini culture local people"
   - "Santorini experience travel"
 
+**WIDGET INTEGRATION REQUIREMENTS:**
+- Place relevant booking widgets within their appropriate sections
+- Add flight search widget in the "Getting Around" section
+- Add hotel booking widget in the "Accommodation" section
+- Add car rental widget in the "Transportation" section
+- Add eSIM widget in the "Useful Apps" or "Don't Forget List" section
+- Add airport transfers widget in the "Getting Around" section
+- Make widgets feel natural and integrated into the content flow
+
 **DAILY ITINERARIES REQUIREMENT:**
 - Create detailed, specific daily itineraries for each day
 - DO NOT use generic "Open Exploration" or placeholder text
 - Each day should have specific activities, times, and locations
 - Include specific restaurant names and attraction names
 - Make it feel like a real, actionable itinerary
+- Include relevant booking widgets within each day's activities
 
 **Requirements:**
 - Make it feel like a premium travel guide
@@ -741,10 +751,9 @@ app.post('/api/plan', async (req, res) => {
     // Then convert to HTML
     const html = marked.parse(processedMarkdown);
     
-    // Add affiliate widgets AFTER HTML conversion
+    // Add affiliate widgets integrated into appropriate sections
     const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
-    const widgetHTML = generateWidgetHTML(widgets);
-    const finalHTML = html + '\n\n' + widgetHTML;
+    const finalHTML = injectWidgetsIntoSections(html, widgets);
     
     const aff = affiliatesFor(payload.destination);
     savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: payload, markdown }));
@@ -759,7 +768,121 @@ app.post('/api/plan', async (req, res) => {
   }
 });
 
-// Analytics endpoints
+// Inject widgets into appropriate sections
+function injectWidgetsIntoSections(html, widgets) {
+  let modifiedHtml = html;
+  
+  // Find flight widget
+  const flightWidget = widgets.find(w => w.category === 'flights');
+  if (flightWidget) {
+    const flightWidgetHTML = `
+      <div class="section-widget" data-category="flights">
+        <div class="widget-header">
+          <h4>${flightWidget.name}</h4>
+          <p>${flightWidget.description}</p>
+        </div>
+        <div class="widget-content">
+          ${flightWidget.script}
+        </div>
+      </div>
+    `;
+    // Inject into "Getting Around" section
+    modifiedHtml = modifiedHtml.replace(
+      /(🗺️ Getting Around.*?)(<h3>|<\/div>)/s,
+      `$1${flightWidgetHTML}$2`
+    );
+  }
+  
+  // Find hotel widget
+  const hotelWidget = widgets.find(w => w.category === 'accommodation');
+  if (hotelWidget) {
+    const hotelWidgetHTML = `
+      <div class="section-widget" data-category="accommodation">
+        <div class="widget-header">
+          <h4>${hotelWidget.name}</h4>
+          <p>${hotelWidget.description}</p>
+        </div>
+        <div class="widget-content">
+          ${hotelWidget.script}
+        </div>
+      </div>
+    `;
+    // Inject into "Accommodation" section
+    modifiedHtml = modifiedHtml.replace(
+      /(🏨 Accommodation.*?)(<h3>|<\/div>)/s,
+      `$1${hotelWidgetHTML}$2`
+    );
+  }
+  
+  // Find car rental widget
+  const carWidget = widgets.find(w => w.category === 'transport');
+  if (carWidget) {
+    const carWidgetHTML = `
+      <div class="section-widget" data-category="transport">
+        <div class="widget-header">
+          <h4>${carWidget.name}</h4>
+          <p>${carWidget.description}</p>
+        </div>
+        <div class="widget-content">
+          ${carWidget.script}
+        </div>
+      </div>
+    `;
+    // Inject into "Getting Around" section after flight widget
+    modifiedHtml = modifiedHtml.replace(
+      /(🗺️ Getting Around.*?)(<h3>|<\/div>)/s,
+      `$1${carWidgetHTML}$2`
+    );
+  }
+  
+  // Find eSIM widget
+  const esimWidget = widgets.find(w => w.category === 'connectivity');
+  if (esimWidget) {
+    const esimWidgetHTML = `
+      <div class="section-widget" data-category="connectivity">
+        <div class="widget-header">
+          <h4>${esimWidget.name}</h4>
+          <p>${esimWidget.description}</p>
+        </div>
+        <div class="widget-content">
+          ${esimWidget.script}
+        </div>
+      </div>
+    `;
+    // Inject into "Useful Apps" section
+    modifiedHtml = modifiedHtml.replace(
+      /(📱 Useful Apps.*?)(<h3>|<\/div>)/s,
+      `$1${esimWidgetHTML}$2`
+    );
+  }
+  
+  // Add remaining widgets at the end if not placed
+  const placedWidgets = [flightWidget, hotelWidget, carWidget, esimWidget].filter(Boolean);
+  const remainingWidgets = widgets.filter(w => !placedWidgets.includes(w));
+  
+  if (remainingWidgets.length > 0) {
+    const remainingWidgetsHTML = remainingWidgets.map(widget => `
+      <div class="section-widget" data-category="${widget.category}">
+        <div class="widget-header">
+          <h4>${widget.name}</h4>
+          <p>${widget.description}</p>
+        </div>
+        <div class="widget-content">
+          ${widget.script}
+        </div>
+      </div>
+    `).join('');
+    
+    modifiedHtml += `
+      <div class="additional-widgets-section">
+        <h3>🚀 Additional Booking Options</h3>
+        ${remainingWidgetsHTML}
+      </div>
+    `;
+  }
+  
+  return modifiedHtml;
+}
 app.get('/api/analytics', (req, res) => {
   try {
     // Get basic analytics from database

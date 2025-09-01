@@ -2142,8 +2142,30 @@
         // Force reload if src contains 'image:' token
         if (img.src.includes('image:')) {
           const query = img.src.replace('image:', '').trim();
-          const unsplashUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(query)}`;
-          console.log('🔄 Converting image token to Unsplash URL:', query, '→', unsplashUrl);
+          // Use specific Santorini queries for better results
+          let unsplashQuery = query;
+          if (query.toLowerCase().includes('santorini')) {
+            // Map generic queries to specific Santorini queries
+            if (query.toLowerCase().includes('cityscape') || query.toLowerCase().includes('city skyline')) {
+              unsplashQuery = 'Santorini sunset Oia Greece';
+            } else if (query.toLowerCase().includes('cuisine') || query.toLowerCase().includes('traditional food')) {
+              unsplashQuery = 'Greek food Santorini taverna';
+            } else if (query.toLowerCase().includes('landmark')) {
+              unsplashQuery = 'Santorini white buildings caldera';
+            } else if (query.toLowerCase().includes('nature') || query.toLowerCase().includes('natural beauty')) {
+              unsplashQuery = 'Santorini beaches volcanic';
+            } else if (query.toLowerCase().includes('culture') || query.toLowerCase().includes('local people')) {
+              unsplashQuery = 'Santorini culture local people';
+            } else if (query.toLowerCase().includes('architecture') || query.toLowerCase().includes('beautiful buildings')) {
+              unsplashQuery = 'Santorini architecture blue domes';
+            } else if (query.toLowerCase().includes('activities') || query.toLowerCase().includes('tourist activities')) {
+              unsplashQuery = 'Santorini activities wine tasting';
+            } else if (query.toLowerCase().includes('experience') || query.toLowerCase().includes('travel experience')) {
+              unsplashQuery = 'Santorini experience travel';
+            }
+          }
+          const unsplashUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(unsplashQuery)}`;
+          console.log('🔄 Converting image token to Unsplash URL:', query, '→', unsplashQuery, '→', unsplashUrl);
           img.src = unsplashUrl;
         }
       });
