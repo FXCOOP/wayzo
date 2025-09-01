@@ -122,10 +122,81 @@ function setPreviewHTML(html = '') {
   if (previewBox) {
     previewBox.innerHTML = html || '<div class="muted">Enter your trip details and generate a plan to see a detailed itinerary here.</div>';
     previewBox.classList.add('markdown'); // Apply rich styles
-    previewBox.querySelectorAll('img[src^="https://unsplash.com"]').forEach(img => {
+    
+    // Enhanced image handling with proper placeholder pattern
+    previewBox.querySelectorAll('img[src*="unsplash.com"], img[src*="source.unsplash.com"]').forEach((img, index) => {
+      // Create proper placeholder structure
+      const placeholder = document.createElement('div');
+      placeholder.className = 'image-placeholder';
+      placeholder.innerHTML = `
+        <div class="placeholder-content">
+          <strong>${img.alt || 'Travel Image'}</strong><br>
+          Loading preview…
+        </div>
+      `;
+      
+      // Insert placeholder before image
+      img.parentNode?.insertBefore(placeholder, img);
+      
+      // Style the image properly
       img.loading = 'lazy';
-      img.onerror = () => { try { img.src = '/frontend/placeholder.jpg'; } catch {} };
+      img.decoding = 'async';
+      img.style.maxWidth = '100%';
+      img.style.height = 'auto';
+      img.style.borderRadius = '8px';
+      img.style.margin = '8px 0';
+      
+      // Handle image load/error
+      const reveal = () => {
+        img.classList.add('image-loaded');
+        placeholder.classList.add('hidden');
+      };
+      
+      const fail = () => {
+        placeholder.querySelector('.placeholder-content').innerHTML = `
+          <strong>Image Unavailable</strong><br>
+          Check URL or network connection
+        `;
+      };
+      
+      if (img.complete) {
+        if (img.naturalWidth > 0) reveal(); else fail();
+      } else {
+        img.addEventListener('load', reveal, { once: true });
+        img.addEventListener('error', fail, { once: true });
+      }
     });
+    
+    // Handle checklist items - make them interactive
+    previewBox.querySelectorAll('li').forEach(li => {
+      const text = li.textContent?.trim();
+      if (text && (text.includes('☐') || text.includes('□') || text.includes('◻️'))) {
+        li.style.cursor = 'pointer';
+        li.style.userSelect = 'none';
+        li.addEventListener('click', () => {
+          if (li.textContent?.includes('☐')) {
+            li.innerHTML = li.innerHTML.replace('☐', '✅');
+          } else if (li.textContent?.includes('✅')) {
+            li.innerHTML = li.innerHTML.replace('✅', '☐');
+          }
+        });
+      }
+    });
+    
+    // Handle budget table checkboxes
+    previewBox.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+      checkbox.addEventListener('change', (e) => {
+        const row = e.target.closest('tr');
+        if (row) {
+          row.classList.toggle('done', e.target.checked);
+          const status = row.querySelector('.status-pending');
+          if (status) {
+            status.textContent = e.target.checked ? 'Done' : 'Pending';
+          }
+        }
+      });
+    });
+    
     previewBox.querySelectorAll('#map').forEach(place => {
       place.innerHTML = '<div>Map loading...</div>';
     });

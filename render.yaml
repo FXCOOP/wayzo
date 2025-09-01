@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: wayzo-backend-staging
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: staging
+      - key: PORT
+        value: 10000
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+    healthCheckPath: /health
+    autoDeploy: true
+    branch: main

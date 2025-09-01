@@ -1,0 +1,15 @@
+# Wayzo HTML report rules
+- Do NOT hide <img> elements with CSS (no `display:none` on images).
+- Always render images as: placeholder DIV + <img> with loading="lazy" decoding="async" and explicit width/height.
+- Use LOCAL image paths only: /docs/... (never remote CDNs) to ensure PDF/print works offline.
+- Keep the reveal/fallback JS snippet at the end of <body>.
+- Keep print CSS to avoid page-breaks inside images, tables, and headings.
+- Safety facts for Santorini:
+  * Red Beach: officially unsafe/closed beyond barriers — list as "viewpoint only", recommend Perissa/Perivolos for swimming.
+  * Oia Castle: public viewpoint — do NOT label "Tickets".
+  * Santo Wines: mention sunset slots fill fast, suggest booking ahead.
+  * KTEL buses: pay conductor in cash, frequent summer service.
+- Always include proper image placeholders with loading states.
+- Use interactive checkboxes (☐/✅) for packing lists and budget items.
+- Include proper error handling for failed images.
+- Maintain print-friendly CSS for PDF generation.

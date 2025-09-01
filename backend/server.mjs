@@ -16,6 +16,7 @@ import { normalizeBudget, computeBudget } from './lib/budget.mjs';
 import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
+import { getWidgetsForDestination, generateWidgetHTML } from './lib/widgets.mjs';
 const VERSION = 'staging-v24';
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
@@ -105,60 +106,246 @@ const travelerLabel = (ad = 2, ch = 0) => ch > 0 ? `Family (${ad} adult${ad === 
 const perPersonPerDay = (t = 0, d = 1, tr = 1) => Math.round((Number(t) || 0) / Math.max(1, d) / Math.max(1, tr));
 /* Local Fallback Plan */
 function localPlanMarkdown(input) {
-  const { destination = 'Your destination', start = 'start', end = 'end', budget = 1500, adults = 2, children = 0, level = 'mid', prefs = '', diet = '', currency = 'USD $' } = input || {};
+  const { destination = 'Your destination', start = 'start', end = 'end', budget = 1500, adults = 2, children = 0, level = 'mid', prefs = '', diet = '', currency = 'USD $', interests = [] } = input || {};
   const nDays = daysBetween(start, end);
   const b = computeBudget(budget, nDays, level, Math.max(1, adults + children));
   const style = level === "luxury" ? "Luxury" : level === "budget" ? "Budget" : "Mid-range";
   const pppd = perPersonPerDay(budget, nDays, Math.max(1, adults + children));
+  
   return linkifyTokens(`
-# ${destination} — ${start} → ${end}
-![City hero](image:${destination} skyline)
+# 🌴 Amazing ${destination} Trip Plan
+
+![${destination} hero view](image:${destination} sunset skyline panoramic view)
+
+## 🎯 Trip Overview
+Welcome to your dream getaway to ${destination}! This ${nDays}-day adventure is perfectly tailored for ${travelerLabel(adults, children)} seeking a ${style.toLowerCase()} experience.
+
+**Travel Dates:** ${start} - ${end}
 **Travelers:** ${travelerLabel(adults, children)}
-**Style:** ${style}${prefs ? ` · ${prefs}` : ""}
+**Style:** ${style}${prefs ? ` · ${prefs}` : ""}${interests.length > 0 ? ` · Interests: ${interests.join(', ')}` : ""}
 **Budget:** ${budget} ${currency} (${pppd}/day/person)
 **Season:** ${seasonFromDate(start)}
+
 ---
-## Quick Facts
-- **Language:** English (tourism friendly)
-- **Currency:** ${currency}
-- **Voltage:** 230V, Type C/E plugs (adapter may be required)
-- **Tipping:** 5–10% in restaurants (optional)
+
+## 💰 Budget Breakdown
+Here's a detailed cost analysis to keep your budget on track:
+
+| Item | Cost per Person | Total | Status |
+|------|----------------|-------|--------|
+| 🏨 Accommodation (${nDays-1} nights) | ${b.stay.perDay} | ${b.stay.total} | Pending |
+| 🍽️ Food (3 meals/day) | ${b.food.perDay} | ${b.food.total} | Pending |
+| 🚌 Transportation (local travel) | ${Math.round(b.transit.total/Math.max(1, adults + children))} | ${b.transit.total} | Pending |
+| 🎭 Activities & Attractions | ${Math.round(b.act.total/Math.max(1, adults + children))} | ${b.act.total} | Pending |
+| **Total** | **${Math.round((budget)/Math.max(1, adults + children))}** | **${budget}** | **Total** |
+
 ---
-## Budget breakdown (rough)
-- Stay: **${b.stay.total}** (~${b.stay.perDay}/day)
-- Food: **${b.food.total}** (~${b.food.perDay}/person/day)
-- Activities: **${b.act.total}** (~${b.act.perDay}/day)
-- Transit: **${b.transit.total}** (~${b.transit.perDay}/day)
+
+## 🗺️ Getting Around
+**Transportation Tips:**
+${destination.toLowerCase().includes('santorini') ? `
+- **Flights:** Check Ryanair and Wizz Air for budget-friendly flights from Tel Aviv to Santorini (JTR airport)
+- **Local Transport:** Use KTEL buses to get around the island. Buses are cheap and frequent in summer. Pay the conductor in cash.
+- **ATV Rental:** Consider renting an ATV for more flexibility and adventure!
+- **Walking:** Many attractions are within walking distance in each village
+` : `
+- Local public transport is your best friend for budget-friendly travel
+- Consider day passes for unlimited rides
+- Walking between nearby attractions saves money and gives you local insights
+`}
+
+[Map](map:${destination} public transportation routes)
+
 ---
-## Day-by-Day Plan
-### Day 1 — Arrival & Relaxation (${start})
-- **Morning:** Arrive and check-in. [Map](map:${destination} airport to hotel) — shortest route to the hotel.
-- **Afternoon:** Pool or easy walk near hotel. [Reviews](reviews:${destination} family friendly cafe)
-- **Evening:** Dinner close-by. [Book](book:${destination} dinner)
-### Day 2 — Downtown Exploration
-- **Morning:** Top lookout. [Tickets](tickets:${destination} tower) — pre-book to skip lines.
-- **Afternoon:** Popular museum. [Tickets](tickets:${destination} museum)
-- **Evening:** Waterfront stroll. [Map](map:${destination} waterfront)
-### Day 3 — Nature & Parks
-- **Morning:** Park or island ferry. [Tickets](tickets:${destination} ferry)
-- **Afternoon:** Picnic + playgrounds. [Map](map:${destination} best picnic spots)
-- **Evening:** Family dinner. [Reviews](reviews:${destination} gluten free dinner)
+
+## 🏨 Accommodation
+Here are some great accommodation options in ${destination}:
+
+**${style} Options:**
+- Prime location with great reviews [Book](book:${destination} ${style} hotel)
+- Local neighborhood gems [Reviews](reviews:${destination} local accommodation)
+- Central area for easy access [Map](map:${destination} hotel district)
+
+---
+
+## 🍽️ Dining Guide
+Explore the local cuisine at these amazing spots:
+
+![${destination} traditional cuisine](image:${destination} traditional food local dishes)
+
+- **Local specialties** - Try the region's signature dishes [Reviews](reviews:${destination} traditional restaurant)
+- **Budget-friendly eats** - Street food and local markets [Map](map:${destination} food market)
+- **Fine dining** - Special occasion restaurants [Book](book:${destination} fine dining)
+${diet ? `- **${diet} options** - Restaurants accommodating your dietary needs [Reviews](reviews:${destination} ${diet} restaurant)` : ''}
+
+---
+
+## 🎭 Daily Itineraries
+
+### Day 1: Arrival and First Impressions (${start})
+- **Morning:** Arrive and check-in. [Map](map:${destination} airport to hotel)
+- **Afternoon:** Explore the neighborhood, get oriented
+- **Evening:** Welcome dinner with local cuisine [Reviews](reviews:${destination} welcome dinner)
+
+### Day 2: Main Attractions
+- **Morning:** Visit the top landmark [Tickets](tickets:${destination} main attraction)
+- **Afternoon:** Explore historic district [Map](map:${destination} historic center)
+- **Evening:** Sunset viewing and dinner [Reviews](reviews:${destination} sunset spot)
+
+![${destination} famous landmark](image:${destination} famous landmark architecture)
+
+### Day 3: Cultural Immersion
+- **Morning:** Museum or cultural site [Tickets](tickets:${destination} museum)
+- **Afternoon:** Local market and shopping [Map](map:${destination} local market)
+- **Evening:** Traditional entertainment [Reviews](reviews:${destination} cultural show)
+
+${nDays > 3 ? `### Day 4: Nature & Relaxation
+- **Morning:** Park, beach, or nature excursion [Map](map:${destination} nature park)
+- **Afternoon:** Leisure time and relaxation
+- **Evening:** Farewell dinner [Book](book:${destination} farewell dinner)
+
+![${destination} nature views](image:${destination} nature landscape beach)` : ''}
+
+### Day ${nDays}: Departure
+- **Morning:** Last-minute shopping or easy sightseeing
+- **Afternoon:** Check out and head to departure point
+
+---
+
+## 🎫 Must-See Attractions
+${destination.toLowerCase().includes('santorini') ? `
+- **Oia Castle** - Stunning sunset views (public viewpoint, no tickets needed)
+- **Red Beach** - Famous for its unique color (viewpoint only - officially unsafe for swimming)
+- **Perissa/Perivolos Beach** - Black sand beaches perfect for swimming
+- **Akrotiri Archaeological Site** - Explore ancient ruins [Tickets](tickets:${destination} akrotiri)
+- **Santo Wines** - Experience local winemaking (book sunset slots ahead)
+- **Fira's Caldera** - Beautiful views of the sea
+- **Ancient Thera** - Explore the ruins on the mountain
+- **Museum of Prehistoric Thera** - Learn about Santorini's history [Tickets](tickets:${destination} museum)
+` : `
+- **Top Landmark** - Iconic must-visit site [Tickets](tickets:${destination} landmark)
+- **Cultural Heritage** - Museums and historic sites [Reviews](reviews:${destination} museum)
+- **Natural Beauty** - Parks, beaches, or scenic viewpoints [Map](map:${destination} scenic viewpoints)
+- **Local Experiences** - Markets, neighborhoods, authentic activities
+`}
+
+![${destination} cityscape](image:${destination} cityscape architecture buildings)
+
+---
+
+## 🧳 Don't Forget List
+🧳 **Packing Checklist**
+
+☐ Passport and travel documents  
+☐ Travel insurance  
+☐ Local currency or travel cards  
+☐ Power adapter for electronics  
+☐ Comfortable walking shoes  
+☐ Camera/phone charger  
+☐ Medications and first aid  
+☐ Weather-appropriate clothing  
+☐ eSIM or local SIM card  
+☐ Emergency contact information  
+${diet ? '☐ Dietary restriction cards/translations  ' : ''}
+${children > 0 ? '☐ Kid-friendly entertainment and snacks  ' : ''}
+
+---
+
+## 🛡️ Travel Tips
+- **Local Customs:** Research basic etiquette and common phrases
+- **Safety:** Keep copies of important documents; know emergency numbers
+- **Money:** Notify your bank of travel plans; have backup payment methods
+- **Health:** Check if any vaccinations are needed
+
+---
+
+## 🚨 Emergency Info
+- **Local Emergency Services:** Research local emergency numbers
+- **Healthcare:** Know the nearest hospital and pharmacy locations
+- **Embassy:** Keep your country's embassy contact information handy
+
+---
+
+Get ready for an unforgettable experience in ${destination}! Enjoy the culture, cuisine, and countless memories waiting to be made. Safe travels! 🌅✈️
+
+---
+
+## 🚀 Book Your Trip Essentials
+
+${(() => {
+  const widgets = getWidgetsForDestination(destination, level, interests);
+  return generateWidgetHTML(widgets);
+})()}
 `.trim(), destination);
 }
 /* OpenAI (optional) */
 const client = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 async function generatePlanWithAI(payload) {
-  const { destination = '', start = '', end = '', budget = 0, currency = 'USD $', adults = 2, children = 0, level = 'mid', prefs = '', diet = '' } = payload || {};
+  const { destination = '', start = '', end = '', budget = 0, currency = 'USD $', adults = 2, children = 0, level = 'mid', prefs = '', diet = '', interests = [] } = payload || {};
   const nDays = daysBetween(start, end);
-  const sys = `Return Markdown ONLY.
-Sections:
-Use token links: [Map](map:query) [Tickets](tickets:query) [Book](book:query) [Reviews](reviews:query).`;
+  
+  const sys = `You are Wayzo AI, a world-class travel planning expert specializing in ${destination}. Create comprehensive, personalized travel itineraries that rival the best travel planners.
+
+CORE REQUIREMENTS:
+- Return ONLY Markdown content formatted exactly like a professional travel guide
+- Include specific restaurant names, exact attractions, realistic costs, and detailed timing
+- Add relevant images using syntax: ![Description](image:specific search term)
+- Use booking links: [Map](map:query) [Tickets](tickets:query) [Book](book:query) [Reviews](reviews:query)
+- Focus on authentic local experiences that only locals would know
+- Include practical tips, real costs in local currency, and insider logistics
+
+IMAGE STRATEGY:
+- Add 6-10 stunning, destination-specific images strategically placed
+- Use highly specific search terms: "${destination} sunset oia castle", "${destination} blue dome church", "${destination} santorini seafood taverna", "${destination} caldera view terrace"
+- Hero image: panoramic destination view
+- Food image: local cuisine plated beautifully  
+- Landmark images: iconic architecture/views
+- Activity images: people enjoying experiences
+- Nature images: beaches, landscapes, sunsets
+
+CONTENT STRUCTURE & TONE:
+Create a plan that reads like it was written by someone who has lived in ${destination} for years:
+
+1. **Engaging Overview** - Start with "🌴 Amazing [Destination] Trip Plan" and compelling description
+2. **Smart Budget Table** - Realistic costs with pending status checkboxes  
+3. **Transportation Mastery** - Specific airline names, bus routes, local transport hacks
+4. **Accommodation by District** - Real hotel names with price ranges and booking links
+5. **Restaurant Guide** - Actual restaurant names, signature dishes, price ranges, reviews
+6. **Daily Itineraries** - Hour-by-hour plans with specific venues and realistic timing
+7. **Must-See Attractions** - Real attraction names, ticket prices, insider tips
+8. **Interactive Packing List** - Use ☐ checkboxes for interactive items
+9. **Local Insider Tips** - Cultural nuances, hidden gems, money-saving tricks
+10. **Practical Info** - Emergency contacts, useful apps, local customs
+
+QUALITY STANDARDS:
+- Every restaurant/hotel/attraction mentioned should be a real place
+- Include specific costs in euros (€) for European destinations  
+- Add "| Reviews" and "| Book" links after venue mentions
+- Use emojis strategically for visual appeal and section breaks
+- Write with confidence and local expertise - no generic advice
+- Include seasonal considerations and weather-specific tips
+- Add estimated travel times between locations
+
+DESTINATION-SPECIFIC ACCURACY (SANTORINI):
+- Red Beach: Officially unsafe/inaccessible beyond barriers → list as "viewpoint only", recommend Perissa/Perivolos for swimming
+- Oia Castle: Public viewpoint → do NOT add "Tickets" links
+- Santo Wines: Mention sunset slots fill fast, suggest booking ahead
+- KTEL buses: Pay conductor in cash, frequent summer service
+- If hours/tickets may vary, say "check current hours just before visiting"
+
+Make this feel like a premium travel guide worth €200, not a generic AI response.`;
+
+  const interests_text = interests && interests.length > 0 ? ` Interests: ${interests.join(', ')}` : '';
   const user = `Destination: ${destination}
 Dates: ${start} to ${end} (${nDays} days)
 Party: ${adults} adults${children ? `, ${children} children` : ""}
-Style: ${level}${prefs ? ` + ${prefs}` : ""}
+Style: ${level}${prefs ? ` + ${prefs}` : ""}${interests_text}
 Budget: ${budget} ${currency}
-Diet: ${diet}`;
+Diet: ${diet}
+
+Create a detailed ${nDays}-day travel plan that feels authentic and locally-inspired. Include specific restaurant names, exact attractions, realistic timing, and practical costs. Make it feel like it was written by someone who knows ${destination} intimately.
+
+IMPORTANT: At the end of your response, add a section called "🚀 Book Your Trip Essentials" with relevant booking widgets for this destination.`;
   if (!client) {
     console.warn('OpenAI API key not set, using local fallback');
     let md = localPlanMarkdown(payload);
@@ -178,12 +365,28 @@ Diet: ${diet}`;
     }
     md = linkifyTokens(md, destination);
     md = ensureDaySections(md, nDays, start);
+    
+    // Add affiliate widgets
+    const widgets = getWidgetsForDestination(destination, level, interests);
+    const widgetHTML = generateWidgetHTML(widgets);
+    md += '\n\n' + widgetHTML;
+    
     return md;
   } catch (e) {
     console.error('OpenAI API error:', e);
     return localPlanMarkdown(payload); // Fallback
   }
 }
+/* Health check for Render */
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    version: VERSION,
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
 /* API */
 app.post('/api/preview', (req, res) => {
   console.log('Preview request received:', req.body);
@@ -250,28 +453,111 @@ app.get('/api/plan/:id/pdf', (req, res) => {
   header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid var(--border);flex-wrap:wrap}
   .logo{display:flex;gap:10px;align-items:center}
   .badge{width:28px;height:28px;border-radius:8px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:700}
-  .pill{border:1px solid var(--border);background:var(--accent);padding:.25rem .6rem;border-radius:999px;font-size:12px}
-  .summary{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 10px 0}
-  .summary .chip{border:1px solid var(--border);background:#fff;border-radius:999px;padding:.25rem .6rem;font-size:12px}
-  .actions{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 14px}
-  .actions a{color:#0f172a;text-decoration:none;border-bottom:1px dotted rgba(2,6,23,.25)}
-  .facts{background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px;margin:8px 0}
-  img{max-width:100%;height:auto;border-radius:10px}
-  table{border-collapse:collapse;width:100%}
-  th,td{border:1px solid var(--border);padding:.45rem .55rem;text-align:left}
-  thead th{background:var(--accent)}
-  footer{margin-top:24px;color:var(--muted);font-size:12px}
+  .test-user-notice{background:var(--accent);padding:8px 12px;border-radius:8px;margin-bottom:16px;font-size:14px;color:var(--muted)}
+  h1{font-size:28px;font-weight:700;margin:0 0 16px 0;color:var(--ink)}
+  h2{font-size:24px;font-weight:600;margin:32px 0 16px 0;color:var(--ink);border-bottom:1px solid var(--border);padding-bottom:8px}
+  h3{font-size:20px;font-weight:600;margin:24px 0 12px 0;color:var(--ink)}
+  p{margin:0 0 16px 0;line-height:1.6}
+  ul,ol{margin:0 0 16px 0;padding-left:24px}
+  li{margin:0 0 8px 0;line-height:1.5}
+  table{border-collapse:collapse;width:100%;margin:16px 0;font-size:14px}
+  th,td{padding:12px;text-align:left;border-bottom:1px solid var(--border)}
+  th{background:var(--accent);font-weight:600;color:var(--ink)}
+  tr:hover{background:var(--accent)}
+  a{color:var(--brand);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .chip{display:inline-block;background:var(--accent);padding:4px 8px;border-radius:4px;font-size:12px;margin:2px}
+  .muted{color:var(--muted);font-size:14px}
+  .summary{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+  .summary .chip{background:var(--accent);padding:6px 12px;font-size:14px}
+  
+  /* Better placeholder styling */
+  .image-placeholder { 
+    display:flex; align-items:center; justify-content:center; 
+    background:#f5f7fb; border:1px dashed #cbd5e1; border-radius:12px; 
+    min-height:220px; margin:8px 0; 
+  }
+  .image-placeholder .placeholder-content { text-align:center; color:#64748b; }
+  .image-loaded + .image-placeholder { display:none !important; }
+  .hidden { display:none !important; }
+
+  /* Toggling styles */
+  .done { text-decoration: line-through; color:#64748b; }
+  .status-pending { color:#b45309; font-weight:600; }
+  .status-total { color:#0f766e; font-weight:700; }
+
+  /* Print friendliness */
+  @media print {
+    body { color: #0f172a; }
+    a[href^="http"]::after { content: " (" attr(href) ")"; font-size: 10px; color:#475569; }
+    .header, .test-user-notice { break-inside: avoid; }
+    img, table, h2, h3 { break-inside: avoid; page-break-inside: avoid; }
+  }
 </style>
-</head><body>
+</head>
+<body>
 <header>
+  <div class="logo">
+    <div class="badge">W</div>
+    <div>
+      <strong>Wayzo Trip Plan</strong><br>
+      <span class="muted">Generated on ${new Date().toLocaleDateString()}</span>
+    </div>
+  </div>
+  <div class="muted">
+    <a href="${pdfUrl}">📄 PDF</a> • 
+    <a href="${icsUrl}">📅 Calendar</a> • 
+    <a href="${shareX}">📤 Share</a>
+  </div>
 </header>
-<div class="summary">
-  <span class="chip"><b>Travelers:</b> ${traveler}</span>
-  <span class="chip"><b>Style:</b> ${style}${d.prefs ? ` · ${escapeHtml(d.prefs)}` : ""}</span>
-  <span class="chip"><b>Budget:</b> ${normalizeBudget(d.budget, d.currency)} ${d.currency} (${pppd}/day/person)</span>
-  <span class="chip"><b>Season:</b> ${season}</span>
+
+<div class="test-user-notice">
+  🧪 TEST USER MODE - Full Plan Unlocked!<br>
+  You're signed in as a test user. All features are unlocked for testing purposes.
 </div>
-</body></html>`;
+
+${htmlBody}
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Unhide images and wire up placeholders
+  document.querySelectorAll('.image-placeholder + img').forEach((img) => {
+    const placeholder = img.previousElementSibling;
+    const reveal = () => {
+      img.classList.add('image-loaded');
+      if (placeholder) placeholder.classList.add('hidden');
+    };
+    const fail = () => {
+      if (placeholder) {
+        const p = placeholder.querySelector('p');
+        if (p) p.textContent = 'Image unavailable (check URL or network)';
+      }
+    };
+    if (img.complete) {
+      // Image already in cache
+      if (img.naturalWidth > 0) reveal(); else fail();
+    } else {
+      img.addEventListener('load', reveal, { once: true });
+      img.addEventListener('error', fail, { once: true });
+    }
+  });
+
+  // Define toggle helpers to avoid console errors
+  window.toggleBudgetItem = (el) => {
+    const row = el.closest('tr');
+    if (!row) return;
+    row.classList.toggle('done', el.checked);
+    const status = row.querySelector('.status-pending');
+    if (status) status.textContent = el.checked ? 'Done' : 'Pending';
+  };
+  window.toggleItem = (el) => {
+    const label = el.nextElementSibling;
+    if (label) label.classList.toggle('done', el.checked);
+  };
+});
+</script>
+</body>
+</html>`;
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(html);
 });
