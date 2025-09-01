@@ -4,9 +4,12 @@
   "description": "AI-powered trip planning application with multi-language support and professional admin dashboard",
   "main": "frontend/index.backend.html",
   "scripts": {
-    "start": "cd frontend && python3 -m http.server 8000",
-    "dev": "cd frontend && python3 -m http.server 8000",
+    "start": "cd backend && node server.mjs",
+    "dev": "cd backend && node server.mjs",
     "build": "echo 'No build step required for static site'",
+    "deploy:staging": "echo 'Staging deployment: Push to feature branch'",
+    "deploy:production": "echo 'Production deployment: Merge to main'",
+    "test": "echo 'Run tests before deployment'",
     "deploy:render": "echo 'Deploy to Render: Connect your GitHub repository to Render and it will auto-deploy'",
     "deploy:netlify": "netlify deploy --prod --dir=frontend",
     "deploy:vercel": "vercel --prod"
