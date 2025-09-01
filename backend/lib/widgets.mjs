@@ -76,9 +76,17 @@ function getWidgetsForDestination(destination, tripType, interests = []) {
   return widgets;
 }
 
-// Generate widget HTML
+// Generate widget HTML with section-specific placement
 function generateWidgetHTML(widgets, placement = 'inline') {
   if (!widgets || widgets.length === 0) return '';
+  
+  // Group widgets by category for better organization
+  const groupedWidgets = {
+    flights: widgets.filter(w => w.category === 'flights'),
+    accommodation: widgets.filter(w => w.category === 'accommodation'),
+    transport: widgets.filter(w => w.category === 'transport'),
+    connectivity: widgets.filter(w => w.category === 'connectivity')
+  };
   
   const widgetHTML = widgets.map(widget => `
     <div class="affiliate-widget" data-category="${widget.category}" data-placement="${widget.placement}">
@@ -102,4 +110,43 @@ function generateWidgetHTML(widgets, placement = 'inline') {
   `;
 }
 
-export { AFFILIATE_WIDGETS, getWidgetsForDestination, generateWidgetHTML };
+// Generate section-specific widget HTML
+function generateSectionWidgets(section, widgets) {
+  const relevantWidgets = widgets.filter(widget => {
+    switch(section) {
+      case 'transportation':
+      case 'getting_around':
+        return widget.category === 'transport' || widget.category === 'flights';
+      case 'accommodation':
+      case 'hotels':
+        return widget.category === 'accommodation';
+      case 'connectivity':
+      case 'essentials':
+        return widget.category === 'connectivity';
+      default:
+        return true;
+    }
+  });
+  
+  if (relevantWidgets.length === 0) return '';
+  
+  const widgetHTML = relevantWidgets.map(widget => `
+    <div class="section-widget" data-category="${widget.category}">
+      <div class="widget-header">
+        <h4>${widget.name}</h4>
+        <p>${widget.description}</p>
+      </div>
+      <div class="widget-content">
+        ${widget.script}
+      </div>
+    </div>
+  `).join('');
+  
+  return `
+    <div class="section-widgets">
+      ${widgetHTML}
+    </div>
+  `;
+}
+
+export { AFFILIATE_WIDGETS, getWidgetsForDestination, generateWidgetHTML, generateSectionWidgets };

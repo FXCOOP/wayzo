@@ -16,19 +16,10 @@
 
   if (!form || !previewEl) return; // nothing to wire up
 
-  // Check if we're on staging environment - automatically enable test user mode
+  // Check if we're on staging environment - but don't auto-login, let user sign up
   const isStaging = window.location.hostname.includes('staging') || window.location.hostname.includes('onrender.com');
   if (isStaging) {
-    console.log('🚀 Staging environment detected - enabling test user mode');
-    // Set test user in localStorage
-    localStorage.setItem('wayzo_authenticated', 'true');
-    localStorage.setItem('wayzo_user', JSON.stringify({
-      name: 'Staging Test User',
-      email: 'staging@wayzo.com',
-      avatar: '/frontend/assets/default-avatar.svg',
-      isTestUser: true
-    }));
-    console.log('✅ Test user set in localStorage');
+    console.log('🚀 Staging environment detected - user needs to sign up manually');
   }
 
   const show = (el) => el && el.classList.remove('hidden');
@@ -1971,17 +1962,71 @@
     updateUIForAuthenticatedUser();
   };
 
-  // Checkbox functionality for Don't Forget List
+  // Enhanced checklist functionality with widget integration
   window.toggleItem = (checkbox) => {
     const item = checkbox.closest('.dont-forget-item');
     if (checkbox.checked) {
       item.classList.add('checked');
       showNotification('✅ Item marked as done!', 'success');
+      
+      // Link to relevant widget based on item content
+      const itemText = checkbox.nextElementSibling.textContent.toLowerCase();
+      linkToRelevantWidget(itemText);
     } else {
       item.classList.remove('checked');
       showNotification('📝 Item unchecked', 'info');
     }
   };
+
+  // Link checklist items to relevant widgets
+  function linkToRelevantWidget(itemText) {
+    const widgets = document.querySelectorAll('.affiliate-widget');
+    
+    widgets.forEach(widget => {
+      const widgetTitle = widget.querySelector('h4').textContent.toLowerCase();
+      const widgetDesc = widget.querySelector('p').textContent.toLowerCase();
+      
+      // Match item to relevant widget
+      if (itemText.includes('esim') || itemText.includes('sim') || itemText.includes('internet') || itemText.includes('connectivity')) {
+        if (widgetTitle.includes('esim') || widgetDesc.includes('internet')) {
+          highlightWidget(widget);
+        }
+      } else if (itemText.includes('flight') || itemText.includes('airplane') || itemText.includes('plane')) {
+        if (widgetTitle.includes('flight') || widgetDesc.includes('flight')) {
+          highlightWidget(widget);
+        }
+      } else if (itemText.includes('hotel') || itemText.includes('accommodation') || itemText.includes('stay')) {
+        if (widgetTitle.includes('hotel') || widgetDesc.includes('accommodation')) {
+          highlightWidget(widget);
+        }
+      } else if (itemText.includes('car') || itemText.includes('rental') || itemText.includes('transport')) {
+        if (widgetTitle.includes('car') || widgetDesc.includes('rental')) {
+          highlightWidget(widget);
+        }
+      } else if (itemText.includes('airport') || itemText.includes('transfer') || itemText.includes('pickup')) {
+        if (widgetTitle.includes('airport') || widgetDesc.includes('transfer')) {
+          highlightWidget(widget);
+        }
+      }
+    });
+  }
+
+  // Highlight relevant widget
+  function highlightWidget(widget) {
+    widget.style.transform = 'scale(1.05)';
+    widget.style.boxShadow = '0 8px 25px rgba(37, 99, 235, 0.3)';
+    widget.style.border = '2px solid var(--brand)';
+    
+    // Scroll to widget
+    widget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    // Reset highlight after 3 seconds
+    setTimeout(() => {
+      widget.style.transform = '';
+      widget.style.boxShadow = '';
+      widget.style.border = '';
+    }, 3000);
+  }
 
   // Image error handling and fallback
   window.handleImageError = (img) => {
@@ -2195,26 +2240,4 @@
   };
 
 })();
-// Trigger redeploy for image fix
-
-// Initialize app for staging test user
-document.addEventListener('DOMContentLoaded', () => {
-  // Check if we're on staging and update UI for test user
-  const isStaging = window.location.hostname.includes('staging') || window.location.hostname.includes('onrender.com');
-  if (isStaging) {
-    // Re-check authentication and update UI
-    const authenticated = localStorage.getItem('wayzo_authenticated') === 'true';
-    const savedUser = localStorage.getItem('wayzo_user');
-    
-    if (authenticated && savedUser) {
-      try {
-        currentUser = JSON.parse(savedUser);
-        isAuthenticated = true;
-        updateUIForAuthenticatedUser();
-        console.log('🚀 Staging test user UI updated');
-      } catch (e) {
-        console.error('Failed to parse saved user:', e);
-      }
-    }
-  }
-});
+// Trigger redeploy for manual signup fix

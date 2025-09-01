@@ -26,6 +26,12 @@
   padding: 16px;
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.affiliate-widget:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
 .widget-header h4 {
@@ -54,15 +60,140 @@
   border-radius: 6px;
 }
 
+/* Section-specific widgets */
+.section-widgets {
+  margin: 16px 0;
+  padding: 16px;
+  background: rgba(37, 99, 235, 0.05);
+  border-radius: 8px;
+  border-left: 4px solid var(--brand);
+}
+
+.section-widget {
+  margin-bottom: 12px;
+  padding: 12px;
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.section-widget:last-child {
+  margin-bottom: 0;
+}
+
+/* Enhanced checklist functionality */
+.dont-forget-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-radius: 6px;
+  margin: 4px 0;
+}
+
+.dont-forget-item:hover {
+  background-color: rgba(37, 99, 235, 0.05);
+}
+
+.dont-forget-item input[type="checkbox"] {
+  margin-right: 12px;
+  transform: scale(1.2);
+  cursor: pointer;
+}
+
+.dont-forget-item label {
+  cursor: pointer;
+  flex: 1;
+  transition: color 0.2s ease;
+}
+
+.dont-forget-item.checked label {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+.dont-forget-item.checked {
+  background-color: rgba(34, 197, 94, 0.1);
+}
+
+/* Budget checklist with widget integration */
+.budget-checkbox {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.budget-checkbox input[type="checkbox"] {
+  margin-right: 8px;
+  transform: scale(1.1);
+  cursor: pointer;
+}
+
+.budget-checkbox label {
+  cursor: pointer;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.budget-checkbox:hover label {
+  color: var(--brand);
+}
+
 /* Mobile responsiveness for widgets */
 @media (max-width: 768px) {
   .widgets-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
   
   .affiliate-widgets-section {
     padding: 16px;
     margin: 24px 0;
+  }
+  
+  .affiliate-widget {
+    padding: 12px;
+  }
+  
+  .widget-content {
+    min-height: 150px;
+  }
+  
+  .section-widgets {
+    padding: 12px;
+    margin: 12px 0;
+  }
+  
+  .section-widget {
+    padding: 10px;
+  }
+  
+  .dont-forget-item {
+    padding: 6px 0;
+  }
+  
+  .dont-forget-item input[type="checkbox"] {
+    transform: scale(1.1);
+  }
+}
+
+@media (max-width: 480px) {
+  .affiliate-widgets-section {
+    padding: 12px;
+    margin: 16px 0;
+  }
+  
+  .widgets-grid {
+    gap: 8px;
+  }
+  
+  .affiliate-widget {
+    padding: 10px;
+  }
+  
+  .widget-content {
+    min-height: 120px;
   }
 }
 

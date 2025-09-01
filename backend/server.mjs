@@ -515,7 +515,8 @@ Create a checklist like this with proper HTML checkboxes:
 - Add [Book](book:query) for booking links
 - Use [Reviews](reviews:query) for recommendations
 - Include [Tickets](tickets:query) for attractions
-- **MANDATORY:** Include 6-8 beautiful images using token links: ![Title](image:QUERY) - this is REQUIRED for every report
+- **MANDATORY:** Include 6-8 beautiful, RELEVANT images using token links: ![Title](image:QUERY) - this is REQUIRED for every report
+- **IMAGE REQUIREMENTS:** Generate specific, relevant images for the destination. For Santorini, include: sunset views, white buildings, caldera views, beaches, local food, architecture, activities. Use specific queries like "Santorini sunset Oia", "Santorini white buildings", "Santorini caldera view", "Greek food Santorini", "Santorini beaches", "Santorini architecture"
 
 **STYLE:** Make it exciting, informative, and ready to use!`;
 
