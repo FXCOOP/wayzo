@@ -16,6 +16,20 @@
 
   if (!form || !previewEl) return; // nothing to wire up
 
+  // Check if we're on staging environment - automatically enable test user mode
+  const isStaging = window.location.hostname.includes('staging') || window.location.hostname.includes('onrender.com');
+  if (isStaging) {
+    console.log('🚀 Staging environment detected - enabling test user mode');
+    // Set test user in localStorage
+    localStorage.setItem('wayzo_authenticated', 'true');
+    localStorage.setItem('wayzo_user', JSON.stringify({
+      name: 'Staging Test User',
+      email: 'staging@wayzo.com',
+      avatar: '/frontend/assets/default-avatar.svg',
+      isTestUser: true
+    }));
+  }
+
   const show = (el) => el && el.classList.remove('hidden');
   const hide = (el) => el && el.classList.add('hidden');
 
@@ -2138,3 +2152,25 @@ let currentUser = JSON.parse(localStorage.getItem('wayzo_user') || 'null');
 
 })();
 // Trigger redeploy for image fix
+
+// Initialize app for staging test user
+document.addEventListener('DOMContentLoaded', () => {
+  // Check if we're on staging and update UI for test user
+  const isStaging = window.location.hostname.includes('staging') || window.location.hostname.includes('onrender.com');
+  if (isStaging) {
+    // Re-check authentication and update UI
+    const authenticated = localStorage.getItem('wayzo_authenticated') === 'true';
+    const savedUser = localStorage.getItem('wayzo_user');
+    
+    if (authenticated && savedUser) {
+      try {
+        currentUser = JSON.parse(savedUser);
+        isAuthenticated = true;
+        updateUIForAuthenticatedUser();
+        console.log('🚀 Staging test user UI updated');
+      } catch (e) {
+        console.error('Failed to parse saved user:', e);
+      }
+    }
+  }
+});
