@@ -2138,6 +2138,14 @@
             img.onerror();
           }
         }
+        
+        // Force reload if src contains 'image:' token
+        if (img.src.includes('image:')) {
+          const query = img.src.replace('image:', '').trim();
+          const unsplashUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(query)}`;
+          console.log('🔄 Converting image token to Unsplash URL:', query, '→', unsplashUrl);
+          img.src = unsplashUrl;
+        }
       });
       
       console.log('Image handling initialized for', travelImages.length, 'images');

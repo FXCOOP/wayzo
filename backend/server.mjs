@@ -570,6 +570,22 @@ ${dateMode === 'flexible' ? `- **Flexible Date Optimization**: Suggest the best 
   - For food: use local dish names (e.g., "Croissant Paris", "Currywurst Berlin")
   - For activities: use specific activities (e.g., "Cycling Amsterdam", "Hiking Swiss Alps")
   - For culture: use local terms (e.g., "Japanese Temple", "Italian Piazza")
+- **FOR SANTORINI SPECIFICALLY**: Use these exact image queries:
+  - "Santorini sunset Oia Greece"
+  - "Santorini white buildings caldera"
+  - "Greek food Santorini taverna"
+  - "Santorini beaches volcanic"
+  - "Santorini architecture blue domes"
+  - "Santorini activities wine tasting"
+  - "Santorini culture local people"
+  - "Santorini experience travel"
+
+**DAILY ITINERARIES REQUIREMENT:**
+- Create detailed, specific daily itineraries for each day
+- DO NOT use generic "Open Exploration" or placeholder text
+- Each day should have specific activities, times, and locations
+- Include specific restaurant names and attraction names
+- Make it feel like a real, actionable itinerary
 
 **Requirements:**
 - Make it feel like a premium travel guide
