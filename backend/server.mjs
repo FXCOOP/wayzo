@@ -890,6 +890,16 @@ function injectWidgetsIntoSections(html, widgets) {
     '$1$2'
   );
   
+  // More aggressive removal of widgets from Don't Forget List
+  modifiedHtml = modifiedHtml.replace(
+    /(<h2>🧳 Don't Forget List<\/h2>.*?<div class="dont-forget-list">)(.*?)(<h3>🧳 Don't Forget List<\/h3>.*?<\/div>\s*<\/div>)/gs,
+    (match, before, widgets, after) => {
+      // Remove all section-widget divs from the middle part
+      const cleanedWidgets = widgets.replace(/<div class="section-widget"[^>]*>.*?<\/div>\s*<\/div>\s*<\/div>/gs, '');
+      return before + cleanedWidgets + after;
+    }
+  );
+  
   // Add remaining widgets at the end if not placed
   const placedWidgets = [flightWidget, hotelWidget, carWidget, esimWidget].filter(Boolean);
   const remainingWidgets = widgets.filter(w => !placedWidgets.includes(w));
