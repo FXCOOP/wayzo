@@ -820,6 +820,19 @@ Create the most amazing, detailed, and useful trip plan possible!`;
     md = md.replace(/## 🖼️ Image Ideas\n[\s\S]*?(?=\n---|\n## |$)/g, '');
     md = md.replace(/## 🖼️ Image Ideas\n[\s\S]*?(?=\n---|\n## |$)/g, '');
     
+    // SIMPLE STRING REPLACEMENT: Remove the entire section
+    const imageIdeasIndex = md.indexOf('## 🖼️ Image Ideas');
+    if (imageIdeasIndex !== -1) {
+      const beforeImageIdeas = md.substring(0, imageIdeasIndex);
+      const afterImageIdeas = md.substring(imageIdeasIndex);
+      const nextSectionIndex = afterImageIdeas.indexOf('\n---');
+      if (nextSectionIndex !== -1) {
+        md = beforeImageIdeas + afterImageIdeas.substring(nextSectionIndex);
+      } else {
+        md = beforeImageIdeas;
+      }
+    }
+    
     // Enhance the markdown with better formatting
     md = linkifyTokens(md, destination);
     // Only add fallback structured day sections if missing to prevent duplicates
