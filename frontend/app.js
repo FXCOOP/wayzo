@@ -2062,8 +2062,10 @@
   window.initializeImageHandling = () => {
     // Wait a bit for the DOM to be ready
     setTimeout(() => {
-      // Find ALL images on the page
-      const allImages = document.querySelectorAll('img');
+      // Scope ONLY to the report container to avoid affecting homepage/UI images
+      const reportContainer = document.getElementById('preview');
+      if (!reportContainer) return;
+      const allImages = reportContainer.querySelectorAll('img');
       console.log('Found total images:', allImages.length);
       
       // Process every single image
@@ -2199,7 +2201,7 @@
           return;
         }
         
-        // Case 8: Force load any image that doesn't have a proper Unsplash URL
+        // Case 8: Force load any image that doesn't have a proper Unsplash URL (scoped)
         if (img.src && !img.src.includes('source.unsplash.com')) {
           const altText = img.alt || '';
           let fallbackQuery = getFallbackQuery(altText);

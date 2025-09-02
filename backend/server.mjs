@@ -1056,20 +1056,17 @@ app.post('/api/plan', async (req, res) => {
 function injectWidgetsIntoSections(html, widgets) {
   let modifiedHtml = html;
   
-  // First, completely remove ALL widgets from the Don't Forget List section
+  // First, completely remove ANY widget blocks anywhere inside the Don't Forget List section
   modifiedHtml = modifiedHtml.replace(
-    /(<h2>🧳 Don't Forget List<\/h2>.*?<div class="dont-forget-list">)(.*?)(<h3>🧳 Don't Forget List<\/h3>.*?<\/div>\s*<\/div>)/gs,
-    (match, before, middle, after) => {
-      // Remove all section-widget divs from the middle part
-      const cleanedMiddle = middle.replace(/<div class="section-widget"[^>]*>.*?<\/div>\s*<\/div>\s*<\/div>/gs, '');
-      return before + cleanedMiddle + after;
+    /(<h2>🧳 Don't Forget List<\/h2>[\s\S]*?<div class="dont-forget-list">)[\s\S]*?(<\/div>\s*\n?\s*<h2>|$)/g,
+    (m, start, tail) => {
+      // Keep only the checklist markup inside dont-forget-list; strip all section-widget blocks and tpwdgt scripts
+      let inner = m.replace(start, '').replace(tail, '');
+      inner = inner
+        .replace(/<div class="section-widget"[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/g, '')
+        .replace(/<script[^>]*src="https?:\/\/tpwdgt\.com[\s\S]*?<\/script>/g, '');
+      return start + inner + tail;
     }
-  );
-  
-  // Also remove any widgets that might be outside the dont-forget-list div
-  modifiedHtml = modifiedHtml.replace(
-    /(<h2>🧳 Don't Forget List<\/h2>.*?)<div class="section-widget"[^>]*>.*?<\/div>\s*<\/div>\s*<\/div>(.*?<h3>🧳 Don't Forget List<\/h3>)/gs,
-    '$1$2'
   );
   
   // Now inject widgets into their proper sections
