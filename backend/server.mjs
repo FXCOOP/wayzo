@@ -746,18 +746,18 @@ Create the most amazing, detailed, and useful trip plan possible!`;
       }
       
       // Skip any "Image Ideas" section - be more aggressive
-      if (line.includes('🖼️ Image Ideas') || line.includes('Image Ideas') || line.includes('Image Ideas:')) {
+      if (line.includes('🖼️ Image Ideas') || line.includes('Image Ideas') || line.includes('Image Ideas:') || line.includes('Image Ideas')) {
         skipUntilNextSection = true;
         continue;
       }
       
-      // Skip any numbered image lists
-      if (skipUntilNextSection && (line.match(/^\d+\.\s*\*\*/) || line.includes('**Cityscape/Overview**') || line.includes('**Local Food**'))) {
+      // Skip any numbered image lists or image content
+      if (skipUntilNextSection && (line.match(/^\d+\.\s*\*\*/) || line.includes('**Cityscape/Overview**') || line.includes('**Local Food**') || line.includes('**Cultural Site**') || line.includes('**Nature/Landscape**') || line.includes('**Local Life**') || line.includes('**Architecture**') || line.includes('**Activity**') || line.includes('**Experience**') || line.includes('![Santorini'))) {
         continue;
       }
       
       // Stop skipping when we hit a new section (starts with ### or ##) or end of content
-      if (skipUntilNextSection && (line.startsWith('###') || line.startsWith('##') || line.startsWith('---') || line.includes('Happy travels') || line.includes('Enjoy your'))) {
+      if (skipUntilNextSection && (line.startsWith('###') || line.startsWith('##') || line.startsWith('---') || line.includes('Happy travels') || line.includes('Enjoy your') || line.includes('Have an amazing'))) {
         skipUntilNextSection = false;
       }
       
