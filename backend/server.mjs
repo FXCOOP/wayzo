@@ -845,6 +845,33 @@ Create the most amazing, detailed, and useful trip plan possible!`;
       }
     }
     
+    // ULTIMATE STRING REPLACEMENT: Remove any section that contains "Image Ideas"
+    let lines = md.split('\n');
+    let cleanedLines = [];
+    let skipSection = false;
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      
+      // Check if this line starts a section we want to skip
+      if (line.includes('## 🖼️ Image Ideas') || line.includes('## Image Ideas') || line.includes('🖼️ Image Ideas')) {
+        skipSection = true;
+        continue;
+      }
+      
+      // If we're skipping and hit a new section, stop skipping
+      if (skipSection && (line.startsWith('## ') || line.startsWith('---'))) {
+        skipSection = false;
+      }
+      
+      // Add line if we're not skipping
+      if (!skipSection) {
+        cleanedLines.push(line);
+      }
+    }
+    
+    md = cleanedLines.join('\n');
+    
     // Enhance the markdown with better formatting
     md = linkifyTokens(md, destination);
     // Only add fallback structured day sections if missing to prevent duplicates
