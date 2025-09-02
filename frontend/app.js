@@ -2065,6 +2065,13 @@
       // Scope ONLY to the report container to avoid affecting homepage/UI images
       const reportContainer = document.getElementById('preview');
       if (!reportContainer) return;
+      // Remove stray placeholders like "🖼️" and "Image loading..." left by the generator
+      Array.from(reportContainer.querySelectorAll('*')).forEach(el => {
+        const text = (el.textContent || '').trim();
+        if (!el.children.length && (text === 'Image loading...' || text === '🖼️')) {
+          try { el.remove(); } catch (_) {}
+        }
+      });
       const allImages = reportContainer.querySelectorAll('img');
       console.log('Found total images:', allImages.length);
       
@@ -2133,7 +2140,7 @@
         // Case 1: Images with 'image:' token
         if (img.src.includes('image:')) {
           const query = img.src.replace('image:', '').trim();
-          let unsplashQuery = getSantoriniQuery(query);
+          let unsplashQuery = prefixWithDestination(getSantoriniQuery(query));
           const unsplashUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(unsplashQuery)}`;
           console.log('🔄 Converting image token:', query, '→', unsplashQuery, '→', unsplashUrl);
           img.src = unsplashUrl;
@@ -2143,7 +2150,7 @@
         // Case 2: Images with "Image loading..." text nearby
         const parentText = img.parentElement?.textContent || '';
         if (parentText.includes('Image loading') && !img.src.includes('unsplash') && !img.src.includes('picsum')) {
-          let contextQuery = getContextQuery(parentText);
+          let contextQuery = prefixWithDestination(getContextQuery(parentText));
           const unsplashUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(contextQuery)}`;
           console.log('🔄 Converting context-based image:', contextQuery, '→', unsplashUrl);
           img.src = unsplashUrl;
@@ -2153,7 +2160,7 @@
         // Case 3: Images with empty or invalid src
         if (!img.src || img.src === '' || img.src.includes('data:') || img.src.includes('blob:')) {
           const altText = img.alt || '';
-          let fallbackQuery = getFallbackQuery(altText);
+          let fallbackQuery = prefixWithDestination(getFallbackQuery(altText));
           const fallbackUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(fallbackQuery)}`;
           console.log('🔄 Loading fallback image:', fallbackQuery, '→', fallbackUrl);
           img.src = fallbackUrl;
@@ -2163,7 +2170,7 @@
         // Case 4: Images that are not loading (no src attribute or broken)
         if (!img.src || img.src === 'undefined' || img.src === 'null') {
           const altText = img.alt || '';
-          let fallbackQuery = getFallbackQuery(altText);
+          let fallbackQuery = prefixWithDestination(getFallbackQuery(altText));
           const fallbackUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(fallbackQuery)}`;
           console.log('🔄 Loading missing image:', fallbackQuery, '→', fallbackUrl);
           img.src = fallbackUrl;
@@ -2174,7 +2181,7 @@
         if (img.src && !img.src.includes('unsplash') && !img.src.includes('picsum') && !img.src.includes('placeholder')) {
           const altText = img.alt || '';
           if (altText.includes('Santorini') || altText.includes('Greece') || altText.includes('Image')) {
-            let fallbackQuery = getFallbackQuery(altText);
+            let fallbackQuery = prefixWithDestination(getFallbackQuery(altText));
             const fallbackUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(fallbackQuery)}`;
             console.log('🔄 Force loading image:', fallbackQuery, '→', fallbackUrl);
             img.src = fallbackUrl;
@@ -2184,7 +2191,7 @@
         // Case 6: Force load any image with "Image loading..." in alt text
         if (img.alt && img.alt.includes('Image loading')) {
           const altText = img.alt || '';
-          let fallbackQuery = getFallbackQuery(altText);
+          let fallbackQuery = prefixWithDestination(getFallbackQuery(altText));
           const fallbackUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(fallbackQuery)}`;
           console.log('🔄 Force loading from alt text:', fallbackQuery, '→', fallbackUrl);
           img.src = fallbackUrl;
@@ -2194,7 +2201,7 @@
         // Case 7: Handle images that show as "Image loading..." text
         if (img.alt && img.alt.includes('🖼️')) {
           const altText = img.alt || '';
-          let fallbackQuery = getFallbackQuery(altText);
+          let fallbackQuery = prefixWithDestination(getFallbackQuery(altText));
           const fallbackUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(fallbackQuery)}`;
           console.log('🔄 Loading emoji image:', fallbackQuery, '→', fallbackUrl);
           img.src = fallbackUrl;
@@ -2204,7 +2211,7 @@
         // Case 8: Force load any image that doesn't have a proper Unsplash URL (scoped)
         if (img.src && !img.src.includes('source.unsplash.com')) {
           const altText = img.alt || '';
-          let fallbackQuery = getFallbackQuery(altText);
+          let fallbackQuery = prefixWithDestination(getFallbackQuery(altText));
           const fallbackUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(fallbackQuery)}`;
           console.log('🔄 Converting to Unsplash:', fallbackQuery, '→', fallbackUrl);
           img.src = fallbackUrl;
@@ -2214,7 +2221,7 @@
         // Case 9: Handle any image with "Image loading..." in src or alt
         if ((img.src && img.src.includes('Image loading')) || (img.alt && img.alt.includes('Image loading'))) {
           const altText = img.alt || '';
-          let fallbackQuery = getFallbackQuery(altText);
+          let fallbackQuery = prefixWithDestination(getFallbackQuery(altText));
           const fallbackUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(fallbackQuery)}`;
           console.log('🔄 Fixing loading text image:', fallbackQuery, '→', fallbackUrl);
           img.src = fallbackUrl;
@@ -2224,7 +2231,7 @@
         // Case 10: Handle any image with empty or invalid src
         if (!img.src || img.src === '#' || img.src === 'data:') {
           const altText = img.alt || '';
-          let fallbackQuery = getFallbackQuery(altText);
+          let fallbackQuery = prefixWithDestination(getFallbackQuery(altText));
           const fallbackUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(fallbackQuery)}`;
           console.log('🔄 Fixing empty src image:', fallbackQuery, '→', fallbackUrl);
           img.src = fallbackUrl;
@@ -2263,43 +2270,81 @@
   // Helper function to get context-based queries
   function getContextQuery(parentText) {
     if (parentText.includes('sunset') || parentText.includes('Oia')) {
-      return 'Santorini sunset Oia Greece';
+      return 'sunset viewpoint';
     } else if (parentText.includes('food') || parentText.includes('cuisine')) {
-      return 'Greek food Santorini taverna';
+      return 'local food taverna';
     } else if (parentText.includes('beach') || parentText.includes('volcanic')) {
-      return 'Santorini beaches volcanic';
+      return 'beach';
     } else if (parentText.includes('architecture') || parentText.includes('blue dome')) {
-      return 'Santorini architecture blue domes';
+      return 'architecture blue domes';
     } else if (parentText.includes('wine') || parentText.includes('tasting')) {
-      return 'Santorini activities wine tasting';
+      return 'wine tasting';
     } else if (parentText.includes('culture') || parentText.includes('local')) {
-      return 'Santorini culture local people';
+      return 'local culture';
     } else if (parentText.includes('experience') || parentText.includes('travel')) {
-      return 'Santorini experience travel';
+      return 'travel experience';
     }
-    return 'Santorini Greece';
+    return 'highlights';
   }
   
   // Helper function to get fallback queries
   function getFallbackQuery(altText) {
     if (altText.includes('Cityscape') || altText.includes('Overview')) {
-      return 'Santorini sunset Oia Greece';
+      return 'cityscape skyline';
     } else if (altText.includes('Food') || altText.includes('Cuisine')) {
-      return 'Greek food Santorini taverna';
+      return 'local food taverna';
     } else if (altText.includes('Landmark') || altText.includes('Cultural')) {
-      return 'Santorini white buildings caldera';
+      return 'famous landmark';
     } else if (altText.includes('Nature') || altText.includes('Landscape')) {
-      return 'Santorini beaches volcanic';
+      return 'nature landscape';
     } else if (altText.includes('Culture') || altText.includes('Local')) {
-      return 'Santorini culture local people';
+      return 'local culture';
     } else if (altText.includes('Architecture')) {
-      return 'Santorini architecture blue domes';
+      return 'architecture';
     } else if (altText.includes('Activity') || altText.includes('Activities')) {
-      return 'Santorini activities wine tasting';
+      return 'top activity';
     } else if (altText.includes('Experience')) {
-      return 'Santorini experience travel';
+      return 'travel experience';
     }
-    return 'Santorini Greece';
+    return 'highlights';
+  }
+
+  // Prefix queries with destination for relevance
+  function prefixWithDestination(query) {
+    try {
+      const destInput = document.getElementById('dest');
+      const dest = (destInput && destInput.value ? destInput.value.trim() : '');
+      if (!dest) return query;
+      if (query.toLowerCase().includes(dest.toLowerCase())) return query;
+      return `${dest} ${query}`.trim();
+    } catch (_) { return query; }
+  }
+
+  // Enhance budget table with checkboxes and status spans if missing
+  function enhanceBudgetTable() {
+    const table = document.querySelector('#preview table.budget-table');
+    if (!table) return;
+    const rows = table.querySelectorAll('tbody tr');
+    rows.forEach((row) => {
+      const cells = row.querySelectorAll('td');
+      if (cells.length < 4) return;
+      if ((cells[0].textContent || '').trim().toLowerCase() === 'total') return;
+      const firstCell = cells[0];
+      if (!firstCell.querySelector('input[type="checkbox"]')) {
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.onchange = () => window.toggleBudgetItem(checkbox);
+        firstCell.prepend(checkbox);
+      }
+      const statusCell = cells[cells.length - 1];
+      if (!statusCell.querySelector('span')) {
+        statusCell.textContent = '';
+        const span = document.createElement('span');
+        span.className = 'status-pending';
+        span.textContent = 'Pending';
+        statusCell.appendChild(span);
+      }
+    });
   }
 
   // Initialize widget rendering
