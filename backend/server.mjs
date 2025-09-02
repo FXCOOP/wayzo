@@ -854,6 +854,10 @@ Create the most amazing, detailed, and useful trip plan possible!`;
     md = md.replace(/\n-\s*\*\*[^*]*\*\*:\s*!\[[^\]]*\]\([^)]*\)/g, '');
     md = md.replace(/\n-\s*!\[[^\]]*\]\([^)]*\)/g, '');
     
+    // Remove numbered lists with bold text and images (the actual format being used)
+    md = md.replace(/\n\d+\.\s*\*\*[^*]*\*\*:\s*!\[[^\]]*\]\([^)]*\)/g, '');
+    md = md.replace(/\n\d+\.\s*\*\*[^*]*\*\*:\s*<img[^>]*>/g, '');
+    
     // Remove any remaining Image Ideas section headers
     md = md.replace(/## 🖼️ Image Ideas.*$/gm, '');
     md = md.replace(/## Image Ideas.*$/gm, '');
