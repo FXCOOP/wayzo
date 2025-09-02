@@ -731,6 +731,39 @@ Create the most amazing, detailed, and useful trip plan possible!`;
       md = localPlanMarkdown(payload);
     }
     
+    // POST-PROCESSING: Remove any generic content that slipped through
+    const lines = md.split('\n');
+    const cleanedLines = [];
+    let skipUntilNextSection = false;
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      
+      // Skip any "Open Exploration" days
+      if (line.includes('Open Exploration') || line.includes('warm-up walk') || line.includes('get oriented')) {
+        skipUntilNextSection = true;
+        continue;
+      }
+      
+      // Skip any "Image Ideas" section
+      if (line.includes('🖼️ Image Ideas') || line.includes('Image Ideas')) {
+        skipUntilNextSection = true;
+        continue;
+      }
+      
+      // Stop skipping when we hit a new section (starts with ### or ##)
+      if (skipUntilNextSection && (line.startsWith('###') || line.startsWith('##') || line.startsWith('---'))) {
+        skipUntilNextSection = false;
+      }
+      
+      // Add line if we're not skipping
+      if (!skipUntilNextSection) {
+        cleanedLines.push(line);
+      }
+    }
+    
+    md = cleanedLines.join('\n');
+    
     // Enhance the markdown with better formatting
     md = linkifyTokens(md, destination);
     // Only add fallback structured day sections if missing to prevent duplicates
