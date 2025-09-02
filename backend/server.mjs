@@ -455,55 +455,55 @@ Create a detailed budget table like this with proper HTML:
 </table>
 
 **DON'T FORGET LIST FORMAT:**
-Create a checklist like this with proper HTML checkboxes:
+Create a checklist like this with proper HTML checkboxes that automatically mark as completed when clicked:
 <div class="dont-forget-list">
 <h3>🧳 Don't Forget List</h3>
 <div class="dont-forget-item">
-<input type="checkbox" id="item1" onchange="toggleItem(this)">
+<input type="checkbox" id="item1" onchange="toggleItem(this)" class="budget-checkbox">
 <label for="item1">Passport and travel documents</label>
 </div>
 <div class="dont-forget-item">
-<input type="checkbox" id="item2" onchange="toggleItem(this)">
+<input type="checkbox" id="item2" onchange="toggleItem(this)" class="budget-checkbox">
 <label for="item2">Travel insurance</label>
 </div>
 <div class="dont-forget-item">
-<input type="checkbox" id="item3" onchange="toggleItem(this)">
+<input type="checkbox" id="item3" onchange="toggleItem(this)" class="budget-checkbox">
 <label for="item3">Local currency (Euros)</label>
 </div>
 <div class="dont-forget-item">
-<input type="checkbox" id="item4" onchange="toggleItem(this)">
+<input type="checkbox" id="item4" onchange="toggleItem(this)" class="budget-checkbox">
 <label for="item4">Power adapter</label>
 </div>
 <div class="dont-forget-item">
-<input type="checkbox" id="item5" onchange="toggleItem(this)">
+<input type="checkbox" id="item5" onchange="toggleItem(this)" class="budget-checkbox">
 <label for="item5">Comfortable walking shoes</label>
 </div>
 <div class="dont-forget-item">
-<input type="checkbox" id="item6" onchange="toggleItem(this)">
+<input type="checkbox" id="item6" onchange="toggleItem(this)" class="budget-checkbox">
 <label for="item6">Camera/phone charger</label>
 </div>
 <div class="dont-forget-item">
-<input type="checkbox" id="item7" onchange="toggleItem(this)">
+<input type="checkbox" id="item7" onchange="toggleItem(this)" class="budget-checkbox">
 <label for="item7">Medications and first aid</label>
 </div>
 <div class="dont-forget-item">
-<input type="checkbox" id="item8" onchange="toggleItem(this)">
+<input type="checkbox" id="item8" onchange="toggleItem(this)" class="budget-checkbox">
 <label for="item8">Weather-appropriate clothing</label>
 </div>
 <div class="dont-forget-item">
-<input type="checkbox" id="item9" onchange="toggleItem(this)">
+<input type="checkbox" id="item9" onchange="toggleItem(this)" class="budget-checkbox">
 <label for="item9">eSIM or local SIM card</label>
 </div>
 <div class="dont-forget-item">
-<input type="checkbox" id="item10" onchange="toggleItem(this)">
+<input type="checkbox" id="item10" onchange="toggleItem(this)" class="budget-checkbox">
 <label for="item10">Local guide contact info</label>
 </div>
 <div class="dont-forget-item">
-<input type="checkbox" id="item11" onchange="toggleItem(this)">
+<input type="checkbox" id="item11" onchange="toggleItem(this)" class="budget-checkbox">
 <label for="item11">Restaurant reservations</label>
 </div>
 <div class="dont-forget-item">
-<input type="checkbox" id="item12" onchange="toggleItem(this)">
+<input type="checkbox" id="item12" onchange="toggleItem(this)" class="budget-checkbox">
 <label for="item12">Swimwear for beaches</label>
 </div>
 </div>
@@ -547,37 +547,37 @@ ${dietary && dietary.length > 0 ? `- **Dietary Accommodations**: Ensure all rest
 ${dateMode === 'flexible' ? `- **Flexible Date Optimization**: Suggest the best times within the month for optimal weather, prices, and fewer crowds
 - **Price Optimization**: Focus on getting the best value during the flexible period` : ''}
 
-**CRITICAL - IMAGE GENERATION:** You MUST include 6-8 beautiful, destination-specific images throughout your report using this exact format:
+**CRITICAL - IMAGE GENERATION:** You MUST include exactly 1 beautiful, destination-specific image per major section using this exact format:
 
-1. **Cityscape/Overview**: ![${destination} Cityscape](image:${destination} city skyline)
-2. **Local Food**: ![${destination} Cuisine](image:${destination} traditional food)
-3. **Cultural Site**: ![${destination} Landmark](image:${destination} main landmark)
-4. **Nature/Landscape**: ![${destination} Nature](image:${destination} natural beauty)
-5. **Local Life**: ![${destination} Culture](image:${destination} local people)
-6. **Architecture**: ![${destination} Architecture](image:${destination} beautiful buildings)
-7. **Activity**: ![${destination} Activities](image:${destination} tourist activities)
-8. **Experience**: ![${destination} Experience](image:${destination} travel experience)
+**STRICT IMAGE RULES:**
+- **EXACTLY 1 image per section** - no more, no less
+- **Place images at the END of each section** - not in the middle
+- **Use destination-prefixed queries** - always start with the destination name
+- **Specific, searchable terms** - avoid generic terms like "beautiful" or "amazing"
 
-**IMPORTANT:** 
-- Place these images strategically throughout your report
-- Each image should be specific to ${destination}, not generic
-- Use descriptive alt text that includes the destination name
-- Position images after relevant content sections
-- Make sure images enhance the reading experience
-- **CRITICAL**: Use specific, searchable terms for images:
-  - For landmarks: use exact names (e.g., "Eiffel Tower Paris", "Brandenburg Gate Berlin")
-  - For food: use local dish names (e.g., "Croissant Paris", "Currywurst Berlin")
-  - For activities: use specific activities (e.g., "Cycling Amsterdam", "Hiking Swiss Alps")
-  - For culture: use local terms (e.g., "Japanese Temple", "Italian Piazza")
-- **FOR SANTORINI SPECIFICALLY**: Use these exact image queries:
-  - "Santorini sunset Oia Greece"
-  - "Santorini white buildings caldera"
-  - "Greek food Santorini taverna"
-  - "Santorini beaches volcanic"
-  - "Santorini architecture blue domes"
-  - "Santorini activities wine tasting"
-  - "Santorini culture local people"
-  - "Santorini experience travel"
+**REQUIRED IMAGE PLACEMENT:**
+1. **After "Getting Around" section**: ![${destination} Transportation](image:${destination} transportation airport)
+2. **After "Accommodation" section**: ![${destination} Hotels](image:${destination} hotels accommodation)
+3. **After "Must-See Attractions" section**: ![${destination} Landmarks](image:${destination} main attractions landmarks)
+4. **After "Daily Itineraries" section**: ![${destination} Activities](image:${destination} tourist activities experiences)
+5. **After "Restaurants" section**: ![${destination} Food](image:${destination} local cuisine traditional food)
+6. **After "Budget Breakdown" section**: ![${destination} Travel](image:${destination} travel experience vacation)
+
+**CRITICAL IMAGE QUERY RULES:**
+- **ALWAYS prefix with destination**: "${destination} [specific term]"
+- **Use exact landmark names**: "${destination} [Eiffel Tower]" not "Eiffel Tower"
+- **Use local food names**: "${destination} [croissant]" not "croissant"
+- **Use specific activities**: "${destination} [wine tasting]" not "wine tasting"
+- **Avoid generic terms**: No "beautiful", "amazing", "stunning" in queries
+- **Be specific and searchable**: Use terms that would work in a search engine
+
+**FOR SANTORINI SPECIFICALLY**: Use these exact queries:
+- "${destination} Oia sunset caldera"
+- "${destination} white buildings architecture"
+- "${destination} Akrotiri archaeological site"
+- "${destination} wine tasting Santo Wines"
+- "${destination} Greek food taverna"
+- "${destination} Red Beach volcanic"
 
 **DAILY ITINERARIES REQUIREMENT:**
 - Create detailed, specific daily itineraries for each day
