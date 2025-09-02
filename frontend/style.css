@@ -2550,7 +2550,7 @@ fieldset.field .chip {
   margin: 0;
 }
 
-/* Trip Report Image Styling */
+/* Trip Report Image Styling - Enhanced */
 .trip-report img,
 #preview img {
   max-width: 400px !important;
@@ -2560,8 +2560,19 @@ fieldset.field .chip {
   border-radius: 12px !important;
   margin: 20px auto !important;
   display: block !important;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.12) !important;
-  transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+  transition: all 0.3s ease !important;
+  filter: blur(0px) !important;
+  transform: scale(1) !important;
+}
+
+/* Loading state for images */
+.trip-report img:not([src]), 
+#preview img:not([src]),
+.trip-report img[src=""], 
+#preview img[src=""] {
+  filter: blur(2px) !important;
+  transform: scale(0.98) !important;
 }
 
 /* Image error handling */
@@ -2628,8 +2639,8 @@ fieldset.field .chip {
 
 .trip-report img:hover,
 #preview img:hover {
-  transform: scale(1.02) !important;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+  transform: scale(1.02) translateY(-2px) !important;
+  box-shadow: 0 12px 35px rgba(0,0,0,0.2) !important;
 }
 
 /* Responsive images for mobile */
@@ -2638,5 +2649,6 @@ fieldset.field .chip {
   #preview img {
     max-width: 100% !important;
     height: 250px !important;
+    margin: 15px auto !important;
   }
 }

@@ -2058,7 +2058,7 @@
     console.log('Image fallback:', { original: originalSrc, fallback: img.src });
   };
 
-    // Initialize image error handling for all images in the report
+      // Initialize image error handling for all images in the report
   window.initializeImageHandling = () => {
     // Wait a bit for the DOM to be ready
     setTimeout(() => {
@@ -2070,19 +2070,27 @@
       allImages.forEach((img, index) => {
         console.log(`Processing image ${index + 1}:`, img.src, img.alt);
         
-        // Set initial styles
-        img.style.borderRadius = '8px';
-        img.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-        img.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+        // Set initial styles for better UX
+        img.style.borderRadius = '12px';
+        img.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+        img.style.transition = 'all 0.3s ease';
         img.style.maxWidth = '100%';
         img.style.height = 'auto';
         img.style.opacity = '1';
         img.style.display = 'block';
+        img.style.margin = '20px 0';
+        img.style.objectFit = 'cover';
+        
+        // Add loading state
+        img.style.filter = 'blur(2px)';
+        img.style.transform = 'scale(0.98)';
         
         // Handle successful load
         img.onload = () => {
           img.style.opacity = '1';
           img.style.display = 'block';
+          img.style.filter = 'blur(0px)';
+          img.style.transform = 'scale(1)';
           console.log('✅ Image loaded successfully:', img.src);
         };
         
@@ -2092,14 +2100,17 @@
           handleImageError(img);
           img.style.opacity = '1';
           img.style.display = 'block';
+          img.style.filter = 'blur(0px)';
         };
         
         // Add hover effects
         img.addEventListener('mouseenter', () => { 
-          img.style.transform = 'scale(1.02)'; 
+          img.style.transform = 'scale(1.02) translateY(-2px)'; 
+          img.style.boxShadow = '0 12px 35px rgba(0,0,0,0.2)';
         });
         img.addEventListener('mouseleave', () => { 
-          img.style.transform = 'scale(1)'; 
+          img.style.transform = 'scale(1) translateY(0px)'; 
+          img.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
         });
         
         // Check if image is already loaded (cached)
@@ -2107,6 +2118,8 @@
           if (img.naturalWidth > 0) { 
             img.style.opacity = '1'; 
             img.style.display = 'block';
+            img.style.filter = 'blur(0px)';
+            img.style.transform = 'scale(1)';
             console.log('✅ Image already loaded (cached):', img.src); 
           } else { 
             img.onerror(); 
@@ -2176,45 +2189,45 @@
           return;
         }
         
-                    // Case 7: Handle images that show as "Image loading..." text
-            if (img.alt && img.alt.includes('🖼️')) {
-              const altText = img.alt || '';
-              let fallbackQuery = getFallbackQuery(altText);
-              const fallbackUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(fallbackQuery)}`;
-              console.log('🔄 Loading emoji image:', fallbackQuery, '→', fallbackUrl);
-              img.src = fallbackUrl;
-              return;
-            }
-            
-            // Case 8: Force load any image that doesn't have a proper Unsplash URL
-            if (img.src && !img.src.includes('source.unsplash.com')) {
-              const altText = img.alt || '';
-              let fallbackQuery = getFallbackQuery(altText);
-              const fallbackUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(fallbackQuery)}`;
-              console.log('🔄 Converting to Unsplash:', fallbackQuery, '→', fallbackUrl);
-              img.src = fallbackUrl;
-              return;
-            }
-            
-            // Case 9: Handle any image with "Image loading..." in src or alt
-            if ((img.src && img.src.includes('Image loading')) || (img.alt && img.alt.includes('Image loading'))) {
-              const altText = img.alt || '';
-              let fallbackQuery = getFallbackQuery(altText);
-              const fallbackUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(fallbackQuery)}`;
-              console.log('🔄 Fixing loading text image:', fallbackQuery, '→', fallbackUrl);
-              img.src = fallbackUrl;
-              return;
-            }
-            
-            // Case 10: Handle any image with empty or invalid src
-            if (!img.src || img.src === '#' || img.src === 'data:') {
-              const altText = img.alt || '';
-              let fallbackQuery = getFallbackQuery(altText);
-              const fallbackUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(fallbackQuery)}`;
-              console.log('🔄 Fixing empty src image:', fallbackQuery, '→', fallbackUrl);
-              img.src = fallbackUrl;
-              return;
-            }
+        // Case 7: Handle images that show as "Image loading..." text
+        if (img.alt && img.alt.includes('🖼️')) {
+          const altText = img.alt || '';
+          let fallbackQuery = getFallbackQuery(altText);
+          const fallbackUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(fallbackQuery)}`;
+          console.log('🔄 Loading emoji image:', fallbackQuery, '→', fallbackUrl);
+          img.src = fallbackUrl;
+          return;
+        }
+        
+        // Case 8: Force load any image that doesn't have a proper Unsplash URL
+        if (img.src && !img.src.includes('source.unsplash.com')) {
+          const altText = img.alt || '';
+          let fallbackQuery = getFallbackQuery(altText);
+          const fallbackUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(fallbackQuery)}`;
+          console.log('🔄 Converting to Unsplash:', fallbackQuery, '→', fallbackUrl);
+          img.src = fallbackUrl;
+          return;
+        }
+        
+        // Case 9: Handle any image with "Image loading..." in src or alt
+        if ((img.src && img.src.includes('Image loading')) || (img.alt && img.alt.includes('Image loading'))) {
+          const altText = img.alt || '';
+          let fallbackQuery = getFallbackQuery(altText);
+          const fallbackUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(fallbackQuery)}`;
+          console.log('🔄 Fixing loading text image:', fallbackQuery, '→', fallbackUrl);
+          img.src = fallbackUrl;
+          return;
+        }
+        
+        // Case 10: Handle any image with empty or invalid src
+        if (!img.src || img.src === '#' || img.src === 'data:') {
+          const altText = img.alt || '';
+          let fallbackQuery = getFallbackQuery(altText);
+          const fallbackUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(fallbackQuery)}`;
+          console.log('🔄 Fixing empty src image:', fallbackQuery, '→', fallbackUrl);
+          img.src = fallbackUrl;
+          return;
+        }
       });
       
       console.log('Image handling initialized for', allImages.length, 'images');

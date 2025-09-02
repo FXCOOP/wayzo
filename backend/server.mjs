@@ -658,20 +658,27 @@ ${dateMode === 'flexible' ? `- **Flexible Date Optimization**: Suggest the best 
    - **Cultural insights** (e.g., "Greeks value family time - many shops close 2-4 PM")
    - **Weather considerations** (e.g., "September is perfect - warm but not crowded")
 
-**IMAGE REQUIREMENTS - EXACT AND SPECIFIC:**
-Generate EXACTLY 8 images with these specific queries:
-1. **Cityscape/Overview**: "Santorini sunset Oia Greece"
-2. **Local Food**: "Greek food Santorini taverna"
-3. **Cultural Site**: "Santorini white buildings caldera"
-4. **Nature/Landscape**: "Santorini beaches volcanic"
-5. **Local Life**: "Santorini culture local people"
-6. **Architecture**: "Santorini architecture blue domes"
-7. **Activity**: "Santorini activities wine tasting"
-8. **Experience**: "Santorini experience travel"
+**IMAGE REQUIREMENTS - CONTEXTUAL PLACEMENT:**
 
-Use ONLY Unsplash URLs with format: https://source.unsplash.com/400x300/?[QUERY]
-NO placeholder text - only actual image URLs
-NO "Image loading..." text - only proper image tags
+**CRITICAL**: Place images contextually within the content, NOT at the end. Each image should appear right after its relevant content section:
+
+1. **After Trip Overview**: ![Santorini sunset Oia Greece](https://source.unsplash.com/400x300/?Santorini,sunset,Oia,Greece)
+2. **After Dining Guide**: ![Greek food Santorini taverna](https://source.unsplash.com/400x300/?Greek,food,Santorini,taverna)
+3. **After Getting Around**: ![Santorini white buildings caldera](https://source.unsplash.com/400x300/?Santorini,white,buildings,caldera)
+4. **After Day 1 itinerary**: ![Santorini architecture blue domes](https://source.unsplash.com/400x300/?Santorini,architecture,blue,domes)
+5. **After Day 2 itinerary**: ![Santorini beaches volcanic](https://source.unsplash.com/400x300/?Santorini,beaches,volcanic)
+6. **After Day 3 itinerary**: ![Santorini culture local people](https://source.unsplash.com/400x300/?Santorini,culture,local,people)
+7. **After Must-See Attractions**: ![Santorini activities wine tasting](https://source.unsplash.com/400x300/?Santorini,activities,wine,tasting)
+8. **After Travel Tips**: ![Santorini experience travel](https://source.unsplash.com/400x300/?Santorini,experience,travel)
+
+**PLACEMENT RULES:**
+- Place each image IMMEDIATELY after its relevant content section
+- DO NOT put all images at the end
+- DO NOT create a separate "Image Ideas" section
+- Each image should enhance the content it follows
+- Use proper HTML img tags with alt text
+- Images should be 400x300 pixels
+- Make images feel natural and integrated into the content flow
 
 **WIDGET INTEGRATION REQUIREMENTS:**
 DO NOT place widgets in the "Don't Forget List" section
