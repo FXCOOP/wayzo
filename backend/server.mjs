@@ -745,14 +745,19 @@ Create the most amazing, detailed, and useful trip plan possible!`;
         continue;
       }
       
-      // Skip any "Image Ideas" section
-      if (line.includes('🖼️ Image Ideas') || line.includes('Image Ideas')) {
+      // Skip any "Image Ideas" section - be more aggressive
+      if (line.includes('🖼️ Image Ideas') || line.includes('Image Ideas') || line.includes('Image Ideas:')) {
         skipUntilNextSection = true;
         continue;
       }
       
-      // Stop skipping when we hit a new section (starts with ### or ##)
-      if (skipUntilNextSection && (line.startsWith('###') || line.startsWith('##') || line.startsWith('---'))) {
+      // Skip any numbered image lists
+      if (skipUntilNextSection && (line.match(/^\d+\.\s*\*\*/) || line.includes('**Cityscape/Overview**') || line.includes('**Local Food**'))) {
+        continue;
+      }
+      
+      // Stop skipping when we hit a new section (starts with ### or ##) or end of content
+      if (skipUntilNextSection && (line.startsWith('###') || line.startsWith('##') || line.startsWith('---') || line.includes('Happy travels') || line.includes('Enjoy your'))) {
         skipUntilNextSection = false;
       }
       
