@@ -748,10 +748,10 @@ Create the most amazing, detailed, and useful trip plan possible!`;
       md = localPlanMarkdown(payload);
     }
     
-    // POST-PROCESSING: Remove any generic content that slipped through
-    const lines = md.split('\n');
-    const cleanedLines = [];
-    let skipUntilNextSection = false;
+    // NUCLEAR POST-PROCESSING: Completely eliminate Image Ideas section and generic content
+    let lines = md.split('\n');
+    let cleanedLines = [];
+    let skipSection = false;
     let inImageIdeasSection = false;
     
     for (let i = 0; i < lines.length; i++) {
@@ -759,80 +759,64 @@ Create the most amazing, detailed, and useful trip plan possible!`;
       
       // Skip any "Open Exploration" days
       if (line.includes('Open Exploration') || line.includes('warm-up walk') || line.includes('get oriented')) {
-        skipUntilNextSection = true;
+        skipSection = true;
         continue;
       }
       
-      // Detect and skip "Image Ideas" section - ULTRA AGGRESSIVE
-      if (line.includes('🖼️ Image Ideas') || line.includes('Image Ideas') || line.includes('Image Ideas:') || line.includes('Image Ideas') || line.includes('🖼️ Image Ideas') || line.includes('Enhance your travel experience with these beautiful images')) {
+      // Detect Image Ideas section - MULTIPLE PATTERNS
+      if (line.includes('🖼️ Image Ideas') || 
+          line.includes('Image Ideas') || 
+          line.includes('Image Ideas:') || 
+          line.includes('Enhance your travel experience') ||
+          line.includes('Here are some stunning visuals') ||
+          line.includes('Here are some beautiful images')) {
         inImageIdeasSection = true;
-        skipUntilNextSection = true;
+        skipSection = true;
         continue;
       }
       
-      // Skip any numbered image lists or image content - ULTRA AGGRESSIVE
-      if (skipUntilNextSection || inImageIdeasSection) {
-        if (line.match(/^\d+\.\s*\*\*/) || 
-            line.includes('**Cityscape/Overview**') || 
-            line.includes('**Local Food**') || 
-            line.includes('**Cultural Site**') || 
-            line.includes('**Nature/Landscape**') || 
-            line.includes('**Local Life**') || 
-            line.includes('**Architecture**') || 
-            line.includes('**Activity**') || 
-            line.includes('**Experience**') || 
-            line.includes('![Santorini') || 
-            line.includes('![Greek') ||
-            line.includes('![Local') ||
-            line.includes('![Cultural') ||
-            line.includes('![Nature') ||
-            line.includes('![Architecture') ||
-            line.includes('![Activity') ||
-            line.includes('![Experience') ||
-            line.includes('https://source.unsplash.com/400x300/?')) {
-          continue;
+      // Skip all content within Image Ideas section
+      if (inImageIdeasSection) {
+        // Stop when we hit a new section or end
+        if (line.startsWith('## ') || line.startsWith('---') || line.includes('Enjoy your') || line.includes('Happy travels')) {
+          inImageIdeasSection = false;
+          skipSection = false;
+        } else {
+          continue; // Skip this line
         }
       }
       
-      // Stop skipping when we hit a new section (starts with ### or ##) or end of content
-      if (skipUntilNextSection && (line.startsWith('###') || line.startsWith('##') || line.startsWith('---') || line.includes('Happy travels') || line.includes('Enjoy your') || line.includes('Have an amazing') || line.includes('Your Santorini adventure'))) {
-        skipUntilNextSection = false;
-        inImageIdeasSection = false;
+      // Skip any numbered lists that are likely image lists
+      if (skipSection && (line.match(/^\d+\.\s*!\[/) || line.match(/^\d+\.\s*\*\*/))) {
+        continue;
+      }
+      
+      // Stop skipping when we hit a new section
+      if (skipSection && (line.startsWith('###') || line.startsWith('##') || line.startsWith('---'))) {
+        skipSection = false;
       }
       
       // Add line if we're not skipping
-      if (!skipUntilNextSection && !inImageIdeasSection) {
+      if (!skipSection && !inImageIdeasSection) {
         cleanedLines.push(line);
       }
     }
     
     md = cleanedLines.join('\n');
     
-    // ULTRA AGGRESSIVE: Remove any remaining "Image Ideas" section using regex
-    md = md.replace(/## 🖼️ Image Ideas[\s\S]*?(?=---|$)/g, '');
+    // ULTIMATE REGEX CLEANUP: Remove any remaining Image Ideas sections
     md = md.replace(/## 🖼️ Image Ideas[\s\S]*?(?=\n## |\n---|$)/g, '');
-    md = md.replace(/🖼️ Image Ideas[\s\S]*?(?=---|$)/g, '');
-    md = md.replace(/Image Ideas[\s\S]*?(?=---|$)/g, '');
-    md = md.replace(/Enhance your travel experience[\s\S]*?(?=---|$)/g, '');
+    md = md.replace(/## Image Ideas[\s\S]*?(?=\n## |\n---|$)/g, '');
+    md = md.replace(/🖼️ Image Ideas[\s\S]*?(?=\n## |\n---|$)/g, '');
+    md = md.replace(/Enhance your travel experience[\s\S]*?(?=\n## |\n---|$)/g, '');
+    md = md.replace(/Here are some stunning visuals[\s\S]*?(?=\n## |\n---|$)/g, '');
+    md = md.replace(/Here are some beautiful images[\s\S]*?(?=\n## |\n---|$)/g, '');
     
-    // NUCLEAR OPTION: Remove any section that contains "Image Ideas" anywhere
-    md = md.replace(/## [^\n]*Image Ideas[^\n]*\n[\s\S]*?(?=\n## |\n---|$)/g, '');
-    md = md.replace(/## [^\n]*🖼️[^\n]*\n[\s\S]*?(?=\n## |\n---|$)/g, '');
-    
-    // FINAL CLEANUP: Remove any remaining image lists
-    md = md.replace(/\n\d+\.\s*\*\*[^*]*\*\*:\s*!\[[^\]]*\]\([^)]*\)/g, '');
-    md = md.replace(/\n- \*\*[^*]*\*\*:\s*!\[[^\]]*\]\([^)]*\)/g, '');
+    // Remove any numbered image lists
     md = md.replace(/\n\d+\.\s*!\[[^\]]*\]\([^)]*\)/g, '');
-    md = md.replace(/\n- !\[[^\]]*\]\([^)]*\)/g, '');
+    md = md.replace(/\n\d+\.\s*\*\*[^*]*\*\*:\s*!\[[^\]]*\]\([^)]*\)/g, '');
     
-    // ULTIMATE NUCLEAR: Remove the entire section with a more specific pattern
-    md = md.replace(/## 🖼️ Image Ideas\n[\s\S]*?(?=\n---|\n## |$)/g, '');
-    md = md.replace(/## 🖼️ Image Ideas\n[\s\S]*?(?=\n---|\n## |$)/g, '');
-    md = md.replace(/## 🖼️ Image Ideas\n[\s\S]*?(?=\n---|\n## |$)/g, '');
-    md = md.replace(/## 🖼️ Image Ideas\n[\s\S]*?(?=\n---|\n## |$)/g, '');
-    md = md.replace(/## 🖼️ Image Ideas\n[\s\S]*?(?=\n---|\n## |$)/g, '');
-    
-    // SIMPLE STRING REPLACEMENT: Remove the entire section
+    // FINAL STRING REPLACEMENT: Remove the entire section
     const imageIdeasIndex = md.indexOf('## 🖼️ Image Ideas');
     if (imageIdeasIndex !== -1) {
       const beforeImageIdeas = md.substring(0, imageIdeasIndex);
@@ -845,39 +829,11 @@ Create the most amazing, detailed, and useful trip plan possible!`;
       }
     }
     
-    // ULTIMATE STRING REPLACEMENT: Remove any section that contains "Image Ideas"
-    let lines = md.split('\n');
-    let cleanedLines = [];
-    let skipSection = false;
+    // EXTRA SAFETY: Remove any remaining Image Ideas references
+    md = md.replace(/## 🖼️ Image Ideas.*$/gm, '');
+    md = md.replace(/## Image Ideas.*$/gm, '');
     
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      
-      // Check if this line starts a section we want to skip
-      if (line.includes('## 🖼️ Image Ideas') || line.includes('## Image Ideas') || line.includes('🖼️ Image Ideas')) {
-        skipSection = true;
-        continue;
-      }
-      
-      // If we're skipping and hit a new section, stop skipping
-      if (skipSection && (line.startsWith('## ') || line.startsWith('---'))) {
-        skipSection = false;
-      }
-      
-      // Add line if we're not skipping
-      if (!skipSection) {
-        cleanedLines.push(line);
-      }
-    }
-    
-    md = cleanedLines.join('\n');
-    
-    // FINAL NUCLEAR OPTION: Use a very specific regex to remove the entire section
-    md = md.replace(/## 🖼️ Image Ideas[\s\S]*?(?=\n## |\n---|$)/g, '');
-    md = md.replace(/## 🖼️ Image Ideas[\s\S]*?(?=\n## |\n---|$)/g, '');
-    md = md.replace(/## 🖼️ Image Ideas[\s\S]*?(?=\n## |\n---|$)/g, '');
-    md = md.replace(/## 🖼️ Image Ideas[\s\S]*?(?=\n## |\n---|$)/g, '');
-    md = md.replace(/## 🖼️ Image Ideas[\s\S]*?(?=\n## |\n---|$)/g, '');
+    // FINAL NUCLEAR OPTION: Use a very specific regex to remove the entire section (repeated for maximum effect)
     md = md.replace(/## 🖼️ Image Ideas[\s\S]*?(?=\n## |\n---|$)/g, '');
     md = md.replace(/## 🖼️ Image Ideas[\s\S]*?(?=\n## |\n---|$)/g, '');
     md = md.replace(/## 🖼️ Image Ideas[\s\S]*?(?=\n## |\n---|$)/g, '');
