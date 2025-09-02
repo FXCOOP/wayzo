@@ -850,6 +850,10 @@ Create the most amazing, detailed, and useful trip plan possible!`;
     md = md.replace(/\n\d+\.\s*!\[[^\]]*\]\([^)]*\)/g, '');
     md = md.replace(/\n\d+\.\s*\*\*[^*]*\*\*:\s*!\[[^\]]*\]\([^)]*\)/g, '');
     
+    // Remove any bullet point image lists
+    md = md.replace(/\n-\s*\*\*[^*]*\*\*:\s*!\[[^\]]*\]\([^)]*\)/g, '');
+    md = md.replace(/\n-\s*!\[[^\]]*\]\([^)]*\)/g, '');
+    
     // Remove any remaining Image Ideas section headers
     md = md.replace(/## 🖼️ Image Ideas.*$/gm, '');
     md = md.replace(/## Image Ideas.*$/gm, '');
