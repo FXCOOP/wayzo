@@ -371,6 +371,12 @@ You are REQUIRED to include EXACTLY 1 image per major section, placed at the END
 - DO NOT add images after each individual day
 - The image should represent the overall activities/experiences
 
+**CRITICAL - DESTINATION RELEVANCE:**
+- ALL images MUST be highly specific to the destination (${destination})
+- Use exact landmark names, local activities, and authentic experiences
+- Avoid generic travel terms - be specific to the location
+- Images should show what makes this destination unique
+
 **IMAGE FORMAT - COPY EXACTLY:**
 ![${destination} Section Name](image:${destination} specific search terms)
 
@@ -614,14 +620,19 @@ ${dateMode === 'flexible' ? `- **Flexible Date Optimization**: Suggest the best 
 - **NEVER use**: "[specific term]" without destination prefix
 - **Examples**: "${destination} Oia sunset" NOT "Oia sunset"
 - **Examples**: "${destination} Greek food" NOT "Greek food"
+- **BE SPECIFIC TO DESTINATION**: Use exact landmark names, local activities, authentic experiences
+- **AVOID GENERIC TERMS**: No "beautiful", "amazing", "stunning", "gorgeous", "travel", "vacation"
+- **SHOW UNIQUENESS**: Images should capture what makes ${destination} special
 
 **FOR SANTORINI SPECIFICALLY - USE THESE EXACT QUERIES:**
-- "${destination} Oia sunset caldera"
-- "${destination} white buildings architecture"
-- "${destination} Akrotiri archaeological site"
-- "${destination} wine tasting Santo Wines"
-- "${destination} Greek food taverna"
-- "${destination} Red Beach volcanic"
+- "${destination} Oia sunset caldera view"
+- "${destination} white buildings blue domes"
+- "${destination} Akrotiri archaeological ruins"
+- "${destination} Santo Wines vineyard tasting"
+- "${destination} Greek taverna seafood"
+- "${destination} Red Beach volcanic sand"
+- "${destination} Fira caldera architecture"
+- "${destination} Santorini donkey path"
 
 **VIOLATION CONSEQUENCES:**
 - Adding more than 1 image per section will cause system errors
