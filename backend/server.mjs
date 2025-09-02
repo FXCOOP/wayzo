@@ -675,10 +675,12 @@ ${dateMode === 'flexible' ? `- **Flexible Date Optimization**: Suggest the best 
 - Place each image IMMEDIATELY after its relevant content section
 - DO NOT put all images at the end
 - DO NOT create a separate "Image Ideas" section
+- DO NOT create any section called "Image Ideas" or "🖼️ Image Ideas"
 - Each image should enhance the content it follows
 - Use proper HTML img tags with alt text
 - Images should be 400x300 pixels
 - Make images feel natural and integrated into the content flow
+- **CRITICAL**: If you see "Image Ideas" or "🖼️ Image Ideas" in your response, REMOVE IT COMPLETELY
 
 **WIDGET INTEGRATION REQUIREMENTS:**
 DO NOT place widgets in the "Don't Forget List" section
@@ -688,11 +690,21 @@ Widgets should be placed in appropriate sections:
 - Car rental widget → "Getting Around" section
 - eSIM widget → "Useful Apps" section
 
-**CRITICAL - NO DUPLICATE CONTENT:**
-DO NOT repeat the same daily itinerary multiple times
-DO NOT include generic "Open Exploration" content
-Each section must be unique and specific
-Remove any duplicate content that might be generated
+**CRITICAL - NO GENERIC CONTENT:**
+- **ABSOLUTELY NO "Open Exploration" days** - this is forbidden
+- **ABSOLUTELY NO generic placeholders** like "Neighborhood warm-up walk" or "Local market + museum"
+- **ABSOLUTELY NO duplicate content** - each day must be unique
+- **ABSOLUTELY NO generic activities** - every activity must be specific to Santorini
+- **ABSOLUTELY NO "warm-up walk" or "get oriented"** - these are generic placeholders
+- **ABSOLUTELY NO "Local market + museum"** - these are generic placeholders
+- **ABSOLUTELY NO "Sunset viewpoint & dinner"** - these are generic placeholders
+
+**MANDATORY - SPECIFIC CONTENT ONLY:**
+- **Every day must have specific Santorini activities** like "Visit Akrotiri Archaeological Site", "Wine tasting at Santo Wines", "Explore Oia Castle"
+- **Every restaurant must be named** like "Taverna Katina", "Pelekanos Restaurant", "Kastro Oia Restaurant"
+- **Every attraction must be specific** like "Red Beach", "Fira Caldera", "Museum of Prehistoric Thera"
+- **Every time must be exact** like "9:00 AM", "2:30 PM", "7:45 PM"
+- **Every location must be specific** like "Amoudi Bay", "Fira", "Oia", "Karterados"
 
 Create a RICH, DETAILED, and PROFESSIONAL report that travelers can actually use to plan their trip. Make it comprehensive, actionable, and visually appealing.
 
