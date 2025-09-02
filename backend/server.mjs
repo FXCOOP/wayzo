@@ -681,6 +681,11 @@ ${dateMode === 'flexible' ? `- **Flexible Date Optimization**: Suggest the best 
 - Images should be 400x300 pixels
 - Make images feel natural and integrated into the content flow
 - **CRITICAL**: If you see "Image Ideas" or "🖼️ Image Ideas" in your response, REMOVE IT COMPLETELY
+- **ABSOLUTELY FORBIDDEN**: Do not create any section called "Image Ideas", "🖼️ Image Ideas", or "Enhance your travel experience with these beautiful images"
+- **ABSOLUTELY FORBIDDEN**: Do not create any numbered list of images at the end of the report
+- **ABSOLUTELY FORBIDDEN**: Do not include any text that says "Enhance your travel experience with these beautiful images"
+- **MANDATORY**: Place images contextually within the content, NOT at the end
+- **MANDATORY**: Each image must appear immediately after its relevant content section
 
 **WIDGET INTEGRATION REQUIREMENTS:**
 DO NOT place widgets in the "Don't Forget List" section
@@ -735,6 +740,7 @@ Create the most amazing, detailed, and useful trip plan possible!`;
     const lines = md.split('\n');
     const cleanedLines = [];
     let skipUntilNextSection = false;
+    let inImageIdeasSection = false;
     
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
@@ -745,24 +751,45 @@ Create the most amazing, detailed, and useful trip plan possible!`;
         continue;
       }
       
-      // Skip any "Image Ideas" section - be more aggressive
-      if (line.includes('🖼️ Image Ideas') || line.includes('Image Ideas') || line.includes('Image Ideas:') || line.includes('Image Ideas') || line.includes('🖼️ Image Ideas')) {
+      // Detect and skip "Image Ideas" section - ULTRA AGGRESSIVE
+      if (line.includes('🖼️ Image Ideas') || line.includes('Image Ideas') || line.includes('Image Ideas:') || line.includes('Image Ideas') || line.includes('🖼️ Image Ideas') || line.includes('Enhance your travel experience with these beautiful images')) {
+        inImageIdeasSection = true;
         skipUntilNextSection = true;
         continue;
       }
       
-      // Skip any numbered image lists or image content
-      if (skipUntilNextSection && (line.match(/^\d+\.\s*\*\*/) || line.includes('**Cityscape/Overview**') || line.includes('**Local Food**') || line.includes('**Cultural Site**') || line.includes('**Nature/Landscape**') || line.includes('**Local Life**') || line.includes('**Architecture**') || line.includes('**Activity**') || line.includes('**Experience**') || line.includes('![Santorini') || line.includes('**Cityscape/Overview**') || line.includes('**Local Food**') || line.includes('**Cultural Site**') || line.includes('**Nature/Landscape**') || line.includes('**Local Life**') || line.includes('**Architecture**') || line.includes('**Activity**') || line.includes('**Experience**'))) {
-        continue;
+      // Skip any numbered image lists or image content - ULTRA AGGRESSIVE
+      if (skipUntilNextSection || inImageIdeasSection) {
+        if (line.match(/^\d+\.\s*\*\*/) || 
+            line.includes('**Cityscape/Overview**') || 
+            line.includes('**Local Food**') || 
+            line.includes('**Cultural Site**') || 
+            line.includes('**Nature/Landscape**') || 
+            line.includes('**Local Life**') || 
+            line.includes('**Architecture**') || 
+            line.includes('**Activity**') || 
+            line.includes('**Experience**') || 
+            line.includes('![Santorini') || 
+            line.includes('![Greek') ||
+            line.includes('![Local') ||
+            line.includes('![Cultural') ||
+            line.includes('![Nature') ||
+            line.includes('![Architecture') ||
+            line.includes('![Activity') ||
+            line.includes('![Experience') ||
+            line.includes('https://source.unsplash.com/400x300/?')) {
+          continue;
+        }
       }
       
       // Stop skipping when we hit a new section (starts with ### or ##) or end of content
-      if (skipUntilNextSection && (line.startsWith('###') || line.startsWith('##') || line.startsWith('---') || line.includes('Happy travels') || line.includes('Enjoy your') || line.includes('Have an amazing'))) {
+      if (skipUntilNextSection && (line.startsWith('###') || line.startsWith('##') || line.startsWith('---') || line.includes('Happy travels') || line.includes('Enjoy your') || line.includes('Have an amazing') || line.includes('Your Santorini adventure'))) {
         skipUntilNextSection = false;
+        inImageIdeasSection = false;
       }
       
       // Add line if we're not skipping
-      if (!skipUntilNextSection) {
+      if (!skipUntilNextSection && !inImageIdeasSection) {
         cleanedLines.push(line);
       }
     }
