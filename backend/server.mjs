@@ -366,7 +366,6 @@ async function generatePlanWithAI(payload) {
 - 🛡️ **Travel Tips** - Local customs, safety, and practical advice
 - 📱 **Useful Apps** - Mobile apps for the destination
 - 🚨 **Emergency Info** - Important contacts and healthcare
-- 🖼️ **Image Ideas** - 3–6 realistic image prompts and a short collage description (use Markdown images with token links like: ![Title](image:query))
 
 **BUDGET BREAKDOWN FORMAT:**
 Create a detailed budget table like this with proper HTML:
