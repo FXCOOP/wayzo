@@ -29,7 +29,7 @@ export class UserModel {
   }
 
   static async findByEmail(email) {
-    const stmt = db.prepare('SELECT * FROM users WHERE email = ? AND status = "active"');
+    const stmt = db.prepare('SELECT * FROM users WHERE email = ?');
     return stmt.get(email.toLowerCase());
   }
 

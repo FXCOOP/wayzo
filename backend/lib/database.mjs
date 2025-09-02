@@ -32,7 +32,18 @@ export function initializeDatabase() {
     )
   `);
 
-  // Update plans table to link with users
+  // Plans table (create if not exists)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS plans (
+      id TEXT PRIMARY KEY,
+      created_at TEXT NOT NULL,
+      payload TEXT NOT NULL,
+      user_id TEXT,
+      is_public BOOLEAN DEFAULT false
+    )
+  `);
+
+  // Add columns to plans table if they don't exist
   try {
     db.exec(`ALTER TABLE plans ADD COLUMN user_id TEXT REFERENCES users(id)`);
   } catch (error) {

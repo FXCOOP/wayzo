@@ -597,6 +597,7 @@ app.post('/api/upload', multerUpload.array('files', 10), (req, res) => {
 });
 
 /* Database */
+import Database from 'better-sqlite3';
 const db = new Database(path.join(ROOT, 'wayzo.sqlite'));
 db.exec(`CREATE TABLE IF NOT EXISTS plans (id TEXT PRIMARY KEY, created_at TEXT NOT NULL, payload TEXT NOT NULL);`);
 const savePlan = db.prepare('INSERT OR REPLACE INTO plans (id, created_at, payload) VALUES (?, ?, ?)');
