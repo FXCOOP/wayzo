@@ -686,6 +686,18 @@ ${dateMode === 'flexible' ? `- **Flexible Date Optimization**: Suggest the best 
 - **ABSOLUTELY FORBIDDEN**: Do not include any text that says "Enhance your travel experience with these beautiful images"
 - **MANDATORY**: Place images contextually within the content, NOT at the end
 - **MANDATORY**: Each image must appear immediately after its relevant content section
+- **CRITICAL**: NEVER create a section called "Image Ideas" or "🖼️ Image Ideas"
+- **CRITICAL**: NEVER create any numbered list of images
+- **CRITICAL**: NEVER include any text about "Image Ideas" or "Enhance your travel experience"
+- **CRITICAL**: NEVER create any section that lists images at the end
+- **CRITICAL**: NEVER create any section that contains the words "Image Ideas"
+- **CRITICAL**: NEVER create any section that contains the emoji "🖼️"
+- **CRITICAL**: NEVER create any section that contains the text "Enhance your travel experience"
+- **CRITICAL**: NEVER create any section that contains the text "Here are some beautiful images"
+- **CRITICAL**: NEVER create any section that contains the text "Here are some images to inspire"
+- **CRITICAL**: NEVER create any section that contains the text "Here are some images"
+- **CRITICAL**: NEVER create any section that contains the text "Image Ideas"
+- **CRITICAL**: NEVER create any section that contains the text "🖼️ Image Ideas"
 
 **WIDGET INTEGRATION REQUIREMENTS:**
 DO NOT place widgets in the "Don't Forget List" section
