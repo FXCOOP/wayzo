@@ -669,7 +669,7 @@ Generate EXACTLY 8 images with these specific queries:
 7. **Activity**: "Santorini activities wine tasting"
 8. **Experience**: "Santorini experience travel"
 
-Use ONLY Unsplash URLs with format: `https://source.unsplash.com/400x300/?[QUERY]`
+Use ONLY Unsplash URLs with format: https://source.unsplash.com/400x300/?[QUERY]
 NO placeholder text - only actual image URLs
 NO "Image loading..." text - only proper image tags
 
