@@ -376,6 +376,8 @@ You are REQUIRED to include EXACTLY 1 image per major section, placed at the END
 - Use exact landmark names, local activities, and authentic experiences
 - Avoid generic travel terms - be specific to the location
 - Images should show what makes this destination unique
+- Research the destination to use accurate, relevant terms
+- Use local cuisine names, famous landmarks, and authentic activities
 
 **IMAGE FORMAT - COPY EXACTLY:**
 ![${destination} Section Name](image:${destination} specific search terms)
@@ -624,15 +626,20 @@ ${dateMode === 'flexible' ? `- **Flexible Date Optimization**: Suggest the best 
 - **AVOID GENERIC TERMS**: No "beautiful", "amazing", "stunning", "gorgeous", "travel", "vacation"
 - **SHOW UNIQUENESS**: Images should capture what makes ${destination} special
 
-**FOR SANTORINI SPECIFICALLY - USE THESE EXACT QUERIES:**
-- "${destination} Oia sunset caldera view"
-- "${destination} white buildings blue domes"
-- "${destination} Akrotiri archaeological ruins"
-- "${destination} Santo Wines vineyard tasting"
-- "${destination} Greek taverna seafood"
-- "${destination} Red Beach volcanic sand"
-- "${destination} Fira caldera architecture"
-- "${destination} Santorini donkey path"
+**FOR ANY DESTINATION - USE THESE PATTERNS:**
+- "${destination} [main landmark or attraction]"
+- "${destination} [local cuisine or food]"
+- "${destination} [famous activity or experience]"
+- "${destination} [unique architecture or buildings]"
+- "${destination} [natural feature or landscape]"
+- "${destination} [local transportation or culture]"
+
+**EXAMPLES FOR DIFFERENT DESTINATIONS:**
+- For Paris: "${destination} Eiffel Tower", "${destination} croissant bakery", "${destination} Louvre museum"
+- For Tokyo: "${destination} Mount Fuji", "${destination} sushi restaurant", "${destination} Shibuya crossing"
+- For New York: "${destination} Statue of Liberty", "${destination} pizza slice", "${destination} Times Square"
+- For Rome: "${destination} Colosseum", "${destination} pasta carbonara", "${destination} Vatican City"
+- For Santorini: "${destination} Oia sunset", "${destination} Greek taverna", "${destination} volcanic beach"
 
 **VIOLATION CONSEQUENCES:**
 - Adding more than 1 image per section will cause system errors
