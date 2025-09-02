@@ -354,7 +354,7 @@ You are REQUIRED to include EXACTLY 1 image per major section, placed at the END
 1. Getting Around (transportation image)
 2. Accommodation (hotels image) 
 3. Must-See Attractions (landmarks image)
-4. Daily Itineraries (activities image)
+4. Daily Itineraries (activities image) - ONLY 1 IMAGE FOR THE ENTIRE SECTION
 5. Restaurants (food image)
 6. Budget Breakdown (travel image)
 
@@ -364,6 +364,12 @@ You are REQUIRED to include EXACTLY 1 image per major section, placed at the END
 - Travel Tips
 - Useful Apps
 - Emergency Info
+
+**CRITICAL - DAILY ITINERARIES RULE:**
+- The "Daily Itineraries" section is ONE section, not multiple sections
+- Place ONLY 1 image at the very END of the entire Daily Itineraries section
+- DO NOT add images after each individual day
+- The image should represent the overall activities/experiences
 
 **IMAGE FORMAT - COPY EXACTLY:**
 ![${destination} Section Name](image:${destination} specific search terms)
@@ -584,7 +590,7 @@ ${dateMode === 'flexible' ? `- **Flexible Date Optimization**: Suggest the best 
 1. **After "Getting Around" section**: ![${destination} Transportation](image:${destination} transportation airport)
 2. **After "Accommodation" section**: ![${destination} Hotels](image:${destination} hotels accommodation)
 3. **After "Must-See Attractions" section**: ![${destination} Landmarks](image:${destination} main attractions landmarks)
-4. **After "Daily Itineraries" section**: ![${destination} Activities](image:${destination} tourist activities experiences)
+4. **After "Daily Itineraries" section**: ![${destination} Activities](image:${destination} tourist activities experiences) - ONLY 1 IMAGE FOR ENTIRE SECTION
 5. **After "Restaurants" section**: ![${destination} Food](image:${destination} local cuisine traditional food)
 6. **After "Budget Breakdown" section**: ![${destination} Travel](image:${destination} travel experience vacation)
 
@@ -595,6 +601,13 @@ ${dateMode === 'flexible' ? `- **Flexible Date Optimization**: Suggest the best 
 - Useful Apps section
 - Emergency Info section
 - Any other sections not listed above
+
+**CRITICAL - DAILY ITINERARIES RULE:**
+- The "Daily Itineraries" section is ONE section, not multiple sections
+- Place ONLY 1 image at the very END of the entire Daily Itineraries section
+- DO NOT add images after each individual day (Day 1, Day 2, etc.)
+- The image should represent the overall activities/experiences
+- This is a CRITICAL rule - violations will break the system
 
 **IMAGE QUERY FORMAT - MANDATORY:**
 - **ALWAYS use**: "${destination} [specific term]"
@@ -614,6 +627,7 @@ ${dateMode === 'flexible' ? `- **Flexible Date Optimization**: Suggest the best 
 - Adding more than 1 image per section will cause system errors
 - Placing images in wrong locations will break the layout
 - Using non-destination-prefixed queries will show "Image loading..."
+- Adding images to Daily Itineraries individual days will break the system
 - This is a CRITICAL system requirement - follow exactly
 
 **DAILY ITINERARIES REQUIREMENT:**
