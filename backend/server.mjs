@@ -796,6 +796,13 @@ Create the most amazing, detailed, and useful trip plan possible!`;
     
     md = cleanedLines.join('\n');
     
+    // ULTRA AGGRESSIVE: Remove any remaining "Image Ideas" section using regex
+    md = md.replace(/## 🖼️ Image Ideas[\s\S]*?(?=---|$)/g, '');
+    md = md.replace(/## 🖼️ Image Ideas[\s\S]*?(?=\n## |\n---|$)/g, '');
+    md = md.replace(/🖼️ Image Ideas[\s\S]*?(?=---|$)/g, '');
+    md = md.replace(/Image Ideas[\s\S]*?(?=---|$)/g, '');
+    md = md.replace(/Enhance your travel experience[\s\S]*?(?=---|$)/g, '');
+    
     // Enhance the markdown with better formatting
     md = linkifyTokens(md, destination);
     // Only add fallback structured day sections if missing to prevent duplicates
