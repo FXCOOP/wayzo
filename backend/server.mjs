@@ -602,20 +602,92 @@ ${dateMode === 'flexible' ? `- **Flexible Date Optimization**: Suggest the best 
 - Add airport transfers widget in the "Getting Around" section
 - Make widgets feel natural and integrated into the content flow
 
-**REPORT QUALITY REQUIREMENTS:**
-- Make it feel like a premium travel guide
-- Include specific neighborhood recommendations
-- Add local insider tips and hidden gems
-- Consider seasonal factors and local events
-- Provide realistic timing and logistics
-- Include money-saving alternatives
-- Make it family-friendly if children are included
-- Consider the starting location (${from || 'user\'s location'}) for flight/transport recommendations
-- Use engaging, descriptive language
-- Include practical tips and local customs
-- Make the report visually appealing with proper formatting
-- **CRITICAL**: DO NOT duplicate content or show generic placeholders
-- **CRITICAL**: Each section should be unique and specific to the destination
+**REPORT QUALITY REQUIREMENTS - ENHANCED:**
+
+**CONTENT RICHNESS REQUIREMENTS:**
+1. **Daily Itineraries**: Each day must include:
+   - **Exact times** (e.g., "9:00 AM", "2:30 PM", "7:45 PM")
+   - **Specific restaurant names** with exact locations (e.g., "Taverna Katina in Amoudi Bay")
+   - **Detailed activity descriptions** (e.g., "Visit the Archaeological Site of Akrotiri - ancient Minoan ruins preserved in volcanic ash")
+   - **Transportation details** (e.g., "Take the local bus from Fira to Oia, 20-minute ride")
+   - **Duration estimates** (e.g., "Wine tasting tour at Santo Wines - 2 hours")
+   - **Booking information** (e.g., "Book sunset dinner at Kastro Oia Restaurant - reservations recommended")
+   - **Alternative activities** for bad weather
+   - **Insider tips** (e.g., "Best time to visit Oia Castle for sunset is 1 hour before sunset")
+
+2. **Restaurant Section**: Include 8-10 specific restaurants with:
+   - **Exact names and locations** (e.g., "Pelekanos Restaurant - Fira, near the cable car")
+   - **Price ranges** (€€ for mid-range, €€€ for upscale)
+   - **Specialties** (e.g., "Famous for fresh seafood and traditional Greek dishes")
+   - **Best dishes to try** (e.g., "Must-try: Grilled octopus, Santorini salad, local wine")
+   - **Reservation tips** (e.g., "Book 2-3 days in advance for sunset views")
+   - **Opening hours** if relevant
+   - **Atmosphere description** (e.g., "Cozy family-run taverna with stunning caldera views")
+
+3. **Accommodation Section**: Include 6-8 specific hotels with:
+   - **Exact names and locations** (e.g., "Villa Manos - Karterados, 10-minute walk to Fira")
+   - **Price ranges per night** (e.g., "€80-120/night")
+   - **Room types** (e.g., "Double rooms with private balconies")
+   - **Amenities** (e.g., "Free Wi-Fi, pool, breakfast included, airport shuttle")
+   - **Distance to attractions** (e.g., "5-minute walk to Fira center, 15-minute drive to Oia")
+   - **Booking links and reviews**
+   - **Seasonal pricing notes**
+
+4. **Must-See Attractions**: Include 10-12 specific attractions with:
+   - **Exact names and locations**
+   - **Entry fees** (e.g., "€12 for adults, €6 for children")
+   - **Opening hours** (e.g., "8:00 AM - 8:00 PM daily")
+   - **Best times to visit** (e.g., "Early morning to avoid crowds")
+   - **Booking requirements** (e.g., "Advance booking required for wine tours")
+   - **Duration estimates** (e.g., "Allow 2-3 hours for Akrotiri")
+   - **Insider tips** (e.g., "Visit Red Beach early morning for best photos")
+
+5. **Budget Breakdown**: Make it realistic with:
+   - **Current market prices** in Euros (€)
+   - **Per-person and total costs**
+   - **Seasonal variations** (e.g., "Summer prices 20% higher")
+   - **Currency conversion notes**
+   - **Money-saving tips** (e.g., "Book flights 3 months in advance for best rates")
+   - **Optional expenses** (e.g., "Wine tours €25-50 per person")
+
+6. **Travel Tips**: Include:
+   - **Local customs and etiquette** (e.g., "Greet with 'Kalimera' in morning, 'Kalispera' in evening")
+   - **Safety tips** specific to Santorini (e.g., "Be careful on cliff edges, especially at sunset")
+   - **Best times for activities** (e.g., "Visit Oia early morning or late afternoon to avoid crowds")
+   - **Money-saving tips** (e.g., "Eat lunch at local tavernas, dinner at upscale restaurants")
+   - **Cultural insights** (e.g., "Greeks value family time - many shops close 2-4 PM")
+   - **Weather considerations** (e.g., "September is perfect - warm but not crowded")
+
+**IMAGE REQUIREMENTS - EXACT AND SPECIFIC:**
+Generate EXACTLY 8 images with these specific queries:
+1. **Cityscape/Overview**: "Santorini sunset Oia Greece"
+2. **Local Food**: "Greek food Santorini taverna"
+3. **Cultural Site**: "Santorini white buildings caldera"
+4. **Nature/Landscape**: "Santorini beaches volcanic"
+5. **Local Life**: "Santorini culture local people"
+6. **Architecture**: "Santorini architecture blue domes"
+7. **Activity**: "Santorini activities wine tasting"
+8. **Experience**: "Santorini experience travel"
+
+Use ONLY Unsplash URLs with format: `https://source.unsplash.com/400x300/?[QUERY]`
+NO placeholder text - only actual image URLs
+NO "Image loading..." text - only proper image tags
+
+**WIDGET INTEGRATION REQUIREMENTS:**
+DO NOT place widgets in the "Don't Forget List" section
+Widgets should be placed in appropriate sections:
+- Flight widget → "Getting Around" section
+- Hotel widget → "Accommodation" section
+- Car rental widget → "Getting Around" section
+- eSIM widget → "Useful Apps" section
+
+**CRITICAL - NO DUPLICATE CONTENT:**
+DO NOT repeat the same daily itinerary multiple times
+DO NOT include generic "Open Exploration" content
+Each section must be unique and specific
+Remove any duplicate content that might be generated
+
+Create a RICH, DETAILED, and PROFESSIONAL report that travelers can actually use to plan their trip. Make it comprehensive, actionable, and visually appealing.
 
 Create the most amazing, detailed, and useful trip plan possible!`;
 
