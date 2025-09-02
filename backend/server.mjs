@@ -813,6 +813,13 @@ Create the most amazing, detailed, and useful trip plan possible!`;
     md = md.replace(/\n\d+\.\s*!\[[^\]]*\]\([^)]*\)/g, '');
     md = md.replace(/\n- !\[[^\]]*\]\([^)]*\)/g, '');
     
+    // ULTIMATE NUCLEAR: Remove the entire section with a more specific pattern
+    md = md.replace(/## 🖼️ Image Ideas\n[\s\S]*?(?=\n---|\n## |$)/g, '');
+    md = md.replace(/## 🖼️ Image Ideas\n[\s\S]*?(?=\n---|\n## |$)/g, '');
+    md = md.replace(/## 🖼️ Image Ideas\n[\s\S]*?(?=\n---|\n## |$)/g, '');
+    md = md.replace(/## 🖼️ Image Ideas\n[\s\S]*?(?=\n---|\n## |$)/g, '');
+    md = md.replace(/## 🖼️ Image Ideas\n[\s\S]*?(?=\n---|\n## |$)/g, '');
+    
     // Enhance the markdown with better formatting
     md = linkifyTokens(md, destination);
     // Only add fallback structured day sections if missing to prevent duplicates
