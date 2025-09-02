@@ -803,6 +803,16 @@ Create the most amazing, detailed, and useful trip plan possible!`;
     md = md.replace(/Image Ideas[\s\S]*?(?=---|$)/g, '');
     md = md.replace(/Enhance your travel experience[\s\S]*?(?=---|$)/g, '');
     
+    // NUCLEAR OPTION: Remove any section that contains "Image Ideas" anywhere
+    md = md.replace(/## [^\n]*Image Ideas[^\n]*\n[\s\S]*?(?=\n## |\n---|$)/g, '');
+    md = md.replace(/## [^\n]*🖼️[^\n]*\n[\s\S]*?(?=\n## |\n---|$)/g, '');
+    
+    // FINAL CLEANUP: Remove any remaining image lists
+    md = md.replace(/\n\d+\.\s*\*\*[^*]*\*\*:\s*!\[[^\]]*\]\([^)]*\)/g, '');
+    md = md.replace(/\n- \*\*[^*]*\*\*:\s*!\[[^\]]*\]\([^)]*\)/g, '');
+    md = md.replace(/\n\d+\.\s*!\[[^\]]*\]\([^)]*\)/g, '');
+    md = md.replace(/\n- !\[[^\]]*\]\([^)]*\)/g, '');
+    
     // Enhance the markdown with better formatting
     md = linkifyTokens(md, destination);
     // Only add fallback structured day sections if missing to prevent duplicates
