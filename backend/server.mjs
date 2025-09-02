@@ -586,67 +586,43 @@ ${dietary && dietary.length > 0 ? `- **Dietary Accommodations**: Ensure all rest
 ${dateMode === 'flexible' ? `- **Flexible Date Optimization**: Suggest the best times within the month for optimal weather, prices, and fewer crowds
 - **Price Optimization**: Focus on getting the best value during the flexible period` : ''}
 
-**CRITICAL - IMAGE GENERATION - STRICT ENFORCEMENT:** You MUST follow these rules EXACTLY - NO EXCEPTIONS:
+**ABSOLUTE IMAGE RULES - SYSTEM BREAKING IF VIOLATED:**
+You are FORBIDDEN from adding images to any section except the 6 listed below. Adding images to other sections will CRASH the system.
 
-**ABSOLUTE IMAGE RULES - VIOLATION WILL CAUSE ERRORS:**
-- **ONLY 1 image per major section** - if you add more than 1 image to any section, the system will break
-- **Images ONLY at the END of sections** - never in the middle of content
-- **Destination-prefixed queries ONLY** - every query must start with the destination name
-- **NO generic terms** - never use "beautiful", "amazing", "stunning", "gorgeous"
+**ONLY THESE 6 SECTIONS CAN HAVE IMAGES:**
+1. Getting Around - 1 image at end
+2. Accommodation - 1 image at end  
+3. Must-See Attractions - 1 image at end
+4. Daily Itineraries - 1 image at end (NOT per day)
+5. Restaurants - 1 image at end
+6. Budget Breakdown - 1 image at end
 
-**MANDATORY IMAGE PLACEMENT - COPY EXACTLY:**
-1. **After "Getting Around" section**: ![${destination} Transportation](image:${destination} transportation airport)
-2. **After "Accommodation" section**: ![${destination} Hotels](image:${destination} hotels accommodation)
-3. **After "Must-See Attractions" section**: ![${destination} Landmarks](image:${destination} main attractions landmarks)
-4. **After "Daily Itineraries" section**: ![${destination} Activities](image:${destination} tourist activities experiences) - ONLY 1 IMAGE FOR ENTIRE SECTION
-5. **After "Restaurants" section**: ![${destination} Food](image:${destination} local cuisine traditional food)
-6. **After "Budget Breakdown" section**: ![${destination} Travel](image:${destination} travel experience vacation)
+**FORBIDDEN SECTIONS - NO IMAGES ALLOWED:**
+- Trip Overview
+- Don't Forget List  
+- Travel Tips
+- Useful Apps
+- Emergency Info
+- Any other section not listed above
 
-**CRITICAL - DO NOT ADD IMAGES TO:**
-- Trip Overview section
-- Don't Forget List section
-- Travel Tips section
-- Useful Apps section
-- Emergency Info section
-- Any other sections not listed above
+**CRITICAL - DAILY ITINERARIES:**
+- The "Daily Itineraries" section is ONE section
+- Place ONLY 1 image at the very END of the entire section
+- DO NOT add images after Day 1, Day 2, Day 3, etc.
+- This will break the system if violated
 
-**CRITICAL - DAILY ITINERARIES RULE:**
-- The "Daily Itineraries" section is ONE section, not multiple sections
-- Place ONLY 1 image at the very END of the entire Daily Itineraries section
-- DO NOT add images after each individual day (Day 1, Day 2, etc.)
-- The image should represent the overall activities/experiences
-- This is a CRITICAL rule - violations will break the system
+**IMAGE FORMAT - EXACT COPY ONLY:**
+![${destination} Section Name](image:${destination} specific term)
 
-**IMAGE QUERY FORMAT - MANDATORY:**
-- **ALWAYS use**: "${destination} [specific term]"
-- **NEVER use**: "[specific term]" without destination prefix
-- **Examples**: "${destination} Oia sunset" NOT "Oia sunset"
-- **Examples**: "${destination} Greek food" NOT "Greek food"
-- **BE SPECIFIC TO DESTINATION**: Use exact landmark names, local activities, authentic experiences
-- **AVOID GENERIC TERMS**: No "beautiful", "amazing", "stunning", "gorgeous", "travel", "vacation"
-- **SHOW UNIQUENESS**: Images should capture what makes ${destination} special
+**EXAMPLES OF CORRECT FORMAT:**
+- ![Santorini, Greece Transportation](image:Santorini, Greece airport transfer)
+- ![Santorini, Greece Hotels](image:Santorini, Greece caldera hotel)
+- ![Santorini, Greece Landmarks](image:Santorini, Greece Oia castle)
+- ![Santorini, Greece Activities](image:Santorini, Greece wine tasting)
+- ![Santorini, Greece Food](image:Santorini, Greece taverna seafood)
+- ![Santorini, Greece Travel](image:Santorini, Greece sunset view)
 
-**FOR ANY DESTINATION - USE THESE PATTERNS:**
-- "${destination} [main landmark or attraction]"
-- "${destination} [local cuisine or food]"
-- "${destination} [famous activity or experience]"
-- "${destination} [unique architecture or buildings]"
-- "${destination} [natural feature or landscape]"
-- "${destination} [local transportation or culture]"
-
-**EXAMPLES FOR DIFFERENT DESTINATIONS:**
-- For Paris: "${destination} Eiffel Tower", "${destination} croissant bakery", "${destination} Louvre museum"
-- For Tokyo: "${destination} Mount Fuji", "${destination} sushi restaurant", "${destination} Shibuya crossing"
-- For New York: "${destination} Statue of Liberty", "${destination} pizza slice", "${destination} Times Square"
-- For Rome: "${destination} Colosseum", "${destination} pasta carbonara", "${destination} Vatican City"
-- For Santorini: "${destination} Oia sunset", "${destination} Greek taverna", "${destination} volcanic beach"
-
-**VIOLATION CONSEQUENCES:**
-- Adding more than 1 image per section will cause system errors
-- Placing images in wrong locations will break the layout
-- Using non-destination-prefixed queries will show "Image loading..."
-- Adding images to Daily Itineraries individual days will break the system
-- This is a CRITICAL system requirement - follow exactly
+**VIOLATION = SYSTEM CRASH - FOLLOW EXACTLY**
 
 **DAILY ITINERARIES REQUIREMENT:**
 - Create detailed, specific daily itineraries for each day
