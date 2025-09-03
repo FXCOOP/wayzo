@@ -379,6 +379,14 @@ You are REQUIRED to include EXACTLY 1 image per major section, placed at the END
 - Research the destination to use accurate, relevant terms
 - Use local cuisine names, famous landmarks, and authentic activities
 
+**CRITICAL - WEB RESEARCH REQUIREMENT:**
+You MUST use web search to verify current information for ${destination}:
+- Current prices for hotels, restaurants, attractions
+- Opening hours and availability
+- Weather forecasts for the travel dates
+- Any closures or seasonal changes
+- Local events that might affect the trip
+
 **IMAGE FORMAT - COPY EXACTLY:**
 ![${destination} Section Name](image:${destination} specific search terms)
 
@@ -611,16 +619,33 @@ You are FORBIDDEN from adding images to any section except the 6 listed below. A
 - DO NOT add images after Day 1, Day 2, Day 3, etc.
 - This will break the system if violated
 
+**CRITICAL - REAL-TIME ACCURACY REQUIREMENTS:**
+You MUST research current information for ${destination} to ensure accuracy:
+
+**MANDATORY RESEARCH REQUIREMENTS:**
+- **Current Prices**: Check real-time prices for hotels, restaurants, attractions
+- **Opening Hours**: Verify current opening hours for all recommended places
+- **Weather**: Check current weather forecasts for ${start} to ${end}
+- **Closures**: Verify no recommended places are permanently closed
+- **Seasonal Changes**: Account for seasonal pricing and availability
+- **Local Events**: Check for any events that might affect availability
+
+**ACCURACY ENFORCEMENT:**
+- If you cannot verify current information, DO NOT recommend that place
+- Use phrases like "Check current prices" or "Verify opening hours"
+- Include disclaimers about price changes
+- Prioritize places with verified current information
+
 **IMAGE FORMAT - EXACT COPY ONLY:**
 ![${destination} Section Name](image:${destination} specific term)
 
 **EXAMPLES OF CORRECT FORMAT:**
-- ![Santorini, Greece Transportation](image:Santorini, Greece airport transfer)
-- ![Santorini, Greece Hotels](image:Santorini, Greece caldera hotel)
-- ![Santorini, Greece Landmarks](image:Santorini, Greece Oia castle)
-- ![Santorini, Greece Activities](image:Santorini, Greece wine tasting)
-- ![Santorini, Greece Food](image:Santorini, Greece taverna seafood)
-- ![Santorini, Greece Travel](image:Santorini, Greece sunset view)
+- ![${destination} Transportation](image:${destination} airport transfer)
+- ![${destination} Hotels](image:${destination} caldera hotel)
+- ![${destination} Landmarks](image:${destination} main attraction)
+- ![${destination} Activities](image:${destination} local activity)
+- ![${destination} Food](image:${destination} local cuisine)
+- ![${destination} Travel](image:${destination} sunset view)
 
 **VIOLATION = SYSTEM CRASH - FOLLOW EXACTLY**
 

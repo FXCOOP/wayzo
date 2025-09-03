@@ -17,15 +17,14 @@ export function affiliatesFor(dest = '') {
     insurance: ()      => `https://www.worldnomads.com/`,
     reviews:   (term) => `https://www.tripadvisor.com/Search?q=${encodeURIComponent(term || dest)}`,
     image:     (term) => {
-      // Use multiple image sources for better reliability
+      // Enhanced image processing with better query formatting
       const query = encodeURIComponent(term || dest);
-      const sources = [
-        `https://source.unsplash.com/400x300/?${query},travel`,
-        `https://picsum.photos/400/300?random=${Math.floor(Math.random() * 1000)}`,
-        `https://via.placeholder.com/400x300/2563eb/ffffff?text=${query}`,
-      ];
-      // Return the first source (Unsplash) as primary, with fallbacks
-      return sources[0];
+      
+      // Use Unsplash with better query formatting
+      const unsplashUrl = `https://source.unsplash.com/400x300/?${query}`;
+      
+      console.log('Image query:', term, '→', unsplashUrl);
+      return unsplashUrl;
     },
   };
 }
