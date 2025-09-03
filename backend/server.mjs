@@ -233,6 +233,42 @@ app.post('/api/upload', multerUpload.array('files', 10), (req, res) => {
   }));
   res.json({ files });
 });
+/* Post-process markdown to remove images from forbidden sections */
+function removeImagesFromForbiddenSections(markdown, destination) {
+  console.log('Post-processing markdown to remove forbidden images...');
+  
+  // Define forbidden sections
+  const forbiddenSections = [
+    'Trip Overview',
+    'Don\'t Forget List', 
+    'Travel Tips',
+    'Useful Apps',
+    'Emergency Info'
+  ];
+  
+  let processed = markdown;
+  
+  // Remove images from forbidden sections
+  forbiddenSections.forEach(section => {
+    const sectionRegex = new RegExp(`(##\\s*${section}[^#]*?)(![^\\n]*\\n)`, 'gis');
+    processed = processed.replace(sectionRegex, '$1');
+    console.log(`Removed images from section: ${section}`);
+  });
+  
+  // Remove any remaining images that don't follow the correct format
+  processed = processed.replace(/!\[([^\]]*)\]\(image:([^)]+)\)/gi, (match, alt, query) => {
+    // Only allow images with destination prefix
+    if (!query.includes(destination)) {
+      console.log(`Removing invalid image: ${match}`);
+      return '';
+    }
+    return match;
+  });
+  
+  console.log('Post-processing complete');
+  return processed;
+}
+
 /* DB */
 const db = new Database(path.join(ROOT, 'tripmaster.sqlite'));
 db.exec(`CREATE TABLE IF NOT EXISTS plans (id TEXT PRIMARY KEY, created_at TEXT NOT NULL, payload TEXT NOT NULL);`);
@@ -1084,8 +1120,11 @@ app.post('/api/plan', async (req, res) => {
     // Process image tokens and other links in the MARKDOWN first
     const processedMarkdown = linkifyTokens(markdown, payload.destination);
     
+    // Post-process to remove images from forbidden sections
+    const cleanedMarkdown = removeImagesFromForbiddenSections(processedMarkdown, payload.destination);
+    
     // Then convert to HTML
-    const html = marked.parse(processedMarkdown);
+    const html = marked.parse(cleanedMarkdown);
     
     // Add affiliate widgets integrated into appropriate sections
     const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
