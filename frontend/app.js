@@ -1314,6 +1314,7 @@ let currentUser = JSON.parse(localStorage.getItem('wayzo_user') || 'null');
   document.addEventListener('DOMContentLoaded', () => {
     setupTripTypeSelector();
     setupEventListeners();
+    setupImageHandling();
     
     // Load saved language
     const savedLanguage = localStorage.getItem('wayzo_language');
@@ -1324,6 +1325,48 @@ let currentUser = JSON.parse(localStorage.getItem('wayzo_user') || 'null');
       }
     }
   });
+
+  // Enhanced image handling with fallbacks
+  function setupImageHandling() {
+    // Handle image loading errors
+    document.addEventListener('error', function(e) {
+      if (e.target.tagName === 'IMG') {
+        const img = e.target;
+        const originalSrc = img.src;
+        
+        // Try fallback sources
+        if (originalSrc.includes('unsplash.com')) {
+          img.src = originalSrc.replace('unsplash.com', 'picsum.photos/800/600?random=');
+        } else if (originalSrc.includes('picsum.photos')) {
+          img.src = `https://via.placeholder.com/800x600/4F46E5/FFFFFF?text=${encodeURIComponent(img.alt || 'Image')}`;
+        } else {
+          // Create fallback placeholder
+          const fallback = document.createElement('div');
+          fallback.className = 'image-fallback';
+          fallback.textContent = img.alt || 'Image not available';
+          img.parentNode.insertBefore(fallback, img);
+          img.style.display = 'none';
+        }
+      }
+    }, true);
+
+    // Add loading states to images
+    document.addEventListener('DOMContentLoaded', function() {
+      const images = document.querySelectorAll('img[src*="unsplash.com"], img[src*="picsum.photos"]');
+      images.forEach(img => {
+        img.setAttribute('loading', 'lazy');
+        img.style.opacity = '0.7';
+        
+        img.addEventListener('load', function() {
+          this.style.opacity = '1';
+        });
+        
+        img.addEventListener('error', function() {
+          this.style.opacity = '0.5';
+        });
+      });
+    });
+  }
 
   // Run init now
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
