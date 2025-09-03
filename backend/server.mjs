@@ -3,6 +3,7 @@ import express from 'express';
 import compression from 'compression';
 import helmet from 'helmet';
 import { marked } from 'marked';
+import puppeteer from 'puppeteer';
 import OpenAI from 'openai';
 import multer from 'multer';
 import fs from 'fs';
@@ -381,7 +382,7 @@ async function generatePlanWithAI(payload) {
   const totalTravelers = adults + children;
   
   // Enhanced system prompt for amazing reports
-  const sys = `You are Wayzo, an expert AI travel planner. 
+  const sys = `You are Wayzo, an expert AI travel planner.
 
 **CRITICAL - IMAGE GENERATION RULES (SYSTEM BREAKING):**
 You are FORBIDDEN from adding images to any section except these 6:
@@ -578,7 +579,7 @@ Create a checklist like this with proper HTML checkboxes that automatically mark
 
 **STYLE:** Make it exciting, informative, and ready to use!`;
 
-  // Enhanced user prompt with all new fields
+  // Trip context appended to system prompt (single prompt approach)
   const user = `Create an AMAZING trip plan for:
 
 **Destination:** ${destination}
@@ -782,7 +783,7 @@ Create the most amazing, detailed, and useful trip plan possible!`;
       model: process.env.OPENAI_MODEL || "gpt-4o-mini",
       temperature: 0.7, // Slightly higher for more creative responses
       max_tokens: 4000, // Allow longer, more detailed responses
-      messages: [{ role: "user", content: sys }],
+      messages: [{ role: "user", content: `${sys}\n\n${user}` }],
     });
     
     let md = resp.choices?.[0]?.message?.content?.trim() || "";
@@ -1096,6 +1097,53 @@ app.post('/api/plan', async (req, res) => {
   } catch (e) {
     console.error('Plan generation error:', e);
     res.status(500).json({ error: 'Failed to generate plan. Check server logs.', version: VERSION });
+  }
+});
+
+// Generate and return a PDF of the plan
+app.post('/api/plan.pdf', async (req, res) => {
+  console.log('PDF plan request received:', req.body);
+  try {
+    const payload = req.body || {};
+    payload.currency = payload.currency || 'USD';
+    payload.budget = normalizeBudget(payload.budget, payload.currency);
+    const markdown = await generatePlanWithAI(payload);
+
+    // Process image tokens and other links first
+    const processedMarkdown = linkifyTokens(markdown, payload.destination);
+    const cleanedMarkdown = removeImagesFromForbiddenSections(processedMarkdown, payload.destination);
+    const html = marked.parse(cleanedMarkdown);
+    const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
+    const finalHTML = injectWidgetsIntoSections(html, widgets);
+
+    const fullHtml = `<!doctype html><html><head>
+      <meta charset="utf-8">
+      <title>Wayzo Trip Plan - ${escapeHtml(payload.destination || '')}</title>
+      <style>
+        body { font-family: Arial, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        img { max-width: 100%; height: auto; }
+        h1, h2, h3 { page-break-after: avoid; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 6px; }
+        .budget-table th { background: #f5f5f5; }
+        .page-break { page-break-before: always; }
+      </style>
+    </head><body>
+      ${finalHTML}
+    </body></html>`;
+
+    const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    const page = await browser.newPage();
+    await page.setContent(fullHtml, { waitUntil: 'networkidle0' });
+    const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
+    await browser.close();
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="wayzo-trip-plan.pdf"');
+    res.send(pdfBuffer);
+  } catch (e) {
+    console.error('PDF generation error:', e);
+    res.status(500).json({ error: 'Failed to generate PDF. Check server logs.', version: VERSION });
   }
 });
 
