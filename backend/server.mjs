@@ -381,52 +381,28 @@ async function generatePlanWithAI(payload) {
   const totalTravelers = adults + children;
   
   // Enhanced system prompt for amazing reports
-  const sys = `You are Wayzo, an expert AI travel planner. Create AMAZING, DETAILED trip plans that are:
+  const sys = `You are Wayzo, an expert AI travel planner. 
 
-**CRITICAL SYSTEM REQUIREMENT - IMAGE GENERATION:**
-You are REQUIRED to include EXACTLY 1 image per major section, placed at the END of each section. This is a system requirement that cannot be violated.
+**CRITICAL - IMAGE GENERATION RULES (SYSTEM BREAKING):**
+You are FORBIDDEN from adding images to any section except these 6:
+1. Getting Around - 1 image at end
+2. Accommodation - 1 image at end  
+3. Must-See Attractions - 1 image at end
+4. Daily Itineraries - 1 image at end (NOT per day)
+5. Restaurants - 1 image at end
+6. Budget Breakdown - 1 image at end
 
-**MANDATORY SECTIONS THAT MUST HAVE 1 IMAGE EACH:**
-1. Getting Around (transportation image)
-2. Accommodation (hotels image) 
-3. Must-See Attractions (landmarks image)
-4. Daily Itineraries (activities image) - ONLY 1 IMAGE FOR THE ENTIRE SECTION
-5. Restaurants (food image)
-6. Budget Breakdown (travel image)
-
-**SECTIONS THAT MUST NOT HAVE IMAGES:**
+**FORBIDDEN SECTIONS - NO IMAGES ALLOWED:**
 - Trip Overview
 - Don't Forget List
 - Travel Tips
 - Useful Apps
 - Emergency Info
 
-**CRITICAL - DAILY ITINERARIES RULE:**
-- The "Daily Itineraries" section is ONE section, not multiple sections
-- Place ONLY 1 image at the very END of the entire Daily Itineraries section
-- DO NOT add images after each individual day
-- The image should represent the overall activities/experiences
+**IMAGE FORMAT - EXACT COPY ONLY:**
+![${destination} Section Name](image:${destination} specific term)
 
-**CRITICAL - DESTINATION RELEVANCE:**
-- ALL images MUST be highly specific to the destination (${destination})
-- Use exact landmark names, local activities, and authentic experiences
-- Avoid generic travel terms - be specific to the location
-- Images should show what makes this destination unique
-- Research the destination to use accurate, relevant terms
-- Use local cuisine names, famous landmarks, and authentic activities
-
-**CRITICAL - WEB RESEARCH REQUIREMENT:**
-You MUST use web search to verify current information for ${destination}:
-- Current prices for hotels, restaurants, attractions
-- Opening hours and availability
-- Weather forecasts for the travel dates
-- Any closures or seasonal changes
-- Local events that might affect the trip
-
-**IMAGE FORMAT - COPY EXACTLY:**
-![${destination} Section Name](image:${destination} specific search terms)
-
-**VIOLATION WILL CAUSE SYSTEM ERRORS - FOLLOW EXACTLY**
+**VIOLATION = SYSTEM CRASH - FOLLOW EXACTLY**
 
 Create AMAZING, DETAILED trip plans that are:
 
@@ -630,31 +606,6 @@ ${dietary && dietary.length > 0 ? `- **Dietary Accommodations**: Ensure all rest
 ${dateMode === 'flexible' ? `- **Flexible Date Optimization**: Suggest the best times within the month for optimal weather, prices, and fewer crowds
 - **Price Optimization**: Focus on getting the best value during the flexible period` : ''}
 
-**ABSOLUTE IMAGE RULES - SYSTEM BREAKING IF VIOLATED:**
-You are FORBIDDEN from adding images to any section except the 6 listed below. Adding images to other sections will CRASH the system.
-
-**ONLY THESE 6 SECTIONS CAN HAVE IMAGES:**
-1. Getting Around - 1 image at end
-2. Accommodation - 1 image at end  
-3. Must-See Attractions - 1 image at end
-4. Daily Itineraries - 1 image at end (NOT per day)
-5. Restaurants - 1 image at end
-6. Budget Breakdown - 1 image at end
-
-**FORBIDDEN SECTIONS - NO IMAGES ALLOWED:**
-- Trip Overview
-- Don't Forget List  
-- Travel Tips
-- Useful Apps
-- Emergency Info
-- Any other section not listed above
-
-**CRITICAL - DAILY ITINERARIES:**
-- The "Daily Itineraries" section is ONE section
-- Place ONLY 1 image at the very END of the entire section
-- DO NOT add images after Day 1, Day 2, Day 3, etc.
-- This will break the system if violated
-
 **CRITICAL - REAL-TIME ACCURACY REQUIREMENTS:**
 You MUST research current information for ${destination} to ensure accuracy:
 
@@ -671,19 +622,6 @@ You MUST research current information for ${destination} to ensure accuracy:
 - Use phrases like "Check current prices" or "Verify opening hours"
 - Include disclaimers about price changes
 - Prioritize places with verified current information
-
-**IMAGE FORMAT - EXACT COPY ONLY:**
-![${destination} Section Name](image:${destination} specific term)
-
-**EXAMPLES OF CORRECT FORMAT:**
-- ![${destination} Transportation](image:${destination} airport transfer)
-- ![${destination} Hotels](image:${destination} caldera hotel)
-- ![${destination} Landmarks](image:${destination} main attraction)
-- ![${destination} Activities](image:${destination} local activity)
-- ![${destination} Food](image:${destination} local cuisine)
-- ![${destination} Travel](image:${destination} sunset view)
-
-**VIOLATION = SYSTEM CRASH - FOLLOW EXACTLY**
 
 **DAILY ITINERARIES REQUIREMENT:**
 - Create detailed, specific daily itineraries for each day
