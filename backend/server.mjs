@@ -407,6 +407,8 @@ ${dateMode === 'flexible' ? `- **Flexible Date Optimization**: Suggest the best 
 
 **Image guidance:** Provide 3–6 realistic image prompts that would look authentic for ${destination} in this season. Use a mix of cityscapes, food, local culture, and nature; each as a Markdown image with token links like ![Title](image:QUERY). Add a short one-line collage idea.
 
+**IMPORTANT:** Do NOT include placeholder text like "Image loading..." or similar. Only use proper Markdown image syntax: ![Alt Text](image:query)
+
 **Requirements:**
 - Make it feel like a premium travel guide
 - Include specific neighborhood recommendations
@@ -442,6 +444,12 @@ Create the most amazing, detailed, and useful trip plan possible!`;
     
     // Enhance the markdown with better formatting
     md = linkifyTokens(md, destination);
+    
+    // Clean up any placeholder text that might have been generated
+    md = md.replace(/🖼️\s*Image loading\.\.\./gi, '');
+    md = md.replace(/Image loading\.\.\./gi, '');
+    md = md.replace(/🖼️\s*$/gm, '');
+    
     // Only add fallback structured day sections if missing to prevent duplicates
     if (!containsDaySections(md)) {
       md = ensureDaySections(md, nDays, start);
