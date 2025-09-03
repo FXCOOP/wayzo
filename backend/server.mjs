@@ -782,7 +782,7 @@ Create the most amazing, detailed, and useful trip plan possible!`;
       model: process.env.OPENAI_MODEL || "gpt-4o-mini",
       temperature: 0.7, // Slightly higher for more creative responses
       max_tokens: 4000, // Allow longer, more detailed responses
-      messages: [{ role: "system", content: sys }, { role: "user", content: user }],
+      messages: [{ role: "user", content: sys }],
     });
     
     let md = resp.choices?.[0]?.message?.content?.trim() || "";
