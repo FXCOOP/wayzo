@@ -224,12 +224,7 @@
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    // Check if user is authenticated for preview
-    if (!isAuthenticated) {
-      showNotification('Please sign in to generate trip previews.', 'warning');
-      showAuthModal();
-      return;
-    }
+    // Authentication not required for preview (staging parity)
     
     const data = readForm();
     console.log('Form data:', data);
@@ -282,12 +277,7 @@
 
   // Full plan generation
   fullPlanBtn.addEventListener('click', async () => {
-    // Check if user is authenticated for full plan
-    if (!isAuthenticated) {
-      showNotification('Please sign in to access the full trip plan.', 'warning');
-      showAuthModal();
-      return;
-    }
+    // Authentication not required for full plan (staging parity)
     
     const data = readForm();
     console.log('Generating full plan for:', data);
