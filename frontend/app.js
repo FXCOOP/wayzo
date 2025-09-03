@@ -422,8 +422,8 @@
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    // Check if user is authenticated for preview (test users bypass this)
-    if (!isAuthenticated) {
+    // Check if user is authenticated for preview (test users on staging bypass this)
+    if (!isAuthenticated && !isStaging) {
       showNotification('Please sign in to generate trip previews.', 'warning');
       showAuthModal();
       return;
@@ -507,8 +507,8 @@
 
   // Full plan generation
   fullPlanBtn.addEventListener('click', async () => {
-    // Check if user is authenticated for full plan
-    if (!isAuthenticated) {
+    // Check if user is authenticated for full plan (bypass on staging)
+    if (!isAuthenticated && !isStaging) {
       showNotification('Please sign in to access the full trip plan.', 'warning');
       showAuthModal();
       return;
@@ -566,13 +566,13 @@
       console.log('Is test user?', currentUser && currentUser.isTestUser);
       console.log('User object details:', JSON.stringify(currentUser, null, 2));
       
-      if (currentUser && currentUser.isTestUser) {
-        console.log('🧪 Test user detected - bypassing payment!');
-        // Test user - show full plan immediately without payment
+      if (currentUser && currentUser.isTestUser || isStaging) {
+        console.log('🧪 Test user or staging detected - bypassing payment!');
+        // Test user or staging - show full plan immediately without payment
         previewEl.innerHTML = `
           <div class="test-user-notice">
             <h3>🧪 TEST USER MODE - Full Plan Unlocked!</h3>
-            <p>You're signed in as a test user. All features are unlocked for testing purposes.</p>
+            <p>You're on staging. All features are unlocked for testing purposes.</p>
           </div>
           ${result.html}
         `;
