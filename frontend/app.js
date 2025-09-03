@@ -1705,38 +1705,27 @@
           </div>
           
           <script>
-            function downloadDirectPDF() {
-              // Create a more comprehensive PDF download
-              const content = document.querySelector('.content').innerHTML;
-              const pdfContent = \`
-                <html>
-                  <head>
-                    <title>Wayzo Trip Plan - ${new Date().toLocaleDateString()}</title>
-                    <style>
-                      body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
-                      .header { text-align: center; margin-bottom: 30px; padding: 20px; background: #f0f0f0; }
-                      img { max-width: 100%; height: auto; }
-                    </style>
-                  </head>
-                  <body>
-                    <div class="header">
-                      <h1>🚀 Wayzo Trip Plan</h1>
-                      <p>Generated on ${new Date().toLocaleDateString()}</p>
-                    </div>
-                    <div class="content">\${content}</div>
-                  </body>
-                </html>
-              \`;
-              
-              const blob = new Blob([pdfContent], { type: 'text/html' });
-              const url = window.URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = 'wayzo-trip-plan.html';
-              a.click();
-              window.URL.revokeObjectURL(url);
-              
-              alert('Trip plan downloaded! Open the HTML file in your browser and use Print to PDF for best results.');
+            async function downloadDirectPDF() {
+              try {
+                let payload = {};
+                try { payload = window.opener && window.opener.readForm ? window.opener.readForm() : {}; } catch {}
+                const resp = await fetch('/api/plan.pdf', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(payload || {}),
+                });
+                if (!resp.ok) throw new Error('Failed to generate PDF');
+                const blob = await resp.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'wayzo-trip-plan.pdf';
+                a.click();
+                window.URL.revokeObjectURL(url);
+              } catch (e) {
+                alert('Unable to download PDF right now. Please try again.');
+                console.error(e);
+              }
             }
           </script>
         </body>
