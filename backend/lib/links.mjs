@@ -17,13 +17,14 @@ export function affiliatesFor(dest = '') {
     insurance: ()      => `https://www.worldnomads.com/`,
     reviews:   (term) => `https://www.tripadvisor.com/Search?q=${encodeURIComponent(term || dest)}`,
     image:     (term) => {
-      // Enhanced image processing with better query formatting
-      const query = encodeURIComponent(term || dest);
-      
-      // Use Unsplash with better query formatting
-      const unsplashUrl = `https://source.unsplash.com/400x300/?${query}`;
-      
-      console.log('Image query:', term, '→', unsplashUrl);
+      // Destination-scoped image query for more accurate visuals
+      const base = String(dest || '').trim();
+      const q = String(term || '').trim();
+      const combined = (q.toLowerCase().includes(base.toLowerCase()) || base === '') ? q : `${base} ${q}`;
+      const query = encodeURIComponent(combined || base || 'travel destination');
+      // Higher resolution for better quality
+      const unsplashUrl = `https://source.unsplash.com/800x500/?${query}`;
+      console.log('Image query:', { dest: base, term: q, combined, url: unsplashUrl });
       return unsplashUrl;
     },
   };
