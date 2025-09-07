@@ -28,6 +28,8 @@ CRITICAL IMAGE RULES (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH):
   * Do NOT duplicate the same image query in multiple sections
   * No placeholder text like "Image loading..." anywhere
   * ALWAYS use the exact format: ![Destination — Section](image:Destination specific term)
+  * NEVER use text like "Tirol — Accommodation" - ALWAYS use proper image tokens
+  * Examples: ![Tirol — Getting Around](image:Tirol public transportation), ![Tirol — Accommodation](image:Tirol luxury hotel mountain view)
 
 ACCURACY RULES (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH):
 - All facts (prices, hours, closures, seasonal notes) must be current

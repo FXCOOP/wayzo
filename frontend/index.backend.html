@@ -44,7 +44,6 @@
             <option value="ko">🇰🇷 한국어</option>
           </select>
         </div>
-        <button id="loginBtn" class="btn btn-ghost">Sign In</button>
         <div id="userMenuBtn" class="user-menu-btn hidden">
           <img id="userMenuAvatar" src="/frontend/assets/default-avatar.svg" alt="User" />
         </div>
@@ -225,8 +224,9 @@
           </fieldset>
 
           <div class="field">
-            <span>Preferences</span>
-            <input id="prefs" type="text" name="prefs" placeholder="e.g., museums, beaches, hiking, kid-friendly" />
+            <span>Preferences & Requirements</span>
+            <textarea id="prefs" name="prefs" rows="3" placeholder="e.g., museums, beaches, hiking, kid-friendly, must-see places, vibe preferences, dining preferences, time constraints..."></textarea>
+            <div class="field-help">Help us create a more personalized and detailed plan.</div>
           </div>
 
           <div class="field">
@@ -242,23 +242,11 @@
           </div>
 
           <div class="field">
-            <span>Professional brief (optional)</span>
-            <textarea id="brief" name="brief" rows="4" placeholder="Detailed requirements: must-see places, vibe preferences, group details, dining preferences, time constraints, anchor events, rainy-day backups..."></textarea>
-            <div class="field-help">This helps us create a more personalized and detailed plan.</div>
-          </div>
-
-          <div class="field">
             <span>Upload existing plans (optional)</span>
             <div class="file-upload">
               <input id="planFiles" type="file" name="planFiles" multiple accept=".pdf,.doc,.docx,.txt" />
               <div class="field-help">Upload existing itineraries, hotel confirmations, or travel documents for analysis.</div>
             </div>
-          </div>
-
-          <div class="field">
-            <span>Referral code (optional)</span>
-            <input id="referralCode" type="text" name="referralCode" placeholder="Enter friend's referral code for $5 off" />
-            <div class="field-help">Get $5 off your plan when you use a friend's referral code!</div>
           </div>
 
           <div class="actions">
