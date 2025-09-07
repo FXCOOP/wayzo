@@ -1409,6 +1409,60 @@ app.get('/cookies', (_req, res) => {
   }
 });
 
+// Simple content pages
+const PAGES = {
+  '/about': 'about.html',
+  '/help': 'help.html',
+  '/status': 'status.html',
+  '/sitemap': 'sitemap.html',
+  '/accessibility': 'accessibility.html',
+  '/sustainability': 'sustainability.html',
+  '/features': 'features.html',
+  '/pricing': 'pricing.html',
+  '/enterprise': 'enterprise.html',
+  '/integrations': 'integrations.html',
+  '/destinations': 'destinations.html',
+  '/blog': 'blog.html',
+  '/community': 'community.html',
+  '/developers': 'developers.html',
+  '/press': 'press.html',
+  '/partners': 'partnerships.html',
+  '/investors': 'investors.html',
+};
+Object.entries(PAGES).forEach(([route, file]) => {
+  app.get(route, (_req, res) => {
+    const f = path.join(FRONTEND, file);
+    if (fs.existsSync(f)) return res.sendFile(f);
+    res.status(200).send(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/frontend/style.css"><title>Wayzo</title></head><body><main class="container"><section class="card"><div class="card-header"><h2>Coming soon</h2></div><p>This page will be available shortly.</p></section></main></body></html>`);
+  });
+});
+
+// API info page (GET /api) without conflicting with /api/* endpoints
+app.get('/api', (_req, res) => {
+  const apiInfo = path.join(FRONTEND, 'api.html');
+  if (fs.existsSync(apiInfo)) return res.sendFile(apiInfo);
+  res.status(200).send('<!doctype html><html><body><h2>API</h2><p>Public API docs coming soon.</p></body></html>');
+});
+
+// Contact page
+app.get('/contact', (_req, res) => {
+  const contactFile = path.join(FRONTEND, 'contact.html');
+  if (fs.existsSync(contactFile)) return res.sendFile(contactFile);
+  res.status(200).send('<!doctype html><html><body><h2>Contact</h2><p>Contact form coming soon.</p></body></html>');
+});
+app.post('/api/contact', (req, res) => {
+  try {
+    const id = uid();
+    const payload = req.body || {};
+    db.prepare('INSERT INTO events (id, event_type, user_id, data, created_at) VALUES (?, ?, ?, ?, ?)')
+      .run(id, 'contact', payload.email || 'anonymous', JSON.stringify(payload), new Date().toISOString());
+    res.json({ success: true, id });
+  } catch (e) {
+    console.error('Contact submission error:', e);
+    res.status(500).json({ success: false });
+  }
+});
+
 app.get('/contact', (_req, res) => {
   const contactFile = path.join(FRONTEND, 'contact.html');
   if (fs.existsSync(contactFile)) {
