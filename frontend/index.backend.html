@@ -377,24 +377,7 @@
           </ul>
         </div>
         
-        <div class="footer-section">
-          <h4>Referral Program</h4>
-          <p class="referral-info">Share Wayzo and earn $5 off your next plan!</p>
-          <div class="referral-display">
-            <div class="referral-code-container">
-              <span class="referral-label">Your Referral Code:</span>
-              <div class="referral-code-wrapper">
-                <span class="referral-code" id="userReferralCode">WAYZO123</span>
-                <button class="copy-btn" onclick="copyReferralCode()" title="Copy code">
-                  <i class="fas fa-copy"></i>
-                </button>
-              </div>
-            </div>
-            <button class="btn btn-primary btn-small" onclick="showReferralModal()">
-              <i class="fas fa-share-alt"></i> Share Now
-            </button>
-          </div>
-        </div>
+        <!-- Referral Program removed during free beta -->
       </div>
       
       <div class="footer-bottom">
@@ -494,84 +477,7 @@
     </div>
   </div>
 
-  <!-- Authentication Modal -->
-  <div id="authModal" class="auth-modal hidden">
-    <div class="auth-modal-content">
-      <div class="auth-header">
-        <h3>Welcome to Wayzo</h3>
-        <button class="btn-close" onclick="hideAuthModal()">×</button>
-      </div>
-      
-      <div class="auth-tabs">
-        <button class="auth-tab active" onclick="switchAuthTab('signin')">Sign In</button>
-        <button class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button>
-      </div>
-      
-      <div id="signinTab" class="auth-tab-content active">
-        <div class="social-auth">
-          <div id="gsiSignInContainer"></div>
-          <button class="btn btn-google" onclick="handleGoogleSignIn()">
-            <i class="fab fa-google"></i> Continue with Google
-          </button>
-          <button class="btn btn-facebook" onclick="handleFacebookSignIn()">
-            <i class="fab fa-facebook"></i> Continue with Facebook
-          </button>
-          <button class="btn btn-apple" onclick="handleAppleSignIn()">
-            <i class="fab fa-apple"></i> Continue with Apple
-          </button>
-        </div>
-        
-        <div class="auth-divider">
-          <span>or</span>
-        </div>
-        
-        <form class="auth-form" onsubmit="handleManualSignIn(event)">
-          <input type="email" placeholder="Email" required />
-          <input type="password" placeholder="Password" required />
-          <button type="submit" class="btn btn-primary">Sign In</button>
-        </form>
-        
-        <div class="auth-links">
-          <a href="#" onclick="showForgotPassword()">Forgot password?</a>
-        </div>
-      </div>
-      
-      <div id="signupTab" class="auth-tab-content">
-        <div class="social-auth">
-          <div id="gsiSignUpContainer"></div>
-          <button class="btn btn-google" onclick="handleGoogleSignUp()">
-            <i class="fab fa-google"></i> Continue with Google
-          </button>
-          <button class="btn btn-facebook" onclick="handleFacebookSignUp()">
-            <i class="fab fa-facebook"></i> Continue with Facebook
-          </button>
-          <button class="btn btn-apple" onclick="handleAppleSignUp()">
-            <i class="fab fa-apple"></i> Continue with Apple
-          </button>
-        </div>
-        
-        <div class="auth-divider">
-          <span>or</span>
-        </div>
-        
-        <form class="auth-form" onsubmit="handleManualSignUp(event)">
-          <input type="text" placeholder="Full Name" required />
-          <input type="email" placeholder="Email" required />
-          <input type="password" placeholder="Password" required />
-          <input type="password" placeholder="Confirm Password" required />
-          <label class="checkbox-group">
-            <input type="checkbox" required />
-            <span>I agree to the <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a></span>
-          </label>
-          <button type="submit" class="btn btn-primary">Create Account</button>
-        </form>
-      </div>
-      
-      <div class="auth-actions">
-        <button class="btn btn-outline" onclick="showQuickSignup()">Quick signup with Email</button>
-      </div>
-    </div>
-  </div>
+  <!-- Authentication removed (no signup required) -->
 
   <!-- User Menu -->
   <div id="userMenu" class="user-menu hidden">

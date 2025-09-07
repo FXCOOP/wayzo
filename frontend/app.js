@@ -291,10 +291,28 @@
   const setupDateModes = () => {
     const exactDates = $('#exactDates');
     const flexibleDates = $('#flexibleDates');
+    const startInput = $('#start');
+    const endInput = $('#end');
+    const monthInput = $('#travelMonth');
+    const durationSelect = $('#duration');
     const radios = $$('input[name="dateMode"]');
     const update = () => {
       const mode = (document.querySelector('input[name="dateMode"]:checked') || { value: 'exact' }).value;
-      if (mode === 'exact') { show(exactDates); hide(flexibleDates); } else { hide(exactDates); show(flexibleDates); }
+      if (mode === 'exact') {
+        show(exactDates);
+        hide(flexibleDates);
+        if (startInput) { startInput.required = true; startInput.disabled = false; }
+        if (endInput) { endInput.required = true; endInput.disabled = false; }
+        if (monthInput) { monthInput.required = false; monthInput.disabled = true; }
+        if (durationSelect) { durationSelect.required = false; durationSelect.disabled = true; }
+      } else {
+        hide(exactDates);
+        show(flexibleDates);
+        if (startInput) { startInput.required = false; startInput.disabled = true; }
+        if (endInput) { endInput.required = false; endInput.disabled = true; }
+        if (monthInput) { monthInput.required = true; monthInput.disabled = false; }
+        if (durationSelect) { durationSelect.required = true; durationSelect.disabled = false; }
+      }
     };
     radios.forEach(r => { r.addEventListener('change', update); r.addEventListener('click', update); });
     update();
@@ -422,15 +440,6 @@
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    // Check if user is authenticated for preview (require login again)
-    if (!isAuthenticated) {
-      showNotification('Please sign in to generate trip previews.', 'warning');
-      showAuthModal();
-      return;
-    }
-    
-    // Test users get enhanced preview with all features
-    const isTestUser = currentUser && currentUser.isTestUser;
     
     const data = readForm();
     console.log('Form data:', data);
@@ -463,31 +472,12 @@
       hide(loadingEl);
       show(previewEl);
       
-      // Show action buttons (test users get enhanced preview)
-      if (isTestUser) {
-        // Test users get enhanced preview with all features
-        show(pdfBtn);
-        show(icsBtn);
-        show($('#excelBtn'));
-        show($('#shareBtn'));
-        show(saveBtn);
-        
-        // Add test user notice for enhanced preview
-        const testUserNotice = document.createElement('div');
-        testUserNotice.className = 'test-user-notice';
-        testUserNotice.innerHTML = `
-          <h3>🧪 TEST USER - Enhanced Preview!</h3>
-          <p>You're signed in as a test user. This preview includes all premium features and download options.</p>
-        `;
-        previewEl.insertBefore(testUserNotice, previewEl.firstChild);
-        
-        showNotification('🧪 Test user: Enhanced preview with all features unlocked!', 'info');
-      } else {
-        // Regular users get basic preview
-        show(pdfBtn);
-        show(icsBtn);
-        show(saveBtn);
-      }
+      // Show action buttons for everyone (no signup/paywall)
+      show(pdfBtn);
+      show(icsBtn);
+      show($('#excelBtn'));
+      show($('#shareBtn'));
+      show(saveBtn);
       
       // Track successful preview generation
       trackEvent('preview_generated', { destination: data.destination, budget: data.budget });
@@ -507,12 +497,6 @@
 
   // Full plan generation
   fullPlanBtn.addEventListener('click', async () => {
-    // Check if user is authenticated for full plan (require login)
-    if (!isAuthenticated) {
-      showNotification('Please sign in to access the full trip plan.', 'warning');
-      showAuthModal();
-      return;
-    }
     
     const data = readForm();
     console.log('Generating full plan for:', data);
@@ -561,85 +545,17 @@
       const result = await response.json();
       console.log('Full plan result:', result);
       
-      // Check if user is a test user - bypass payment
-      console.log('Current user:', currentUser);
-      console.log('Is test user?', currentUser && currentUser.isTestUser);
-      console.log('User object details:', JSON.stringify(currentUser, null, 2));
-      
-      if (currentUser && currentUser.isTestUser) {
-        console.log('🧪 Test user detected - bypassing payment!');
-        // Test user - show full plan immediately without payment
-        previewEl.innerHTML = `
-          <div class="test-user-notice">
-            <h3>🧪 TEST USER MODE - Full Plan Unlocked!</h3>
-            <p>You're signed in as a test user. All features are unlocked for testing purposes.</p>
-          </div>
-          ${result.html}
-        `;
-        setAffiliates(data.destination);
-        
-        // Initialize image handling
-        initializeImageHandling();
-        
-        // Initialize widget rendering
-        initializeWidgets();
-        
-        // Show all download buttons for test user
-        show(pdfBtn);
-        show(icsBtn);
-        show($('#excelBtn'));
-        show($('#shareBtn'));
-        
-        // Hide paywall for test user
-        hide($('#purchaseActions'));
-        
-        // Save full plan for "Get Back" functionality
-        saveFullPlan(result.html, data.destination);
-        
-        showNotification('🧪 Test user: Full plan unlocked! All features available for testing.', 'info');
-      } else {
-        // Regular user - show paywall
-        previewEl.innerHTML = `
-          <div class="paywall-preview">
-            <h3>🔒 Unlock Your Complete ${data.destination} Trip Plan</h3>
-            <p>Your AI-generated itinerary is ready with:</p>
-            <div class="paywall-features">
-              <span>🗺️ Daily Plans</span>
-              <span>🏨 Best Hotels</span>
-              <span>🍽️ Top Restaurants</span>
-              <span>🎫 Activity Bookings</span>
-              <span>💰 Budget Breakdown</span>
-              <span>🖼️ Beautiful Images</span>
-            </div>
-            <p class="paywall-cta"><strong>Just $19 to unlock everything + best booking deals!</strong></p>
-          </div>
-        `;
-        setAffiliates(data.destination);
-        
-        // Initialize image handling for any preview images
-        initializeImageHandling();
-        
-        // Store full plan content for payment success
-        localStorage.setItem('wayzo_pending_full_plan', result.html);
-        localStorage.setItem('wayzo_pending_destination', data.destination);
-        
-        // Show paywall for conversion
-        show($('#purchaseActions'));
-        // Hide all download buttons until payment
-        hide(pdfBtn);
-        hide(icsBtn);
-        hide($('#excelBtn'));
-        hide($('#shareBtn'));
-        
-        // Initialize PayPal buttons for the paywall
-        setTimeout(() => {
-          if (typeof paypal !== 'undefined') {
-            initializePayPalButtons();
-          } else {
-            bindPaywall();
-          }
-        }, 500);
-      }
+      // Always show full plan (no paywall or signup)
+      previewEl.innerHTML = result.html;
+      setAffiliates(data.destination);
+      initializeImageHandling();
+      initializeWidgets();
+      show(pdfBtn);
+      show(icsBtn);
+      show($('#excelBtn'));
+      show($('#shareBtn'));
+      hide($('#purchaseActions'));
+      saveFullPlan(result.html, data.destination);
       
       // Hide loading
       hide(loadingEl);
@@ -888,7 +804,8 @@
   window.retryPayPal = () => {
     hide($('#paypal-fallback'));
     show($('#paypal-buttons'));
-    bindPaywall();
+    // Disable paywall entirely
+    hide($('#purchaseActions'));
   };
 
   // Initialize Google Auth from config
@@ -958,8 +875,8 @@
     // Detect user location
     detectUserLocation();
     
-    // Ensure login is visible
-    ensureLoginVisible();
+    // Ensure login not shown (no signup required)
+    if (loginBtn) loginBtn.classList.add('hidden');
     
     // Restore authentication state if user was previously signed in
     if (isAuthenticated && currentUser) {
@@ -1222,19 +1139,14 @@
     updateDisplay();
   }
 
-  // Authentication System
-  let isAuthenticated = localStorage.getItem('wayzo_authenticated') === 'true';
-  let currentUser = JSON.parse(localStorage.getItem('wayzo_user') || 'null');
+  // Authentication System (disabled: free, no signup)
+  let isAuthenticated = true;
+  let currentUser = { name: 'Guest', email: 'guest@wayzo.com', avatar: '/frontend/assets/default-avatar.svg' };
   
   console.log('🔍 User initialization:', { isAuthenticated, currentUser });
 
-  function showAuthModal() {
-    $('#authModal').classList.remove('hidden');
-  }
-
-  function hideAuthModal() {
-    $('#authModal').classList.add('hidden');
-  }
+  function showAuthModal() {}
+  function hideAuthModal() {}
 
   function switchAuthTab(tab) {
     // Hide all tabs
