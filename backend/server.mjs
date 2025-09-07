@@ -1119,7 +1119,12 @@ function injectWidgetsIntoSections(html, widgets) {
     // Only within the Daily Itineraries section boundaries
     modifiedHtml = modifiedHtml.replace(
       /(<h2>🎭 Daily Itineraries<\/h2>[\s\S]*?)(?=(<h2>🗺️|<h2>🏨|<h2>🎫|<h2>🍽️|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|$))/s,
-      (match) => match.replace(/(<h3>Day [^<]+<\/h3>)/g, `$1\n${gygAuto}`)
+      (match) => match
+        .replace(/(<h3>Day [^<]+<\/h3>\s*)(<ul>|)/g, `$1`)
+        .replace(/(<h3>Day [^<]+<\/h3>[\s\S]*?)(?=<h3>|$)/g, (seg)=>{
+          // Add per-day weather link at the end of each day block
+          return seg + `\n<p><a href=\"https://www.meteoblue.com/en/weather/14-days\" target=\"_blank\" rel=\"noopener\">Daily forecast</a></p>\n${gygAuto}`;
+        })
     );
   } catch (e) {
     console.warn('Failed to inject per-day GYG widgets:', e);
@@ -1347,7 +1352,7 @@ app.get('/plan/:id', (req, res) => {
     const saved = JSON.parse(row.payload || '{}');
     const html = saved.html || marked.parse(saved.markdown || '# Plan');
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    return res.send(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Wayzo Plan</title><link rel="stylesheet" href="/frontend/style.css"></head><body><main class="container"><section class="card"><div class="card-header"><h2>Your itinerary</h2></div><div id="preview" class="preview-content">${html}</div></section></main></body></html>`);
+    return res.send(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Wayzo Plan</title><link rel="stylesheet" href="/frontend/style.css"><script async defer src="https://widget.getyourguide.com/dist/pa.umd.production.min.js" data-gyg-partner-id="PUHVJ53"></script></head><body><main class="container"><section class="card"><div class="card-header"><h2>Your itinerary</h2></div><div id="preview" class="preview-content">${html}</div></section></main></body></html>`);
   } catch (e) {
     return res.status(500).send('<!doctype html><html><body><h2>Error rendering plan</h2></body></html>');
   }

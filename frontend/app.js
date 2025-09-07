@@ -396,8 +396,8 @@
     show(pdfBtn); show(icsBtn); show($('#excelBtn')); show($('#shareBtn')); show(saveBtn);
     hide($('#purchaseActions'));
     setAffiliates(destination);
-    // Inject live weather widget
-    try { injectWeatherWidget(destination); } catch(_){}
+    // Inject live weather widget at bottom of the report
+    try { injectWeatherWidget(destination, { position: 'bottom' }); } catch(_){}
   };
 
   // Save preview to localStorage
@@ -899,8 +899,9 @@
     // Initialize cookie consent
     initializeCookieConsent();
     
-    // Detect user location
+    // Detect user location and autofill "from"
     detectUserLocation();
+    try { autoFillFromByIP(); } catch(_){}
     
     // Ensure login not shown (no signup required)
     if (loginBtn) loginBtn.classList.add('hidden');
@@ -910,6 +911,16 @@
       updateUIForAuthenticatedUser();
     }
   };
+
+  async function autoFillFromByIP() {
+    const input = document.getElementById('from');
+    if (!input || (input && input.value)) return;
+    try {
+      const info = await fetch('https://ipapi.co/json/').then(r=>r.json());
+      const city = [info.city, info.country_name].filter(Boolean).join(', ');
+      if (city) input.value = city;
+    } catch (_) {}
+  }
 
   // Setup children ages functionality
   const setupChildrenAges = () => {
@@ -2313,13 +2324,17 @@
   };
 
   // Live Weather (Open-Meteo simple fetch by geocoding via Nominatim)
-  async function injectWeatherWidget(destination) {
+  async function injectWeatherWidget(destination, opts = {}) {
     const container = document.getElementById('preview');
     if (!container || !destination) return;
     const section = document.createElement('div');
     section.className = 'card';
     section.innerHTML = `<h3>🌤️ Live Weather</h3><div id="weatherBox">Loading weather…</div>`;
-    container.prepend(section);
+    if (opts.position === 'bottom') {
+      container.appendChild(section);
+    } else {
+      container.prepend(section);
+    }
     try {
       const geo = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(destination)}`).then(r=>r.json());
       const { lat, lon } = (geo && geo[0]) || {};
@@ -2329,9 +2344,10 @@
         date: t,
         tmax: wx.daily.temperature_2m_max[i],
         tmin: wx.daily.temperature_2m_min[i],
-        pop: wx.daily.precipitation_probability_max[i]
+        pop: wx.daily.precipitation_probability_max[i],
+        link: `https://www.meteoblue.com/en/weather/14-days?lat=${lat}&lon=${lon}`
       })).slice(0,7) : [];
-      const html = days.length ? `<table class="budget-table"><thead><tr><th>Date</th><th>Min</th><th>Max</th><th>Rain%</th></tr></thead><tbody>${days.map(d=>`<tr><td>${d.date}</td><td>${d.tmin}°</td><td>${d.tmax}°</td><td>${d.pop || 0}%</td></tr>`).join('')}</tbody></table>` : 'Weather unavailable.';
+      const html = days.length ? `<table class="budget-table"><thead><tr><th>Date</th><th>Min</th><th>Max</th><th>Rain%</th><th>Details</th></tr></thead><tbody>${days.map(d=>`<tr><td>${d.date}</td><td>${d.tmin}°</td><td>${d.tmax}°</td><td>${d.pop || 0}%</td><td><a href="${d.link}" target="_blank" rel="noopener">Forecast</a></td></tr>`).join('')}</tbody></table>` : 'Weather unavailable.';
       document.getElementById('weatherBox').innerHTML = html;
     } catch (e) {
       document.getElementById('weatherBox').textContent = 'Weather unavailable.';
