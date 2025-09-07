@@ -372,20 +372,27 @@ Pick a well-reviewed hotel or guesthouse in a central, walkable neighborhood. Pr
 
 ## 🎫 Must-See Attractions
 - Old Town walking route with main square and viewpoints (early morning is best)
+  - Why: Compact route to orient yourself and catch soft light over façades
   - Reviews: "Charming streets, easy to cover in 2–3 hours."
 - Signature landmark or cable car ride for panoramic alpine views
+  - Why: Fast access to panoramic viewpoints without a strenuous hike
   - Reviews: "Panoramas are unreal—go on a clear morning."
 - Local museum or palace for history and culture
+  - Why: Adds depth and context; great for variable weather days
   - Reviews: "Great curation; allow 60–90 minutes."
 - Scenic lake/river promenade for sunset
+  - Why: Relaxed golden-hour walk with photo-friendly vantage points
   - Reviews: "Golden hour photos and relaxed cafes along the water."
 
 ## 🍽️ Dining Guide
 - Traditional tavern: hearty local dishes (book dinner)  
+  - Why: Best value for local flavors in a cozy setting
   - Reviews: "Generous portions; try the seasonal soup."
 - Market or food hall: casual lunch with regional specialties  
+  - Why: Quick, affordable variety; great mid-day pit stop
   - Reviews: "Affordable and lively; perfect for a quick stop."
 - Cafe/bakery: coffee and pastries for a mid-morning break  
+  - Why: Classic coffee culture; ideal pause between sights
   - Reviews: "Apple strudel and melange are local favorites."
 ${dietary && dietary.length ? `- Dietary-friendly options: ${dietary.join(', ')}` : ''}
 
@@ -418,10 +425,7 @@ ${dietary && dietary.length ? `- Dietary-friendly options: ${dietary.join(', ')}
 - Seefeld in Tirol: Alpine village vibe, access to trails and lakes  
 - Kitzbühel: Boutique stays, dining, and easy mountain access  
 
-## 🧭 Why These Picks
-- Balance of iconic highlights with underrated local spots  
-- Clustered by neighborhoods to minimize backtracking  
-- Matches ${style.toLowerCase()} style and ${totalTravelers} traveler(s) pacing  
+ 
 
 ## 🍂 Season Insights (Autumn)
 - Best visibility for alpine views; cooler mornings and warm afternoons  

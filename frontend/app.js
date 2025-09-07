@@ -581,6 +581,19 @@
           linkBar.className = 'preview-cta';
           linkBar.innerHTML = `🔗 Shareable link: <a href="${result.permalink}" target="_blank" rel="noopener">${location.origin}${result.permalink}</a>`;
           previewEl.parentElement.insertBefore(linkBar, previewEl.nextSibling);
+          // Auto-open permalink in a new tab
+          window.open(result.permalink, '_blank');
+          // Add rich share buttons
+          const shareBar = document.createElement('div');
+          shareBar.className = 'actions';
+          const fullUrl = location.origin + result.permalink;
+          shareBar.innerHTML = `
+            <a class="btn btn-ghost" href="https://twitter.com/intent/tweet?url=${encodeURIComponent(fullUrl)}&text=${encodeURIComponent('My Wayzo trip plan')}">Share on X</a>
+            <a class="btn btn-ghost" href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(fullUrl)}">Share on Facebook</a>
+            <a class="btn btn-ghost" href="mailto:?subject=${encodeURIComponent('Wayzo Trip Plan')}&body=${encodeURIComponent(fullUrl)}">Share via Email</a>
+            <button class="btn btn-ghost" onclick="navigator.clipboard.writeText('${fullUrl}');">Copy Link</button>
+          `;
+          linkBar.after(shareBar);
         }
       } catch(_){}
       

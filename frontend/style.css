@@ -345,7 +345,8 @@ a:hover{ text-decoration: underline; }
   background:var(--card);
   border-radius:16px;
   box-shadow: 0 4px 20px rgba(2,8,23,.06);
-  padding:24px;
+  padding:20px;
+  margin-bottom:16px;
 }
 .card-header{
   margin-bottom:16px;
@@ -464,14 +465,7 @@ fieldset.field .chip {
 }
 
 /* ====== PREVIEW ====== */
-.preview-content{
-  min-height:200px;
-  padding:20px;
-  background:#f8fafc;
-  border-radius:12px;
-  border:2px dashed #e2e8f0;
-}
-.preview-content p{ margin:0; }
+.preview-content{ min-height:200px; padding:0; background:transparent; border:none; }
 
 /* Enhanced preview teaser */
 .preview-teaser{
@@ -1108,16 +1102,13 @@ fieldset.field .chip {
   font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   line-height:1.6;
 }
-.markdown h1, .markdown h2, .markdown h3{
-  margin:24px 0 16px 0;
-  font-weight:700;
-}
+.markdown h1, .markdown h2, .markdown h3{ margin:12px 0 8px 0; font-weight:700; }
 .markdown h1{ font-size:1.75rem; }
 .markdown h2{ font-size:1.5rem; }
 .markdown h3{ font-size:1.25rem; }
-.markdown p{ margin:16px 0; }
-.markdown ul, .markdown ol{ margin:16px 0; padding-left:24px; }
-.markdown li{ margin:8px 0; }
+.markdown p{ margin:8px 0; }
+.markdown ul, .markdown ol{ margin:8px 0; padding-left:20px; }
+.markdown li{ margin:6px 0; }
 .markdown a{ color:var(--brand); text-decoration:underline; }
 .markdown img{ max-width:100%; height:auto; border-radius:8px; margin:16px 0; }
 
