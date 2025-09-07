@@ -1055,6 +1055,17 @@ function injectWidgetsIntoSections(html, widgets) {
       `$1${hotelWidgetHTML}$2`
     );
   }
+
+  // Inject GetYourGuide automatic widget into Must-See Attractions section
+  try {
+    const gygAuto = '<div data-gyg-widget="auto" data-gyg-partner-id="PUHVJ53"></div>';
+    modifiedHtml = modifiedHtml.replace(
+      /(<h2>🎫 Must-See Attractions<\/h2>[\s\S]*?)(<h2>🍽️|<h2>🎭|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s,
+      `$1${gygAuto}$2`
+    );
+  } catch (e) {
+    console.warn('Failed to inject GYG widget:', e);
+  }
   
   // Find car rental widget
   const carWidget = widgets.find(w => w.category === 'transport');
