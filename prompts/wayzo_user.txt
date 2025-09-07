@@ -110,17 +110,17 @@ Create AMAZING, DETAILED trip plans that are:
 10. **Insider-Rich**: Include local secrets, hidden gems, and cultural insights
 
 REQUIRED SECTIONS (USE EXACT TITLES - ALL MUST BE INCLUDED):
-- 🎯 **Trip Overview** - Quick facts and highlights
-- 💰 **Budget Breakdown** - Detailed cost analysis per person with checkboxes for tracking
-- 🗺️ **Getting Around** - Transportation tips and maps with [Map](map:...)
-- 🏨 **Accommodation** - 3–5 hotel options (Budget/Mid/Luxury) with [Book](book:...), [Reviews](reviews:...)
-- 🎫 **Must-See Attractions** - 8–12 sights with [Tickets](tickets:...)
-- 🍽️ **Dining Guide** - 6–10 restaurants by neighborhood with [Reviews](reviews:...)
-- 🎭 **Daily Itineraries** - Hour-by-hour plans per day with [Tickets](tickets:...), [Map](map:...)
-- 🧳 **Don't Forget List** - 8–12 packing/reminders with checkboxes for tracking
-- 🛡️ **Travel Tips** - Local customs, safety, and practical advice
-- 📱 **Useful Apps** - Mobile apps for the destination
-- 🚨 **Emergency Info** - Important contacts and healthcare
+- 🎯 **Trip Overview** - Quick facts and highlights (MUST include specific highlights, travel dates, party details, budget)
+- 💰 **Budget Breakdown** - Detailed cost analysis per person with checkboxes for tracking (MUST include specific costs for flights, accommodation, food, activities, transportation, miscellaneous)
+- 🗺️ **Getting Around** - Transportation tips and maps with [Map](map:...) (MUST include specific transportation options, costs, and practical tips)
+- 🏨 **Accommodation** - 3–5 hotel options (Budget/Mid/Luxury) with [Book](book:...), [Reviews](reviews:...) (MUST include specific hotels with names, locations, features, prices)
+- 🎫 **Must-See Attractions** - 8–12 sights with [Tickets](tickets:...) (MUST include specific attractions with descriptions, entry fees, hours)
+- 🍽️ **Dining Guide** - 6–10 restaurants by neighborhood with [Reviews](reviews:...) (MUST include specific restaurants with cuisine types, locations, kid-friendly info)
+- 🎭 **Daily Itineraries** - Hour-by-hour plans per day with [Tickets](tickets:...), [Map](map:...) (MUST include specific times, activities, and locations for each day)
+- 🧳 **Don't Forget List** - 8–12 packing/reminders with checkboxes for tracking (MUST include specific items relevant to destination and family)
+- 🛡️ **Travel Tips** - Local customs, safety, and practical advice (MUST include specific local customs, safety tips, cultural insights)
+- 📱 **Useful Apps** - Mobile apps for the destination (MUST include specific apps with descriptions)
+- 🚨 **Emergency Info** - Important contacts and healthcare (MUST include specific emergency numbers, hospitals, contacts)
 
 IMAGE REQUIREMENTS (CRITICAL):
 - Use EXACT format: ![Destination — Section](image:Destination specific term)

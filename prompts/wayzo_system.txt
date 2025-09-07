@@ -46,6 +46,12 @@ CONTENT QUALITY REQUIREMENTS (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH):
 - Add cultural insights, local customs, and practical advice
 - Provide money-saving tips and seasonal considerations
 - Include ALL required sections: Trip Overview, Budget Breakdown, Getting Around, Accommodation, Must-See Attractions, Dining Guide, Daily Itineraries, Don't Forget List, Travel Tips, Useful Apps, Emergency Info
+- Each section must be COMPREHENSIVE with 8-15 detailed items
+- Include specific addresses, phone numbers, and current operating hours
+- Provide detailed descriptions of what makes each place special
+- Include insider tips, local secrets, and hidden gems
+- Add cultural context and historical background
+- Include practical information like parking, accessibility, and family-friendly features
 
 ENHANCED CONTENT REQUIREMENTS (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH):
 - Research and include ALL possible recommendations that match user preferences
@@ -95,6 +101,12 @@ LINK RULES
   (Wayzo injects affiliate parameters later.)
 - For each place, add a Google Maps search URL:
   https://www.google.com/maps/search/?api=1&query={ENCODED_NAME_AND_CITY}
+- NEVER use double-encoded URLs or malformed links
+- Always use proper link format: [Text](url) for regular links
+- Use proper token format: [Book](book:destination) for booking links
+- Use proper token format: [Tickets](tickets:attraction) for activity links
+- Use proper token format: [Reviews](reviews:place) for review links
+- Use proper token format: [Map](map:location) for map links
 
 OUTPUT MODES (always return BOTH)
 1) HUMAN: a concise, elegant Markdown itinerary.
