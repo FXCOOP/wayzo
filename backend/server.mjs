@@ -343,8 +343,8 @@ function enforceWayzoContracts(markdown, destination) {
     console.log(`Removed images from forbidden section: ${section}`);
   });
   
-  // 2. Ensure images are destination-scoped (but don't remove them here - let linkifyTokens handle it)
-  // This is handled by linkifyTokens function, so we don't need to process image tokens here
+  // 2. Don't process image tokens here - linkifyTokens handles this
+  // After linkifyTokens processes images, they become Unsplash URLs and should be preserved
   
   // 3. Remove any "Image Ideas" sections completely
   processed = processed.replace(/## 🖼️ Image Ideas[\s\S]*?(?=\n## |\n---|$)/g, '');
@@ -357,13 +357,7 @@ function enforceWayzoContracts(markdown, destination) {
   processed = processed.replace(/### Day \d+ — Open Exploration[\s\S]*?(?=\n### |\n## |$)/g, '');
   processed = processed.replace(/## Day \d+ — Open Exploration[\s\S]*?(?=\n## |$)/g, '');
   
-  // 5. Remove numbered image lists
-  processed = processed.replace(/\n\d+\.\s*!\[[^\]]*\]\([^)]*\)/g, '');
-  processed = processed.replace(/\n\d+\.\s*\*\*[^*]*\*\*:\s*!\[[^\]]*\]\([^)]*\)/g, '');
-  
-  // 6. Remove bullet point image lists
-  processed = processed.replace(/\n-\s*\*\*[^*]*\*\*:\s*!\[[^\]]*\]\([^)]*\)/g, '');
-  processed = processed.replace(/\n-\s*!\[[^\]]*\]\([^)]*\)/g, '');
+  // 5. Don't remove properly formatted images - they should be preserved after linkifyTokens processing
   
   console.log('WAYZO OUTPUT CONTRACT enforcement complete');
   return processed;

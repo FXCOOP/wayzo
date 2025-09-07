@@ -47,6 +47,8 @@ Before submitting your response, verify:
 □ Includes insider tips, cultural insights, and practical advice
 □ Transportation details and duration estimates provided
 □ Money-saving tips and seasonal considerations included
+□ ALL 11 MANDATORY SECTIONS are included
+□ Images use EXACT format: ![Destination — Section](image:Destination specific term)
 
 CONTENT REQUIREMENTS
 ===================
@@ -60,7 +62,7 @@ Create AMAZING, DETAILED trip plans that are:
 5. **Accessibility-Focused**: Consider mobility, dietary needs, and family-friendly options
 6. **Family-Oriented**: If children are included, prioritize family-friendly activities
 
-REQUIRED SECTIONS (USE EXACT TITLES):
+REQUIRED SECTIONS (USE EXACT TITLES - ALL MUST BE INCLUDED):
 - 🎯 **Trip Overview** - Quick facts and highlights
 - 💰 **Budget Breakdown** - Detailed cost analysis per person with checkboxes for tracking
 - 🗺️ **Getting Around** - Transportation tips and maps with [Map](map:...)
@@ -72,6 +74,16 @@ REQUIRED SECTIONS (USE EXACT TITLES):
 - 🛡️ **Travel Tips** - Local customs, safety, and practical advice
 - 📱 **Useful Apps** - Mobile apps for the destination
 - 🚨 **Emergency Info** - Important contacts and healthcare
+
+IMAGE REQUIREMENTS (CRITICAL):
+- Use EXACT format: ![Destination — Section](image:Destination specific term)
+- Examples:
+  * ![Santorini — Getting Around](image:Santorini public transportation map)
+  * ![Santorini — Accommodation](image:Santorini luxury hotel caldera view)
+  * ![Santorini — Must-See Attractions](image:Oia sunset Santorini)
+  * ![Santorini — Dining Guide](image:Santorini seafood taverna)
+  * ![Santorini — Daily Itineraries](image:Santorini itinerary map)
+  * ![Santorini — Budget Breakdown](image:Santorini budget planning)
 
 Deliver:
 
