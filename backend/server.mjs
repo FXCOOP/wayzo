@@ -308,9 +308,8 @@ function localPlanMarkdown(input) {
     for (let i = 0; i < nDays; i++) days.push({ iso: startISO, label: `Day ${i+1}` });
   }
 
-  // Sections
+  // Sections (no inline images; widgets will provide visuals)
   let md = `# ${prettyDest} — ${startISO} → ${endISO}
-![City hero](image:${prettyDest} skyline)
 **Travelers:** ${travelerLabel(adults, children)}  
 **Style:** ${style}${prefs ? ` · ${prefs}` : ''}  
 **Budget:** ${budget} ${currency} (${pppd}/day/person)  
@@ -367,25 +366,28 @@ function localPlanMarkdown(input) {
 
 ## 🗺️ Getting Around
 Public transport is reliable. Use regional trains and buses for intercity moves; walk or tram in the center. For remote areas, consider a 1–2 day car rental. Book airport transfers in advance for late arrivals.
-![${prettyDest} — Getting Around](image:${prettyDest} public transportation)
 
 ## 🏨 Accommodation
 Pick a well-reviewed hotel or guesthouse in a central, walkable neighborhood. Prioritize free cancellation and breakfast included if you want convenience. For families, look for family rooms or kitchenette.
-![${prettyDest} — Accommodation](image:${prettyDest} boutique hotel city center)
 
 ## 🎫 Must-See Attractions
 - Old Town walking route with main square and viewpoints (early morning is best)
+  - Reviews: "Charming streets, easy to cover in 2–3 hours."
 - Signature landmark or cable car ride for panoramic alpine views
+  - Reviews: "Panoramas are unreal—go on a clear morning."
 - Local museum or palace for history and culture
+  - Reviews: "Great curation; allow 60–90 minutes."
 - Scenic lake/river promenade for sunset
-![${prettyDest} — Must-See Attractions](image:${prettyDest} landmark panoramic view)
+  - Reviews: "Golden hour photos and relaxed cafes along the water."
 
 ## 🍽️ Dining Guide
 - Traditional tavern: hearty local dishes (book dinner)  
+  - Reviews: "Generous portions; try the seasonal soup."
 - Market or food hall: casual lunch with regional specialties  
+  - Reviews: "Affordable and lively; perfect for a quick stop."
 - Cafe/bakery: coffee and pastries for a mid-morning break  
+  - Reviews: "Apple strudel and melange are local favorites."
 ${dietary && dietary.length ? `- Dietary-friendly options: ${dietary.join(', ')}` : ''}
-![${prettyDest} — Dining Guide](image:${prettyDest} traditional food specialties)
 
 ## 🎭 Day-by-Day Plan`;
 
@@ -415,7 +417,6 @@ ${dietary && dietary.length ? `- Dietary-friendly options: ${dietary.join(', ')}
 - Innsbruck Altstadt: Walkable, near sights, great for first-time visitors  
 - Seefeld in Tirol: Alpine village vibe, access to trails and lakes  
 - Kitzbühel: Boutique stays, dining, and easy mountain access  
-![${prettyDest} — Accommodation](image:${prettyDest} old town boutique hotel)
 
 ## 🧭 Why These Picks
 - Balance of iconic highlights with underrated local spots  
@@ -426,7 +427,6 @@ ${dietary && dietary.length ? `- Dietary-friendly options: ${dietary.join(', ')}
 - Best visibility for alpine views; cooler mornings and warm afternoons  
 - Shoulder season pricing on hotels and tours  
 - Pack layers; lifts and some attractions may reduce hours after late September  
-![${prettyDest} — Autumn landscapes](image:${prettyDest} autumn mountains valley)
 
 ## ⭐ Traveler Reviews (Highlights)
 - "Cable car ride gave us unforgettable panoramas—worth every minute."  
@@ -1085,6 +1085,28 @@ function injectWidgetsIntoSections(html, widgets) {
     const gygAuto = '<div data-gyg-widget="auto" data-gyg-partner-id="PUHVJ53"></div>';
     modifiedHtml = modifiedHtml.replace(
       /(<h2>🎫 Must-See Attractions<\/h2>[\s\S]*?)(<h2>🍽️|<h2>🎭|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s,
+      `$1${gygAuto}$2`
+    );
+    // Also inject under other key sections to provide visuals
+    modifiedHtml = modifiedHtml.replace(
+      /(<h2>🗺️ Getting Around<\/h2>[\s\S]*?)(<h2>🏨|<h2>🍽️|<h2>🎭|<h2>🎫|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨)/s,
+      `$1${gygAuto}$2`
+    );
+    modifiedHtml = modifiedHtml.replace(
+      /(<h2>🏨 Accommodation<\/h2>[\s\S]*?)(<h2>🍽️|<h2>🎭|<h2>🎫|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨)/s,
+      `$1${gygAuto}$2`
+    );
+    modifiedHtml = modifiedHtml.replace(
+      /(<h2>🍽️ Dining Guide<\/h2>[\s\S]*?)(<h2>🎭|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨)/s,
+      `$1${gygAuto}$2`
+    );
+    // Optional sections if present
+    modifiedHtml = modifiedHtml.replace(
+      /(<h2>🏙️ Best Areas to Stay<\/h2>[\s\S]*?)(<h2>🧭|<h2>🍂|<h2>🛡️|<h2>📱|<h2>🚨|$)/s,
+      `$1${gygAuto}$2`
+    );
+    modifiedHtml = modifiedHtml.replace(
+      /(<h2>🍂 Season Insights \(Autumn\)<\/h2>[\s\S]*?)(<h2>⭐|<h2>🛡️|<h2>📱|<h2>🚨|$)/s,
       `$1${gygAuto}$2`
     );
   } catch (e) {
