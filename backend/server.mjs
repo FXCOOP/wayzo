@@ -742,7 +742,9 @@ app.post('/api/plan', async (req, res) => {
     widgets.forEach((widget, index) => {
       console.log(`Widget ${index + 1}: ${widget.name} (${widget.category})`);
     });
+    console.log('HTML before widget injection:', html.substring(0, 500));
     const finalHTML = injectWidgetsIntoSections(html, widgets);
+    console.log('HTML after widget injection:', finalHTML.substring(0, 500));
     
     // Remove any duplicate content that might have been generated
     const cleanedHTML = finalHTML.replace(
@@ -830,6 +832,8 @@ app.post('/api/plan.pdf', async (req, res) => {
 function injectWidgetsIntoSections(html, widgets) {
   let modifiedHtml = html;
   console.log(`Injecting ${widgets.length} widgets into HTML`);
+  console.log('Original HTML length:', html.length);
+  console.log('Looking for h2 tags in HTML:', html.includes('<h2>'));
   
   // First, completely remove ANY widget blocks anywhere inside the Don't Forget List section
   modifiedHtml = modifiedHtml.replace(
