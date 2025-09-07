@@ -738,6 +738,10 @@ app.post('/api/plan', async (req, res) => {
     
     // Add affiliate widgets integrated into appropriate sections
     const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
+    console.log(`Generated ${widgets.length} widgets for destination: ${payload.destination}`);
+    widgets.forEach((widget, index) => {
+      console.log(`Widget ${index + 1}: ${widget.name} (${widget.category})`);
+    });
     const finalHTML = injectWidgetsIntoSections(html, widgets);
     
     // Remove any duplicate content that might have been generated
@@ -785,6 +789,10 @@ app.post('/api/plan.pdf', async (req, res) => {
     const cleanedMarkdown = enforceWayzoContracts(processedMarkdown, payload.destination);
     const html = marked.parse(cleanedMarkdown);
     const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
+    console.log(`PDF: Generated ${widgets.length} widgets for destination: ${payload.destination}`);
+    widgets.forEach((widget, index) => {
+      console.log(`PDF Widget ${index + 1}: ${widget.name} (${widget.category})`);
+    });
     const finalHTML = injectWidgetsIntoSections(html, widgets);
 
     const fullHtml = `<!doctype html><html><head>
@@ -821,6 +829,7 @@ app.post('/api/plan.pdf', async (req, res) => {
 // Inject widgets into appropriate sections
 function injectWidgetsIntoSections(html, widgets) {
   let modifiedHtml = html;
+  console.log(`Injecting ${widgets.length} widgets into HTML`);
   
   // First, completely remove ANY widget blocks anywhere inside the Don't Forget List section
   modifiedHtml = modifiedHtml.replace(
@@ -838,6 +847,7 @@ function injectWidgetsIntoSections(html, widgets) {
   // Now inject widgets into their proper sections
   const flightWidget = widgets.find(w => w.category === 'flights');
   if (flightWidget) {
+    console.log('Injecting flight widget into Getting Around section');
     const flightWidgetHTML = `
       <div class="section-widget" data-category="flights">
         <div class="widget-header">
@@ -859,6 +869,7 @@ function injectWidgetsIntoSections(html, widgets) {
   // Find hotel widget
   const hotelWidget = widgets.find(w => w.category === 'accommodation');
   if (hotelWidget) {
+    console.log('Injecting hotel widget into Accommodation section');
     const hotelWidgetHTML = `
       <div class="section-widget" data-category="accommodation">
         <div class="widget-header">
@@ -880,6 +891,7 @@ function injectWidgetsIntoSections(html, widgets) {
   // Find car rental widget
   const carWidget = widgets.find(w => w.category === 'transport');
   if (carWidget) {
+    console.log('Injecting car rental widget into Getting Around section');
     const carWidgetHTML = `
       <div class="section-widget" data-category="transport">
         <div class="widget-header">
@@ -901,6 +913,7 @@ function injectWidgetsIntoSections(html, widgets) {
   // Find eSIM widget
   const esimWidget = widgets.find(w => w.category === 'connectivity');
   if (esimWidget) {
+    console.log('Injecting eSIM widget into Travel Tips section');
     const esimWidgetHTML = `
       <div class="section-widget" data-category="connectivity">
         <div class="widget-header">
