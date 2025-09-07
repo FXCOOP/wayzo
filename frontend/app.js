@@ -396,6 +396,8 @@
     show(pdfBtn); show(icsBtn); show($('#excelBtn')); show($('#shareBtn')); show(saveBtn);
     hide($('#purchaseActions'));
     setAffiliates(destination);
+    // Inject live weather widget
+    try { injectWeatherWidget(destination); } catch(_){}
   };
 
   // Save preview to localStorage
@@ -572,6 +574,15 @@
       previewEl.innerHTML = result.html;
       finalizeRender(data.destination);
       saveFullPlan(result.html, data.destination);
+      // Show permalink if available
+      try {
+        if (result.permalink) {
+          const linkBar = document.createElement('div');
+          linkBar.className = 'preview-cta';
+          linkBar.innerHTML = `🔗 Shareable link: <a href="${result.permalink}" target="_blank" rel="noopener">${location.origin}${result.permalink}</a>`;
+          previewEl.parentElement.insertBefore(linkBar, previewEl.nextSibling);
+        }
+      } catch(_){}
       
       // Hide loading
       hide(loadingEl);
@@ -2300,6 +2311,32 @@
       console.log('Widget rendering initialized');
     }, 500); // Increased delay to ensure DOM is fully ready
   };
+
+  // Live Weather (Open-Meteo simple fetch by geocoding via Nominatim)
+  async function injectWeatherWidget(destination) {
+    const container = document.getElementById('preview');
+    if (!container || !destination) return;
+    const section = document.createElement('div');
+    section.className = 'card';
+    section.innerHTML = `<h3>🌤️ Live Weather</h3><div id="weatherBox">Loading weather…</div>`;
+    container.prepend(section);
+    try {
+      const geo = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(destination)}`).then(r=>r.json());
+      const { lat, lon } = (geo && geo[0]) || {};
+      if (!lat || !lon) { document.getElementById('weatherBox').textContent = 'Weather unavailable.'; return; }
+      const wx = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto`).then(r=>r.json());
+      const days = (wx.daily && wx.daily.time) ? wx.daily.time.map((t, i)=>({
+        date: t,
+        tmax: wx.daily.temperature_2m_max[i],
+        tmin: wx.daily.temperature_2m_min[i],
+        pop: wx.daily.precipitation_probability_max[i]
+      })).slice(0,7) : [];
+      const html = days.length ? `<table class="budget-table"><thead><tr><th>Date</th><th>Min</th><th>Max</th><th>Rain%</th></tr></thead><tbody>${days.map(d=>`<tr><td>${d.date}</td><td>${d.tmin}°</td><td>${d.tmax}°</td><td>${d.pop || 0}%</td></tr>`).join('')}</tbody></table>` : 'Weather unavailable.';
+      document.getElementById('weatherBox').innerHTML = html;
+    } catch (e) {
+      document.getElementById('weatherBox').textContent = 'Weather unavailable.';
+    }
+  }
 
   // Helper function to process widget containers
   function processWidgetContainer(container, index) {

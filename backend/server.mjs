@@ -474,7 +474,7 @@ function enforceWayzoContracts(markdown, destination) {
     processed += '\n\n## 🏨 Accommodation\nFamily-friendly hotel recommendations in ' + destination + '.\n';
   }
   if (!processed.includes('## 🎫 Must-See Attractions')) {
-    processed += '\n\n## 🎫 Must-See Attractions\nTop attractions and activities for families in ' + destination + '.\n';
+    processed += '\n\n## 🎫 Must-See Attractions\nTop attractions and activities in ' + destination + ', with reasons and reviews.\n';
   }
   if (!processed.includes('## 🍽️ Dining Guide')) {
     processed += '\n\n## 🍽️ Dining Guide\nFamily-friendly restaurants and dining options in ' + destination + '.\n';
@@ -938,12 +938,12 @@ app.post('/api/plan', async (req, res) => {
     );
     
     const aff = affiliatesFor(payload.destination);
-    savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: payload, markdown }));
+    savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: payload, markdown, html: finalHTML }));
     
     // Track plan generation for analytics
     trackPlanGeneration(payload);
     
-    return res.json({ id, markdown, html: cleanedHTML, affiliates: aff, version: VERSION });
+    return res.json({ id, markdown, html: cleanedHTML, affiliates: aff, version: VERSION, permalink: `/plan/${id}` });
   } catch (e) {
     console.error('Plan generation error:', e);
     try {
@@ -957,7 +957,7 @@ app.post('/api/plan', async (req, res) => {
       const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
       const finalHTML = injectWidgetsIntoSections(html, widgets);
       const aff = affiliatesFor(payload.destination);
-      return res.status(200).json({ id, markdown, html: finalHTML, affiliates: aff, version: VERSION });
+      return res.status(200).json({ id, markdown, html: finalHTML, affiliates: aff, version: VERSION, permalink: `/plan/${id}` });
     } catch (fallbackErr) {
       console.error('Fallback also failed:', fallbackErr);
       return res.status(200).json({ id: uid(), markdown: '# Temporary issue', html: '<p>Temporary issue generating plan. Please try again.</p>', affiliates: {}, version: VERSION });
@@ -1334,6 +1334,23 @@ app.get('/api/plan/:id/pdf', (req, res) => {
 </body></html>`;
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(html);
+});
+
+// Public permalink to view a saved plan HTML
+app.get('/plan/:id', (req, res) => {
+  const { id } = req.params;
+  const row = getPlan.get(id);
+  if (!row) {
+    return res.status(404).send('<!doctype html><html><body><h2>Plan not found</h2><p>Please generate a plan again.</p></body></html>');
+  }
+  try {
+    const saved = JSON.parse(row.payload || '{}');
+    const html = saved.html || marked.parse(saved.markdown || '# Plan');
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.send(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Wayzo Plan</title><link rel="stylesheet" href="/frontend/style.css"></head><body><main class="container"><section class="card"><div class="card-header"><h2>Your itinerary</h2></div><div id="preview" class="preview-content">${html}</div></section></main></body></html>`);
+  } catch (e) {
+    return res.status(500).send('<!doctype html><html><body><h2>Error rendering plan</h2></body></html>');
+  }
 });
 app.get('/api/plan/:id/ics', (_req, res) => {
   const { id } = req.params;
