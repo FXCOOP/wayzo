@@ -323,10 +323,47 @@ function localPlanMarkdown(input) {
 - Tipping: 5–10% in restaurants (optional)
 ---
 ## Budget breakdown (rough)
-- Stay: ${b.stay.total} (~${b.stay.perDay}/day)
-- Food: ${b.food.total} (~${b.food.perDay}/person/day)
-- Activities: ${b.act.total} (~${b.act.perDay}/day)
-- Transit: ${b.transit.total} (~${b.transit.perDay}/day)
+<table class="budget-table">
+  <thead>
+    <tr>
+      <th>Item</th>
+      <th>Total</th>
+      <th>Per-day</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><label class="budget-checkbox"><input type="checkbox" onchange="window.toggleBudgetItem(this)"/> Stay</label></td>
+      <td>${b.stay.total}</td>
+      <td>${b.stay.perDay}</td>
+      <td><span class="status-pending">Pending</span></td>
+    </tr>
+    <tr>
+      <td><label class="budget-checkbox"><input type="checkbox" onchange="window.toggleBudgetItem(this)"/> Food</label></td>
+      <td>${b.food.total}</td>
+      <td>${b.food.perDay}/person</td>
+      <td><span class="status-pending">Pending</span></td>
+    </tr>
+    <tr>
+      <td><label class="budget-checkbox"><input type="checkbox" onchange="window.toggleBudgetItem(this)"/> Activities</label></td>
+      <td>${b.act.total}</td>
+      <td>${b.act.perDay}</td>
+      <td><span class="status-pending">Pending</span></td>
+    </tr>
+    <tr>
+      <td><label class="budget-checkbox"><input type="checkbox" onchange="window.toggleBudgetItem(this)"/> Transit</label></td>
+      <td>${b.transit.total}</td>
+      <td>${b.transit.perDay}</td>
+      <td><span class="status-pending">Pending</span></td>
+    </tr>
+    <tr>
+      <td>Total</td>
+      <td><strong>${normalizeBudget(budget, currency)}</strong></td>
+      <td colspan="2"><span class="status-total">${pppd}/day/person</span></td>
+    </tr>
+  </tbody>
+ </table>
 
 ## 🗺️ Getting Around
 Public transport is reliable. Use regional trains and buses for intercity moves; walk or tram in the center. For remote areas, consider a 1–2 day car rental. Book airport transfers in advance for late arrivals.
@@ -363,10 +400,14 @@ ${dietary && dietary.length ? `- Dietary-friendly options: ${dietary.join(', ')}
   md += `
 
 ## 🧳 Don't Forget List
-- Passport and travel insurance  
-- Comfortable walking shoes  
-- Weather-appropriate layers  
-- Power adapter (Type C/E)  
+<div class="dont-forget-list">
+  <div class="dont-forget-item"><input type="checkbox" onchange="window.toggleItem(this)"><label>Passport and travel insurance</label></div>
+  <div class="dont-forget-item"><input type="checkbox" onchange="window.toggleItem(this)"><label>Comfortable walking shoes</label></div>
+  <div class="dont-forget-item"><input type="checkbox" onchange="window.toggleItem(this)"><label>Weather-appropriate layers</label></div>
+  <div class="dont-forget-item"><input type="checkbox" onchange="window.toggleItem(this)"><label>Power adapter (Type C/E)</label></div>
+  <div class="dont-forget-item"><input type="checkbox" onchange="window.toggleItem(this)"><label>Local SIM/eSIM or roaming plan</label></div>
+  <div class="dont-forget-item"><input type="checkbox" onchange="window.toggleItem(this)"><label>Reusable water bottle</label></div>
+</div>
 
 ## 🛡️ Travel Tips
 - Check opening hours and seasonal closures  
