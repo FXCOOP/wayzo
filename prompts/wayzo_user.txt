@@ -23,6 +23,44 @@ Nap windows: {{nap_windows}}
 
 Weather notes: {{weather_notes}}
 
+COMPREHENSIVE RESEARCH REQUIREMENTS
+==================================
+
+Research and include ALL possible recommendations that match the user's preferences and family needs:
+
+1. **Family-Specific Research**: Based on children's ages ({{children_ages}}), find:
+   - Age-appropriate activities and attractions
+   - Family-friendly restaurants with kids' menus
+   - Accommodations with family amenities
+   - Educational and interactive experiences
+   - Safety considerations and child-friendly facilities
+
+2. **Preference Matching**: Based on user preferences ({{prefs}}), research:
+   - All attractions and activities that match these interests
+   - Hidden gems and local secrets related to preferences
+   - Seasonal considerations for preferred activities
+   - Local events and festivals during travel dates
+   - Specialized tours and experiences
+
+3. **Comprehensive Destination Research**: Include:
+   - Top-rated attractions with current reviews and ratings
+   - Local restaurants with authentic cuisine and family-friendly options
+   - Cultural sites and historical landmarks
+   - Outdoor activities and nature experiences
+   - Shopping areas and local markets
+   - Transportation options and costs
+   - Weather considerations and seasonal activities
+
+4. **Detailed Information for Each Recommendation**:
+   - Exact names, addresses, and contact information
+   - Current opening hours and seasonal schedules
+   - Entry fees, ticket prices, and booking requirements
+   - Duration estimates and time recommendations
+   - Accessibility information and family considerations
+   - Insider tips and best times to visit
+   - Transportation instructions and costs
+   - Cultural context and local customs
+
 FINAL CHECKLIST
 ===============
 
@@ -49,6 +87,11 @@ Before submitting your response, verify:
 □ Money-saving tips and seasonal considerations included
 □ ALL 11 MANDATORY SECTIONS are included
 □ Images use EXACT format: ![Destination — Section](image:Destination specific term)
+□ Family-specific recommendations based on children's ages
+□ All possible recommendations matching user preferences included
+□ Detailed descriptions and insider tips for each recommendation
+□ Current pricing and booking information provided
+□ Cultural context and local customs included
 
 CONTENT REQUIREMENTS
 ===================
@@ -61,6 +104,10 @@ Create AMAZING, DETAILED trip plans that are:
 4. **Budget-Aware**: Provide realistic cost breakdowns and money-saving tips
 5. **Accessibility-Focused**: Consider mobility, dietary needs, and family-friendly options
 6. **Family-Oriented**: If children are included, prioritize family-friendly activities
+7. **Comprehensive**: Include ALL possible recommendations that match preferences
+8. **Detailed**: Provide extensive information about each recommendation
+9. **Accurate**: Include current information and verify all details
+10. **Insider-Rich**: Include local secrets, hidden gems, and cultural insights
 
 REQUIRED SECTIONS (USE EXACT TITLES - ALL MUST BE INCLUDED):
 - 🎯 **Trip Overview** - Quick facts and highlights
@@ -78,12 +125,12 @@ REQUIRED SECTIONS (USE EXACT TITLES - ALL MUST BE INCLUDED):
 IMAGE REQUIREMENTS (CRITICAL):
 - Use EXACT format: ![Destination — Section](image:Destination specific term)
 - Examples:
-  * ![Santorini — Getting Around](image:Santorini public transportation map)
-  * ![Santorini — Accommodation](image:Santorini luxury hotel caldera view)
-  * ![Santorini — Must-See Attractions](image:Oia sunset Santorini)
-  * ![Santorini — Dining Guide](image:Santorini seafood taverna)
-  * ![Santorini — Daily Itineraries](image:Santorini itinerary map)
-  * ![Santorini — Budget Breakdown](image:Santorini budget planning)
+  * ![Tirol — Getting Around](image:Tirol public transportation map)
+  * ![Tirol — Accommodation](image:Tirol luxury hotel mountain view)
+  * ![Tirol — Must-See Attractions](image:Innsbruck Nordkette cable car)
+  * ![Tirol — Dining Guide](image:Tirol traditional restaurant)
+  * ![Tirol — Daily Itineraries](image:Tirol itinerary map)
+  * ![Tirol — Budget Breakdown](image:Tirol budget planning)
 
 Deliver:
 

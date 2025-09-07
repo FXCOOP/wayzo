@@ -53,7 +53,10 @@ function getWidgetsForDestination(destination, tripType, interests = []) {
   // Always include eSIM for international travel
   if (destination.toLowerCase().includes('santorini') || 
       destination.toLowerCase().includes('greece') ||
-      destination.toLowerCase().includes('international')) {
+      destination.toLowerCase().includes('tirol') ||
+      destination.toLowerCase().includes('austria') ||
+      destination.toLowerCase().includes('international') ||
+      destination.toLowerCase().includes('europe')) {
     widgets.push(AFFILIATE_WIDGETS.esim);
   }
   
@@ -65,8 +68,12 @@ function getWidgetsForDestination(destination, tripType, interests = []) {
   
   // Add car rentals for destinations where it makes sense
   if (destination.toLowerCase().includes('santorini') ||
+      destination.toLowerCase().includes('tirol') ||
+      destination.toLowerCase().includes('austria') ||
       destination.toLowerCase().includes('island') ||
-      destination.toLowerCase().includes('rural')) {
+      destination.toLowerCase().includes('rural') ||
+      destination.toLowerCase().includes('mountain') ||
+      destination.toLowerCase().includes('alpine')) {
     widgets.push(AFFILIATE_WIDGETS.car_rentals);
   }
   
