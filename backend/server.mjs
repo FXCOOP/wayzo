@@ -1444,6 +1444,15 @@ app.get('/api', (_req, res) => {
   res.status(200).send('<!doctype html><html><body><h2>API</h2><p>Public API docs coming soon.</p></body></html>');
 });
 
+// Health check for Render
+app.get('/healthz', (_req, res) => {
+  try {
+    res.status(200).json({ status: 'ok', version: VERSION, uptime_s: Math.round(process.uptime()) });
+  } catch (_) {
+    res.status(200).send('ok');
+  }
+});
+
 // Contact page
 app.get('/contact', (_req, res) => {
   const contactFile = path.join(FRONTEND, 'contact.html');
