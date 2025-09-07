@@ -278,45 +278,113 @@ const travelerLabel = (ad = 2, ch = 0) => ch > 0 ? `Family (${ad} adult${ad === 
 const perPersonPerDay = (t = 0, d = 1, tr = 1) => Math.round((Number(t) || 0) / Math.max(1, d) / Math.max(1, tr));
 /* Local Fallback Plan */
 function localPlanMarkdown(input) {
-  const { destination = 'Your destination', start = 'start', end = 'end', budget = 1500, adults = 2, children = 0, level = 'mid', prefs = '', diet = '', currency = 'USD $' } = input || {};
-  const nDays = daysBetween(start, end);
-  const b = computeBudget(budget, nDays, level, Math.max(1, adults + children));
-  const style = level === "luxury" ? "Luxury" : level === "budget" ? "Budget" : "Mid-range";
-  const pppd = perPersonPerDay(budget, nDays, Math.max(1, adults + children));
-  return linkifyTokens(`
-# ${destination} — ${start} → ${end}
-![City hero](image:${destination} skyline)
-**Travelers:** ${travelerLabel(adults, children)}
-**Style:** ${style}${prefs ? ` · ${prefs}` : ""}
-**Budget:** ${budget} ${currency} (${pppd}/day/person)
-**Season:** ${seasonFromDate(start)}
+  const { destination = 'Your destination', start = 'start', end = 'end', budget = 1500, adults = 2, children = 0, level = 'mid', prefs = '', dietary = [], currency = 'USD' } = input || {};
+  const nDays = Math.max(1, daysBetween(start, end));
+  const totalTravelers = Math.max(1, adults + children);
+  const style = level === 'luxury' ? 'Luxury' : level === 'budget' ? 'Budget' : 'Mid-range';
+  const prettyDest = String(destination || '').replace(/\b\w/g, c => c.toUpperCase());
+  const b = computeBudget(budget, nDays, level, totalTravelers);
+  const pppd = perPersonPerDay(budget, nDays, totalTravelers);
+
+  const fmt = (dateStr) => {
+    try { return new Date(dateStr).toISOString().slice(0,10); } catch { return dateStr; }
+  };
+  const startISO = fmt(start);
+  const endISO = fmt(end);
+
+  // Build dated daily itinerary items
+  const days = [];
+  try {
+    const s = new Date(startISO);
+    for (let i = 0; i < nDays; i++) {
+      const d = new Date(s.getTime());
+      d.setDate(s.getDate() + i);
+      const iso = d.toISOString().slice(0,10);
+      const label = i === 0 ? 'Arrival & Relaxation' : (i === 1 ? 'City Highlights' : (i === 2 ? 'Nature & Views' : `Exploration`));
+      days.push({ iso, label });
+    }
+  } catch (_) {
+    // Fallback without specific dates
+    for (let i = 0; i < nDays; i++) days.push({ iso: startISO, label: `Day ${i+1}` });
+  }
+
+  // Sections
+  let md = `# ${prettyDest} — ${startISO} → ${endISO}
+![City hero](image:${prettyDest} skyline)
+**Travelers:** ${travelerLabel(adults, children)}  
+**Style:** ${style}${prefs ? ` · ${prefs}` : ''}  
+**Budget:** ${budget} ${currency} (${pppd}/day/person)  
+**Season:** ${seasonFromDate(startISO)}
 ---
 ## Quick Facts
-- **Language:** English (tourism friendly)
-- **Currency:** ${currency}
-- **Voltage:** 230V, Type C/E plugs (adapter may be required)
-- **Tipping:** 5–10% in restaurants (optional)
+- Language: English (tourism friendly)
+- Currency: ${currency}
+- Voltage: 230V, Type C/E plugs (adapter may be required)
+- Tipping: 5–10% in restaurants (optional)
 ---
 ## Budget breakdown (rough)
-- Stay: **${b.stay.total}** (~${b.stay.perDay}/day)
-- Food: **${b.food.total}** (~${b.food.perDay}/person/day)
-- Activities: **${b.act.total}** (~${b.act.perDay}/day)
-- Transit: **${b.transit.total}** (~${b.transit.perDay}/day)
----
-## Day-by-Day Plan
-### Day 1 — Arrival & Relaxation (${start})
-- **Morning:** Arrive and check-in. [Map](map:${destination} airport to hotel) — shortest route to the hotel.
-- **Afternoon:** Pool or easy walk near hotel. [Reviews](reviews:${destination} family friendly cafe)
-- **Evening:** Dinner close-by. [Book](book:${destination} dinner)
-### Day 2 — Downtown Exploration
-- **Morning:** Top lookout. [Tickets](tickets:${destination} tower) — pre-book to skip lines.
-- **Afternoon:** Popular museum. [Tickets](tickets:${destination} museum)
-- **Evening:** Waterfront stroll. [Map](map:${destination} waterfront)
-### Day 3 — Nature & Parks
-- **Morning:** Park or island ferry. [Tickets](tickets:${destination} ferry)
-- **Afternoon:** Picnic + playgrounds. [Map](map:${destination} best picnic spots)
-- **Evening:** Family dinner. [Reviews](reviews:${destination} gluten free dinner)
-`.trim(), destination);
+- Stay: ${b.stay.total} (~${b.stay.perDay}/day)
+- Food: ${b.food.total} (~${b.food.perDay}/person/day)
+- Activities: ${b.act.total} (~${b.act.perDay}/day)
+- Transit: ${b.transit.total} (~${b.transit.perDay}/day)
+
+## 🗺️ Getting Around
+Public transport is reliable. Use regional trains and buses for intercity moves; walk or tram in the center. For remote areas, consider a 1–2 day car rental. Book airport transfers in advance for late arrivals.
+![${prettyDest} — Getting Around](image:${prettyDest} public transportation)
+
+## 🏨 Accommodation
+Pick a well-reviewed hotel or guesthouse in a central, walkable neighborhood. Prioritize free cancellation and breakfast included if you want convenience. For families, look for family rooms or kitchenette.
+![${prettyDest} — Accommodation](image:${prettyDest} boutique hotel city center)
+
+## 🎫 Must-See Attractions
+- Old Town walking route with main square and viewpoints (early morning is best)
+- Signature landmark or cable car ride for panoramic alpine views
+- Local museum or palace for history and culture
+- Scenic lake/river promenade for sunset
+![${prettyDest} — Must-See Attractions](image:${prettyDest} landmark panoramic view)
+
+## 🍽️ Dining Guide
+- Traditional tavern: hearty local dishes (book dinner)  
+- Market or food hall: casual lunch with regional specialties  
+- Cafe/bakery: coffee and pastries for a mid-morning break  
+${dietary && dietary.length ? `- Dietary-friendly options: ${dietary.join(', ')}` : ''}
+![${prettyDest} — Dining Guide](image:${prettyDest} traditional food specialties)
+
+## 🎭 Day-by-Day Plan`;
+
+  days.forEach((d, idx) => {
+    md += `
+### Day ${idx + 1} — ${d.label} (${d.iso})
+- Morning: Signature sight or viewpoint. [Tickets](tickets:${prettyDest} top attraction)
+- Afternoon: Neighborhood walk + museum. [Map](map:${prettyDest} walking route)
+- Evening: Dinner reservation. [Reviews](reviews:${prettyDest} best dinner)`;
+  });
+
+  md += `
+
+## 🧳 Don't Forget List
+- Passport and travel insurance  
+- Comfortable walking shoes  
+- Weather-appropriate layers  
+- Power adapter (Type C/E)  
+
+## 🛡️ Travel Tips
+- Check opening hours and seasonal closures  
+- Pre-book popular attractions in peak season  
+- Validate tickets on regional transport  
+
+## 📱 Useful Apps
+- Transit/ÖBB for trains and buses  
+- Google Maps offline area  
+- Translation and currency apps  
+
+## 🚨 Emergency Info
+- Emergency: 112  
+- Local medical center and pharmacy locations  
+`;
+
+  // Linkify image and booking tokens and return
+  return linkifyTokens(md.trim(), prettyDest);
 }
 function containsDaySections(md = "") {
   try { return /(^|\n)\s*#{0,6}\s*Day\s+\d+/i.test(md); } catch { return false; }
