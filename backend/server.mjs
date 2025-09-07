@@ -343,14 +343,8 @@ function enforceWayzoContracts(markdown, destination) {
     console.log(`Removed images from forbidden section: ${section}`);
   });
   
-  // 2. Ensure images are destination-scoped
-  processed = processed.replace(/!\[([^\]]*)\]\(image:([^)]+)\)/gi, (match, alt, query) => {
-    if (!query.includes(destination)) {
-      console.log(`Removing invalid image (not destination-scoped): ${match}`);
-      return '';
-    }
-    return match;
-  });
+  // 2. Ensure images are destination-scoped (but don't remove them here - let linkifyTokens handle it)
+  // This is handled by linkifyTokens function, so we don't need to process image tokens here
   
   // 3. Remove any "Image Ideas" sections completely
   processed = processed.replace(/## 🖼️ Image Ideas[\s\S]*?(?=\n## |\n---|$)/g, '');

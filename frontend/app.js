@@ -692,15 +692,16 @@
         console.log('Image failed to load:', e.target.src);
         // Replace failed image with a placeholder
         e.target.style.display = 'none';
-        const placeholder = document.createElement('div');
-        placeholder.className = 'image-placeholder';
-        placeholder.innerHTML = `
-          <div class="placeholder-content">
-            <span class="placeholder-icon">🖼️</span>
-            <p>Image loading...</p>
-          </div>
-        `;
-        e.target.parentNode.insertBefore(placeholder, e.target);
+        // Disabled - backend handles image processing
+        // const placeholder = document.createElement('div');
+        // placeholder.className = 'image-placeholder';
+        // placeholder.innerHTML = `
+        //   <div class="placeholder-content">
+        //     <span class="placeholder-icon">🖼️</span>
+        //     <p>Image loading...</p>
+        //   </div>
+        // `;
+        // e.target.parentNode.insertBefore(placeholder, e.target);
       }
     }, true);
   };
@@ -2092,11 +2093,11 @@
           console.log('✅ Image loaded successfully:', img.src);
         };
         
-        // Handle load error
+        // Handle load error - simplified to avoid interference
         img.onerror = () => {
           console.log('❌ Image failed to load:', img.src);
-          handleImageError(img);
-          img.style.opacity = '1';
+          // Don't call handleImageError to avoid interference with backend processing
+          img.style.opacity = '0.5';
           img.style.display = 'block';
           img.style.filter = 'blur(0px)';
         };
@@ -2124,28 +2125,10 @@
           }
         }
         
-        // AGGRESSIVE IMAGE FIXING - Handle all possible cases
+        // Let backend handle image processing - don't interfere
+        // All image processing is now handled by the backend
         
-        // Case 1: Images with 'image:' token
-        if (img.src.includes('image:')) {
-          const query = img.src.replace('image:', '').trim();
-          let unsplashQuery = prefixWithDestination(getSantoriniQuery(query));
-          const unsplashUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(unsplashQuery)}`;
-          console.log('🔄 Converting image token:', query, '→', unsplashQuery, '→', unsplashUrl);
-          img.src = unsplashUrl;
-          return;
-        }
-        
-        // Case 2: Images with "Image loading..." text nearby
-        const parentText = img.parentElement?.textContent || '';
-        if (parentText.includes('Image loading') && !img.src.includes('unsplash') && !img.src.includes('picsum')) {
-          let contextQuery = prefixWithDestination(getContextQuery(parentText));
-          const unsplashUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(contextQuery)}`;
-          console.log('🔄 Converting context-based image:', contextQuery, '→', unsplashUrl);
-          img.src = unsplashUrl;
-          return;
-        }
-        
+        /* DISABLED - Backend handles all image processing
         // Case 3: Images with empty or invalid src
         if (!img.src || img.src === '' || img.src.includes('data:') || img.src.includes('blob:')) {
           const altText = img.alt || '';
@@ -2226,6 +2209,7 @@
           img.src = fallbackUrl;
           return;
         }
+        */
       });
       
       console.log('Image handling initialized for', allImages.length, 'images');
