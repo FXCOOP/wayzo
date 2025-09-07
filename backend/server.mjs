@@ -189,7 +189,6 @@ app.get('/dashboard/billing', (req, res) => {
   res.sendFile(dashboardPath);
 });
 
-app.get('/healthz', (_req, res) => res.json({ ok: true, version: VERSION }));
 app.get('/version', (_req, res) => res.json({ version: VERSION }));
 
 // Public runtime config for frontend (safe values only)
@@ -1446,11 +1445,7 @@ app.get('/api', (_req, res) => {
 
 // Health check for Render
 app.get('/healthz', (_req, res) => {
-  try {
-    res.status(200).json({ status: 'ok', version: VERSION, uptime_s: Math.round(process.uptime()) });
-  } catch (_) {
-    res.status(200).send('ok');
-  }
+  res.status(200).send('ok');
 });
 
 // Contact page
