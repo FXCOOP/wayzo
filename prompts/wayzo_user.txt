@@ -1,5 +1,8 @@
 Please plan a trip with the following inputs:
 
+DATA
+====
+
 Destination: {{destination}}
 Dates: {{start}} to {{end}} (flexible: {{flex_enabled}}, ±{{flex_days}} days)
 Party: {{adults}} adults{{children_suffix}}
@@ -19,6 +22,27 @@ Accessibility: {{access_needs}}
 Nap windows: {{nap_windows}}
 
 Weather notes: {{weather_notes}}
+
+FINAL CHECKLIST
+===============
+
+Before submitting your response, verify:
+
+□ All images follow WAYZO OUTPUT CONTRACT rules exactly
+□ No images in forbidden sections (Trip Overview, Don't Forget List, Travel Tips, Useful Apps, Emergency Info)
+□ Exactly 1 image per allowed section, placed at the END of that section
+□ All image queries include the destination name and are highly specific
+□ No duplicate image queries across sections
+□ All facts (prices, hours, closures) are current and accurate
+□ If information cannot be verified, place is not recommended
+□ All prices include disclaimers about verification
+□ Daily itineraries are specific and actionable (no generic "Open Exploration")
+□ All restaurant names, attraction names, and times are specific
+□ Budget breakdown is realistic with current market prices
+□ All booking links use proper SEARCH URL format
+□ Google Maps search URLs included for every place
+□ Content follows required section order and formatting
+□ Both human-readable Markdown and machine-readable JSON provided
 
 Deliver:
 

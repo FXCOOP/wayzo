@@ -234,41 +234,6 @@ app.post('/api/upload', multerUpload.array('files', 10), (req, res) => {
   }));
   res.json({ files });
 });
-/* Post-process markdown to remove images from forbidden sections */
-function removeImagesFromForbiddenSections(markdown, destination) {
-  console.log('Post-processing markdown to remove forbidden images...');
-  
-  // Define forbidden sections
-  const forbiddenSections = [
-    'Trip Overview',
-    'Don\'t Forget List', 
-    'Travel Tips',
-    'Useful Apps',
-    'Emergency Info'
-  ];
-  
-  let processed = markdown;
-  
-  // Remove images from forbidden sections
-  forbiddenSections.forEach(section => {
-    const sectionRegex = new RegExp(`(##\\s*${section}[^#]*?)(![^\\n]*\\n)`, 'gis');
-    processed = processed.replace(sectionRegex, '$1');
-    console.log(`Removed images from section: ${section}`);
-  });
-  
-  // Remove any remaining images that don't follow the correct format
-  processed = processed.replace(/!\[([^\]]*)\]\(image:([^)]+)\)/gi, (match, alt, query) => {
-    // Only allow images with destination prefix
-    if (!query.includes(destination)) {
-      console.log(`Removing invalid image: ${match}`);
-      return '';
-    }
-    return match;
-  });
-  
-  console.log('Post-processing complete');
-  return processed;
-}
 
 /* DB */
 const db = new Database(path.join(ROOT, 'tripmaster.sqlite'));
@@ -356,6 +321,60 @@ function localPlanMarkdown(input) {
 function containsDaySections(md = "") {
   try { return /(^|\n)\s*#{0,6}\s*Day\s+\d+/i.test(md); } catch { return false; }
 }
+
+/* WAYZO CONTRACT ENFORCEMENT */
+function enforceWayzoContracts(markdown, destination) {
+  console.log('Enforcing WAYZO OUTPUT CONTRACT rules...');
+  
+  let processed = markdown;
+  
+  // 1. Remove images from forbidden sections
+  const forbiddenSections = [
+    'Trip Overview',
+    'Don\'t Forget List', 
+    'Travel Tips',
+    'Useful Apps',
+    'Emergency Info'
+  ];
+  
+  forbiddenSections.forEach(section => {
+    const sectionRegex = new RegExp(`(##\\s*${section}[^#]*?)(![^\\n]*\\n)`, 'gis');
+    processed = processed.replace(sectionRegex, '$1');
+    console.log(`Removed images from forbidden section: ${section}`);
+  });
+  
+  // 2. Ensure images are destination-scoped
+  processed = processed.replace(/!\[([^\]]*)\]\(image:([^)]+)\)/gi, (match, alt, query) => {
+    if (!query.includes(destination)) {
+      console.log(`Removing invalid image (not destination-scoped): ${match}`);
+      return '';
+    }
+    return match;
+  });
+  
+  // 3. Remove any "Image Ideas" sections completely
+  processed = processed.replace(/## 🖼️ Image Ideas[\s\S]*?(?=\n## |\n---|$)/g, '');
+  processed = processed.replace(/## Image Ideas[\s\S]*?(?=\n## |\n---|$)/g, '');
+  processed = processed.replace(/🖼️ Image Ideas[\s\S]*?(?=\n## |\n---|$)/g, '');
+  processed = processed.replace(/Enhance your travel experience[\s\S]*?(?=\n## |\n---|$)/g, '');
+  processed = processed.replace(/Here are some beautiful images[\s\S]*?(?=\n## |\n---|$)/g, '');
+  
+  // 4. Remove generic "Open Exploration" days
+  processed = processed.replace(/### Day \d+ — Open Exploration[\s\S]*?(?=\n### |\n## |$)/g, '');
+  processed = processed.replace(/## Day \d+ — Open Exploration[\s\S]*?(?=\n## |$)/g, '');
+  
+  // 5. Remove numbered image lists
+  processed = processed.replace(/\n\d+\.\s*!\[[^\]]*\]\([^)]*\)/g, '');
+  processed = processed.replace(/\n\d+\.\s*\*\*[^*]*\*\*:\s*!\[[^\]]*\]\([^)]*\)/g, '');
+  
+  // 6. Remove bullet point image lists
+  processed = processed.replace(/\n-\s*\*\*[^*]*\*\*:\s*!\[[^\]]*\]\([^)]*\)/g, '');
+  processed = processed.replace(/\n-\s*!\[[^\]]*\]\([^)]*\)/g, '');
+  
+  console.log('WAYZO OUTPUT CONTRACT enforcement complete');
+  return processed;
+}
+
 /* OpenAI (optional) */
 const client = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 async function generatePlanWithAI(payload) {
@@ -381,414 +400,56 @@ async function generatePlanWithAI(payload) {
   const nDays = dateMode === 'flexible' && flexibleDates ? flexibleDates.duration : daysBetween(start, end);
   const totalTravelers = adults + children;
   
-  // Enhanced system prompt for amazing reports
-  const sys = `You are Wayzo, an expert AI travel planner.
+  // Load system prompt from file
+  let sys = '';
+  try {
+    sys = fs.readFileSync(path.join(__dirname, '..', 'prompts', 'wayzo_system.txt'), 'utf8');
+  } catch (e) {
+    console.error('Failed to load system prompt:', e);
+    sys = 'You are Wayzo, an expert AI travel planner.';
+  }
 
-**PRIMARY OBJECTIVE:** Produce a highly accurate, up-to-date, bookable trip plan for ${destination} that strictly follows formatting and image rules. All facts (prices, hours, closures, seasonal notes) must be current.
+  // Load user prompt template from file
+  let userTemplate = '';
+  try {
+    userTemplate = fs.readFileSync(path.join(__dirname, '..', 'prompts', 'wayzo_user.txt'), 'utf8');
+  } catch (e) {
+    console.error('Failed to load user prompt:', e);
+    userTemplate = 'Please plan a trip with the following inputs:\n\nDestination: {{destination}}';
+  }
+  
+  // Replace template variables in user prompt
+  const user = userTemplate
+    .replace(/\{\{destination\}\}/g, destination)
+    .replace(/\{\{start\}\}/g, start)
+    .replace(/\{\{end\}\}/g, end)
+    .replace(/\{\{flex_enabled\}\}/g, dateMode === 'flexible' ? 'true' : 'false')
+    .replace(/\{\{flex_days\}\}/g, flexibleDates?.flexibility || '3')
+    .replace(/\{\{adults\}\}/g, adults)
+    .replace(/\{\{children_suffix\}\}/g, children > 0 ? `, ${children} children${childrenAges.length > 0 ? ` (ages: ${childrenAges.join(', ')})` : ''}` : '')
+    .replace(/\{\{style\}\}/g, level)
+    .replace(/\{\{pace\}\}/g, 'moderate')
+    .replace(/\{\{daily_start\}\}/g, '9:00 AM')
+    .replace(/\{\{currency\}\}/g, currency)
+    .replace(/\{\{budget_total\}\}/g, budget)
+    .replace(/\{\{includes_flights\}\}/g, 'true')
+    .replace(/\{\{dietary\}\}/g, dietary.join(', ') || 'None')
+    .replace(/\{\{lodging_type\}\}/g, 'hotel')
+    .replace(/\{\{purpose_list\}\}/g, 'leisure')
+    .replace(/\{\{prefs\}\}/g, prefs || 'None')
+    .replace(/\{\{max_drive_minutes\}\}/g, '120')
+    .replace(/\{\{access_needs\}\}/g, 'None')
+    .replace(/\{\{nap_windows\}\}/g, children > 0 ? '2:00 PM - 4:00 PM' : 'None')
+    .replace(/\{\{weather_notes\}\}/g, 'Check current forecast');
 
-**CRITICAL - IMAGE GENERATION RULES (SYSTEM BREAKING):**
-You are FORBIDDEN from adding images to any section except these 6:
-1. Getting Around - 1 image at end
-2. Accommodation - 1 image at end  
-3. Must-See Attractions - 1 image at end
-4. Daily Itineraries - 1 image at end (NOT per day)
-5. Restaurants - 1 image at end
-6. Budget Breakdown - 1 image at end
-
-**FORBIDDEN SECTIONS - NO IMAGES ALLOWED:**
-- Trip Overview
-- Don't Forget List
-- Travel Tips
-- Useful Apps
-- Emergency Info
-
-**IMAGE FORMAT - EXACT COPY ONLY (MUST BE DESTINATION-SCOPED):**
-![${destination} — Section](image:${destination} specific landmark|activity|food term)
-
-**ADDITIONAL IMAGE CONSTRAINTS:**
-- Exactly 1 image per allowed section, placed at the END of that section
-- The image query MUST include "${destination}" and be highly specific (avoid generic terms)
-- Do NOT duplicate the same image query in multiple sections; ensure variety and relevance
-- No placeholder text like "Image loading..." anywhere
-
-**VIOLATION = SYSTEM CRASH - FOLLOW EXACTLY**
-
-**SECTION ORDER (MANDATORY):**
-- 🎯 Trip Overview
-- 💰 Budget Breakdown
-- 🗺️ Getting Around
-- 🏨 Accommodation
-- 🎫 Must-See Attractions   ← must come BEFORE Daily Itineraries
-- 🍽️ Dining Guide
-- 🎭 Daily Itineraries
-- 🧳 Don't Forget List
-- 🛡️ Travel Tips
-- 📱 Useful Apps
-- 🚨 Emergency Info
-
-Create AMAZING, DETAILED trip plans that are:
-
-1. **Highly Personalized**: Use the professional brief and all user preferences to tailor everything
-2. **Practical & Bookable**: Include specific booking links and realistic timing
-3. **Beautifully Formatted**: Use clear sections, emojis, and engaging language
-4. **Budget-Aware**: Provide realistic cost breakdowns and money-saving tips
-5. **Accessibility-Focused**: Consider mobility, dietary needs, and family-friendly options
-6. **Family-Oriented**: If children are included, prioritize family-friendly activities and accommodations
-
-**REQUIRED SECTIONS (USE EXACT TITLES):**
-- 🎯 **Trip Overview** - Quick facts and highlights
-- 💰 **Budget Breakdown** - Detailed cost analysis per person with checkboxes for tracking
-- 🗺️ **Getting Around** - Transportation tips and maps with [Map](map:...)
-- 🏨 **Accommodation** - 3–5 hotel options (Budget/Mid/Luxury) with [Book](book:...), [Reviews](reviews:...)
-- 🎫 **Must-See Attractions** - 8–12 sights with [Tickets](tickets:...)
-- 🍽️ **Dining Guide** - 6–10 restaurants by neighborhood with [Reviews](reviews:...)
-- 🎭 **Daily Itineraries** - Hour-by-hour plans per day with [Tickets](tickets:...), [Map](map:...)
-- 🧳 **Don't Forget List** - 8–12 packing/reminders with checkboxes for tracking
-- 🛡️ **Travel Tips** - Local customs, safety, and practical advice
-- 📱 **Useful Apps** - Mobile apps for the destination
-- 🚨 **Emergency Info** - Important contacts and healthcare
-
-**BUDGET BREAKDOWN FORMAT:**
-Create a detailed budget table like this with proper HTML:
-<table class="budget-table">
-<thead>
-<tr>
-<th>Item</th>
-<th>Cost per Person (€)</th>
-<th>Total (€)</th>
-<th>Status</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>
-<div class="budget-checkbox">
-<input type="checkbox" id="budget1" onchange="toggleBudgetItem(this)">
-<label for="budget1">Flights (From to Destination)</label>
-</div>
-</td>
-<td>150</td>
-<td>300</td>
-<td><span class="status-pending">Pending</span></td>
-</tr>
-<tr>
-<td>
-<div class="budget-checkbox">
-<input type="checkbox" id="budget2" onchange="toggleBudgetItem(this)">
-<label for="budget2">Accommodation (X nights)</label>
-</div>
-</td>
-<td>150</td>
-<td>300</td>
-<td><span class="status-pending">Pending</span></td>
-</tr>
-<tr>
-<td>
-<div class="budget-checkbox">
-<input type="checkbox" id="budget3" onchange="toggleBudgetItem(this)">
-<label for="budget3">Food (3 meals/day)</label>
-</div>
-</td>
-<td>25</td>
-<td>150</td>
-<td><span class="status-pending">Pending</span></td>
-</tr>
-<tr>
-<td>
-<div class="budget-checkbox">
-<input type="checkbox" id="budget4" onchange="toggleBudgetItem(this)">
-<label for="budget4">Transportation (local travel)</label>
-</div>
-</td>
-<td>30</td>
-<td>60</td>
-<td><span class="status-pending">Pending</span></td>
-</tr>
-<tr>
-<td>
-<div class="budget-checkbox">
-<input type="checkbox" id="budget5" onchange="toggleBudgetItem(this)">
-<label for="budget5">Activities & Attractions</label>
-</div>
-</td>
-<td>80</td>
-<td>160</td>
-<td><span class="status-pending">Pending</span></td>
-</tr>
-<tr>
-<td>
-<div class="budget-checkbox">
-<input type="checkbox" id="budget6" onchange="toggleBudgetItem(this)">
-<label for="budget6">Miscellaneous</label>
-</div>
-</td>
-<td>10</td>
-<td>20</td>
-<td><span class="status-pending">Pending</span></td>
-</tr>
-<tr>
-<td><strong>Total</strong></td>
-<td><strong>€250</strong></td>
-<td><strong>€500</strong></td>
-<td><span class="status-total">Total</span></td>
-</tr>
-</tbody>
-</table>
-
-**DON'T FORGET LIST FORMAT:**
-Create a checklist like this with proper HTML checkboxes that automatically mark as completed when clicked:
-<div class="dont-forget-list">
-<h3>🧳 Don't Forget List</h3>
-<div class="dont-forget-item">
-<input type="checkbox" id="item1" onchange="toggleItem(this)" class="budget-checkbox">
-<label for="item1">Passport and travel documents</label>
-</div>
-<div class="dont-forget-item">
-<input type="checkbox" id="item2" onchange="toggleItem(this)" class="budget-checkbox">
-<label for="item2">Travel insurance</label>
-</div>
-<div class="dont-forget-item">
-<input type="checkbox" id="item3" onchange="toggleItem(this)" class="budget-checkbox">
-<label for="item3">Local currency (Euros)</label>
-</div>
-<div class="dont-forget-item">
-<input type="checkbox" id="item4" onchange="toggleItem(this)" class="budget-checkbox">
-<label for="item4">Power adapter</label>
-</div>
-<div class="dont-forget-item">
-<input type="checkbox" id="item5" onchange="toggleItem(this)" class="budget-checkbox">
-<label for="item5">Comfortable walking shoes</label>
-</div>
-<div class="dont-forget-item">
-<input type="checkbox" id="item6" onchange="toggleItem(this)" class="budget-checkbox">
-<label for="item6">Camera/phone charger</label>
-</div>
-<div class="dont-forget-item">
-<input type="checkbox" id="item7" onchange="toggleItem(this)" class="budget-checkbox">
-<label for="item7">Medications and first aid</label>
-</div>
-<div class="dont-forget-item">
-<input type="checkbox" id="item8" onchange="toggleItem(this)" class="budget-checkbox">
-<label for="item8">Weather-appropriate clothing</label>
-</div>
-<div class="dont-forget-item">
-<input type="checkbox" id="item9" onchange="toggleItem(this)" class="budget-checkbox">
-<label for="item9">eSIM or local SIM card</label>
-</div>
-<div class="dont-forget-item">
-<input type="checkbox" id="item10" onchange="toggleItem(this)" class="budget-checkbox">
-<label for="item10">Local guide contact info</label>
-</div>
-<div class="dont-forget-item">
-<input type="checkbox" id="item11" onchange="toggleItem(this)" class="budget-checkbox">
-<label for="item11">Restaurant reservations</label>
-</div>
-<div class="dont-forget-item">
-<input type="checkbox" id="item12" onchange="toggleItem(this)" class="budget-checkbox">
-<label for="item12">Swimwear for beaches</label>
-</div>
-</div>
-
-**FORMATTING:**
-- Use emojis and clear headings
-- Include [Map](map:query) for location links
-- Add [Book](book:query) for booking links
-- Use [Reviews](reviews:query) for recommendations
-- Include [Tickets](tickets:query) for attractions
-
-**STYLE:** Make it exciting, informative, and ready to use!`;
-
-  // Trip context appended to system prompt (single prompt approach)
-  const user = `Create an AMAZING trip plan for:
-
-**Destination:** ${destination}
-${from ? `**Traveling From:** ${from}` : ''}
-**Dates:** ${dateMode === 'flexible' ? `Flexible dates in ${flexibleDates?.month || 'selected month'} for ${nDays} days` : `${start} to ${end} (${nDays} days)`}
-**Travelers:** ${adults} adults${children ? `, ${children} children${childrenAges.length > 0 ? ` (ages: ${childrenAges.join(', ')})` : ''}` : ''}
-**Style:** ${level}${prefs ? ` + ${prefs}` : ""}
-**Budget:** ${budget} ${currency} (${Math.round(budget / nDays / totalTravelers)} per person per day)
-${dietary && dietary.length > 0 ? `**Dietary Needs:** ${dietary.join(', ')}` : ''}
-
-${professional_brief ? `**PROFESSIONAL BRIEF:** ${professional_brief}
-
-Use this detailed brief to create a highly personalized plan that addresses every specific requirement mentioned.` : ''}
-
-${uploadedFiles && uploadedFiles.length > 0 ? `**UPLOADED DOCUMENTS:** User has uploaded ${uploadedFiles.length} document(s) including: ${uploadedFiles.map(f => f.name).join(', ')}. Consider any existing plans or preferences mentioned in these documents when creating the itinerary.` : ''}
-
-**SPECIAL CONSIDERATIONS:**
-${children > 0 ? `- **Family-Friendly Focus**: Include activities suitable for children, family-friendly accommodations, and consider child safety and entertainment
-- **Age-Appropriate Activities**: Tailor activities to the children's ages (${childrenAges.join(', ')})
-- **Flexible Timing**: Include breaks and downtime suitable for families` : ''}
-
-${dietary && dietary.length > 0 ? `- **Dietary Accommodations**: Ensure all restaurant recommendations accommodate ${dietary.join(', ')} dietary needs
-- **Local Cuisine**: Highlight local dishes that fit dietary restrictions` : ''}
-
-${dateMode === 'flexible' ? `- **Flexible Date Optimization**: Suggest the best times within the month for optimal weather, prices, and fewer crowds
-- **Price Optimization**: Focus on getting the best value during the flexible period` : ''}
-
-**CRITICAL - REAL-TIME ACCURACY REQUIREMENTS:**
-You MUST research current information for ${destination} to ensure accuracy:
-
-**MANDATORY RESEARCH REQUIREMENTS:**
-- **Current Prices**: Check real-time prices for hotels, restaurants, attractions
-- **Opening Hours**: Verify current opening hours for all recommended places
-- **Weather**: Check current weather forecasts for ${start} to ${end}
-- **Closures**: Verify no recommended places are permanently closed
-- **Seasonal Changes**: Account for seasonal pricing and availability
-- **Local Events**: Check for any events that might affect availability
-
-**ACCURACY ENFORCEMENT:**
-- If you cannot verify current information, DO NOT recommend that place
-- Use phrases like "Check current prices" or "Verify opening hours"
-- Include disclaimers about price changes
-- Prioritize places with verified current information
-
-**DAILY ITINERARIES REQUIREMENT:**
-- Create detailed, specific daily itineraries for each day
-- DO NOT use generic "Open Exploration" or placeholder text
-- Each day should have specific activities, times, and locations
-- Include specific restaurant names and attraction names
-- Make it feel like a real, actionable itinerary
-- Include relevant booking widgets within each day's activities
-- **CRITICAL**: Each day must be unique and specific to the destination
-- **CRITICAL**: Include exact times, restaurant names, and attraction names
-- **CRITICAL**: Make it family-friendly if children are included
-- **CRITICAL**: Consider the starting location (${from || 'user\'s location'}) for flight/transport recommendations
-
-**WIDGET INTEGRATION REQUIREMENTS:**
-- DO NOT place widgets in the "Don't Forget List" section
-- Place relevant booking widgets within their appropriate sections
-- Add flight search widget in the "Getting Around" section
-- Add hotel booking widget in the "Accommodation" section
-- Add car rental widget in the "Transportation" section
-- Add eSIM widget in the "Useful Apps" or "Don't Forget List" section
-- Add airport transfers widget in the "Getting Around" section
-- Make widgets feel natural and integrated into the content flow
-
-**REPORT QUALITY REQUIREMENTS - ENHANCED:**
-
-**CONTENT RICHNESS REQUIREMENTS:**
-1. **Daily Itineraries**: Each day must include:
-   - **Exact times** (e.g., "9:00 AM", "2:30 PM", "7:45 PM")
-   - **Specific restaurant names** with exact locations (e.g., "Taverna Katina in Amoudi Bay")
-   - **Detailed activity descriptions** (e.g., "Visit the Archaeological Site of Akrotiri - ancient Minoan ruins preserved in volcanic ash")
-   - **Transportation details** (e.g., "Take the local bus from Fira to Oia, 20-minute ride")
-   - **Duration estimates** (e.g., "Wine tasting tour at Santo Wines - 2 hours")
-   - **Booking information** (e.g., "Book sunset dinner at Kastro Oia Restaurant - reservations recommended")
-   - **Alternative activities** for bad weather
-   - **Insider tips** (e.g., "Best time to visit Oia Castle for sunset is 1 hour before sunset")
-
-2. **Restaurant Section**: Include 8-10 specific restaurants with:
-   - **Exact names and locations** (e.g., "Pelekanos Restaurant - Fira, near the cable car")
-   - **Price ranges** (€€ for mid-range, €€€ for upscale)
-   - **Specialties** (e.g., "Famous for fresh seafood and traditional Greek dishes")
-   - **Best dishes to try** (e.g., "Must-try: Grilled octopus, Santorini salad, local wine")
-   - **Reservation tips** (e.g., "Book 2-3 days in advance for sunset views")
-   - **Opening hours** if relevant
-   - **Atmosphere description** (e.g., "Cozy family-run taverna with stunning caldera views")
-
-3. **Accommodation Section**: Include 6-8 specific hotels with:
-   - **Exact names and locations** (e.g., "Villa Manos - Karterados, 10-minute walk to Fira")
-   - **Price ranges per night** (e.g., "€80-120/night")
-   - **Room types** (e.g., "Double rooms with private balconies")
-   - **Amenities** (e.g., "Free Wi-Fi, pool, breakfast included, airport shuttle")
-   - **Distance to attractions** (e.g., "5-minute walk to Fira center, 15-minute drive to Oia")
-   - **Booking links and reviews**
-   - **Seasonal pricing notes**
-
-4. **Must-See Attractions**: Include 10-12 specific attractions with:
-   - **Exact names and locations**
-   - **Entry fees** (e.g., "€12 for adults, €6 for children")
-   - **Opening hours** (e.g., "8:00 AM - 8:00 PM daily")
-   - **Best times to visit** (e.g., "Early morning to avoid crowds")
-   - **Booking requirements** (e.g., "Advance booking required for wine tours")
-   - **Duration estimates** (e.g., "Allow 2-3 hours for Akrotiri")
-   - **Insider tips** (e.g., "Visit Red Beach early morning for best photos")
-
-5. **Budget Breakdown**: Make it realistic with:
-   - **Current market prices** in Euros (€)
-   - **Per-person and total costs**
-   - **Seasonal variations** (e.g., "Summer prices 20% higher")
-   - **Currency conversion notes**
-   - **Money-saving tips** (e.g., "Book flights 3 months in advance for best rates")
-   - **Optional expenses** (e.g., "Wine tours €25-50 per person")
-
-6. **Travel Tips**: Include:
-   - **Local customs and etiquette** (e.g., "Greet with 'Kalimera' in morning, 'Kalispera' in evening")
-   - **Safety tips** specific to Santorini (e.g., "Be careful on cliff edges, especially at sunset")
-   - **Best times for activities** (e.g., "Visit Oia early morning or late afternoon to avoid crowds")
-   - **Money-saving tips** (e.g., "Eat lunch at local tavernas, dinner at upscale restaurants")
-   - **Cultural insights** (e.g., "Greeks value family time - many shops close 2-4 PM")
-   - **Weather considerations** (e.g., "September is perfect - warm but not crowded")
-
-**IMAGE REQUIREMENTS - CONTEXTUAL PLACEMENT:**
-
-**CRITICAL**: Place images contextually within the content, NOT at the end. Each image should appear right after its relevant content section:
-
-1. **After Trip Overview**: ![Santorini sunset Oia Greece](https://source.unsplash.com/400x300/?Santorini,sunset,Oia,Greece)
-2. **After Dining Guide**: ![Greek food Santorini taverna](https://source.unsplash.com/400x300/?Greek,food,Santorini,taverna)
-3. **After Getting Around**: ![Santorini white buildings caldera](https://source.unsplash.com/400x300/?Santorini,white,buildings,caldera)
-4. **After Day 1 itinerary**: ![Santorini architecture blue domes](https://source.unsplash.com/400x300/?Santorini,architecture,blue,domes)
-5. **After Day 2 itinerary**: ![Santorini beaches volcanic](https://source.unsplash.com/400x300/?Santorini,beaches,volcanic)
-6. **After Day 3 itinerary**: ![Santorini culture local people](https://source.unsplash.com/400x300/?Santorini,culture,local,people)
-7. **After Must-See Attractions**: ![Santorini activities wine tasting](https://source.unsplash.com/400x300/?Santorini,activities,wine,tasting)
-8. **After Travel Tips**: ![Santorini experience travel](https://source.unsplash.com/400x300/?Santorini,experience,travel)
-
-**PLACEMENT RULES:**
-- Place each image IMMEDIATELY after its relevant content section
-- DO NOT put all images at the end
-- DO NOT create a separate "Image Ideas" section
-- DO NOT create any section called "Image Ideas" or "🖼️ Image Ideas"
-- Each image should enhance the content it follows
-- Use proper HTML img tags with alt text
-- Images should be 400x300 pixels
-- Make images feel natural and integrated into the content flow
-- **CRITICAL**: If you see "Image Ideas" or "🖼️ Image Ideas" in your response, REMOVE IT COMPLETELY
-- **ABSOLUTELY FORBIDDEN**: Do not create any section called "Image Ideas", "🖼️ Image Ideas", or "Enhance your travel experience with these beautiful images"
-- **ABSOLUTELY FORBIDDEN**: Do not create any numbered list of images at the end of the report
-- **ABSOLUTELY FORBIDDEN**: Do not include any text that says "Enhance your travel experience with these beautiful images"
-- **MANDATORY**: Place images contextually within the content, NOT at the end
-- **MANDATORY**: Each image must appear immediately after its relevant content section
-- **CRITICAL**: NEVER create a section called "Image Ideas" or "🖼️ Image Ideas"
-- **CRITICAL**: NEVER create any numbered list of images
-- **CRITICAL**: NEVER include any text about "Image Ideas" or "Enhance your travel experience"
-- **CRITICAL**: NEVER create any section that lists images at the end
-- **CRITICAL**: NEVER create any section that contains the words "Image Ideas"
-- **CRITICAL**: NEVER create any section that contains the emoji "🖼️"
-- **CRITICAL**: NEVER create any section that contains the text "Enhance your travel experience"
-- **CRITICAL**: NEVER create any section that contains the text "Here are some beautiful images"
-- **CRITICAL**: NEVER create any section that contains the text "Here are some images to inspire"
-- **CRITICAL**: NEVER create any section that contains the text "Here are some images"
-- **CRITICAL**: NEVER create any section that contains the text "Image Ideas"
-- **CRITICAL**: NEVER create any section that contains the text "🖼️ Image Ideas"
-
-**WIDGET INTEGRATION REQUIREMENTS:**
-DO NOT place widgets in the "Don't Forget List" section
-Widgets should be placed in appropriate sections:
-- Flight widget → "Getting Around" section
-- Hotel widget → "Accommodation" section
-- Car rental widget → "Getting Around" section
-- eSIM widget → "Useful Apps" section
-
-**CRITICAL - NO GENERIC CONTENT:**
-- **ABSOLUTELY NO "Open Exploration" days** - this is forbidden
-- **ABSOLUTELY NO generic placeholders** like "Neighborhood warm-up walk" or "Local market + museum"
-- **ABSOLUTELY NO duplicate content** - each day must be unique
-- **ABSOLUTELY NO generic activities** - every activity must be specific to Santorini
-- **ABSOLUTELY NO "warm-up walk" or "get oriented"** - these are generic placeholders
-- **ABSOLUTELY NO "Local market + museum"** - these are generic placeholders
-- **ABSOLUTELY NO "Sunset viewpoint & dinner"** - these are generic placeholders
-
-**MANDATORY - SPECIFIC CONTENT ONLY:**
-- **Every day must have specific Santorini activities** like "Visit Akrotiri Archaeological Site", "Wine tasting at Santo Wines", "Explore Oia Castle"
-- **Every restaurant must be named** like "Taverna Katina", "Pelekanos Restaurant", "Kastro Oia Restaurant"
-- **Every attraction must be specific** like "Red Beach", "Fira Caldera", "Museum of Prehistoric Thera"
-- **Every time must be exact** like "9:00 AM", "2:30 PM", "7:45 PM"
-- **Every location must be specific** like "Amoudi Bay", "Fira", "Oia", "Karterados"
-
-Create a RICH, DETAILED, and PROFESSIONAL report that travelers can actually use to plan their trip. Make it comprehensive, actionable, and visually appealing.
-
-Create the most amazing, detailed, and useful trip plan possible!`;
+  // Add additional context if needed
+  if (professional_brief) {
+    user += `\n\n**PROFESSIONAL BRIEF:** ${professional_brief}\n\nUse this detailed brief to create a highly personalized plan that addresses every specific requirement mentioned.`;
+  }
+  
+  if (uploadedFiles && uploadedFiles.length > 0) {
+    user += `\n\n**UPLOADED DOCUMENTS:** User has uploaded ${uploadedFiles.length} document(s) including: ${uploadedFiles.map(f => f.name).join(', ')}. Consider any existing plans or preferences mentioned in these documents when creating the itinerary.`;
+  }
 
   if (!client) {
     console.warn('OpenAI API key not set, using local fallback');
@@ -802,7 +463,10 @@ Create the most amazing, detailed, and useful trip plan possible!`;
       model: process.env.OPENAI_MODEL || "gpt-4o-mini",
       temperature: 0.7, // Slightly higher for more creative responses
       max_tokens: 4000, // Allow longer, more detailed responses
-      messages: [{ role: "user", content: `${sys}\n\n${user}` }],
+      messages: [
+        { role: "system", content: sys },
+        { role: "user", content: user }
+      ],
     });
     
     let md = resp.choices?.[0]?.message?.content?.trim() || "";
@@ -1078,8 +742,8 @@ app.post('/api/plan', async (req, res) => {
     // Process image tokens and other links in the MARKDOWN first
     const processedMarkdown = linkifyTokens(markdown, payload.destination);
     
-    // Post-process to remove images from forbidden sections
-    const cleanedMarkdown = removeImagesFromForbiddenSections(processedMarkdown, payload.destination);
+    // Enforce WAYZO OUTPUT CONTRACT rules
+    const cleanedMarkdown = enforceWayzoContracts(processedMarkdown, payload.destination);
     
     // Then convert to HTML
     const html = marked.parse(cleanedMarkdown);
@@ -1130,7 +794,7 @@ app.post('/api/plan.pdf', async (req, res) => {
 
     // Process image tokens and other links first
     const processedMarkdown = linkifyTokens(markdown, payload.destination);
-    const cleanedMarkdown = removeImagesFromForbiddenSections(processedMarkdown, payload.destination);
+    const cleanedMarkdown = enforceWayzoContracts(processedMarkdown, payload.destination);
     const html = marked.parse(cleanedMarkdown);
     const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
     const finalHTML = injectWidgetsIntoSections(html, widgets);
