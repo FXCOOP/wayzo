@@ -756,7 +756,16 @@ app.post('/api/plan', async (req, res) => {
     payload.currency = payload.currency || 'USD';
     payload.budget = normalizeBudget(payload.budget, payload.currency);
     const id = uid();
-    const markdown = await generatePlanWithAI(payload);
+
+    // Hard timeout to avoid Render 502s (falls back to local plan)
+    const withTimeout = (promise, ms) => Promise.race([
+      promise,
+      new Promise((resolve) => setTimeout(async () => {
+        try { resolve(await localPlanMarkdown(payload)); } catch { resolve('# Trip plan temporarily unavailable'); }
+      }, ms))
+    ]);
+
+    const markdown = await withTimeout(generatePlanWithAI(payload), 22000);
     
     // Process image tokens and other links in the MARKDOWN first
     const processedMarkdown = linkifyTokens(markdown, payload.destination);
@@ -801,10 +810,25 @@ app.post('/api/plan', async (req, res) => {
     // Track plan generation for analytics
     trackPlanGeneration(payload);
     
-    res.json({ id, markdown, html: cleanedHTML, affiliates: aff, version: VERSION });
+    return res.json({ id, markdown, html: cleanedHTML, affiliates: aff, version: VERSION });
   } catch (e) {
     console.error('Plan generation error:', e);
-    res.status(500).json({ error: 'Failed to generate plan. Check server logs.', version: VERSION });
+    try {
+      // Last-resort graceful fallback to prevent 502
+      const payload = req.body || {};
+      const id = uid();
+      const markdown = await localPlanMarkdown(payload);
+      const processedMarkdown = linkifyTokens(markdown, payload.destination);
+      const cleanedMarkdown = enforceWayzoContracts(processedMarkdown, payload.destination);
+      const html = marked.parse(cleanedMarkdown);
+      const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
+      const finalHTML = injectWidgetsIntoSections(html, widgets);
+      const aff = affiliatesFor(payload.destination);
+      return res.status(200).json({ id, markdown, html: finalHTML, affiliates: aff, version: VERSION });
+    } catch (fallbackErr) {
+      console.error('Fallback also failed:', fallbackErr);
+      return res.status(200).json({ id: uid(), markdown: '# Temporary issue', html: '<p>Temporary issue generating plan. Please try again.</p>', affiliates: {}, version: VERSION });
+    }
   }
 });
 

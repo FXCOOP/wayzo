@@ -1337,16 +1337,18 @@
   }
 
   function signOut() {
-    isAuthenticated = false;
-    currentUser = null;
-    // Clear authentication from localStorage
-    localStorage.removeItem('wayzo_authenticated');
-    localStorage.removeItem('wayzo_user');
-    if (loginBtn) loginBtn.classList.remove('hidden');
-    if ($('#userMenuBtn')) $('#userMenuBtn').classList.add('hidden');
-    if ($('#userMenu')) $('#userMenu').classList.add('hidden');
-    if ($('#personalCabinet')) $('#personalCabinet').classList.add('hidden');
-    showNotification('Signed out successfully', 'info');
+    try {
+      // Guest mode; just hide menus and reset UI
+      isAuthenticated = true;
+      currentUser = { name: 'Guest', email: 'guest@wayzo.com', avatar: '/frontend/assets/default-avatar.svg' };
+      localStorage.removeItem('wayzo_authenticated');
+      localStorage.removeItem('wayzo_user');
+      if (loginBtn) loginBtn.classList.add('hidden');
+      if ($('#userMenuBtn')) $('#userMenuBtn').classList.add('hidden');
+      if ($('#userMenu')) $('#userMenu').classList.add('hidden');
+      if ($('#personalCabinet')) $('#personalCabinet').classList.add('hidden');
+      showNotification('Signed out. You can use Wayzo without an account.', 'info');
+    } catch (_) {}
   }
 
   // Personal Cabinet Management
