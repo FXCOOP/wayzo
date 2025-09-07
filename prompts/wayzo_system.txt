@@ -121,7 +121,19 @@ OUTPUT FORMATTING REQUIREMENTS (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH):
 - Use EXACT Markdown section headers: ## 📱 Useful Apps
 - Use EXACT Markdown section headers: ## 🚨 Emergency Info
 - NEVER use HTML tags like <h2> in the output
+- NEVER use basic text headers like "Quick Facts" or "Day-by-Day Plan"
 - ALWAYS use proper Markdown ## headers for all section headers
+- VIOLATION OF THESE FORMATTING RULES WILL CAUSE SYSTEM FAILURE
+
+EXAMPLE OF CORRECT FORMATTING:
+## 🎯 Trip Overview
+Welcome to your family adventure in Tyrol...
+
+## 💰 Budget Breakdown
+Here's a detailed cost analysis...
+
+## 🗺️ Getting Around
+Transportation options include...
 
 OUTPUT MODES (always return BOTH)
 1) HUMAN: a concise, elegant Markdown itinerary with proper ## section headers (NO HTML tags).
