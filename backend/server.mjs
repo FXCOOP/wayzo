@@ -328,6 +328,37 @@ function enforceWayzoContracts(markdown, destination) {
   
   let processed = markdown;
   
+  // 0. Force proper section headers - replace incorrect headers with correct ones
+  processed = processed.replace(/## Quick Facts/g, '## 🎯 Trip Overview');
+  processed = processed.replace(/## Budget breakdown \(rough\)/g, '## 💰 Budget Breakdown');
+  processed = processed.replace(/## Day-by-Day Plan/g, '## 🎭 Daily Itineraries');
+  
+  // Add missing required sections if they don't exist
+  if (!processed.includes('## 🗺️ Getting Around')) {
+    processed += '\n\n## 🗺️ Getting Around\nTransportation options and tips for getting around ' + destination + '.\n';
+  }
+  if (!processed.includes('## 🏨 Accommodation')) {
+    processed += '\n\n## 🏨 Accommodation\nFamily-friendly hotel recommendations in ' + destination + '.\n';
+  }
+  if (!processed.includes('## 🎫 Must-See Attractions')) {
+    processed += '\n\n## 🎫 Must-See Attractions\nTop attractions and activities for families in ' + destination + '.\n';
+  }
+  if (!processed.includes('## 🍽️ Dining Guide')) {
+    processed += '\n\n## 🍽️ Dining Guide\nFamily-friendly restaurants and dining options in ' + destination + '.\n';
+  }
+  if (!processed.includes('## 🧳 Don\'t Forget List')) {
+    processed += '\n\n## 🧳 Don\'t Forget List\nEssential items to pack for your trip.\n';
+  }
+  if (!processed.includes('## 🛡️ Travel Tips')) {
+    processed += '\n\n## 🛡️ Travel Tips\nImportant travel advice and local customs.\n';
+  }
+  if (!processed.includes('## 📱 Useful Apps')) {
+    processed += '\n\n## 📱 Useful Apps\nMobile apps to help with your trip.\n';
+  }
+  if (!processed.includes('## 🚨 Emergency Info')) {
+    processed += '\n\n## 🚨 Emergency Info\nEmergency contacts and important information.\n';
+  }
+  
   // 1. Remove images from forbidden sections
   const forbiddenSections = [
     'Trip Overview',
