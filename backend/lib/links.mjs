@@ -47,11 +47,12 @@ export function linkifyTokens(markdown = '', dest = '') {
     .replace(/!\[([^\]]*)\]\(image:([^)]+)\)/gi,  (_m, alt, q) => {
       const imageUrl = aff.image(q.trim());
       console.log('Processing image token:', { alt, query: q.trim(), generatedUrl: imageUrl });
-      
-      // Add error handling for images
-      const imgTag = `![${alt || 'Photo'}](${imageUrl})`;
-      console.log('Generated img tag:', imgTag);
-      return imgTag;
+      const safeAlt = (alt || 'Photo').replace(/"/g, '\\"');
+      const fallback = `https://picsum.photos/800/500?random=${Math.floor(Math.random()*1000)}`;
+      // Use HTML <img> to avoid markdown renderer quirks
+      const imgHtml = `<img src="${imageUrl}" alt="${safeAlt}" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='${fallback}';this.style.opacity='0.85'" style="max-width:100%;height:auto;border-radius:12px;box-shadow:0 8px 25px rgba(0,0,0,0.15);margin:16px 0;object-fit:cover"/>`;
+      console.log('Generated img html:', imgHtml.substring(0, 120));
+      return imgHtml;
     });
   
   console.log('Processed markdown length:', processed.length);
