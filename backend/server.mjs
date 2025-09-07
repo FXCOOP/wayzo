@@ -370,41 +370,114 @@ Public transport is reliable. Use regional trains and buses for intercity moves;
 Pick a well-reviewed hotel or guesthouse in a central, walkable neighborhood. Prioritize free cancellation and breakfast included if you want convenience. For families, look for family rooms or kitchenette.
 
 ## 🎫 Must-See Attractions
-- Old Town walking route with main square and viewpoints (early morning is best)
-  - Why: Compact route to orient yourself and catch soft light over façades
-  - Reviews: "Charming streets, easy to cover in 2–3 hours."
-- Signature landmark or cable car ride for panoramic alpine views
-  - Why: Fast access to panoramic viewpoints without a strenuous hike
-  - Reviews: "Panoramas are unreal—go on a clear morning."
-- Local museum or palace for history and culture
-  - Why: Adds depth and context; great for variable weather days
-  - Reviews: "Great curation; allow 60–90 minutes."
-- Scenic lake/river promenade for sunset
-  - Why: Relaxed golden-hour walk with photo-friendly vantage points
-  - Reviews: "Golden hour photos and relaxed cafes along the water."
+- **Historic Old Town Walking Tour** (2-3 hours, best in early morning)
+  - Why: Perfect introduction to local architecture, culture, and history. Cobblestone streets reveal hidden courtyards and artisan workshops.
+  - Reviews: "Absolutely magical! The morning light on the medieval buildings was perfect for photos. Our guide knew every hidden gem."
+  - Insider Tip: Start at the main square before 9 AM to avoid crowds and catch the best lighting for photos.
+
+- **Panoramic Cable Car Experience** (1-2 hours, weather dependent)
+  - Why: Breathtaking 360-degree views of the entire region. Accessible to all fitness levels with stunning photo opportunities.
+  - Reviews: "Worth every penny! The views were absolutely incredible. We could see for miles in every direction."
+  - Insider Tip: Check weather conditions before going up. Clear days offer the best visibility and photo opportunities.
+
+- **Regional History Museum** (1-2 hours, great for any weather)
+  - Why: Comprehensive collection showcasing local heritage, artifacts, and cultural evolution. Perfect for understanding the destination's story.
+  - Reviews: "Fascinating exhibits! The audio guide really brought the history to life. Great way to spend a rainy afternoon."
+  - Insider Tip: Book tickets online to skip the queue, especially on weekends. Audio guides are worth the extra cost.
+
+- **Scenic Lake Promenade** (1-2 hours, perfect for sunset)
+  - Why: Peaceful lakeside walk with stunning reflections, local wildlife, and charming cafes. Ideal for relaxation and photography.
+  - Reviews: "So peaceful and beautiful! The sunset over the lake was absolutely stunning. Perfect end to a busy day."
+  - Insider Tip: Visit during golden hour (1 hour before sunset) for the most spectacular views and photos.
 
 ## 🍽️ Dining Guide
-- Traditional tavern: hearty local dishes (book dinner)  
-  - Why: Best value for local flavors in a cozy setting
-  - Reviews: "Generous portions; try the seasonal soup."
-- Market or food hall: casual lunch with regional specialties  
-  - Why: Quick, affordable variety; great mid-day pit stop
-  - Reviews: "Affordable and lively; perfect for a quick stop."
-- Cafe/bakery: coffee and pastries for a mid-morning break  
-  - Why: Classic coffee culture; ideal pause between sights
-  - Reviews: "Apple strudel and melange are local favorites."
+- **Traditional Local Tavern** (Dinner reservations recommended)
+  - Why: Authentic regional cuisine in a cozy, historic setting. Generous portions showcase local ingredients and traditional cooking methods.
+  - Reviews: "Incredible food and atmosphere! The seasonal soup was amazing, and the staff was so welcoming. Felt like dining with family."
+  - Insider Tip: Book dinner reservations 2-3 days in advance, especially on weekends. Ask for the daily specials and local wine recommendations.
+
+- **Historic Market Food Hall** (Perfect for lunch)
+  - Why: Fresh, local ingredients prepared by skilled vendors. Great variety and authentic flavors at reasonable prices.
+  - Reviews: "Amazing variety and quality! We tried so many different local specialties. Perfect for a quick, delicious lunch."
+  - Insider Tip: Arrive before 12 PM for the best selection. Many vendors offer samples, so you can try before you buy.
+
+- **Artisan Cafe & Bakery** (Morning coffee break)
+  - Why: Handcrafted pastries, premium coffee, and a charming atmosphere. Perfect pause between sightseeing activities.
+  - Reviews: "Best coffee in town! The apple strudel was incredible, and the melange was perfectly prepared. Great place to relax."
+  - Insider Tip: Try the house specialty pastries and ask about the coffee bean origins. Outdoor seating offers great people-watching opportunities.
 ${dietary && dietary.length ? `- Dietary-friendly options: ${dietary.join(', ')}` : ''}
 
 ## 🎭 Day-by-Day Plan`;
 
+  // Generate specific, diverse daily itineraries
+  const dailyActivities = [
+    {
+      morning: "Explore the historic Old Town with its charming cobblestone streets and medieval architecture",
+      afternoon: "Visit the local museum to learn about regional history and culture",
+      evening: "Enjoy traditional dinner at a local tavern with regional specialties",
+      review: "The Old Town walking tour was perfect for getting oriented—highly recommend starting here.",
+      tip: "Book museum tickets online to skip the queue, especially on weekends."
+    },
+    {
+      morning: "Take the cable car to panoramic viewpoints for stunning alpine vistas",
+      afternoon: "Hike scenic trails or visit a nearby lake for relaxation",
+      evening: "Dine at a mountain restaurant with sunset views",
+      review: "The cable car ride offered breathtaking views—worth every penny for the experience.",
+      tip: "Check weather conditions before heading up; clear days provide the best visibility."
+    },
+    {
+      morning: "Discover local markets and artisan shops in the city center",
+      afternoon: "Take a guided tour of historic landmarks and cultural sites",
+      evening: "Experience local nightlife or attend a cultural performance",
+      review: "The market tour gave us authentic local insights and great shopping opportunities.",
+      tip: "Markets are busiest in the morning—arrive early for the best selection."
+    },
+    {
+      morning: "Explore nature trails and outdoor activities in the surrounding area",
+      afternoon: "Visit a local winery or brewery for tastings and tours",
+      evening: "Enjoy a leisurely dinner at a riverside restaurant",
+      review: "The nature trails were perfect for unwinding and connecting with the local landscape.",
+      tip: "Pack comfortable walking shoes and check trail conditions before heading out."
+    },
+    {
+      morning: "Visit architectural highlights and iconic landmarks",
+      afternoon: "Take a cooking class or food tour to learn local cuisine",
+      evening: "Relax at a local spa or wellness center",
+      review: "The cooking class was a highlight—we learned to make authentic local dishes.",
+      tip: "Book cooking classes in advance as they often fill up quickly."
+    },
+    {
+      morning: "Explore hidden gems and off-the-beaten-path attractions",
+      afternoon: "Take a scenic boat ride or outdoor adventure activity",
+      evening: "Enjoy a farewell dinner at a highly-rated local restaurant",
+      review: "The hidden gems tour showed us places we never would have found on our own.",
+      tip: "Ask locals for recommendations—they know the best spots tourists miss."
+    },
+    {
+      morning: "Visit local art galleries and cultural centers",
+      afternoon: "Take a leisurely bike tour or walking tour of different neighborhoods",
+      evening: "Experience local music scene or cultural events",
+      review: "The art galleries provided great cultural context and beautiful local artwork.",
+      tip: "Many galleries offer free admission on certain days—check schedules."
+    },
+    {
+      morning: "Explore local parks and botanical gardens",
+      afternoon: "Take a day trip to nearby attractions or scenic viewpoints",
+      evening: "Enjoy a special dinner at a fine dining establishment",
+      review: "The botanical gardens were peaceful and beautiful—perfect for a relaxing morning.",
+      tip: "Day trips often require advance booking—plan transportation ahead of time."
+    }
+  ];
+
   days.forEach((d, idx) => {
+    const activity = dailyActivities[idx % dailyActivities.length] || dailyActivities[0];
     md += `
 ### Day ${idx + 1} — ${d.label} (${d.iso})
-- Morning: Signature sight or viewpoint. Book fast-track where available.
-- Afternoon: Neighborhood walk + museum. Use public transit or walk between stops.
-- Evening: Dinner reservation. Aim for local specials and regional wines/beer.
-  - Review highlight: "Fantastic views and superb value with the regional pass—highly recommended."
-  - Insider tip: Reserve mountain lifts in advance on clear days.`;
+- **Morning:** ${activity.morning}
+- **Afternoon:** ${activity.afternoon}  
+- **Evening:** ${activity.evening}
+  - **Review:** "${activity.review}"
+  - **Insider Tip:** ${activity.tip}`;
   });
 
   md += `
