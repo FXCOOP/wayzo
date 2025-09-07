@@ -367,6 +367,37 @@
     setAffiliates(dest);
   };
 
+  // Remove any leftover test banners in rendered HTML (defensive)
+  const stripTestBanners = () => {
+    try {
+      const container = previewEl;
+      if (!container) return;
+      const selectors = [
+        '.test-user-notice',
+        'h3',
+        'h2'
+      ];
+      selectors.forEach(sel => {
+        container.querySelectorAll(sel).forEach(el => {
+          const t = (el.textContent || '').toLowerCase();
+          if (t.includes('test user') || t.includes('full plan unlocked')) {
+            el.closest('.test-user-notice') ? el.closest('.test-user-notice').remove() : el.remove();
+          }
+        });
+      });
+    } catch (_) {}
+  };
+
+  // Keep widgets: ensure initialization always runs after render
+  const finalizeRender = (destination) => {
+    initializeImageHandling();
+    initializeWidgets();
+    stripTestBanners();
+    show(pdfBtn); show(icsBtn); show($('#excelBtn')); show($('#shareBtn')); show(saveBtn);
+    hide($('#purchaseActions'));
+    setAffiliates(destination);
+  };
+
   // Save preview to localStorage
   const savePreview = () => {
     const previewData = {
@@ -463,21 +494,13 @@
       
       // Display preview
       previewEl.innerHTML = result.teaser_html;
-      setAffiliates(data.destination);
-      
-      // Initialize image handling
-      initializeImageHandling();
+      finalizeRender(data.destination);
       
       // Show preview and hide loading
       hide(loadingEl);
       show(previewEl);
       
-      // Show action buttons for everyone (no signup/paywall)
-      show(pdfBtn);
-      show(icsBtn);
-      show($('#excelBtn'));
-      show($('#shareBtn'));
-      show(saveBtn);
+      // Buttons shown by finalizeRender
       
       // Track successful preview generation
       trackEvent('preview_generated', { destination: data.destination, budget: data.budget });
@@ -547,14 +570,7 @@
       
       // Always show full plan (no paywall or signup)
       previewEl.innerHTML = result.html;
-      setAffiliates(data.destination);
-      initializeImageHandling();
-      initializeWidgets();
-      show(pdfBtn);
-      show(icsBtn);
-      show($('#excelBtn'));
-      show($('#shareBtn'));
-      hide($('#purchaseActions'));
+      finalizeRender(data.destination);
       saveFullPlan(result.html, data.destination);
       
       // Hide loading
