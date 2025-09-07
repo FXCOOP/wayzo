@@ -314,51 +314,59 @@ function localPlanMarkdown(input) {
 **Budget:** ${budget} ${currency} (${pppd}/day/person)  
 **Season:** ${seasonFromDate(startISO)}
 ---
-## Quick Facts
-- Language: English (tourism friendly)
-- Currency: ${currency}
-- Voltage: 230V, Type C/E plugs (adapter may be required)
-- Tipping: 5–10% in restaurants (optional)
+## 🎯 Trip Overview
+- **Language:** German (official), English widely spoken in tourist areas
+- **Currency:** Euro (EUR) - ${currency === 'USD' ? '1 USD ≈ 0.85 EUR' : 'Local currency'}
+- **Voltage:** 230V, Type C/F plugs (Schuko) - adapter required for US devices
+- **Tipping:** 5-10% in restaurants, round up taxi fares, €1-2 per bag for porters
+- **Time Zone:** CET (UTC+1), CEST (UTC+2) in summer
+- **Emergency:** 112 (EU emergency number), 144 (medical), 133 (police)
+- **Best Time to Visit:** ${seasonFromDate(startISO)} offers ${seasonFromDate(startISO) === 'Autumn' ? 'stunning fall colors, fewer crowds, and shoulder season pricing' : seasonFromDate(startISO) === 'Summer' ? 'perfect hiking weather, long days, and outdoor activities' : seasonFromDate(startISO) === 'Winter' ? 'world-class skiing, Christmas markets, and cozy alpine atmosphere' : 'mild weather, blooming flowers, and fewer tourists'}
 ---
-## Budget breakdown (rough)
+## 💰 Detailed Budget Breakdown
 <table class="budget-table">
   <thead>
     <tr>
-      <th>Item</th>
+      <th>Category</th>
       <th>Total</th>
       <th>Per-day</th>
+      <th>Details</th>
       <th>Status</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td><label class="budget-checkbox"><input type="checkbox" onchange="window.toggleBudgetItem(this)"/> Stay</label></td>
+      <td><label class="budget-checkbox"><input type="checkbox" onchange="window.toggleBudgetItem(this)"/> 🏨 Accommodation</label></td>
       <td>${b.stay.total}</td>
       <td>${b.stay.perDay}</td>
+      <td>Mid-range hotels, guesthouses, or B&Bs in Tyrol</td>
       <td><span class="status-pending">Pending</span></td>
     </tr>
     <tr>
-      <td><label class="budget-checkbox"><input type="checkbox" onchange="window.toggleBudgetItem(this)"/> Food</label></td>
+      <td><label class="budget-checkbox"><input type="checkbox" onchange="window.toggleBudgetItem(this)"/> 🍽️ Food & Dining</label></td>
       <td>${b.food.total}</td>
       <td>${b.food.perDay}/person</td>
+      <td>Local restaurants, cafes, and traditional Tyrolean cuisine</td>
       <td><span class="status-pending">Pending</span></td>
     </tr>
     <tr>
-      <td><label class="budget-checkbox"><input type="checkbox" onchange="window.toggleBudgetItem(this)"/> Activities</label></td>
+      <td><label class="budget-checkbox"><input type="checkbox" onchange="window.toggleBudgetItem(this)"/> 🎫 Activities & Attractions</label></td>
       <td>${b.act.total}</td>
       <td>${b.act.perDay}</td>
+      <td>Cable cars, museums, hiking, cultural sites</td>
       <td><span class="status-pending">Pending</span></td>
     </tr>
     <tr>
-      <td><label class="budget-checkbox"><input type="checkbox" onchange="window.toggleBudgetItem(this)"/> Transit</label></td>
+      <td><label class="budget-checkbox"><input type="checkbox" onchange="window.toggleBudgetItem(this)"/> 🚌 Transportation</label></td>
       <td>${b.transit.total}</td>
       <td>${b.transit.perDay}</td>
+      <td>Regional trains, buses, airport transfers</td>
       <td><span class="status-pending">Pending</span></td>
     </tr>
     <tr>
-      <td>Total</td>
+      <td><strong>💰 Total Budget</strong></td>
       <td><strong>${normalizeBudget(budget, currency)}</strong></td>
-      <td colspan="2"><span class="status-total">${pppd}/day/person</span></td>
+      <td colspan="3"><span class="status-total">${pppd}/day/person</span></td>
     </tr>
   </tbody>
  </table>
@@ -366,8 +374,18 @@ function localPlanMarkdown(input) {
 ## 🗺️ Getting Around
 Public transport is reliable. Use regional trains and buses for intercity moves; walk or tram in the center. For remote areas, consider a 1–2 day car rental. Book airport transfers in advance for late arrivals.
 
-## 🏨 Accommodation
+## 🏙️ Best Areas to Stay
+- **Innsbruck Altstadt (Old Town)**: Historic heart with cobblestone streets, medieval architecture, and walking distance to major attractions. Perfect for first-time visitors who want to be in the center of action.
+- **Seefeld in Tirol**: Charming alpine village with traditional Tyrolean atmosphere, direct access to hiking trails and pristine lakes. Ideal for nature lovers and those seeking authentic mountain experience.
+- **Kitzbühel**: Upscale resort town known for world-class skiing and luxury accommodations. Great for those wanting premium dining, boutique shopping, and easy access to mountain activities.
+
+## 🏨 Accommodation Recommendations
 Pick a well-reviewed hotel or guesthouse in a central, walkable neighborhood. Prioritize free cancellation and breakfast included if you want convenience. For families, look for family rooms or kitchenette.
+
+**Recommended Hotels by Area:**
+- **Innsbruck**: Hotel Goldener Adler (historic), Hotel Innsbruck (modern), Gasthof Weisses Kreuz (traditional)
+- **Seefeld**: Hotel Klosterbräu (luxury spa), Hotel Seespitz (family-friendly), Pension Bergkristall (budget)
+- **Kitzbühel**: Hotel Tennerhof (boutique), Hotel Kitzhof (wellness), Gasthof Eggerwirt (authentic)
 
 ## 🎫 Must-See Attractions
 - **Historic Old Town Walking Tour** (2-3 hours, best in early morning)
@@ -409,63 +427,71 @@ ${dietary && dietary.length ? `- Dietary-friendly options: ${dietary.join(', ')}
 
 ## 🎭 Day-by-Day Plan`;
 
-  // Generate specific, diverse daily itineraries
+  // Generate specific, diverse daily itineraries with Tyrol attractions
   const dailyActivities = [
     {
-      morning: "Explore the historic Old Town with its charming cobblestone streets and medieval architecture",
-      afternoon: "Visit the local museum to learn about regional history and culture",
-      evening: "Enjoy traditional dinner at a local tavern with regional specialties",
+      morning: "🏰 **Innsbruck Old Town Walking Tour** (Maria-Theresien-Straße → Golden Roof → Hofburg Palace)",
+      afternoon: "🏛️ **Tyrolean State Museum** (Museumstraße 15, Innsbruck) - Regional history & culture",
+      evening: "🍽️ **Gasthof Weisses Kreuz** (Herzog-Friedrich-Straße 31) - Traditional Tyrolean dinner",
       review: "The Old Town walking tour was perfect for getting oriented—highly recommend starting here.",
-      tip: "Book museum tickets online to skip the queue, especially on weekends."
+      tip: "Book museum tickets online to skip the queue, especially on weekends.",
+      map: "📍 Start: Maria-Theresien-Straße, Innsbruck"
     },
     {
-      morning: "Take the cable car to panoramic viewpoints for stunning alpine vistas",
-      afternoon: "Hike scenic trails or visit a nearby lake for relaxation",
-      evening: "Dine at a mountain restaurant with sunset views",
+      morning: "🚠 **Nordkette Cable Car** (Höhenstraße 145, Innsbruck) - Panoramic alpine views",
+      afternoon: "🥾 **Seegrube Lake Hike** or **Alpenzoo Innsbruck** (Weiherburggasse 37)",
+      evening: "🍽️ **Restaurant Seegrube** (2,000m altitude) - Mountain restaurant with sunset views",
       review: "The cable car ride offered breathtaking views—worth every penny for the experience.",
-      tip: "Check weather conditions before heading up; clear days provide the best visibility."
+      tip: "Check weather conditions before heading up; clear days provide the best visibility.",
+      map: "📍 Nordkette Cable Car Station, Innsbruck"
     },
     {
-      morning: "Discover local markets and artisan shops in the city center",
-      afternoon: "Take a guided tour of historic landmarks and cultural sites",
-      evening: "Experience local nightlife or attend a cultural performance",
+      morning: "🛍️ **Innsbruck Market Hall** (Maria-Theresien-Straße 18) - Local artisan shops & markets",
+      afternoon: "🏰 **Ambras Castle** (Schlossstraße 20, Innsbruck) - Renaissance palace & gardens",
+      evening: "🎭 **Tiroler Landestheater** (Rennweg 2) - Cultural performance or local nightlife",
       review: "The market tour gave us authentic local insights and great shopping opportunities.",
-      tip: "Markets are busiest in the morning—arrive early for the best selection."
+      tip: "Markets are busiest in the morning—arrive early for the best selection.",
+      map: "📍 Market Hall, Maria-Theresien-Straße, Innsbruck"
     },
     {
-      morning: "Explore nature trails and outdoor activities in the surrounding area",
-      afternoon: "Visit a local winery or brewery for tastings and tours",
-      evening: "Enjoy a leisurely dinner at a riverside restaurant",
+      morning: "🥾 **Patscherkofel Mountain Trail** (Igls, Innsbruck) - Nature trails & outdoor activities",
+      afternoon: "🍺 **Stiegl Brewery Tour** (Brunecker Straße 1, Salzburg) or **Local Winery Visit**",
+      evening: "🍽️ **Restaurant Ottoburg** (Herzog-Friedrich-Straße 1) - Riverside dining",
       review: "The nature trails were perfect for unwinding and connecting with the local landscape.",
-      tip: "Pack comfortable walking shoes and check trail conditions before heading out."
+      tip: "Pack comfortable walking shoes and check trail conditions before heading out.",
+      map: "📍 Patscherkofel Cable Car, Igls"
     },
     {
-      morning: "Visit architectural highlights and iconic landmarks",
-      afternoon: "Take a cooking class or food tour to learn local cuisine",
-      evening: "Relax at a local spa or wellness center",
+      morning: "🏛️ **Hofburg Imperial Palace** (Rennweg 1, Innsbruck) - Architectural highlights",
+      afternoon: "👨‍🍳 **Tyrolean Cooking Class** (Local culinary school) - Learn traditional cuisine",
+      evening: "♨️ **Aqua Dome Spa** (Oberlängenfeld 140, Längenfeld) - Wellness & relaxation",
       review: "The cooking class was a highlight—we learned to make authentic local dishes.",
-      tip: "Book cooking classes in advance as they often fill up quickly."
+      tip: "Book cooking classes in advance as they often fill up quickly.",
+      map: "📍 Hofburg Palace, Rennweg 1, Innsbruck"
     },
     {
-      morning: "Explore hidden gems and off-the-beaten-path attractions",
-      afternoon: "Take a scenic boat ride or outdoor adventure activity",
-      evening: "Enjoy a farewell dinner at a highly-rated local restaurant",
+      morning: "🔍 **Hidden Gems Tour** - Swarovski Crystal Worlds (Kristallweltenstraße 1, Wattens)",
+      afternoon: "🚤 **Achensee Lake Boat Tour** (Seestraße 2, Pertisau) - Scenic lake adventure",
+      evening: "🍽️ **Restaurant Goldener Adler** (Herzog-Friedrich-Straße 6) - Highly-rated farewell dinner",
       review: "The hidden gems tour showed us places we never would have found on our own.",
-      tip: "Ask locals for recommendations—they know the best spots tourists miss."
+      tip: "Ask locals for recommendations—they know the best spots tourists miss.",
+      map: "📍 Swarovski Crystal Worlds, Wattens"
     },
     {
-      morning: "Visit local art galleries and cultural centers",
-      afternoon: "Take a leisurely bike tour or walking tour of different neighborhoods",
-      evening: "Experience local music scene or cultural events",
+      morning: "🎨 **Tiroler Landesmuseum Ferdinandeum** (Museumstraße 15) - Art galleries & cultural centers",
+      afternoon: "🚴 **Innsbruck City Bike Tour** - Different neighborhoods & local insights",
+      evening: "🎵 **Local Music Scene** - Traditional Tyrolean music or modern venues",
       review: "The art galleries provided great cultural context and beautiful local artwork.",
-      tip: "Many galleries offer free admission on certain days—check schedules."
+      tip: "Many galleries offer free admission on certain days—check schedules.",
+      map: "📍 Ferdinandeum Museum, Museumstraße 15, Innsbruck"
     },
     {
-      morning: "Explore local parks and botanical gardens",
-      afternoon: "Take a day trip to nearby attractions or scenic viewpoints",
-      evening: "Enjoy a special dinner at a fine dining establishment",
+      morning: "🌿 **Alpenzoo Innsbruck** (Weiherburggasse 37) - Alpine wildlife & botanical gardens",
+      afternoon: "🚗 **Day Trip to Hall in Tirol** (Rathausplatz 1) - Historic salt mining town",
+      evening: "🍽️ **Restaurant Lichtblick** (Maria-Theresien-Straße 18) - Fine dining establishment",
       review: "The botanical gardens were peaceful and beautiful—perfect for a relaxing morning.",
-      tip: "Day trips often require advance booking—plan transportation ahead of time."
+      tip: "Day trips often require advance booking—plan transportation ahead of time.",
+      map: "📍 Alpenzoo, Weiherburggasse 37, Innsbruck"
     }
   ];
 
@@ -477,7 +503,8 @@ ${dietary && dietary.length ? `- Dietary-friendly options: ${dietary.join(', ')}
 - **Afternoon:** ${activity.afternoon}  
 - **Evening:** ${activity.evening}
   - **Review:** "${activity.review}"
-  - **Insider Tip:** ${activity.tip}`;
+  - **Insider Tip:** ${activity.tip}
+  - **Map Location:** ${activity.map}`;
   });
 
   md += `
@@ -492,36 +519,46 @@ ${dietary && dietary.length ? `- Dietary-friendly options: ${dietary.join(', ')}
   <div class="dont-forget-item"><input type="checkbox" onchange="window.toggleItem(this)"><label>Reusable water bottle</label></div>
 </div>
 
-## 🏙️ Best Areas to Stay
-- Innsbruck Altstadt: Walkable, near sights, great for first-time visitors  
-- Seefeld in Tirol: Alpine village vibe, access to trails and lakes  
-- Kitzbühel: Boutique stays, dining, and easy mountain access  
-
- 
-
 ## 🍂 Season Insights (Autumn)
 - Best visibility for alpine views; cooler mornings and warm afternoons  
 - Shoulder season pricing on hotels and tours  
 - Pack layers; lifts and some attractions may reduce hours after late September  
 
 ## ⭐ Traveler Reviews (Highlights)
-- "Cable car ride gave us unforgettable panoramas—worth every minute."  
-- "Old town cafes were perfect for slow mornings; strudel was a must."  
-- "Regional travel pass saved money across multiple lifts and buses."  
+- "The Nordkette Cable Car ride gave us unforgettable panoramas of the entire Tyrolean Alps—worth every penny!"
+- "Innsbruck's Old Town cafes were perfect for slow mornings; the apple strudel and melange were absolute must-tries."
+- "The Tyrol Card saved us money across multiple lifts, buses, and museums—highly recommend getting one."
+- "Ambras Castle gardens were stunning, and the Renaissance art collection was world-class."
+- "Traditional Tyrolean dinner at Gasthof Weisses Kreuz felt like dining with family—incredible hospitality."
 
-## 🛡️ Travel Tips
-- Check opening hours and seasonal closures  
-- Pre-book popular attractions in peak season  
-- Validate tickets on regional transport  
+## 🛡️ Essential Travel Tips for Tyrol
+- **Opening Hours**: Most attractions open 9 AM-6 PM, closed Mondays. Check seasonal schedules for mountain lifts.
+- **Advance Booking**: Pre-book popular attractions like Nordkette Cable Car, Ambras Castle, and cooking classes.
+- **Transportation**: Validate tickets on regional transport (ÖBB trains, IVB buses). Tyrol Card covers most public transport.
+- **Weather**: Mountain weather changes quickly—pack layers and check forecasts before heading to higher altitudes.
+- **Cash vs Card**: Most places accept cards, but carry cash for smaller establishments and mountain huts.
+- **Language**: Learn basic German phrases—locals appreciate the effort, though English is widely spoken.
 
-## 📱 Useful Apps
-- Transit/ÖBB for trains and buses  
-- Google Maps offline area  
-- Translation and currency apps  
+## 📱 Essential Apps for Tyrol
+- **ÖBB Scotty**: Train schedules and tickets for Austrian railways
+- **IVB Live**: Innsbruck public transport real-time info
+- **Bergfex**: Mountain weather forecasts and trail conditions
+- **Google Maps**: Offline area downloads for mountain regions
+- **DeepL**: Translation app for German-English
+- **XE Currency**: Real-time EUR exchange rates
+- **Tyrol Card App**: Digital version of the tourist card
 
-## 🚨 Emergency Info
-- Emergency: 112  
-- Local medical center and pharmacy locations  
+## 🚨 Emergency Information & Local Resources
+- **Emergency Numbers**: 112 (EU emergency), 144 (medical), 133 (police), 122 (fire)
+- **Medical Centers**: 
+  - Universitätsklinik Innsbruck (Anichstraße 35, Innsbruck)
+  - Krankenhaus Kitzbühel (Hornweg 28, Kitzbühel)
+- **Pharmacies**: Look for "Apotheke" signs. Most open 8 AM-6 PM, some have 24-hour emergency service
+- **Tourist Information**: 
+  - Innsbruck Tourist Office (Burggraben 3, Innsbruck)
+  - Kitzbühel Tourist Office (Hinterstadt 4, Kitzbühel)
+- **Lost & Found**: Contact local police stations or tourist offices
+- **Consulate Services**: Nearest US Consulate in Munich, Germany
 `;
 
   // Linkify image and booking tokens and return
