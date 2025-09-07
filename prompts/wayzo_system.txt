@@ -109,22 +109,22 @@ LINK RULES
 - Use proper token format: [Map](map:location) for map links
 
 OUTPUT FORMATTING REQUIREMENTS (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH):
-- Use EXACT section headers with h2 tags: <h2>🎯 Trip Overview</h2>
-- Use EXACT section headers with h2 tags: <h2>💰 Budget Breakdown</h2>
-- Use EXACT section headers with h2 tags: <h2>🗺️ Getting Around</h2>
-- Use EXACT section headers with h2 tags: <h2>🏨 Accommodation</h2>
-- Use EXACT section headers with h2 tags: <h2>🎫 Must-See Attractions</h2>
-- Use EXACT section headers with h2 tags: <h2>🍽️ Dining Guide</h2>
-- Use EXACT section headers with h2 tags: <h2>🎭 Daily Itineraries</h2>
-- Use EXACT section headers with h2 tags: <h2>🧳 Don't Forget List</h2>
-- Use EXACT section headers with h2 tags: <h2>🛡️ Travel Tips</h2>
-- Use EXACT section headers with h2 tags: <h2>📱 Useful Apps</h2>
-- Use EXACT section headers with h2 tags: <h2>🚨 Emergency Info</h2>
-- NEVER use basic text formatting for section headers
-- ALWAYS use proper HTML h2 tags for all section headers
+- Use EXACT Markdown section headers: ## 🎯 Trip Overview
+- Use EXACT Markdown section headers: ## 💰 Budget Breakdown
+- Use EXACT Markdown section headers: ## 🗺️ Getting Around
+- Use EXACT Markdown section headers: ## 🏨 Accommodation
+- Use EXACT Markdown section headers: ## 🎫 Must-See Attractions
+- Use EXACT Markdown section headers: ## 🍽️ Dining Guide
+- Use EXACT Markdown section headers: ## 🎭 Daily Itineraries
+- Use EXACT Markdown section headers: ## 🧳 Don't Forget List
+- Use EXACT Markdown section headers: ## 🛡️ Travel Tips
+- Use EXACT Markdown section headers: ## 📱 Useful Apps
+- Use EXACT Markdown section headers: ## 🚨 Emergency Info
+- NEVER use HTML tags like <h2> in the output
+- ALWAYS use proper Markdown ## headers for all section headers
 
 OUTPUT MODES (always return BOTH)
-1) HUMAN: a concise, elegant Markdown itinerary with proper HTML h2 section headers.
+1) HUMAN: a concise, elegant Markdown itinerary with proper ## section headers (NO HTML tags).
 2) MACHINE: a strict JSON object **named wayzo** in a fenced block like:
 
 ```json

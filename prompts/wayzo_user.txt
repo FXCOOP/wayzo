@@ -111,18 +111,18 @@ Create AMAZING, DETAILED trip plans that are:
 9. **Accurate**: Include current information and verify all details
 10. **Insider-Rich**: Include local secrets, hidden gems, and cultural insights
 
-REQUIRED SECTIONS (USE EXACT HTML H2 TAGS - ALL MUST BE INCLUDED):
-- <h2>🎯 Trip Overview</h2> - Quick facts and highlights (MUST include specific highlights, travel dates, party details, budget)
-- <h2>💰 Budget Breakdown</h2> - Detailed cost analysis per person with checkboxes for tracking (MUST include specific costs for flights, accommodation, food, activities, transportation, miscellaneous)
-- <h2>🗺️ Getting Around</h2> - Transportation tips and maps with [Map](map:...) (MUST include specific transportation options, costs, and practical tips)
-- <h2>🏨 Accommodation</h2> - 3–5 hotel options (Budget/Mid/Luxury) with [Book](book:...), [Reviews](reviews:...) (MUST include specific hotels with names, locations, features, prices)
-- <h2>🎫 Must-See Attractions</h2> - 8–12 sights with [Tickets](tickets:...) (MUST include specific attractions with descriptions, entry fees, hours)
-- <h2>🍽️ Dining Guide</h2> - 6–10 restaurants by neighborhood with [Reviews](reviews:...) (MUST include specific restaurants with cuisine types, locations, kid-friendly info)
-- <h2>🎭 Daily Itineraries</h2> - Hour-by-hour plans per day with [Tickets](tickets:...), [Map](map:...) (MUST include specific times, activities, and locations for each day)
-- <h2>🧳 Don't Forget List</h2> - 8–12 packing/reminders with checkboxes for tracking (MUST include specific items relevant to destination and family)
-- <h2>🛡️ Travel Tips</h2> - Local customs, safety, and practical advice (MUST include specific local customs, safety tips, cultural insights)
-- <h2>📱 Useful Apps</h2> - Mobile apps for the destination (MUST include specific apps with descriptions)
-- <h2>🚨 Emergency Info</h2> - Important contacts and healthcare (MUST include specific emergency numbers, hospitals, contacts)
+REQUIRED SECTIONS (USE EXACT MARKDOWN HEADERS - ALL MUST BE INCLUDED):
+- ## 🎯 Trip Overview - Quick facts and highlights (MUST include specific highlights, travel dates, party details, budget)
+- ## 💰 Budget Breakdown - Detailed cost analysis per person with checkboxes for tracking (MUST include specific costs for flights, accommodation, food, activities, transportation, miscellaneous)
+- ## 🗺️ Getting Around - Transportation tips and maps with [Map](map:...) (MUST include specific transportation options, costs, and practical tips)
+- ## 🏨 Accommodation - 3–5 hotel options (Budget/Mid/Luxury) with [Book](book:...), [Reviews](reviews:...) (MUST include specific hotels with names, locations, features, prices)
+- ## 🎫 Must-See Attractions - 8–12 sights with [Tickets](tickets:...) (MUST include specific attractions with descriptions, entry fees, hours)
+- ## 🍽️ Dining Guide - 6–10 restaurants by neighborhood with [Reviews](reviews:...) (MUST include specific restaurants with cuisine types, locations, kid-friendly info)
+- ## 🎭 Daily Itineraries - Hour-by-hour plans per day with [Tickets](tickets:...), [Map](map:...) (MUST include specific times, activities, and locations for each day)
+- ## 🧳 Don't Forget List - 8–12 packing/reminders with checkboxes for tracking (MUST include specific items relevant to destination and family)
+- ## 🛡️ Travel Tips - Local customs, safety, and practical advice (MUST include specific local customs, safety tips, cultural insights)
+- ## 📱 Useful Apps - Mobile apps for the destination (MUST include specific apps with descriptions)
+- ## 🚨 Emergency Info - Important contacts and healthcare (MUST include specific emergency numbers, hospitals, contacts)
 
 IMAGE REQUIREMENTS (CRITICAL):
 - Use EXACT format: ![Destination — Section](image:Destination specific term)
