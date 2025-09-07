@@ -861,7 +861,7 @@ function injectWidgetsIntoSections(html, widgets) {
     `;
     // Inject into "Getting Around" section AFTER the content
     modifiedHtml = modifiedHtml.replace(
-      /(🗺️ Getting Around.*?)(<h3>🏨|<h3>🍽️|<h3>🎭|<h3>🎫|<h3>🧳|<h3>🛡️|<h3>📱|<h3>🚨|<h3>🖼️)/s,
+      /(<h2>🗺️ Getting Around<\/h2>[\s\S]*?)(<h2>🏨|<h2>🍽️|<h2>🎭|<h2>🎫|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s,
       `$1${flightWidgetHTML}$2`
     );
   }
@@ -883,7 +883,7 @@ function injectWidgetsIntoSections(html, widgets) {
     `;
     // Inject into "Accommodation" section AFTER the content
     modifiedHtml = modifiedHtml.replace(
-      /(🏨 Accommodation.*?)(<h3>🍽️|<h3>🎭|<h3>🎫|<h3>🧳|<h3>🛡️|<h3>📱|<h3>🚨|<h3>🖼️)/s,
+      /(<h2>🏨 Accommodation<\/h2>[\s\S]*?)(<h2>🍽️|<h2>🎭|<h2>🎫|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s,
       `$1${hotelWidgetHTML}$2`
     );
   }
@@ -905,7 +905,7 @@ function injectWidgetsIntoSections(html, widgets) {
     `;
     // Inject into "Getting Around" section AFTER the content
     modifiedHtml = modifiedHtml.replace(
-      /(🗺️ Getting Around.*?)(<h3>🏨|<h3>🍽️|<h3>🎭|<h3>🎫|<h3>🧳|<h3>🛡️|<h3>📱|<h3>🚨|<h3>🖼️)/s,
+      /(<h2>🗺️ Getting Around<\/h2>[\s\S]*?)(<h2>🏨|<h2>🍽️|<h2>🎭|<h2>🎫|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s,
       `$1${carWidgetHTML}$2`
     );
   }
@@ -927,7 +927,7 @@ function injectWidgetsIntoSections(html, widgets) {
     `;
     // Inject into "Useful Apps" section AFTER the content
     modifiedHtml = modifiedHtml.replace(
-      /(📱 Useful Apps.*?)(<h3>🚨|<h3>🖼️)/s,
+      /(<h2>📱 Useful Apps<\/h2>[\s\S]*?)(<h2>🚨|<h2>🖼️)/s,
       `$1${esimWidgetHTML}$2`
     );
   }
