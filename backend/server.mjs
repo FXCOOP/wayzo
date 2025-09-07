@@ -1066,6 +1066,18 @@ function injectWidgetsIntoSections(html, widgets) {
   } catch (e) {
     console.warn('Failed to inject GYG widget:', e);
   }
+
+  // Inject GetYourGuide widget after each Day in Daily Itineraries
+  try {
+    const gygAuto = '<div data-gyg-widget="auto" data-gyg-partner-id="PUHVJ53"></div>';
+    // Only within the Daily Itineraries section boundaries
+    modifiedHtml = modifiedHtml.replace(
+      /(<h2>🎭 Daily Itineraries<\/h2>[\s\S]*?)(?=(<h2>🗺️|<h2>🏨|<h2>🎫|<h2>🍽️|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|$))/s,
+      (match) => match.replace(/(<h3>Day [^<]+<\/h3>)/g, `$1\n${gygAuto}`)
+    );
+  } catch (e) {
+    console.warn('Failed to inject per-day GYG widgets:', e);
+  }
   
   // Find car rental widget
   const carWidget = widgets.find(w => w.category === 'transport');
