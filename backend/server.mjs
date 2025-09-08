@@ -297,6 +297,71 @@ const perPersonPerDay = (t = 0, d = 1, tr = 1) => Math.round((Number(t) || 0) / 
 function getDestinationInfo(destination) {
   const dest = destination.toLowerCase();
   
+  if (dest.includes('berlin')) {
+    return {
+      language: 'German (Deutsch); English widely spoken in central areas',
+      currency: 'Euro (EUR)',
+      currencyConversion: '1 USD ≈ 0.92 EUR',
+      voltage: '230V, Type C/F plugs',
+      tipping: 'Round up or ~5–10% at restaurants',
+      timeZone: 'CET/CEST (UTC+1/UTC+2)',
+      emergency: '112 (emergency), 110 (police)',
+      seasonalInfo: {
+        'Autumn': 'comfortable temps, festivals, fewer crowds than summer',
+        'Summer': 'warm, long days; busiest for museums and sights',
+        'Winter': 'cold; Christmas markets and museum time',
+        'Spring': 'mild; parks and beer gardens reopen'
+      },
+      attractions: [
+        { name: 'Museum Island (Museumsinsel)', description: 'UNESCO site of five world-class museums', duration: '3–4 hours', bestTime: 'late morning', why: 'Art and antiquities in stunning neoclassical buildings', review: 'An entire day can fly by here—Pergamon Panorama is excellent.', tip: 'Buy a combined Museum Island pass; closed on some Mondays' },
+        { name: 'Brandenburg Gate & Pariser Platz', description: 'Iconic 18th‑century gate and grand square', duration: '45–60 minutes', bestTime: 'sunrise or evening', why: 'Signature Berlin photo and history stop', review: 'Beautiful at blue hour; less crowded at sunrise.', tip: 'Combine with Reichstag and Tiergarten walk' },
+        { name: 'Reichstag Dome (Bundestag)', description: 'Glass dome with panoramic city views', duration: '60–90 minutes', bestTime: 'late afternoon', why: 'Architecture and views with audio guide', review: 'Free with advance booking—audio guide is excellent.', tip: 'Reserve online weeks ahead and bring ID' },
+        { name: 'East Side Gallery', description: '1.3 km open‑air gallery on the Berlin Wall', duration: '60–90 minutes', bestTime: 'morning', why: 'Street art and history together', review: 'Powerful murals—get there early for clean photos.', tip: 'Continue riverside walk to Oberbaum Bridge' },
+        { name: 'Gendarmenmarkt & Unter den Linden', description: 'Elegant square and historic boulevard', duration: '60–90 minutes', bestTime: 'afternoon', why: 'Architecture, cafes, and boutiques', review: 'Lovely coffee stop between sights.', tip: 'Climb Französischer Dom for views' },
+        { name: 'Topography of Terror', description: 'Documentation center on Nazi institutions', duration: '1.5–2 hours', bestTime: 'midday', why: 'Clear, sobering historical context', review: 'Well‑curated and free; multilingual panels.', tip: 'Combine with Checkpoint Charlie walk' }
+      ],
+      accommodation: {
+        areas: [
+          'Mitte: Walkable to Museum Island, Brandenburg Gate, Unter den Linden',
+          'Prenzlauer Berg: Leafy, cafes and family‑friendly, near Mauerpark',
+          'Friedrichshain: East Side Gallery, nightlife, easy S‑Bahn',
+          'Charlottenburg: Ku’damm, Charlottenburg Palace, classic West Berlin',
+          'Kreuzberg: Creative, food scene, canal walks'
+        ],
+        recommendations: {
+          'Mitte': 'ARCOTEL John F (mid), Adina Apartment Hotel Hackescher Markt (mid), Hotel de Rome (luxury)',
+          'Prenzlauer Berg': 'Hotel Oderberger (mid), Schoenhouse Studios (mid), Pension Absolut (budget)',
+          'Charlottenburg': 'Hotel Zoo Berlin (luxury), Sir Savigny (mid), Motel One Upper West (budget)'
+        }
+      },
+      dining: [
+        { name: 'Markthalle Neun', description: 'Street food hall (Thu Street Food Thursday)', type: 'Lunch or casual dinner', why: 'Variety and quality under one roof', review: 'Fantastic options; arrive hungry.', tip: 'Check event days for special vendors' },
+        { name: 'Mustafa’s Gemüse Kebap / Konnopke’s Imbiss', description: 'Beloved Berlin street‑food institutions', type: 'Quick bite', why: 'Classic Berlin flavors', review: 'Queues move fast; worth the wait.', tip: 'Go off‑peak to avoid long lines' },
+        { name: 'Zur letzten Instanz', description: 'Historic German restaurant (since 1621)', type: 'Dinner reservation', why: 'Traditional cuisine in old‑world setting', review: 'Pork knuckle and dumplings are classics.', tip: 'Reserve ahead; cozy and popular' }
+      ],
+      reviews: [
+        'Museum Island could fill a whole day—audio guides are excellent.',
+        'East Side Gallery murals are moving; go early for photos.',
+        'Cycling around Tiergarten and the canals was a highlight.'
+      ],
+      travelTips: [
+        { category: 'Transit', description: 'Buy a Berlin ABC pass if flying to BER and visiting Potsdam; validate tickets.' },
+        { category: 'Timing', description: 'Reserve Reichstag Dome; many museums closed Mondays.' },
+        { category: 'Cash/Card', description: 'Cards widely accepted; some kiosks prefer cash.' }
+      ],
+      apps: [
+        { name: 'BVG Fahrinfo / Jelbi', description: 'Public transport tickets and routing' },
+        { name: 'Google Maps (offline)', description: 'Download areas for coverage underground' },
+        { name: 'Too Good To Go', description: 'Food bargains from cafes and bakeries' }
+      ],
+      emergencyInfo: `- **Emergency Numbers**: 112 (emergency), 110 (police)
+- **Hospitals**: Charité – Universitätsmedizin Berlin; DRK Kliniken Berlin
+- **Pharmacies**: "Apotheke" signs; late‑night options rotate
+- **Tourist Info**: Brandenburg Gate, Central Station (Hbf)
+- **Consulates**: Check location and hours in advance`
+    };
+  }
+
   if (dest.includes('philippines') || dest.includes('manila') || dest.includes('cebu') || dest.includes('boracay') || dest.includes('palawan') || dest.includes('el nido')) {
     return {
       language: 'Filipino/Tagalog (official), English widely spoken',
@@ -483,6 +548,20 @@ function getDestinationInfo(destination) {
 function getDailyActivities(destination, nDays) {
   const dest = destination.toLowerCase();
   
+  if (dest.includes('berlin')) {
+    const days = [
+      { morning: '🏛️ Museum Island (Pergamon Panorama or Neues Museum)', afternoon: '🗽 Berlin Cathedral & Spree river walk', evening: '🍽️ Dinner in Hackescher Markt', review: 'Island pass made it easy to see multiple museums.', tip: 'Reserve time slots; closed some Mondays', map: '📍 Museum Island' },
+      { morning: '🚶 Unter den Linden → Brandenburg Gate', afternoon: '🏛️ Reichstag Dome (booked visit)', evening: '🌳 Tiergarten stroll & Café am Neuen See', review: 'Reichstag audio guide is excellent and free.', tip: 'Bring ID for security at Reichstag', map: '📍 Reichstag' },
+      { morning: '🧱 East Side Gallery mural walk', afternoon: '🌉 Oberbaum Bridge & Spree riverside', evening: '🍻 Friedrichshain dinner & craft beer', review: 'Street art + sunset over the river was perfect.', tip: 'Go early for fewer crowds/photos', map: '📍 East Side Gallery' },
+      { morning: '📜 Topography of Terror (documentation center)', afternoon: '🪖 Checkpoint Charlie & Gendarmenmarkt', evening: '🍷 Dinner around Mitte/Prenzlauer Berg', review: 'Sobering but very informative exhibits.', tip: 'Most content is bilingual; allow 90–120 min', map: '📍 Niederkirchnerstraße 8' },
+      { morning: '🏰 Charlottenburg Palace & Gardens', afternoon: '🛍️ Kurfürstendamm & KaDeWe food hall', evening: '🎶 Potsdamer Platz/Philharmonie (if available)', review: 'Gardens are lovely on clear days.', tip: 'Book palace timeslot; combine with Ku’damm', map: '📍 Schloss Charlottenburg' },
+      { morning: '🚲 Tempelhofer Feld cycling or walk', afternoon: '🛍️ Markthalle Neun / food crawl', evening: '🎭 Theater/club or canal walk (Landwehrkanal)', review: 'Tempelhof runways—unique city space.', tip: 'Rent bikes or grab e‑scooters nearby', map: '📍 Tempelhofer Damm' },
+      { morning: '🕍 Jewish Museum or DDR Museum (your pick)', afternoon: '🌳 Mauerpark & fleamarket (Sun)', evening: '🎤 Karaoke / street food (Sun)', review: 'Mauerpark on Sunday is peak local vibe.', tip: 'Check museum hours and market days', map: '📍 Mauerpark' },
+      { morning: '🚆 Day trip (Potsdam palaces or Sachsenhausen Memorial)', afternoon: '🏞️ Sanssouci Park (if Potsdam)', evening: '🍽️ Return to Berlin—farewell dinner', review: 'Potsdam is an easy S‑Bahn ride away.', tip: 'ABC ticket covers Potsdam; validate it', map: '📍 Potsdam Hbf' }
+    ];
+    return Array.from({ length: Math.max(1, nDays) }, (_, i) => days[i % days.length]);
+  }
+
   if (dest.includes('philippines') || dest.includes('manila') || dest.includes('cebu') || dest.includes('boracay') || dest.includes('palawan') || dest.includes('el nido')) {
     return [
       {
