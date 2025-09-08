@@ -664,7 +664,24 @@ function localPlanMarkdown(input) {
  </table>
 
 ## 🗺️ Getting Around
-Public transport is reliable. Use regional trains and buses for intercity moves; walk or tram in the center. For remote areas, consider a 1–2 day car rental. Book airport transfers in advance for late arrivals.
+${destinationInfo.transportation || 'Public transport is reliable. Use regional trains and buses for intercity moves; walk or tram in the center. For remote areas, consider a 1–2 day car rental. Book airport transfers in advance for late arrivals.'}
+${dest.includes('el nido') || dest.includes('boracay') || dest.includes('palawan') ? `
+
+**🚢 Island Transportation:**
+- **El Nido to Manila**: 1-hour flight (PAL, Cebu Pacific) or 6-8 hour bus + ferry
+- **El Nido to Boracay**: 1-hour flight via Manila or 8-10 hour bus + ferry journey
+- **Island Hopping**: Book tours in advance - Tours A, B, C, D available
+- **Local Transport**: Tricycles (₱50-100), motorbikes (₱500/day), boats for island transfers
+- **Airport Transfer**: El Nido Airport to town (15 min, ₱200-300)
+
+**⚠️ Important**: El Nido is remote - plan flights and accommodations well in advance. Weather can affect boat tours.` : ''}
+${dest.includes('philippines') && !dest.includes('el nido') && !dest.includes('boracay') ? `
+
+**🚌 Philippine Transportation:**
+- **Inter-island**: Domestic flights (PAL, Cebu Pacific, AirAsia) or ferries (2GO, SuperFerry)
+- **Local Transport**: Jeepneys (₱8-15), tricycles (₱50-100), Grab rideshare
+- **Long Distance**: Buses (Victory Liner, Philtranco) for Luzon, ferries for Visayas/Mindanao
+- **Airport Transfers**: Book in advance for late arrivals, especially to remote destinations` : ''}
 
 ## 🏙️ Best Areas to Stay
 ${destinationInfo.accommodation.areas.map(area => `- **${area.split(':')[0]}**: ${area.split(':')[1]}`).join('\n')}
@@ -715,11 +732,23 @@ ${dietary && dietary.length ? `- Dietary-friendly options: ${dietary.join(', ')}
   <div class="dont-forget-item"><input type="checkbox" onchange="window.toggleItem(this)"><label>Power adapter (Type C/E)</label></div>
   <div class="dont-forget-item"><input type="checkbox" onchange="window.toggleItem(this)"><label>Local SIM/eSIM or roaming plan</label></div>
   <div class="dont-forget-item"><input type="checkbox" onchange="window.toggleItem(this)"><label>Reusable water bottle</label></div>
+  ${dest.includes('el nido') || dest.includes('boracay') || dest.includes('palawan') ? `
+  <div class="dont-forget-item"><input type="checkbox" onchange="window.toggleItem(this)"><label>Reef-safe sunscreen (mandatory for island tours)</label></div>
+  <div class="dont-forget-item"><input type="checkbox" onchange="window.toggleItem(this)"><label>Waterproof camera or phone case</label></div>
+  <div class="dont-forget-item"><input type="checkbox" onchange="window.toggleItem(this)"><label>Snorkeling gear (optional - tours provide)</label></div>
+  <div class="dont-forget-item"><input type="checkbox" onchange="window.toggleItem(this)"><label>Motion sickness medication (for boat tours)</label></div>` : ''}
 </div>
 
+## 🎯 Tour Guide Expertise
+**20+ Years of Local Knowledge:**
+- **Hidden Gems**: ${dest.includes('el nido') ? 'Secret lagoons accessible only by local boats, hidden beaches away from crowds' : 'Off-the-beaten-path attractions known only to locals'}
+- **Best Timing**: ${dest.includes('el nido') ? 'Early morning lagoon tours (7 AM) for calm waters and fewer crowds' : 'Optimal visiting times for each attraction to avoid crowds'}
+- **Local Connections**: ${dest.includes('el nido') ? 'Direct relationships with boat operators and resort owners for better rates' : 'Insider access to local restaurants and cultural experiences'}
+- **Weather Wisdom**: ${dest.includes('el nido') ? 'Monsoon season patterns, safe boating conditions, and alternative indoor activities' : 'Seasonal patterns and weather-dependent activity planning'}
+- **Cultural Insights**: ${dest.includes('el nido') ? 'Palawan indigenous culture, environmental conservation efforts, and sustainable tourism practices' : 'Local customs, traditions, and cultural etiquette'}
+
 ## 🍂 Season Insights (${seasonFromDate(startISO)})
-${destinationInfo.seasonalInfo[seasonFromDate(startISO)] || 'Great weather and fewer crowds'}
-${seasonFromDate(startISO) === 'Autumn' ? destinationInfo.seasonalInfo.Autumn : seasonFromDate(startISO) === 'Summer' ? destinationInfo.seasonalInfo.Summer : seasonFromDate(startISO) === 'Winter' ? destinationInfo.seasonalInfo.Winter : destinationInfo.seasonalInfo.Spring}  
+${destinationInfo.seasonalInfo[seasonFromDate(startISO)] || 'Great weather and fewer crowds'}  
 
 ## ⭐ Traveler Reviews (Highlights)
 ${destinationInfo.reviews ? destinationInfo.reviews.map(review => `- "${review}"`).join('\n') : `- "Great destination with amazing attractions and friendly locals!"
@@ -729,19 +758,10 @@ ${destinationInfo.reviews ? destinationInfo.reviews.map(review => `- "${review}"
 - "Local transportation was reliable and the people were very welcoming."`}
 
 ## 🛡️ Essential Travel Tips for ${prettyDest}
-${destinationInfo.travelTips ? destinationInfo.travelTips.map(tip => `- **${tip.category}**: ${tip.description}`).join('\n') : `- **Opening Hours**: Most attractions open 9 AM-6 PM. Check seasonal schedules.
-- **Advance Booking**: Pre-book popular attractions and tours in advance.
-- **Transportation**: Use local transport options and validate tickets properly.
-- **Weather**: Check weather forecasts and pack appropriate clothing.
-- **Cash vs Card**: Most places accept cards, but carry cash for smaller establishments.
-- **Language**: Learn basic local phrases—locals appreciate the effort.`}
+${destinationInfo.travelTips ? destinationInfo.travelTips.map(tip => `- **${tip.category}**: ${tip.description}`).join('\n') : ''}
 
 ## 📱 Essential Apps for ${prettyDest}
-${destinationInfo.apps ? destinationInfo.apps.map(app => `- **${app.name}**: ${app.description}`).join('\n') : `- **Google Maps**: Offline area downloads for navigation
-- **Translation App**: For local language assistance
-- **Currency Converter**: Real-time exchange rates
-- **Weather App**: Local weather forecasts
-- **Transportation App**: Local transport schedules and tickets`}
+${destinationInfo.apps ? destinationInfo.apps.map(app => `- **${app.name}**: ${app.description}`).join('\n') : ''}
 
 ## 🚨 Emergency Information & Local Resources
 ${destinationInfo.emergencyInfo ? destinationInfo.emergencyInfo : `- **Emergency Numbers**: 911 (emergency), check local emergency numbers
@@ -1398,35 +1418,40 @@ function injectWidgetsIntoSections(html, widgets) {
     );
   }
 
-  // Inject GetYourGuide automatic widget into Must-See Attractions section
+  // Inject GetYourGuide automatic widget into key sections (avoid duplicates)
   try {
     const gygAuto = '<div data-gyg-widget="auto" data-gyg-partner-id="PUHVJ53"></div>';
-    modifiedHtml = modifiedHtml.replace(
-      /(<h2>🎫 Must-See Attractions<\/h2>[\s\S]*?)(<h2>🍽️|<h2>🎭|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s,
-      `$1${gygAuto}$2`
-    );
-    // Also inject under other key sections to provide visuals
-    modifiedHtml = modifiedHtml.replace(
-      /(<h2>🗺️ Getting Around<\/h2>[\s\S]*?)(<h2>🏨|<h2>🍽️|<h2>🎭|<h2>🎫|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨)/s,
-      `$1${gygAuto}$2`
-    );
-    modifiedHtml = modifiedHtml.replace(
-      /(<h2>🏨 Accommodation<\/h2>[\s\S]*?)(<h2>🍽️|<h2>🎭|<h2>🎫|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨)/s,
-      `$1${gygAuto}$2`
-    );
-    modifiedHtml = modifiedHtml.replace(
-      /(<h2>🍽️ Dining Guide<\/h2>[\s\S]*?)(<h2>🎭|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨)/s,
-      `$1${gygAuto}$2`
-    );
-    // Optional sections if present
-    modifiedHtml = modifiedHtml.replace(
-      /(<h2>🏙️ Best Areas to Stay<\/h2>[\s\S]*?)(<h2>🧭|<h2>🍂|<h2>🛡️|<h2>📱|<h2>🚨|$)/s,
-      `$1${gygAuto}$2`
-    );
-    modifiedHtml = modifiedHtml.replace(
-      /(<h2>🍂 Season Insights \(Autumn\)<\/h2>[\s\S]*?)(<h2>⭐|<h2>🛡️|<h2>📱|<h2>🚨|$)/s,
-      `$1${gygAuto}$2`
-    );
+    
+    // Only inject if not already present
+    if (!modifiedHtml.includes('data-gyg-widget="auto"')) {
+      // Inject into Must-See Attractions section
+      modifiedHtml = modifiedHtml.replace(
+        /(<h2>🎫 Must-See Attractions<\/h2>[\s\S]*?)(<h2>🍽️|<h2>🎭|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s,
+        `$1${gygAuto}$2`
+      );
+      
+      // Inject into Getting Around section (only if no flight widget already there)
+      if (!modifiedHtml.includes('data-category="flights"')) {
+        modifiedHtml = modifiedHtml.replace(
+          /(<h2>🗺️ Getting Around<\/h2>[\s\S]*?)(<h2>🏨|<h2>🍽️|<h2>🎭|<h2>🎫|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨)/s,
+          `$1${gygAuto}$2`
+        );
+      }
+      
+      // Inject into Accommodation section (only if no hotel widget already there)
+      if (!modifiedHtml.includes('data-category="accommodation"')) {
+        modifiedHtml = modifiedHtml.replace(
+          /(<h2>🏨 Accommodation<\/h2>[\s\S]*?)(<h2>🍽️|<h2>🎭|<h2>🎫|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨)/s,
+          `$1${gygAuto}$2`
+        );
+      }
+      
+      // Inject into Dining Guide section
+      modifiedHtml = modifiedHtml.replace(
+        /(<h2>🍽️ Dining Guide<\/h2>[\s\S]*?)(<h2>🎭|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨)/s,
+        `$1${gygAuto}$2`
+      );
+    }
   } catch (e) {
     console.warn('Failed to inject GYG widget:', e);
   }
