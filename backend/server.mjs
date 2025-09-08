@@ -1578,7 +1578,7 @@ app.post('/api/plan', async (req, res) => {
     };
 
     console.log('🚀 About to call generatePlanWithAI for:', payload.destination);
-    const markdown = await withTimeout(generatePlanWithAI(payload), 20000); // Increased to 20 seconds
+    const markdown = await withTimeout(generatePlanWithAI(payload), 60000); // Increased to 60 seconds
     console.log('✅ generatePlanWithAI completed, markdown length:', markdown?.length || 0);
     
     // Process image tokens and other links in the MARKDOWN first
