@@ -945,6 +945,15 @@ function enforceWayzoContracts(markdown, destination) {
   // 5. Don't remove properly formatted images - they should be preserved after linkifyTokens processing
   
   console.log('WAYZO OUTPUT CONTRACT enforcement complete');
+  // 6. Strip any raw code blocks or JSON blobs the model might have appended
+  try {
+    // Remove fenced code blocks ```...```
+    processed = processed.replace(/```[\s\S]*?```/g, '');
+    // Remove inline JSON-like blobs starting with { and containing typical keys
+    processed = processed.replace(/\n\{[\s\S]*?\}\s*$/gm, '');
+    // Remove stray triple-backtick markers
+    processed = processed.replace(/```/g, '');
+  } catch (_) {}
   return processed;
 }
 
@@ -1645,30 +1654,7 @@ function injectWidgetsIntoSections(html, widgets) {
     );
   }
   
-  // Add remaining widgets at the end if not placed
-  const placedWidgets = [flightWidget, hotelWidget, carWidget, esimWidget].filter(Boolean);
-  const remainingWidgets = widgets.filter(w => !placedWidgets.includes(w));
-  
-  if (remainingWidgets.length > 0) {
-    const remainingWidgetsHTML = remainingWidgets.map(widget => `
-      <div class="section-widget" data-category="${widget.category}">
-        <div class="widget-header">
-          <h4>${widget.name}</h4>
-          <p>${widget.description}</p>
-        </div>
-        <div class="widget-content">
-          ${widget.script}
-        </div>
-      </div>
-    `).join('');
-    
-    modifiedHtml += `
-      <div class="additional-widgets-section">
-        <h3>🚀 Additional Booking Options</h3>
-        ${remainingWidgetsHTML}
-      </div>
-    `;
-  }
+  // Do NOT append unplaced widgets at the footer to avoid layout gaps
   
   return modifiedHtml;
 }
