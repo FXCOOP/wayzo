@@ -1308,7 +1308,9 @@ app.post('/api/plan', async (req, res) => {
       ]);
     };
 
+    console.log('🚀 About to call generatePlanWithAI for:', payload.destination);
     const markdown = await withTimeout(generatePlanWithAI(payload), 20000); // Increased to 20 seconds
+    console.log('✅ generatePlanWithAI completed, markdown length:', markdown?.length || 0);
     
     // Process image tokens and other links in the MARKDOWN first
     const processedMarkdown = linkifyTokens(markdown, payload.destination);
@@ -1353,7 +1355,7 @@ app.post('/api/plan', async (req, res) => {
     // Track plan generation for analytics
     trackPlanGeneration(payload);
     
-    return res.json({ id, markdown, html: cleanedHTML, affiliates: aff, version: VERSION, permalink: `/plan/${id}` });
+    return res.json({ id, markdown, html: cleanedHTML, affiliates: aff, version: VERSION, permalink: `/plan/${id}`, debug: { aiCalled: true, markdownLength: markdown?.length || 0, destination: payload.destination } });
   } catch (e) {
     console.error('Plan generation error:', e);
     try {
