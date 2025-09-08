@@ -1335,6 +1335,12 @@ SPECIFIC EXAMPLES FOR ${destination.toUpperCase()}:
 - Restaurants: Trattoria da Enzo, Roscioli, La Pergola, Armando al Pantheon
 - Hotels: Hotel Artemide, The First Roma Arte, Hotel de Russie, Palazzo Naiadi
 
+CRITICAL: You MUST use SPECIFIC, REAL place names. NEVER use generic terms like:
+- "Historic Old Town Walking Tour" → Use specific attractions like "Colosseum" or "Roman Forum"
+- "Local Restaurant" → Use specific restaurants like "Trattoria da Enzo" or "Roscioli"
+- "City Center Hotel" → Use specific hotels like "Hotel Artemide" or "The First Roma Arte"
+- "Local Museum" → Use specific museums like "Vatican Museums" or "Capitoline Museums"
+
 Please plan a trip with the following inputs:
 
 DATA ====
