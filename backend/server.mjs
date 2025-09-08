@@ -1169,11 +1169,12 @@ async function generatePlanWithAI(payload) {
     user += `\n\n**UPLOADED DOCUMENTS:** User has uploaded ${uploadedFiles.length} document(s) including: ${uploadedFiles.map(f => f.name).join(', ')}. Consider any existing plans or preferences mentioned in these documents when creating the itinerary.`;
   }
 
-  // TEMPORARILY DISABLE AI TO FIX HANGING ISSUE
-  console.warn('AI temporarily disabled to fix hanging issue, using local fallback');
-  let md = localPlanMarkdown(payload);
-  md = ensureDaySections(md, nDays, start);
-  return md;
+  if (!client) {
+    console.warn('OpenAI API key not set, using local fallback');
+    let md = localPlanMarkdown(payload);
+    md = ensureDaySections(md, nDays, start);
+    return md;
+  }
   
   try {
     const modelName = process.env.WAYZO_MODEL || process.env.OPENAI_MODEL || "gpt-4o-mini";
@@ -1186,26 +1187,33 @@ async function generatePlanWithAI(payload) {
       console.log(`OpenAI attempt ${attempt}...`);
       
       try {
-        const resp = await Promise.race([
-          client.chat.completions.create({
-            model: modelName,
-            temperature: 0.7,
-            max_tokens: 4000,
-            messages: [
-              { role: "system", content: sys },
-              { role: "user", content: user }
-            ],
-          }),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('API timeout')), 15000))
-        ]);
+        // Create a timeout promise that rejects after 10 seconds
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Request timeout after 10 seconds')), 10000);
+        });
+        
+        // Create the API call promise
+        const apiPromise = client.chat.completions.create({
+          model: modelName,
+          temperature: 0.7,
+          max_tokens: 4000,
+          messages: [
+            { role: "system", content: sys },
+            { role: "user", content: user }
+          ],
+        });
+        
+        // Race between API call and timeout
+        const resp = await Promise.race([apiPromise, timeoutPromise]);
+        
         console.log('Chat API finish_reason:', resp.choices?.[0]?.finish_reason);
         md = resp.choices?.[0]?.message?.content?.trim() || "";
         
-        if (md) {
+        if (md && md.length > 100) {
           console.log('OpenAI response length:', md.length);
           break;
         }
-        console.warn('OpenAI response empty on attempt', attempt);
+        console.warn('OpenAI response empty or too short on attempt', attempt);
       } catch (apiError) {
         console.error(`OpenAI API error on attempt ${attempt}:`, apiError.message);
         if (attempt === 2) {
@@ -1511,7 +1519,7 @@ app.post('/api/plan', async (req, res) => {
       ]);
     };
 
-    const markdown = await withTimeout(generatePlanWithAI(payload), 30000); // Reduced to 30 seconds
+    const markdown = await withTimeout(generatePlanWithAI(payload), 15000); // Reduced to 15 seconds
     
     // Process image tokens and other links in the MARKDOWN first
     const processedMarkdown = linkifyTokens(markdown, payload.destination);
