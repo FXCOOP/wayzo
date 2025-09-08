@@ -1105,6 +1105,7 @@ console.log('OpenAI client created:', !!client);
 console.log('Client type:', typeof client);
 async function generatePlanWithAI(payload) {
   console.log('🚀 NEW AI INTEGRATION - Starting fresh approach');
+  console.log('🎯 FUNCTION CALLED - This should appear in logs!');
   
   const { destination = '', start = '', end = '', budget = 0, adults = 2, children = 0, level = 'mid', prefs = '', dietary = [] } = payload || {};
   const nDays = daysBetween(start, end);
