@@ -1207,7 +1207,11 @@ async function generatePlanWithAI(payload) {
         const resp = await Promise.race([apiPromise, timeoutPromise]);
         
         console.log('Chat API finish_reason:', resp.choices?.[0]?.finish_reason);
+        console.log('Chat API response structure:', JSON.stringify(resp, null, 2).substring(0, 500));
         md = resp.choices?.[0]?.message?.content?.trim() || "";
+        
+        console.log('Extracted markdown length:', md.length);
+        console.log('Extracted markdown preview:', md.substring(0, 200));
         
         if (md && md.length > 100) {
           console.log('OpenAI response length:', md.length);
