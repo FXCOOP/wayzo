@@ -1297,6 +1297,12 @@ EXAMPLES OF WHAT TO DO:
 - For Paris: Eiffel Tower, Louvre Museum, Café de Flore, Hotel Ritz Paris
 - For Tokyo: Senso-ji Temple, Tsukiji Fish Market, Sukiyabashi Jiro, Hotel Okura Tokyo
 
+CRITICAL: You MUST use SPECIFIC, REAL place names. NEVER use generic terms like:
+- "Historic Old Town Walking Tour" → Use specific attractions like "Colosseum" or "Roman Forum"
+- "Local Restaurant" → Use specific restaurants like "Trattoria da Enzo" or "Roscioli"
+- "City Center Hotel" → Use specific hotels like "Hotel Artemide" or "The First Roma Arte"
+- "Local Museum" → Use specific museums like "Vatican Museums" or "Capitoline Museums"
+
 EXAMPLE OF CORRECT FORMATTING:
 ## 🎯 Trip Overview
 Welcome to your family adventure in Tyrol...
@@ -1323,6 +1329,11 @@ FOR ${destination.toUpperCase()}, you MUST research and include REAL places like
 - REAL hotels with actual names and features
 - REAL transportation options with specific details
 - REAL cultural insights specific to ${destination}
+
+SPECIFIC EXAMPLES FOR ${destination.toUpperCase()}:
+- Attractions: Colosseum, Roman Forum, Pantheon, Trevi Fountain, Vatican City
+- Restaurants: Trattoria da Enzo, Roscioli, La Pergola, Armando al Pantheon
+- Hotels: Hotel Artemide, The First Roma Arte, Hotel de Russie, Palazzo Naiadi
 
 Please plan a trip with the following inputs:
 
