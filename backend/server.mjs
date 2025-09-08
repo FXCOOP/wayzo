@@ -1186,20 +1186,40 @@ async function generatePlanWithAI(payload) {
     let md = "";
     for (let attempt = 1; attempt <= 2; attempt++) {
       console.log(`OpenAI attempt ${attempt}...`);
+      
+      // Try GPT-5 first, but fallback to regular chat completions if it fails
       if (isGpt5 && client?.beta?.chat?.completions?.responses?.create) {
-        const resp = await client.beta.chat.completions.responses.create({
-          model: modelName,
-          instructions: sys,
-          input: user,
-          temperature: 0.7,
-          max_output_tokens: 4000,
-        });
-        const out = (resp?.output_text ?? resp?.output ?? "").toString();
-        md = out.trim();
-        console.log('Responses API finish_reason:', resp?.finish_reason || 'n/a', 'len:', md.length);
+        try {
+          const resp = await client.beta.chat.completions.responses.create({
+            model: modelName,
+            instructions: sys,
+            input: user,
+            temperature: 0.7,
+            max_output_tokens: 4000,
+          });
+          const out = (resp?.output_text ?? resp?.output ?? "").toString();
+          md = out.trim();
+          console.log('Responses API finish_reason:', resp?.finish_reason || 'n/a', 'len:', md.length);
+        } catch (gpt5Error) {
+          console.warn('GPT-5 API failed, falling back to regular chat completions:', gpt5Error.message);
+          // Fallback to regular chat completions
+          const resp = await client.chat.completions.create({
+            model: "gpt-4o-mini", // Use reliable model
+            temperature: 0.7,
+            max_tokens: 4000,
+            messages: [
+              { role: "system", content: sys },
+              { role: "user", content: user }
+            ],
+          });
+          console.log('Chat API finish_reason:', resp.choices?.[0]?.finish_reason);
+          md = resp.choices?.[0]?.message?.content?.trim() || "";
+        }
       } else {
+        // Use reliable model if the configured model fails
+        const fallbackModel = modelName === "gpt-5" ? "gpt-4o-mini" : modelName;
         const resp = await client.chat.completions.create({
-          model: modelName,
+          model: fallbackModel,
           temperature: 0.7,
           max_tokens: 4000,
           messages: [
