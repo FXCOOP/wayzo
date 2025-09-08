@@ -1169,12 +1169,11 @@ async function generatePlanWithAI(payload) {
     user += `\n\n**UPLOADED DOCUMENTS:** User has uploaded ${uploadedFiles.length} document(s) including: ${uploadedFiles.map(f => f.name).join(', ')}. Consider any existing plans or preferences mentioned in these documents when creating the itinerary.`;
   }
 
-  if (!client) {
-    console.warn('OpenAI API key not set, using local fallback');
-    let md = localPlanMarkdown(payload);
-    md = ensureDaySections(md, nDays, start);
-    return md;
-  }
+  // TEMPORARILY DISABLE AI TO PREVENT CRASHING WITH NEW API KEY
+  console.warn('AI temporarily disabled to prevent server crashes, using local fallback');
+  let md = localPlanMarkdown(payload);
+  md = ensureDaySections(md, nDays, start);
+  return md;
   
   try {
     const modelName = process.env.WAYZO_MODEL || process.env.OPENAI_MODEL || "gpt-4o-mini";
