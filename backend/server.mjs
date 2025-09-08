@@ -280,7 +280,7 @@ const perPersonPerDay = (t = 0, d = 1, tr = 1) => Math.round((Number(t) || 0) / 
 function getDestinationInfo(destination) {
   const dest = destination.toLowerCase();
   
-  if (dest.includes('philippines') || dest.includes('manila') || dest.includes('cebu') || dest.includes('boracay') || dest.includes('palawan')) {
+  if (dest.includes('philippines') || dest.includes('manila') || dest.includes('cebu') || dest.includes('boracay') || dest.includes('palawan') || dest.includes('el nido')) {
     return {
       language: 'Filipino/Tagalog (official), English widely spoken',
       currency: 'Philippine Peso (PHP)',
@@ -331,6 +331,15 @@ function getDestinationInfo(destination) {
           why: 'Iconic Philippine landmark offering panoramic views and unique photo opportunities',
           review: 'Amazing natural wonder! The view from the observation deck was absolutely stunning.',
           tip: 'Best lighting for photos is during golden hour. Combine with Tarsier Sanctuary visit.'
+        },
+        {
+          name: 'El Nido Lagoons Tour (Palawan)',
+          description: 'Stunning limestone lagoons with crystal clear waters',
+          duration: 'Full day',
+          bestTime: 'early morning',
+          why: 'World-famous lagoons with breathtaking scenery and perfect for island hopping',
+          review: 'Absolutely incredible! The lagoons were like paradise - crystal clear water and stunning limestone cliffs.',
+          tip: 'Book tours in advance as they sell out quickly. Bring waterproof camera and reef-safe sunscreen.'
         }
       ],
       accommodation: {
@@ -372,7 +381,41 @@ function getDestinationInfo(destination) {
           review: 'Amazing seafood! The grilled fish was incredibly fresh and flavorful.',
           tip: 'Ask for the daily catch. Best seafood is usually available in coastal areas.'
         }
-      ]
+      ],
+      reviews: [
+        "Boracay White Beach was absolutely pristine! Perfect for families with kids - shallow waters and soft sand.",
+        "Intramuros was absolutely fascinating! The Spanish colonial architecture was stunning.",
+        "El Nido lagoons were like paradise - crystal clear water and stunning limestone cliffs.",
+        "Filipino cuisine was incredible! The lechon and adobo were amazing, and the staff was so welcoming.",
+        "The island hopping tours were perfect for families - kids loved the snorkeling and beach activities."
+      ],
+      travelTips: [
+        { category: "Opening Hours", description: "Most attractions open 8 AM-6 PM. Check seasonal schedules for island tours." },
+        { category: "Advance Booking", description: "Pre-book popular attractions like El Nido lagoons, Boracay activities, and island hopping tours." },
+        { category: "Transportation", description: "Use local transport options like jeepneys, tricycles, and boats. Validate tickets properly." },
+        { category: "Weather", description: "Check weather forecasts - tropical climate with afternoon rains possible. Pack rain gear." },
+        { category: "Cash vs Card", description: "Most places accept cards, but carry cash for smaller establishments and island tours." },
+        { category: "Language", description: "Learn basic Filipino phrases—locals appreciate the effort, though English is widely spoken." }
+      ],
+      apps: [
+        { name: "Grab", description: "Ride-hailing and food delivery app" },
+        { name: "Google Maps", description: "Offline area downloads for navigation" },
+        { name: "Google Translate", description: "Filipino-English translation" },
+        { name: "XE Currency", description: "Real-time PHP exchange rates" },
+        { name: "Weather App", description: "Tropical weather forecasts" },
+        { name: "Transportation Apps", description: "Local transport schedules and tickets" }
+      ],
+      emergencyInfo: `- **Emergency Numbers**: 911 (emergency), 117 (police), 143 (medical)
+- **Medical Centers**: 
+  - Makati Medical Center (Makati)
+  - St. Luke's Medical Center (Quezon City)
+  - El Nido Medical Clinic (El Nido)
+- **Pharmacies**: Look for "Botika" signs. Most open 8 AM-8 PM
+- **Tourist Information**: 
+  - Department of Tourism offices in major cities
+  - Local tourist information centers
+- **Lost & Found**: Contact local police stations or tourist offices
+- **Consulate Services**: Check for nearest consulate services in Manila`
     };
   }
   
@@ -423,7 +466,7 @@ function getDestinationInfo(destination) {
 function getDailyActivities(destination, nDays) {
   const dest = destination.toLowerCase();
   
-  if (dest.includes('philippines') || dest.includes('manila') || dest.includes('cebu') || dest.includes('boracay') || dest.includes('palawan')) {
+  if (dest.includes('philippines') || dest.includes('manila') || dest.includes('cebu') || dest.includes('boracay') || dest.includes('palawan') || dest.includes('el nido')) {
     return [
       {
         morning: "🏰 **Intramuros Historic District** (Fort Santiago → San Agustin Church → Casa Manila)",
@@ -488,6 +531,22 @@ function getDailyActivities(destination, nDays) {
         review: "Manila Ocean Park was perfect for families! The kids loved the marine life exhibits.",
         tip: "Day trips often require advance booking—plan transportation ahead of time.",
         map: "📍 Manila Ocean Park, Quirino Grandstand"
+      },
+      {
+        morning: "🏝️ **El Nido Lagoons Tour A** (Small Lagoon → Big Lagoon → Secret Lagoon)",
+        afternoon: "🤿 **Snorkeling at Shimizu Island** - Coral reefs & marine life",
+        evening: "🍽️ **Artcafe** (El Nido Town) - Beachfront dining with sunset views",
+        review: "El Nido lagoons were absolutely stunning! The crystal clear water was like paradise.",
+        tip: "Book lagoon tours in advance as they sell out quickly. Bring waterproof camera and reef-safe sunscreen.",
+        map: "📍 El Nido Lagoons, Palawan"
+      },
+      {
+        morning: "🏝️ **El Nido Lagoons Tour C** (Hidden Beach → Matinloc Shrine → Helicopter Island)",
+        afternoon: "🏖️ **Nacpan Beach** - Long white sand beach perfect for families",
+        evening: "🍽️ **Trattoria Altrove** (El Nido Town) - Italian-Filipino fusion cuisine",
+        review: "Hidden Beach was incredible! The kids loved playing in the shallow waters.",
+        tip: "Nacpan Beach is perfect for families with kids. Bring beach toys and snacks.",
+        map: "📍 Hidden Beach, El Nido, Palawan"
       }
     ];
   }
@@ -658,46 +717,39 @@ ${dietary && dietary.length ? `- Dietary-friendly options: ${dietary.join(', ')}
   <div class="dont-forget-item"><input type="checkbox" onchange="window.toggleItem(this)"><label>Reusable water bottle</label></div>
 </div>
 
-## 🍂 Season Insights (Autumn)
-- Best visibility for alpine views; cooler mornings and warm afternoons  
-- Shoulder season pricing on hotels and tours  
-- Pack layers; lifts and some attractions may reduce hours after late September  
+## 🍂 Season Insights (${seasonFromDate(startISO)})
+${destinationInfo.seasonalInfo[seasonFromDate(startISO)] || 'Great weather and fewer crowds'}
+${seasonFromDate(startISO) === 'Autumn' ? destinationInfo.seasonalInfo.Autumn : seasonFromDate(startISO) === 'Summer' ? destinationInfo.seasonalInfo.Summer : seasonFromDate(startISO) === 'Winter' ? destinationInfo.seasonalInfo.Winter : destinationInfo.seasonalInfo.Spring}  
 
 ## ⭐ Traveler Reviews (Highlights)
-- "The Nordkette Cable Car ride gave us unforgettable panoramas of the entire Tyrolean Alps—worth every penny!"
-- "Innsbruck's Old Town cafes were perfect for slow mornings; the apple strudel and melange were absolute must-tries."
-- "The Tyrol Card saved us money across multiple lifts, buses, and museums—highly recommend getting one."
-- "Ambras Castle gardens were stunning, and the Renaissance art collection was world-class."
-- "Traditional Tyrolean dinner at Gasthof Weisses Kreuz felt like dining with family—incredible hospitality."
+${destinationInfo.reviews ? destinationInfo.reviews.map(review => `- "${review}"`).join('\n') : `- "Great destination with amazing attractions and friendly locals!"
+- "The local cuisine was incredible and the cultural sites were fascinating."
+- "Perfect for families with lots of activities for kids and adults alike."
+- "The natural beauty was stunning and the beaches were pristine."
+- "Local transportation was reliable and the people were very welcoming."`}
 
-## 🛡️ Essential Travel Tips for Tyrol
-- **Opening Hours**: Most attractions open 9 AM-6 PM, closed Mondays. Check seasonal schedules for mountain lifts.
-- **Advance Booking**: Pre-book popular attractions like Nordkette Cable Car, Ambras Castle, and cooking classes.
-- **Transportation**: Validate tickets on regional transport (ÖBB trains, IVB buses). Tyrol Card covers most public transport.
-- **Weather**: Mountain weather changes quickly—pack layers and check forecasts before heading to higher altitudes.
-- **Cash vs Card**: Most places accept cards, but carry cash for smaller establishments and mountain huts.
-- **Language**: Learn basic German phrases—locals appreciate the effort, though English is widely spoken.
+## 🛡️ Essential Travel Tips for ${prettyDest}
+${destinationInfo.travelTips ? destinationInfo.travelTips.map(tip => `- **${tip.category}**: ${tip.description}`).join('\n') : `- **Opening Hours**: Most attractions open 9 AM-6 PM. Check seasonal schedules.
+- **Advance Booking**: Pre-book popular attractions and tours in advance.
+- **Transportation**: Use local transport options and validate tickets properly.
+- **Weather**: Check weather forecasts and pack appropriate clothing.
+- **Cash vs Card**: Most places accept cards, but carry cash for smaller establishments.
+- **Language**: Learn basic local phrases—locals appreciate the effort.`}
 
-## 📱 Essential Apps for Tyrol
-- **ÖBB Scotty**: Train schedules and tickets for Austrian railways
-- **IVB Live**: Innsbruck public transport real-time info
-- **Bergfex**: Mountain weather forecasts and trail conditions
-- **Google Maps**: Offline area downloads for mountain regions
-- **DeepL**: Translation app for German-English
-- **XE Currency**: Real-time EUR exchange rates
-- **Tyrol Card App**: Digital version of the tourist card
+## 📱 Essential Apps for ${prettyDest}
+${destinationInfo.apps ? destinationInfo.apps.map(app => `- **${app.name}**: ${app.description}`).join('\n') : `- **Google Maps**: Offline area downloads for navigation
+- **Translation App**: For local language assistance
+- **Currency Converter**: Real-time exchange rates
+- **Weather App**: Local weather forecasts
+- **Transportation App**: Local transport schedules and tickets`}
 
 ## 🚨 Emergency Information & Local Resources
-- **Emergency Numbers**: 112 (EU emergency), 144 (medical), 133 (police), 122 (fire)
-- **Medical Centers**: 
-  - Universitätsklinik Innsbruck (Anichstraße 35, Innsbruck)
-  - Krankenhaus Kitzbühel (Hornweg 28, Kitzbühel)
-- **Pharmacies**: Look for "Apotheke" signs. Most open 8 AM-6 PM, some have 24-hour emergency service
-- **Tourist Information**: 
-  - Innsbruck Tourist Office (Burggraben 3, Innsbruck)
-  - Kitzbühel Tourist Office (Hinterstadt 4, Kitzbühel)
+${destinationInfo.emergencyInfo ? destinationInfo.emergencyInfo : `- **Emergency Numbers**: 911 (emergency), check local emergency numbers
+- **Medical Centers**: Check local hospitals and clinics
+- **Pharmacies**: Look for local pharmacy signs and hours
+- **Tourist Information**: Contact local tourist offices
 - **Lost & Found**: Contact local police stations or tourist offices
-- **Consulate Services**: Nearest US Consulate in Munich, Germany
+- **Consulate Services**: Check for nearest consulate services`}
 `;
 
   // Linkify image and booking tokens and return
