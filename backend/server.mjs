@@ -1182,6 +1182,32 @@ async function generatePlanWithAI(payload) {
     console.log('API Key present:', !!process.env.OPENAI_API_KEY);
     console.log('User prompt length:', user.length);
 
+    // SIMPLE TEST: Try a basic AI call first
+    try {
+      console.log('Testing basic AI call...');
+      const testResp = await client.chat.completions.create({
+        model: modelName,
+        temperature: 0.7,
+        max_tokens: 100,
+        messages: [
+          { role: "user", content: "Say 'AI is working' if you can respond." }
+        ],
+      });
+      
+      const testContent = testResp.choices?.[0]?.message?.content?.trim() || "";
+      console.log('Basic AI test response:', testContent);
+      
+      if (testContent.includes('AI is working')) {
+        console.log('✅ Basic AI test passed, proceeding with full call...');
+      } else {
+        console.log('❌ Basic AI test failed, using local fallback');
+        throw new Error('Basic AI test failed');
+      }
+    } catch (testError) {
+      console.error('Basic AI test failed:', testError.message);
+      throw testError;
+    }
+
     let md = "";
     for (let attempt = 1; attempt <= 2; attempt++) {
       console.log(`OpenAI attempt ${attempt}...`);
