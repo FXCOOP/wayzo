@@ -1317,6 +1317,13 @@ EXAMPLE: For Rome, you should mention specific places like:
 - Hotel Artemide (not "City Center Hotel")
 - Trevi Fountain (not "Historic Old Town Walking Tour")
 
+FOR ${destination.toUpperCase()}, you MUST research and include REAL places like:
+- REAL restaurants with actual names and addresses
+- REAL attractions with specific names and locations
+- REAL hotels with actual names and features
+- REAL transportation options with specific details
+- REAL cultural insights specific to ${destination}
+
 Please plan a trip with the following inputs:
 
 DATA ====
