@@ -1205,6 +1205,19 @@ CONTENT QUALITY REQUIREMENTS (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH):
 - Add cultural context and historical background
 - Include practical information like parking, accessibility, and family-friendly features
 
+ENHANCED CONTENT REQUIREMENTS (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH):
+- Research and include ALL possible recommendations that match user preferences
+- Provide family-specific recommendations based on children's ages
+- Include detailed descriptions of each activity, restaurant, and attraction
+- Add insider tips, local secrets, and hidden gems
+- Include seasonal considerations and weather-dependent alternatives
+- Provide specific timing recommendations (best times to visit, avoid crowds)
+- Include detailed transportation instructions with costs and duration
+- Add cultural context and local customs for each recommendation
+- Include accessibility information for families with children
+- Provide detailed cost breakdowns with current market prices
+- Include booking recommendations and advance reservation requirements
+
 MANDATORY SECTIONS (ALL MUST BE INCLUDED):
 1. 🎯 Trip Overview - Quick facts and highlights
 2. 💰 Budget Breakdown - Detailed cost analysis with checkboxes
@@ -1217,6 +1230,31 @@ MANDATORY SECTIONS (ALL MUST BE INCLUDED):
 9. 🛡️ Travel Tips - Local customs, safety, and practical advice
 10. 📱 Useful Apps - Mobile apps for the destination
 11. 🚨 Emergency Info - Important contacts and healthcare
+
+GOALS:
+- Produce a realistic, day-by-day itinerary that fits dates, party, pace, style, and budget
+- Include clear booking shortcuts (flight/hotel/activity search URLs) and cost ranges
+- Structure outputs so Wayzo can render a web view, PDF, and a shareable map
+
+QUALITY RULES:
+- Pacing: ~3 anchor items/day (morning / afternoon / evening) + optional extras
+- Logistics: Group sights by neighborhood; minimize backtracking; prefer transit/walkability
+- Kids/family: Respect nap windows, early dinners, playground stops where relevant
+- Costs: Give ranges in local currency; note spikes (festivals/peak season). If unsure, say "verify on booking"
+- Seasonality: Weather-aware; include Plan B indoor options for rain/heat/cold
+- Authenticity: 1–2 local experiences per day (food market, neighborhood stroll, viewpoint)
+- Sustainability (when asked): trains/public transit, city cards, local vendors
+
+LINK RULES:
+- Use SEARCH URLs only (no made-up affiliate params): 
+  flights: https://www.kayak.com/flights?query={CITY}
+  hotels: https://www.booking.com/searchresults.html?ss={CITY}
+  activities: https://www.getyourguide.com/s/?q={CITY}
+- For each place, add a Google Maps search URL: https://www.google.com/maps/search/?api=1&query={ENCODED_NAME_AND_CITY}
+- Use proper token format: [Book](book:destination) for booking links
+- Use proper token format: [Tickets](tickets:attraction) for activity links
+- Use proper token format: [Reviews](reviews:place) for review links
+- Use proper token format: [Map](map:location) for map links
 
 OUTPUT FORMATTING REQUIREMENTS (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH):
 - Use EXACT Markdown section headers: ## 🎯 Trip Overview
@@ -1235,16 +1273,26 @@ OUTPUT FORMATTING REQUIREMENTS (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH):
 - ALWAYS use proper Markdown ## headers for all section headers
 - VIOLATION OF THESE FORMATTING RULES WILL CAUSE SYSTEM FAILURE
 
-LINK RULES:
-- Use SEARCH URLs only (no made-up affiliate params): 
-  flights: https://www.kayak.com/flights?query={CITY}
-  hotels: https://www.booking.com/searchresults.html?ss={CITY}
-  activities: https://www.getyourguide.com/s/?q={CITY}
-- For each place, add a Google Maps search URL: https://www.google.com/maps/search/?api=1&query={ENCODED_NAME_AND_CITY}
-- Use proper token format: [Book](book:destination) for booking links
-- Use proper token format: [Tickets](tickets:attraction) for activity links
-- Use proper token format: [Reviews](reviews:place) for review links
-- Use proper token format: [Map](map:location) for map links
+DESTINATION-SPECIFIC RESEARCH REQUIREMENTS (CRITICAL):
+- You MUST research and provide SPECIFIC, REAL places for the destination
+- NO generic placeholders like "Local Restaurant" or "Historic Old Town Walking Tour"
+- Include REAL restaurant names, REAL attraction names, REAL hotel names
+- Provide SPECIFIC addresses, phone numbers, and current operating hours
+- Include REAL cultural insights, local customs, and practical advice specific to the destination
+- Research REAL transportation options, costs, and practical tips for the destination
+- Include REAL emergency numbers, hospitals, and contacts for the destination
+- Provide REAL mobile apps that are actually useful for the destination
+- Include REAL packing items relevant to the destination's climate and culture
+- Research REAL seasonal considerations and weather-dependent alternatives
+- Provide REAL money-saving tips and local secrets specific to the destination
+
+EXAMPLE OF CORRECT FORMATTING:
+## 🎯 Trip Overview
+Welcome to your family adventure in Tyrol...
+## 💰 Budget Breakdown
+Here's a detailed cost analysis...
+## 🗺️ Getting Around
+Transportation options include...
 
 Deliver: Elegant Markdown itinerary with proper ## section headers. Include Google Maps search URLs for every place.`
         },
@@ -1261,7 +1309,87 @@ Budget: ${budget} USD
 Dietary: ${dietary.join(', ') || 'None'}
 Preferences: ${prefs || 'None'}
 
-Create a comprehensive, detailed travel itinerary with specific attractions, restaurants, and activities for ${destination}. Use markdown formatting with proper section headers.`
+COMPREHENSIVE RESEARCH REQUIREMENTS ==================================
+Research and include ALL possible recommendations that match the user's preferences and family needs:
+
+1. **Family-Specific Research**: Based on children's ages, find:
+   - Age-appropriate activities and attractions
+   - Family-friendly restaurants with kids' menus
+   - Accommodations with family amenities
+   - Educational and interactive experiences
+   - Safety considerations and child-friendly facilities
+
+2. **Preference Matching**: Based on user preferences (${prefs || 'None'}), research:
+   - All attractions and activities that match these interests
+   - Hidden gems and local secrets related to preferences
+   - Seasonal considerations for preferred activities
+   - Local events and festivals during travel dates
+   - Specialized tours and experiences
+
+3. **Comprehensive Destination Research**: Include:
+   - Top-rated attractions with current reviews and ratings
+   - Local restaurants with authentic cuisine and family-friendly options
+   - Cultural sites and historical landmarks
+   - Outdoor activities and nature experiences
+   - Shopping areas and local markets
+   - Transportation options and costs
+   - Weather considerations and seasonal activities
+
+4. **Detailed Information for Each Recommendation**:
+   - Exact names, addresses, and contact information
+   - Current opening hours and seasonal schedules
+   - Entry fees, ticket prices, and booking requirements
+   - Duration estimates and time recommendations
+   - Accessibility information and family considerations
+   - Insider tips and best times to visit
+   - Transportation instructions and costs
+   - Cultural context and local customs
+
+FINAL CHECKLIST ===============
+Before submitting your response, verify:
+□ All images follow WAYZO OUTPUT CONTRACT rules exactly
+□ No images in forbidden sections (Trip Overview, Don't Forget List, Travel Tips, Useful Apps, Emergency Info)
+□ Exactly 1 image per allowed section, placed at the END of that section
+□ All image queries include the destination name and are highly specific
+□ No duplicate image queries across sections
+□ All facts (prices, hours, closures) are current and accurate
+□ If information cannot be verified, place is not recommended
+□ All prices include disclaimers about verification
+□ Daily itineraries are specific and actionable (no generic "Open Exploration")
+□ All restaurant names, attraction names, and times are specific
+□ Budget breakdown is realistic with current market prices
+□ All booking links use proper SEARCH URL format
+□ Google Maps search URLs included for every place
+□ Content follows required section order and formatting
+□ Both human-readable Markdown and machine-readable JSON provided
+□ Content is RICH, DETAILED, and PROFESSIONAL
+□ Includes insider tips, cultural insights, and practical advice
+□ Transportation details and duration estimates provided
+□ Money-saving tips and seasonal considerations included
+□ ALL 11 MANDATORY SECTIONS are included
+□ Images use EXACT format: ![Destination — Section](image:Destination specific term)
+□ Family-specific recommendations based on children's ages
+□ All possible recommendations matching user preferences included
+□ Detailed descriptions and insider tips for each recommendation
+□ Current pricing and booking information provided
+□ Cultural context and local customs included
+□ Complete JSON output with ALL sections included (NO truncated JSON)
+□ JSON includes all daily itineraries, attractions, restaurants, and accommodation details
+
+CONTENT REQUIREMENTS ===================
+Create AMAZING, DETAILED trip plans that are:
+1. **Highly Personalized**: Use all user preferences to tailor everything
+2. **Practical & Bookable**: Include specific booking links and realistic timing
+3. **Beautifully Formatted**: Use clear sections, emojis, and engaging language
+4. **Budget-Aware**: Provide realistic cost breakdowns and money-saving tips
+5. **Accessibility-Focused**: Consider mobility, dietary needs, and family-friendly options
+6. **Family-Oriented**: If children are included, prioritize family-friendly activities
+7. **Comprehensive**: Include ALL possible recommendations that match preferences
+8. **Detailed**: Provide extensive information about each recommendation
+9. **Accurate**: Include current information and verify all details
+10. **Insider-Rich**: Include local secrets, hidden gems, and cultural insights
+
+Create a comprehensive, detailed travel itinerary with SPECIFIC attractions, restaurants, and activities for ${destination}. Use markdown formatting with proper section headers.`
         }
       ],
     });
