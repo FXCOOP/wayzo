@@ -1094,7 +1094,15 @@ function enforceWayzoContracts(markdown, destination) {
 }
 
 /* OpenAI (optional) */
+console.log('🔍 DEBUGGING OpenAI client initialization...');
+console.log('OPENAI_API_KEY exists:', !!process.env.OPENAI_API_KEY);
+console.log('OPENAI_API_KEY length:', process.env.OPENAI_API_KEY?.length || 0);
+console.log('OPENAI_API_KEY starts with sk-:', process.env.OPENAI_API_KEY?.startsWith('sk-') || false);
+console.log('OPENAI_API_KEY preview:', process.env.OPENAI_API_KEY?.substring(0, 20) + '...');
+
 const client = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
+console.log('OpenAI client created:', !!client);
+console.log('Client type:', typeof client);
 async function generatePlanWithAI(payload) {
   console.log('🚀 NEW AI INTEGRATION - Starting fresh approach');
   
