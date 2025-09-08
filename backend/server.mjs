@@ -1176,6 +1176,12 @@ async function generatePlanWithAI(payload) {
     return md;
   }
   
+  console.log('=== AI DEBUG START ===');
+  console.log('Client exists:', !!client);
+  console.log('API Key exists:', !!process.env.OPENAI_API_KEY);
+  console.log('API Key length:', process.env.OPENAI_API_KEY?.length || 0);
+  console.log('API Key starts with sk-:', process.env.OPENAI_API_KEY?.startsWith('sk-') || false);
+  
   try {
     const modelName = process.env.WAYZO_MODEL || process.env.OPENAI_MODEL || "gpt-4o-mini";
     console.log('Making OpenAI API call with model:', modelName);
@@ -1205,7 +1211,9 @@ async function generatePlanWithAI(payload) {
         });
         
         // Race between API call and timeout
+        console.log('About to make OpenAI API call...');
         const resp = await Promise.race([apiPromise, timeoutPromise]);
+        console.log('OpenAI API call completed successfully!');
         
         console.log('Chat API finish_reason:', resp.choices?.[0]?.finish_reason);
         console.log('Chat API response structure:', JSON.stringify(resp, null, 2).substring(0, 500));
