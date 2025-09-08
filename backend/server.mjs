@@ -1096,185 +1096,116 @@ function enforceWayzoContracts(markdown, destination) {
 /* OpenAI (optional) */
 const client = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 async function generatePlanWithAI(payload) {
-  const { 
-    destination = '', 
-    start = '', 
-    end = '', 
-    budget = 0, 
-    currency = 'USD $', 
-    adults = 2, 
-    children = 0, 
-    childrenAges = [],
-    level = 'mid', 
-    prefs = '', 
-    dietary = [], 
-    professional_brief = '',
-    from = '',
-    dateMode = 'exact',
-    flexibleDates = null,
-    uploadedFiles = []
-  } = payload || {};
+  console.log('🚀 NEW AI INTEGRATION - Starting fresh approach');
   
-  const nDays = dateMode === 'flexible' && flexibleDates ? flexibleDates.duration : daysBetween(start, end);
-  const totalTravelers = adults + children;
+  const { destination = '', start = '', end = '', budget = 0, adults = 2, children = 0, level = 'mid', prefs = '', dietary = [] } = payload || {};
+  const nDays = daysBetween(start, end);
   
-  // Load system prompt from file
-  let sys = '';
-  try {
-    sys = fs.readFileSync(path.join(__dirname, '..', 'prompts', 'wayzo_system.txt'), 'utf8');
-  } catch (e) {
-    console.error('Failed to load system prompt:', e);
-    sys = 'You are Wayzo, an expert AI travel planner.';
-  }
-
-  // Load user prompt template from file
-  let userTemplate = '';
-  try {
-    userTemplate = fs.readFileSync(path.join(__dirname, '..', 'prompts', 'wayzo_user.txt'), 'utf8');
-  } catch (e) {
-    console.error('Failed to load user prompt:', e);
-    userTemplate = 'Please plan a trip with the following inputs:\n\nDestination: {{destination}}';
-  }
+  // STEP 1: Check OpenAI client
+  console.log('Step 1: OpenAI client check');
+  console.log('- Client exists:', !!client);
+  console.log('- API Key exists:', !!process.env.OPENAI_API_KEY);
+  console.log('- API Key length:', process.env.OPENAI_API_KEY?.length || 0);
   
-  // Replace template variables in user prompt
-  const user = userTemplate
-    .replace(/\{\{destination\}\}/g, destination)
-    .replace(/\{\{start\}\}/g, start)
-    .replace(/\{\{end\}\}/g, end)
-    .replace(/\{\{flex_enabled\}\}/g, dateMode === 'flexible' ? 'true' : 'false')
-    .replace(/\{\{flex_days\}\}/g, flexibleDates?.flexibility || '3')
-    .replace(/\{\{adults\}\}/g, adults)
-    .replace(/\{\{children_suffix\}\}/g, children > 0 ? `, ${children} children${childrenAges.length > 0 ? ` (ages: ${childrenAges.join(', ')})` : ''}` : '')
-    .replace(/\{\{style\}\}/g, level)
-    .replace(/\{\{pace\}\}/g, 'moderate')
-    .replace(/\{\{daily_start\}\}/g, '9:00 AM')
-    .replace(/\{\{currency\}\}/g, currency)
-    .replace(/\{\{budget_total\}\}/g, budget)
-    .replace(/\{\{includes_flights\}\}/g, 'true')
-    .replace(/\{\{dietary\}\}/g, dietary.join(', ') || 'None')
-    .replace(/\{\{lodging_type\}\}/g, 'hotel')
-    .replace(/\{\{purpose_list\}\}/g, 'leisure')
-    .replace(/\{\{prefs\}\}/g, prefs || 'None')
-    .replace(/\{\{max_drive_minutes\}\}/g, '120')
-    .replace(/\{\{access_needs\}\}/g, 'None')
-    .replace(/\{\{nap_windows\}\}/g, children > 0 ? '2:00 PM - 4:00 PM' : 'None')
-    .replace(/\{\{weather_notes\}\}/g, 'Check current forecast');
-
-  // Add additional context if needed
-  if (professional_brief) {
-    user += `\n\n**PROFESSIONAL BRIEF:** ${professional_brief}\n\nUse this detailed brief to create a highly personalized plan that addresses every specific requirement mentioned.`;
-  }
-  
-  if (uploadedFiles && uploadedFiles.length > 0) {
-    user += `\n\n**UPLOADED DOCUMENTS:** User has uploaded ${uploadedFiles.length} document(s) including: ${uploadedFiles.map(f => f.name).join(', ')}. Consider any existing plans or preferences mentioned in these documents when creating the itinerary.`;
-  }
-
   if (!client) {
-    console.warn('OpenAI API key not set, using local fallback');
-    let md = localPlanMarkdown(payload);
-    md = ensureDaySections(md, nDays, start);
-    return md;
+    console.log('❌ No OpenAI client - using local fallback');
+    return localPlanMarkdown(payload);
   }
   
-  console.log('=== AI DEBUG START ===');
-  console.log('Client exists:', !!client);
-  console.log('API Key exists:', !!process.env.OPENAI_API_KEY);
-  console.log('API Key length:', process.env.OPENAI_API_KEY?.length || 0);
-  console.log('API Key starts with sk-:', process.env.OPENAI_API_KEY?.startsWith('sk-') || false);
-  
-  // STEP 2: Test API connectivity with a simple call
-  console.log('Step 2: Testing API connectivity...');
+  // STEP 2: Simple API test
+  console.log('Step 2: Testing API with simple call...');
   try {
-    const testResponse = await client.chat.completions.create({
+    const testCall = await client.chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0.1,
-      max_tokens: 50,
-      messages: [
-        { role: "user", content: "Say 'AI is working' if you can read this." }
-      ],
+      max_tokens: 20,
+      messages: [{ role: "user", content: "Say 'TEST OK'" }],
     });
     
-    const testResult = testResponse.choices?.[0]?.message?.content?.trim() || "";
-    console.log('✅ API test successful:', testResult);
+    const testResult = testCall.choices?.[0]?.message?.content?.trim() || "";
+    console.log('✅ API test result:', testResult);
     
-    if (!testResult.includes('AI is working')) {
-      throw new Error('API test failed - unexpected response');
+    if (!testResult.includes('TEST OK')) {
+      throw new Error('API test failed');
     }
   } catch (testError) {
     console.error('❌ API test failed:', testError.message);
-    console.log('Using local fallback due to API test failure');
-    let md = localPlanMarkdown(payload);
-    md = ensureDaySections(md, nDays, start);
-    return md;
+    console.log('Using local fallback');
+    return localPlanMarkdown(payload);
   }
   
+  // STEP 3: Generate actual plan
+  console.log('Step 3: Generating AI plan for', destination);
   try {
-    const modelName = process.env.WAYZO_MODEL || process.env.OPENAI_MODEL || "gpt-4o-mini";
-    console.log('Making OpenAI API call with model:', modelName);
-    console.log('API Key present:', !!process.env.OPENAI_API_KEY);
-    console.log('User prompt length:', user.length);
+    const response = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      temperature: 0.7,
+      max_tokens: 3000,
+      messages: [
+        {
+          role: "system",
+          content: "You are Wayzo, an expert travel planner. Create detailed, personalized travel itineraries in markdown format."
+        },
+        {
+          role: "user",
+          content: `Create a detailed travel plan for ${destination}:
+- Dates: ${start} to ${end} (${nDays} days)
+- Travelers: ${adults} adults${children > 0 ? `, ${children} children` : ''}
+- Budget: ${budget} USD
+- Style: ${level}
+- Preferences: ${prefs || 'None'}
+- Dietary: ${dietary.join(', ') || 'None'}
 
-
-    let md = "";
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      console.log(`OpenAI attempt ${attempt}...`);
-      
-      try {
-        // Create a timeout promise that rejects after 15 seconds
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Request timeout after 15 seconds')), 15000);
-        });
-        
-        // Create the API call promise
-        const apiPromise = client.chat.completions.create({
-          model: modelName,
-          temperature: 0.7,
-          max_tokens: 4000,
-          messages: [
-            { role: "system", content: sys },
-            { role: "user", content: user }
-          ],
-        });
-        
-        // Race between API call and timeout
-        console.log('About to make OpenAI API call...');
-        const resp = await Promise.race([apiPromise, timeoutPromise]);
-        console.log('OpenAI API call completed successfully!');
-        
-        console.log('Chat API finish_reason:', resp.choices?.[0]?.finish_reason);
-        console.log('Chat API response structure:', JSON.stringify(resp, null, 2).substring(0, 500));
-        md = resp.choices?.[0]?.message?.content?.trim() || "";
-        
-        console.log('Extracted markdown length:', md.length);
-        console.log('Extracted markdown preview:', md.substring(0, 200));
-        
-        if (md && md.length > 100) {
-          console.log('OpenAI response length:', md.length);
-          break;
+Create a comprehensive itinerary with specific attractions, restaurants, and activities for ${destination}. Use markdown formatting.`
         }
-        console.warn('OpenAI response empty or too short on attempt', attempt);
-      } catch (apiError) {
-        console.error(`OpenAI API error on attempt ${attempt}:`, apiError.message);
-        if (attempt === 2) {
-          console.log('Both attempts failed, using local fallback');
-        }
-      }
-    }
-    if (!md) {
-      console.warn('OpenAI returned empty after retries, using fallback');
-      md = localPlanMarkdown(payload);
+      ],
+    });
+    
+    const aiContent = response.choices?.[0]?.message?.content?.trim() || "";
+    console.log('✅ AI response length:', aiContent.length);
+    console.log('AI preview:', aiContent.substring(0, 150));
+    
+    if (aiContent && aiContent.length > 200) {
+      console.log('🎉 AI plan generated successfully!');
+      return aiContent;
+    } else {
+      console.log('❌ AI response too short, using fallback');
+      return localPlanMarkdown(payload);
     }
     
-    // NUCLEAR POST-PROCESSING: Completely eliminate Image Ideas section and generic content
-    let lines = md.split('\n');
-    let cleanedLines = [];
-    let skipSection = false;
-    let inImageIdeasSection = false;
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      
-      // Skip any "Open Exploration" days
+  } catch (aiError) {
+    console.error('❌ AI generation failed:', aiError.message);
+    console.log('Using local fallback');
+    return localPlanMarkdown(payload);
+  }
+}
+
+/* API */
+app.post('/api/preview', (req, res) => {
+  try {
+    console.log('Preview request received:', req.body); // Debug
+    const payload = req.body || {};
+    const currency = payload.currency || 'USD';
+    const budgetNum = Number(payload.budget || 0);
+    const level = payload.level || 'mid';
+    const destination = (payload.destination || 'your destination').toString();
+    const from = payload.from || 'your location';
+    const dateMode = payload.dateMode || 'exact';
+    const adults = Number(payload.adults || 2);
+    const children = Number(payload.children || 0);
+    const totalTravelers = Math.max(1, adults + children);
+
+    // Normalize budget safely
+    payload.budget = normalizeBudget(budgetNum, currency);
+
+    // Duration handling (supports flexible dates)
+    const nDays = payload.flexibleDates && Number(payload.flexibleDates.duration)
+      ? Number(payload.flexibleDates.duration)
+      : (payload.start && payload.end ? daysBetween(payload.start, payload.end) : 5);
+
+    const style = level === 'luxury' ? 'Luxury' : level === 'budget' ? 'Budget' : 'Mid-range';
+    const aff = affiliatesFor(destination);
+    const id = uid();
       if (line.includes('Open Exploration') || line.includes('warm-up walk') || line.includes('get oriented')) {
         skipSection = true;
         continue;
