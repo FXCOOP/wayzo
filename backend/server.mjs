@@ -1286,6 +1286,17 @@ DESTINATION-SPECIFIC RESEARCH REQUIREMENTS (CRITICAL):
 - Research REAL seasonal considerations and weather-dependent alternatives
 - Provide REAL money-saving tips and local secrets specific to the destination
 
+EXAMPLES OF WHAT NOT TO DO:
+- "Historic Old Town Walking Tour" → Use specific attractions like "Colosseum" or "Roman Forum"
+- "Local Restaurant" → Use specific restaurants like "Trattoria da Enzo" or "Roscioli"
+- "City Center Hotel" → Use specific hotels like "Hotel Artemide" or "The First Roma Arte"
+- "Local Museum" → Use specific museums like "Vatican Museums" or "Capitoline Museums"
+
+EXAMPLES OF WHAT TO DO:
+- For Rome: Colosseum, Trevi Fountain, Pantheon, Trattoria da Enzo, Hotel Artemide
+- For Paris: Eiffel Tower, Louvre Museum, Café de Flore, Hotel Ritz Paris
+- For Tokyo: Senso-ji Temple, Tsukiji Fish Market, Sukiyabashi Jiro, Hotel Okura Tokyo
+
 EXAMPLE OF CORRECT FORMATTING:
 ## 🎯 Trip Overview
 Welcome to your family adventure in Tyrol...
@@ -1299,6 +1310,12 @@ Deliver: Elegant Markdown itinerary with proper ## section headers. Include Goog
         {
           role: "user",
           content: `CRITICAL: You MUST provide SPECIFIC, REAL places for ${destination}. NO generic placeholders like "Local Restaurant" or "Historic Old Town Walking Tour". Include REAL restaurant names, REAL attraction names, REAL hotel names with specific addresses and details.
+
+EXAMPLE: For Rome, you should mention specific places like:
+- Colosseum (not "Historic Landmarks")
+- Trattoria da Enzo (not "Local Restaurant") 
+- Hotel Artemide (not "City Center Hotel")
+- Trevi Fountain (not "Historic Old Town Walking Tour")
 
 Please plan a trip with the following inputs:
 
