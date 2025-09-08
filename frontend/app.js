@@ -2397,8 +2397,12 @@
       console.log('✅ Widget script loaded successfully:', script.src);
     };
     
-    // Replace the old script with the new one
-    script.parentNode.replaceChild(newScript, script);
+    // Replace the old script with the new one (guard against null parent)
+    if (script && script.parentNode) {
+      script.parentNode.replaceChild(newScript, script);
+    } else {
+      (document.body || document.documentElement).appendChild(newScript);
+    }
   }
 
   // Define missing toggle functions

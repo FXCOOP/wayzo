@@ -1255,7 +1255,7 @@ app.post('/api/plan', async (req, res) => {
       }, ms))
     ]);
 
-    const markdown = await withTimeout(generatePlanWithAI(payload), 22000);
+    const markdown = await withTimeout(generatePlanWithAI(payload), 60000);
     
     // Process image tokens and other links in the MARKDOWN first
     const processedMarkdown = linkifyTokens(markdown, payload.destination);
