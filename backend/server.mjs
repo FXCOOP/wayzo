@@ -1213,9 +1213,9 @@ async function generatePlanWithAI(payload) {
       console.log(`OpenAI attempt ${attempt}...`);
       
       try {
-        // Create a timeout promise that rejects after 5 seconds
+        // Create a timeout promise that rejects after 15 seconds
         const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Request timeout after 5 seconds')), 5000);
+          setTimeout(() => reject(new Error('Request timeout after 15 seconds')), 15000);
         });
         
         // Create the API call promise
@@ -1549,7 +1549,7 @@ app.post('/api/plan', async (req, res) => {
       ]);
     };
 
-    const markdown = await withTimeout(generatePlanWithAI(payload), 10000); // Reduced to 10 seconds
+    const markdown = await withTimeout(generatePlanWithAI(payload), 20000); // Increased to 20 seconds
     
     // Process image tokens and other links in the MARKDOWN first
     const processedMarkdown = linkifyTokens(markdown, payload.destination);
