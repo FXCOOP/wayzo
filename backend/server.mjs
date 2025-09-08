@@ -1775,56 +1775,27 @@ function injectWidgetsIntoSections(html, widgets) {
   try {
     const gygAuto = '<div data-gyg-widget="auto" data-gyg-partner-id="PUHVJ53"></div>';
     
-    // Only inject if not already present
-    if (!modifiedHtml.includes('data-gyg-widget="auto"')) {
-      // Inject into Must-See Attractions section
-      modifiedHtml = modifiedHtml.replace(
-        /(<h2>🎫 Must-See Attractions<\/h2>[\s\S]*?)(<h2>🍽️|<h2>🎭|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s,
-        `$1${gygAuto}$2`
-      );
-      
-      // Inject into Getting Around section (only if no flight widget already there)
-      if (!modifiedHtml.includes('data-category="flights"')) {
+    // Count existing GYG widgets to avoid too many requests
+    const existingGygCount = (modifiedHtml.match(/data-gyg-widget="auto"/g) || []).length;
+    console.log(`Found ${existingGygCount} existing GYG widgets`);
+    
+    // Only inject if we have fewer than 2 GYG widgets total
+    if (existingGygCount < 2) {
+      // Inject into Must-See Attractions section (most important)
+      if (!modifiedHtml.includes('data-gyg-widget="auto"')) {
         modifiedHtml = modifiedHtml.replace(
-          /(<h2>🗺️ Getting Around<\/h2>[\s\S]*?)(<h2>🏨|<h2>🍽️|<h2>🎭|<h2>🎫|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨)/s,
+          /(<h2>🎫 Must-See Attractions<\/h2>[\s\S]*?)(<h2>🍽️|<h2>🎭|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s,
           `$1${gygAuto}$2`
         );
+        console.log('Injected GYG widget into Must-See Attractions');
       }
-      
-      // Inject into Accommodation section (only if no hotel widget already there)
-      if (!modifiedHtml.includes('data-category="accommodation"')) {
-        modifiedHtml = modifiedHtml.replace(
-          /(<h2>🏨 Accommodation<\/h2>[\s\S]*?)(<h2>🍽️|<h2>🎭|<h2>🎫|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨)/s,
-          `$1${gygAuto}$2`
-        );
-      }
-      
-      // Inject into Dining Guide section
-      modifiedHtml = modifiedHtml.replace(
-        /(<h2>🍽️ Dining Guide<\/h2>[\s\S]*?)(<h2>🎭|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨)/s,
-        `$1${gygAuto}$2`
-      );
     }
   } catch (e) {
     console.warn('Failed to inject GYG widget:', e);
   }
 
-  // Inject GetYourGuide widget after each Day in Daily Itineraries
-  try {
-    const gygAuto = '<div data-gyg-widget="auto" data-gyg-partner-id="PUHVJ53"></div>';
-    // Only within the Daily Itineraries section boundaries
-    modifiedHtml = modifiedHtml.replace(
-      /(<h2>🎭 Daily Itineraries<\/h2>[\s\S]*?)(?=(<h2>🗺️|<h2>🏨|<h2>🎫|<h2>🍽️|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|$))/s,
-      (match) => match
-        .replace(/(<h3>Day [^<]+<\/h3>\s*)(<ul>|)/g, `$1`)
-        .replace(/(<h3>Day [^<]+<\/h3>[\s\S]*?)(?=<h3>|$)/g, (seg)=>{
-          // Add per-day weather link at the end of each day block
-          return seg + `\n<p><a href=\"https://www.meteoblue.com/en/weather/14-days\" target=\"_blank\" rel=\"noopener\">Daily forecast</a></p>\n${gygAuto}`;
-        })
-    );
-  } catch (e) {
-    console.warn('Failed to inject per-day GYG widgets:', e);
-  }
+  // Remove per-day GYG widget injection to prevent 429 errors
+  // (This was causing too many requests to GetYourGuide API)
   
   // Find car rental widget
   const carWidget = widgets.find(w => w.category === 'transport');

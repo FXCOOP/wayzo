@@ -17,15 +17,19 @@ export function affiliatesFor(dest = '') {
     insurance: ()      => `https://www.worldnomads.com/`,
     reviews:   (term) => `https://www.tripadvisor.com/Search?q=${encodeURIComponent(term || dest)}`,
     image:     (term) => {
-      // Destination-scoped image query for more accurate visuals
+      // Use a simple gradient data URI for reliable image display
       const base = String(dest || '').trim();
       const q = String(term || '').trim();
       const combined = (q.toLowerCase().includes(base.toLowerCase()) || base === '') ? q : `${base} ${q}`;
-      const query = encodeURIComponent(combined || base || 'travel destination');
-      // Higher resolution for better quality
-      const unsplashUrl = `https://source.unsplash.com/800x500/?${query}`;
-      console.log('Image query:', { dest: base, term: q, combined, url: unsplashUrl });
-      return unsplashUrl;
+      // Generate a consistent color based on the query
+      const hash = combined.split('').reduce((a, b) => {
+        a = ((a << 5) - a) + b.charCodeAt(0);
+        return a & a;
+      }, 0);
+      const hue = Math.abs(hash) % 360;
+      const dataUri = `data:image/svg+xml;base64,${Buffer.from(`<svg width="800" height="500" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:hsl(${hue}, 70%, 60%);stop-opacity:1" /><stop offset="100%" style="stop-color:hsl(${hue + 30}, 70%, 40%);stop-opacity:1" /></linearGradient></defs><rect width="800" height="500" fill="url(#grad)" /><text x="400" y="250" font-family="Arial, sans-serif" font-size="24" fill="white" text-anchor="middle" dominant-baseline="middle">${combined || 'Travel'}</text></svg>`).toString('base64')}`;
+      console.log('Image query:', { dest: base, term: q, combined, hue, url: 'data:image/svg+xml...' });
+      return dataUri;
     },
   };
 }

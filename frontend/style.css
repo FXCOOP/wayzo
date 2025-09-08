@@ -1102,18 +1102,18 @@ fieldset.field .chip {
   font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   line-height:1.6;
 }
-.markdown h1, .markdown h2, .markdown h3{ margin:12px 0 8px 0; font-weight:800; line-height:1.2; }
+.markdown h1, .markdown h2, .markdown h3{ margin:16px 0 12px 0; font-weight:800; line-height:1.2; }
 .markdown h1{ font-size:2rem; }
 .markdown h2{ font-size:1.6rem; }
 .markdown h3{ font-size:1.3rem; }
-.markdown p{ margin:8px 0; }
-.markdown ul, .markdown ol{ margin:8px 0; padding-left:22px; }
-.markdown li{ margin:6px 0; }
-.markdown h2 + .section-widgets, .markdown h3 + .section-widgets { margin-top:8px; }
+.markdown p{ margin:12px 0; }
+.markdown ul, .markdown ol{ margin:12px 0; padding-left:22px; }
+.markdown li{ margin:8px 0; }
+.markdown h2 + .section-widgets, .markdown h3 + .section-widgets { margin-top:12px; }
 .markdown table{ width:100%; border-collapse:collapse; }
 .markdown table th, .markdown table td{ border:1px solid #e2e8f0; padding:10px; }
 .markdown a{ color:var(--brand); text-decoration:underline; }
-.markdown img{ max-width:100%; height:auto; border-radius:8px; margin:12px 0; }
+.markdown img{ max-width:100%; height:auto; border-radius:8px; margin:16px 0; }
 
 /* ====== RESPONSIVE ====== */
 @media (max-width: 768px) {
@@ -1228,7 +1228,7 @@ fieldset.field .chip {
 .budget-table {
   width: 100%;
   border-collapse: collapse;
-  margin: 20px 0;
+  margin: 16px 0;
   background: white;
   border-radius: 8px;
   overflow: hidden;
@@ -1312,8 +1312,8 @@ fieldset.field .chip {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  padding: 20px;
-  margin: 20px 0;
+  padding: 16px;
+  margin: 16px 0;
 }
 
 .dont-forget-list h3 {
