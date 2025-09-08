@@ -957,24 +957,30 @@ async function generatePlanWithAI(payload) {
     console.log('Making OpenAI API call with model:', safeModel);
     console.log('API Key present:', !!process.env.OPENAI_API_KEY);
     console.log('User prompt length:', user.length);
-    
-    const resp = await client.chat.completions.create({
-      model: safeModel,
-      temperature: 0.7, // Slightly higher for more creative responses
-      max_tokens: 4000, // Allow longer, more detailed responses
-      messages: [
-        { role: "system", content: sys },
-        { role: "user", content: user }
-      ],
-    });
-    
-    console.log('OpenAI API response received, status:', resp.choices?.[0]?.finish_reason);
-    let md = resp.choices?.[0]?.message?.content?.trim() || "";
+
+    let md = "";
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      console.log(`OpenAI attempt ${attempt}...`);
+      const resp = await client.chat.completions.create({
+        model: safeModel,
+        temperature: 0.7,
+        max_tokens: 4000,
+        messages: [
+          { role: "system", content: sys },
+          { role: "user", content: user }
+        ],
+      });
+      console.log('OpenAI API response received, status:', resp.choices?.[0]?.finish_reason);
+      md = resp.choices?.[0]?.message?.content?.trim() || "";
+      if (md) {
+        console.log('OpenAI response length:', md.length);
+        break;
+      }
+      console.warn('OpenAI response empty on attempt', attempt);
+    }
     if (!md) {
-      console.warn('OpenAI response empty, using fallback');
+      console.warn('OpenAI returned empty after retries, using fallback');
       md = localPlanMarkdown(payload);
-    } else {
-      console.log('OpenAI response length:', md.length);
     }
     
     // NUCLEAR POST-PROCESSING: Completely eliminate Image Ideas section and generic content

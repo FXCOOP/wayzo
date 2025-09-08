@@ -925,7 +925,7 @@
     const input = document.getElementById('from');
     if (!input || (input && input.value)) return;
     try {
-      const info = await fetch('https://ipapi.co/json/').then(r=>r.json());
+      const info = await fetch('/api/geo').then(r=>r.json());
       const city = [info.city, info.country_name].filter(Boolean).join(', ');
       if (city) input.value = city;
     } catch (_) {}
@@ -2285,6 +2285,12 @@
   window.initializeWidgets = () => {
     // Wait a bit for the DOM to be ready
     setTimeout(() => {
+      // Prevent infinite retry loop
+      if (window.__widgetsInitCount && window.__widgetsInitCount > 2) {
+        console.log('Max widget init retries reached');
+        return;
+      }
+      window.__widgetsInitCount = (window.__widgetsInitCount || 0) + 1;
       // Try multiple selectors to find widget containers
       const selectors = [
         '.widget-content',
@@ -2321,11 +2327,12 @@
       });
       
       // If still no widgets found, try again after a longer delay
-      if (widgetContainers.length === 0 && allScripts.length === 0) {
+      // Retry only once more if nothing found
+      if (widgetContainers.length === 0 && allScripts.length === 0 && window.__widgetsInitCount < 2) {
         setTimeout(() => {
           console.log('Retrying widget initialization...');
           initializeWidgets();
-        }, 1000);
+        }, 800);
       }
       
       console.log('Widget rendering initialized');
