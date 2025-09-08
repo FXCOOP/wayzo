@@ -584,6 +584,7 @@ function getDailyActivities(destination, nDays) {
 /* Local Fallback Plan */
 function localPlanMarkdown(input) {
   const { destination = 'Your destination', start = 'start', end = 'end', budget = 1500, adults = 2, children = 0, level = 'mid', prefs = '', dietary = [], currency = 'USD' } = input || {};
+  const dest = String(destination || '').toLowerCase();
   const nDays = Math.max(1, daysBetween(start, end));
   const totalTravelers = Math.max(1, adults + children);
   const style = level === 'luxury' ? 'Luxury' : level === 'budget' ? 'Budget' : 'Mid-range';
