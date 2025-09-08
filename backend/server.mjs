@@ -915,8 +915,12 @@ async function generatePlanWithAI(payload) {
   }
   
   try {
+    console.log('Making OpenAI API call with model:', process.env.WAYZO_MODEL || process.env.OPENAI_MODEL || "gpt-4o-mini");
+    console.log('API Key present:', !!process.env.OPENAI_API_KEY);
+    console.log('User prompt length:', user.length);
+    
     const resp = await client.chat.completions.create({
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      model: process.env.WAYZO_MODEL || process.env.OPENAI_MODEL || "gpt-4o-mini",
       temperature: 0.7, // Slightly higher for more creative responses
       max_tokens: 4000, // Allow longer, more detailed responses
       messages: [
@@ -925,10 +929,13 @@ async function generatePlanWithAI(payload) {
       ],
     });
     
+    console.log('OpenAI API response received, status:', resp.choices?.[0]?.finish_reason);
     let md = resp.choices?.[0]?.message?.content?.trim() || "";
     if (!md) {
       console.warn('OpenAI response empty, using fallback');
       md = localPlanMarkdown(payload);
+    } else {
+      console.log('OpenAI response length:', md.length);
     }
     
     // NUCLEAR POST-PROCESSING: Completely eliminate Image Ideas section and generic content
@@ -1094,7 +1101,14 @@ async function generatePlanWithAI(payload) {
     
     return md;
   } catch (e) {
-    console.error('OpenAI API error:', e);
+    console.error('OpenAI API error details:', {
+      message: e.message,
+      status: e.status,
+      code: e.code,
+      type: e.type,
+      stack: e.stack?.substring(0, 500)
+    });
+    console.log('Falling back to local plan generation');
     return localPlanMarkdown(payload); // Fallback
   }
 }

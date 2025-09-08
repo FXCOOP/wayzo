@@ -11,3 +11,5 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: OPENAI_API_KEY
+        value: sk-your-openai-api-key-here
