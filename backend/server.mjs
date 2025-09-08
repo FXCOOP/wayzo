@@ -1149,7 +1149,7 @@ async function generatePlanWithAI(payload) {
     const response = await client.chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0.7,
-      max_tokens: 4000,
+      max_tokens: 6000,
       messages: [
         {
           role: "system",
@@ -1298,7 +1298,9 @@ Deliver: Elegant Markdown itinerary with proper ## section headers. Include Goog
         },
         {
           role: "user",
-          content: `Please plan a trip with the following inputs:
+          content: `CRITICAL: You MUST provide SPECIFIC, REAL places for ${destination}. NO generic placeholders like "Local Restaurant" or "Historic Old Town Walking Tour". Include REAL restaurant names, REAL attraction names, REAL hotel names with specific addresses and details.
+
+Please plan a trip with the following inputs:
 
 DATA ====
 Destination: ${destination}
