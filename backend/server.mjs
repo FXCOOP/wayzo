@@ -1125,7 +1125,7 @@ async function generatePlanWithAI(payload) {
   console.log('Step 2: Testing API with simple call...');
   try {
     const testCall = await client.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-4o",
       temperature: 0.1,
       max_tokens: 20,
       messages: [{ role: "user", content: "Say 'TEST OK'" }],
