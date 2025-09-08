@@ -1169,11 +1169,12 @@ async function generatePlanWithAI(payload) {
     user += `\n\n**UPLOADED DOCUMENTS:** User has uploaded ${uploadedFiles.length} document(s) including: ${uploadedFiles.map(f => f.name).join(', ')}. Consider any existing plans or preferences mentioned in these documents when creating the itinerary.`;
   }
 
-  // TEMPORARILY DISABLE AI TO PREVENT CRASHING WITH NEW API KEY
-  console.warn('AI temporarily disabled to prevent server crashes, using local fallback');
-  let md = localPlanMarkdown(payload);
-  md = ensureDaySections(md, nDays, start);
-  return md;
+  if (!client) {
+    console.warn('OpenAI API key not set, using local fallback');
+    let md = localPlanMarkdown(payload);
+    md = ensureDaySections(md, nDays, start);
+    return md;
+  }
   
   try {
     const modelName = process.env.WAYZO_MODEL || process.env.OPENAI_MODEL || "gpt-4o-mini";
@@ -1212,9 +1213,9 @@ async function generatePlanWithAI(payload) {
       console.log(`OpenAI attempt ${attempt}...`);
       
       try {
-        // Create a timeout promise that rejects after 20 seconds
+        // Create a timeout promise that rejects after 5 seconds
         const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Request timeout after 20 seconds')), 20000);
+          setTimeout(() => reject(new Error('Request timeout after 5 seconds')), 5000);
         });
         
         // Create the API call promise
@@ -1548,7 +1549,7 @@ app.post('/api/plan', async (req, res) => {
       ]);
     };
 
-    const markdown = await withTimeout(generatePlanWithAI(payload), 25000); // Increased to 25 seconds
+    const markdown = await withTimeout(generatePlanWithAI(payload), 10000); // Reduced to 10 seconds
     
     // Process image tokens and other links in the MARKDOWN first
     const processedMarkdown = linkifyTokens(markdown, payload.destination);
