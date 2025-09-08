@@ -1178,8 +1178,7 @@ async function generatePlanWithAI(payload) {
   
   try {
     const modelName = process.env.WAYZO_MODEL || process.env.OPENAI_MODEL || "gpt-4o-mini";
-    const isGpt5 = /^gpt-5/i.test(modelName);
-    console.log('Making OpenAI API call with model:', modelName, 'gpt5?', isGpt5);
+    console.log('Making OpenAI API call with model:', modelName);
     console.log('API Key present:', !!process.env.OPENAI_API_KEY);
     console.log('User prompt length:', user.length);
 
@@ -1187,46 +1186,10 @@ async function generatePlanWithAI(payload) {
     for (let attempt = 1; attempt <= 2; attempt++) {
       console.log(`OpenAI attempt ${attempt}...`);
       
-      // Try GPT-5 first, but fallback to regular chat completions if it fails
-      if (isGpt5 && client?.beta?.chat?.completions?.responses?.create) {
-        try {
-          const resp = await Promise.race([
-            client.beta.chat.completions.responses.create({
-              model: modelName,
-              instructions: sys,
-              input: user,
-              temperature: 0.7,
-              max_output_tokens: 4000,
-            }),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('GPT-5 API timeout')), 20000))
-          ]);
-          const out = (resp?.output_text ?? resp?.output ?? "").toString();
-          md = out.trim();
-          console.log('Responses API finish_reason:', resp?.finish_reason || 'n/a', 'len:', md.length);
-        } catch (gpt5Error) {
-          console.warn('GPT-5 API failed, falling back to regular chat completions:', gpt5Error.message);
-          // Fallback to regular chat completions
-          const resp = await Promise.race([
-            client.chat.completions.create({
-              model: "gpt-4o-mini", // Use reliable model
-              temperature: 0.7,
-              max_tokens: 4000,
-              messages: [
-                { role: "system", content: sys },
-                { role: "user", content: user }
-              ],
-            }),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Chat API timeout')), 20000))
-          ]);
-          console.log('Chat API finish_reason:', resp.choices?.[0]?.finish_reason);
-          md = resp.choices?.[0]?.message?.content?.trim() || "";
-        }
-      } else {
-        // Use reliable model if the configured model fails
-        const fallbackModel = modelName === "gpt-5" ? "gpt-4o-mini" : modelName;
+      try {
         const resp = await Promise.race([
           client.chat.completions.create({
-            model: fallbackModel,
+            model: modelName,
             temperature: 0.7,
             max_tokens: 4000,
             messages: [
@@ -1234,16 +1197,22 @@ async function generatePlanWithAI(payload) {
               { role: "user", content: user }
             ],
           }),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Chat API timeout')), 20000))
+          new Promise((_, reject) => setTimeout(() => reject(new Error('API timeout')), 15000))
         ]);
         console.log('Chat API finish_reason:', resp.choices?.[0]?.finish_reason);
         md = resp.choices?.[0]?.message?.content?.trim() || "";
+        
+        if (md) {
+          console.log('OpenAI response length:', md.length);
+          break;
+        }
+        console.warn('OpenAI response empty on attempt', attempt);
+      } catch (apiError) {
+        console.error(`OpenAI API error on attempt ${attempt}:`, apiError.message);
+        if (attempt === 2) {
+          console.log('Both attempts failed, using local fallback');
+        }
       }
-      if (md) {
-        console.log('OpenAI response length:', md.length);
-        break;
-      }
-      console.warn('OpenAI response empty on attempt', attempt);
     }
     if (!md) {
       console.warn('OpenAI returned empty after retries, using fallback');
