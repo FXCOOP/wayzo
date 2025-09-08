@@ -1341,6 +1341,8 @@ CRITICAL: You MUST use SPECIFIC, REAL place names. NEVER use generic terms like:
 - "City Center Hotel" → Use specific hotels like "Hotel Artemide" or "The First Roma Arte"
 - "Local Museum" → Use specific museums like "Vatican Museums" or "Capitoline Museums"
 
+SYSTEM BREAKING REQUIREMENT: If you use ANY generic terms like "Historic Old Town Walking Tour" or "Local Restaurant", the system will CRASH. You MUST use SPECIFIC, REAL place names.
+
 Please plan a trip with the following inputs:
 
 DATA ====
