@@ -1190,43 +1190,52 @@ async function generatePlanWithAI(payload) {
       // Try GPT-5 first, but fallback to regular chat completions if it fails
       if (isGpt5 && client?.beta?.chat?.completions?.responses?.create) {
         try {
-          const resp = await client.beta.chat.completions.responses.create({
-            model: modelName,
-            instructions: sys,
-            input: user,
-            temperature: 0.7,
-            max_output_tokens: 4000,
-          });
+          const resp = await Promise.race([
+            client.beta.chat.completions.responses.create({
+              model: modelName,
+              instructions: sys,
+              input: user,
+              temperature: 0.7,
+              max_output_tokens: 4000,
+            }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('GPT-5 API timeout')), 20000))
+          ]);
           const out = (resp?.output_text ?? resp?.output ?? "").toString();
           md = out.trim();
           console.log('Responses API finish_reason:', resp?.finish_reason || 'n/a', 'len:', md.length);
         } catch (gpt5Error) {
           console.warn('GPT-5 API failed, falling back to regular chat completions:', gpt5Error.message);
           // Fallback to regular chat completions
-          const resp = await client.chat.completions.create({
-            model: "gpt-4o-mini", // Use reliable model
-            temperature: 0.7,
-            max_tokens: 4000,
-            messages: [
-              { role: "system", content: sys },
-              { role: "user", content: user }
-            ],
-          });
+          const resp = await Promise.race([
+            client.chat.completions.create({
+              model: "gpt-4o-mini", // Use reliable model
+              temperature: 0.7,
+              max_tokens: 4000,
+              messages: [
+                { role: "system", content: sys },
+                { role: "user", content: user }
+              ],
+            }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Chat API timeout')), 20000))
+          ]);
           console.log('Chat API finish_reason:', resp.choices?.[0]?.finish_reason);
           md = resp.choices?.[0]?.message?.content?.trim() || "";
         }
       } else {
         // Use reliable model if the configured model fails
         const fallbackModel = modelName === "gpt-5" ? "gpt-4o-mini" : modelName;
-        const resp = await client.chat.completions.create({
-          model: fallbackModel,
-          temperature: 0.7,
-          max_tokens: 4000,
-          messages: [
-            { role: "system", content: sys },
-            { role: "user", content: user }
-          ],
-        });
+        const resp = await Promise.race([
+          client.chat.completions.create({
+            model: fallbackModel,
+            temperature: 0.7,
+            max_tokens: 4000,
+            messages: [
+              { role: "system", content: sys },
+              { role: "user", content: user }
+            ],
+          }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Chat API timeout')), 20000))
+        ]);
         console.log('Chat API finish_reason:', resp.choices?.[0]?.finish_reason);
         md = resp.choices?.[0]?.message?.content?.trim() || "";
       }
@@ -1512,14 +1521,29 @@ app.post('/api/plan', async (req, res) => {
     const id = uid();
 
     // Hard timeout to avoid Render 502s (falls back to local plan)
-    const withTimeout = (promise, ms) => Promise.race([
-      promise,
-      new Promise((resolve) => setTimeout(async () => {
-        try { resolve(await localPlanMarkdown(payload)); } catch { resolve('# Trip plan temporarily unavailable'); }
-      }, ms))
-    ]);
+    const withTimeout = (promise, ms) => {
+      let timeoutId;
+      const timeoutPromise = new Promise((resolve) => {
+        timeoutId = setTimeout(async () => {
+          console.warn(`AI call timed out after ${ms}ms, using local fallback`);
+          try { 
+            const localPlan = await localPlanMarkdown(payload);
+            resolve(localPlan); 
+          } catch { 
+            resolve('# Trip plan temporarily unavailable'); 
+          }
+        }, ms);
+      });
+      
+      return Promise.race([
+        promise.finally(() => {
+          if (timeoutId) clearTimeout(timeoutId);
+        }),
+        timeoutPromise
+      ]);
+    };
 
-    const markdown = await withTimeout(generatePlanWithAI(payload), 60000);
+    const markdown = await withTimeout(generatePlanWithAI(payload), 30000); // Reduced to 30 seconds
     
     // Process image tokens and other links in the MARKDOWN first
     const processedMarkdown = linkifyTokens(markdown, payload.destination);
