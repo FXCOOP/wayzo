@@ -1147,8 +1147,8 @@ async function generatePlanWithAI(payload) {
   console.log('Step 3: Generating AI plan for', destination);
   try {
     const response = await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      temperature: 0.7,
+      model: "gpt-4o",
+      temperature: 0.3,
       max_tokens: 6000,
       messages: [
         {
