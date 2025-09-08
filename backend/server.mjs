@@ -297,6 +297,69 @@ const perPersonPerDay = (t = 0, d = 1, tr = 1) => Math.round((Number(t) || 0) / 
 function getDestinationInfo(destination) {
   const dest = destination.toLowerCase();
   
+  if (dest.includes('toronto') || dest.includes('canada')) {
+    return {
+      language: 'English widely spoken in tourist areas',
+      currency: 'Canadian Dollar (CAD)',
+      currencyConversion: '1 USD ≈ 1.35 CAD',
+      voltage: '120V, Type A/B plugs',
+      tipping: '15-20% in restaurants, 10-15% for other services',
+      timeZone: 'EST/EDT (UTC-5/UTC-4)',
+      emergency: '911 (emergency), 311 (non-emergency)',
+      seasonalInfo: {
+        'Autumn': 'pleasant weather and fewer crowds, perfect for sightseeing',
+        'Summer': 'warm and humid, peak tourist season with festivals',
+        'Winter': 'cold and snowy, indoor attractions and winter activities',
+        'Spring': 'mild weather, cherry blossoms and outdoor activities'
+      },
+      attractions: [
+        { name: 'CN Tower', description: 'Iconic 553m tower with observation deck', duration: '2-3 hours', bestTime: 'early morning or sunset', why: 'Panoramic city views and thrilling EdgeWalk', review: 'The views were absolutely incredible! Worth every penny.', tip: 'Book tickets online to skip lines, especially on weekends' },
+        { name: 'Royal Ontario Museum (ROM)', description: 'World-class museum of art, culture, and natural history', duration: '3-4 hours', bestTime: 'late morning', why: 'Extensive collections and interactive exhibits', review: 'ROM had amazing exhibits! Perfect for families.', tip: 'Free admission on certain days, check schedule' },
+        { name: 'Art Gallery of Ontario (AGO)', description: 'Premier art museum with Canadian and international works', duration: '2-3 hours', bestTime: 'afternoon', why: 'World-class art collection and beautiful architecture', review: 'AGO collection was world-class! The building itself is art.', tip: 'Many galleries offer free admission on certain days' },
+        { name: 'Casa Loma', description: 'Historic castle with gardens and secret passages', duration: '2-3 hours', bestTime: 'morning', why: 'Unique castle experience in the heart of the city', review: 'Casa Loma was fascinating! The castle tour was very informative.', tip: 'Book castle timeslot in advance, combine with Yorkville' },
+        { name: 'St. Lawrence Market', description: 'Historic food market with local vendors and restaurants', duration: '1-2 hours', bestTime: 'morning or lunch', why: 'Authentic local food and cultural experience', review: 'St. Lawrence Market had amazing local food!', tip: 'Market is busiest on weekends, arrive early' }
+      ],
+      accommodation: {
+        areas: [
+          'Downtown Core: Close to major attractions, CN Tower, and entertainment',
+          'Yorkville: Upscale shopping and dining, near museums',
+          'Entertainment District: Nightlife, theatres, and restaurants',
+          'Harbourfront: Waterfront views, close to Toronto Islands',
+          'Kensington Market: Bohemian vibe, unique shops and cafes'
+        ],
+        recommendations: {
+          'Downtown': 'Fairmont Royal York (luxury), Delta Toronto (mid), HI Toronto (budget)',
+          'Yorkville': 'Four Seasons Hotel Toronto (luxury), InterContinental Toronto Centre (mid)',
+          'Harbourfront': 'Westin Harbour Castle (mid), Radisson Admiral Hotel (budget)'
+        }
+      },
+      dining: [
+        { name: 'St. Lawrence Market', description: 'Historic food market with local vendors', type: 'Lunch or casual dinner', why: 'Authentic local food and cultural experience', review: 'Amazing variety of local food!', tip: 'Busiest on weekends, arrive early for best selection' },
+        { name: 'Kensington Market', description: 'Bohemian neighborhood with diverse international cuisine', type: 'Casual dining', why: 'Unique multicultural food scene', review: 'Kensington Market was vibrant and authentic.', tip: 'Great for walking tours and food exploration' },
+        { name: 'Distillery District', description: 'Historic district with restaurants and craft breweries', type: 'Dinner and drinks', why: 'Historic setting with modern dining', review: 'Distillery District had great atmosphere and food.', tip: 'Book dinner reservations, especially on weekends' }
+      ],
+      reviews: [
+        'CN Tower views were absolutely incredible! Worth every penny.',
+        'ROM had amazing exhibits! Perfect for families.',
+        'St. Lawrence Market had amazing local food!',
+        'Casa Loma was fascinating! The castle tour was very informative.',
+        'Toronto Islands ferry ride was scenic and relaxing.'
+      ],
+      travelTips: [
+        { category: 'Transit', description: 'Use TTC (Toronto Transit Commission) for public transport; buy day passes for convenience' },
+        { category: 'Timing', description: 'Book major attractions like CN Tower and Casa Loma in advance, especially on weekends' },
+        { category: 'Weather', description: 'Pack layers - weather can change quickly; check forecasts for outdoor activities' },
+        { category: 'Dining', description: 'Make dinner reservations, especially in popular areas like Distillery District' }
+      ],
+      apps: [
+        { name: 'TTC Trip Planner', description: 'Public transit routes and schedules' },
+        { name: 'Toronto.com', description: 'Local events, attractions, and dining' },
+        { name: 'Weather Network', description: 'Accurate local weather forecasts' }
+      ],
+      emergencyInfo: 'Emergency Numbers: 911 (emergency), 311 (non-emergency)\nMedical Centers: Toronto General Hospital, Mount Sinai Hospital\nPharmacies: Shoppers Drug Mart, Rexall (24-hour locations available)\nTourist Information: CN Tower, Union Station, Harbourfront Centre\nLost & Found: Contact TTC for transit items, local police for other items\nConsulate Services: Check for nearest consulate services in downtown area'
+    };
+  }
+  
   if (dest.includes('berlin')) {
     return {
       language: 'German (Deutsch); English widely spoken in central areas',
@@ -647,17 +710,90 @@ function getDailyActivities(destination, nDays) {
     ];
   }
   
-  // Default fallback for other destinations
-  return [
+  // Toronto-specific content
+  if (dest.includes('toronto') || dest.includes('canada')) {
+    const days = [
+      { morning: '🏛️ CN Tower & Ripley\'s Aquarium', afternoon: '🌳 Harbourfront & Toronto Islands ferry', evening: '🍽️ St. Lawrence Market dinner', review: 'CN Tower views were incredible! The aquarium was perfect for families.', tip: 'Book CN Tower tickets online to skip lines', map: '📍 CN Tower' },
+      { morning: '🏰 Royal Ontario Museum (ROM)', afternoon: '🛍️ Kensington Market & Chinatown', evening: '🍻 Distillery District & craft breweries', review: 'ROM had amazing exhibits! Kensington Market was vibrant and authentic.', tip: 'ROM offers free admission on certain days', map: '📍 Royal Ontario Museum' },
+      { morning: '🏛️ Art Gallery of Ontario (AGO)', afternoon: '🌳 High Park & cherry blossoms', evening: '🍽️ Little Italy dinner', review: 'AGO collection was world-class! High Park was beautiful and peaceful.', tip: 'Check cherry blossom timing in spring', map: '📍 Art Gallery of Ontario' },
+      { morning: '🏰 Casa Loma castle tour', afternoon: '🛍️ Yorkville shopping district', evening: '🎭 Theatre District show', review: 'Casa Loma was fascinating! The castle tour was very informative.', tip: 'Book theatre tickets in advance', map: '📍 Casa Loma' },
+      { morning: '🌳 Toronto Zoo or Ontario Science Centre', afternoon: '🏛️ Bata Shoe Museum', evening: '🍽️ Queen Street West dining', review: 'Great family-friendly options! The Science Centre was interactive and fun.', tip: 'Zoo requires advance booking for timed entry', map: '📍 Toronto Zoo' },
+      { morning: '🚶 St. Lawrence Market & Old Town', afternoon: '🌉 Harbourfront Centre & waterfront walk', evening: '🍻 Entertainment District nightlife', review: 'St. Lawrence Market had amazing local food! Harbourfront was scenic.', tip: 'Market is busiest on weekends', map: '📍 St. Lawrence Market' },
+      { morning: '🏛️ Hockey Hall of Fame', afternoon: '🛍️ Eaton Centre shopping', evening: '🍽️ Financial District fine dining', review: 'Hockey Hall of Fame was a must-see! Great for sports fans.', tip: 'Allow 2-3 hours for the full experience', map: '📍 Hockey Hall of Fame' },
+      { morning: '🌳 Scarborough Bluffs or day trip to Niagara', afternoon: '🏛️ Gardiner Museum of Ceramic Art', evening: '🍽️ Final dinner in Yorkville', review: 'Scarborough Bluffs offered stunning lake views!', tip: 'Niagara Falls is 1.5 hours drive away', map: '📍 Scarborough Bluffs' }
+    ];
+    return Array.from({ length: Math.max(1, nDays) }, (_, i) => days[i % days.length]);
+  }
+
+  // Default fallback for other destinations - generate diverse activities
+  const genericActivities = [
     {
       morning: "🏰 **Historic Old Town Walking Tour** - Explore the historic center",
-      afternoon: "🏛️ **Local Museum** - Regional history & culture",
+      afternoon: "🏛️ **Local Museum** - Regional history & culture", 
       evening: "🍽️ **Traditional Restaurant** - Local cuisine dinner",
       review: "The Old Town walking tour was perfect for getting oriented—highly recommend starting here.",
       tip: "Book museum tickets online to skip the queue, especially on weekends.",
       map: "📍 Start: Historic Old Town"
+    },
+    {
+      morning: "🌳 **City Park & Gardens** - Explore local green spaces",
+      afternoon: "🛍️ **Local Markets & Shopping** - Discover local crafts and products",
+      evening: "🍻 **Local Bar District** - Experience the nightlife scene",
+      review: "The city parks were beautiful and perfect for families!",
+      tip: "Markets are busiest in the morning—arrive early for the best selection.",
+      map: "📍 City Center"
+    },
+    {
+      morning: "🏛️ **Art Gallery & Cultural Center** - Local art and exhibitions",
+      afternoon: "🌉 **Scenic Waterfront Walk** - Enjoy harbor or river views",
+      evening: "🍽️ **Fine Dining Experience** - Upscale local restaurant",
+      review: "The art gallery provided great cultural context and beautiful local artwork.",
+      tip: "Many galleries offer free admission on certain days—check schedules.",
+      map: "📍 Art District"
+    },
+    {
+      morning: "🚶 **Neighborhood Exploration** - Discover local districts",
+      afternoon: "🏰 **Historic Landmarks** - Visit important local sites",
+      evening: "🎭 **Cultural Performance** - Theatre, music, or local show",
+      review: "The neighborhood tour gave us authentic local insights and great photo opportunities.",
+      tip: "Walking tours often require advance booking—plan ahead.",
+      map: "📍 Historic District"
+    },
+    {
+      morning: "🌿 **Nature & Outdoor Activities** - Parks, trails, or outdoor adventures",
+      afternoon: "🏛️ **Science Museum or Planetarium** - Educational and interactive exhibits",
+      evening: "🍽️ **Local Food Scene** - Street food or food market tour",
+      review: "The outdoor activities were perfect for families! The kids loved the interactive exhibits.",
+      tip: "Check weather conditions and pack appropriate gear.",
+      map: "📍 Nature Area"
+    },
+    {
+      morning: "🛍️ **Shopping District** - Local boutiques and specialty stores",
+      afternoon: "🌳 **Botanical Gardens or Zoo** - Family-friendly attractions",
+      evening: "🍻 **Local Brewery or Winery** - Taste local beverages",
+      review: "The shopping district had unique local finds! The botanical gardens were peaceful and beautiful.",
+      tip: "Many attractions offer family discounts—ask about packages.",
+      map: "📍 Shopping District"
+    },
+    {
+      morning: "🏛️ **History Museum** - Learn about local heritage",
+      afternoon: "🌉 **Scenic Lookout or Observation Deck** - City views and photo opportunities",
+      evening: "🍽️ **Local Cuisine Experience** - Traditional cooking class or food tour",
+      review: "The history museum was fascinating! The scenic views were absolutely breathtaking.",
+      tip: "Observation decks often have timed entry—book in advance.",
+      map: "📍 Historic Museum"
+    },
+    {
+      morning: "🚗 **Day Trip to Nearby Attraction** - Explore surrounding areas",
+      afternoon: "🏛️ **Local University or Cultural Center** - Educational visit",
+      evening: "🍽️ **Farewell Dinner** - Special restaurant for your last night",
+      review: "The day trip was a great way to see more of the region!",
+      tip: "Day trips often require advance booking—plan transportation ahead of time.",
+      map: "📍 Day Trip Destination"
     }
   ];
+  
+  return Array.from({ length: Math.max(1, nDays) }, (_, i) => genericActivities[i % genericActivities.length]);
 }
 
 /* Local Fallback Plan */
