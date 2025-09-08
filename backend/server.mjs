@@ -224,6 +224,23 @@ app.get('/paypal-config.js', (_req, res) => {
   `);
 });
 
+// CORS-safe IP geolocation proxy
+app.get('/api/geo', async (_req, res) => {
+  try {
+    const controller = new AbortController();
+    const t = setTimeout(() => controller.abort(), 8000);
+    const r = await fetch('https://ipapi.co/json/', { signal: controller.signal });
+    clearTimeout(t);
+    if (!r.ok) throw new Error(`ipapi HTTP ${r.status}`);
+    const data = await r.json();
+    res.setHeader('Cache-Control', 'no-cache');
+    return res.json(data);
+  } catch (e) {
+    console.warn('ipapi proxy failed:', e.message || e);
+    return res.json({ city: '', country_name: '' });
+  }
+});
+
 /* Uploads */
 const multerUpload = multer({ dest: UPLOADS, limits: { fileSize: 10 * 1024 * 1024, files: 10 } });
 app.post('/api/upload', multerUpload.array('files', 10), (req, res) => {
@@ -935,12 +952,13 @@ async function generatePlanWithAI(payload) {
   }
   
   try {
-    console.log('Making OpenAI API call with model:', process.env.WAYZO_MODEL || process.env.OPENAI_MODEL || "gpt-4o-mini");
+    const safeModel = "gpt-4o-mini"; // force chat-completions compatible model for this build
+    console.log('Making OpenAI API call with model:', safeModel);
     console.log('API Key present:', !!process.env.OPENAI_API_KEY);
     console.log('User prompt length:', user.length);
     
     const resp = await client.chat.completions.create({
-      model: process.env.WAYZO_MODEL || process.env.OPENAI_MODEL || "gpt-4o-mini",
+      model: safeModel,
       temperature: 0.7, // Slightly higher for more creative responses
       max_tokens: 4000, // Allow longer, more detailed responses
       messages: [
@@ -1298,7 +1316,17 @@ app.post('/api/plan', async (req, res) => {
       return res.status(200).json({ id, markdown, html: finalHTML, affiliates: aff, version: VERSION, permalink: `/plan/${id}` });
     } catch (fallbackErr) {
       console.error('Fallback also failed:', fallbackErr);
-      return res.status(200).json({ id: uid(), markdown: '# Temporary issue', html: '<p>Temporary issue generating plan. Please try again.</p>', affiliates: {}, version: VERSION });
+      // Attempt a minimal but valid plan response instead of a temporary error
+      try {
+        const payload = req.body || {};
+        const md2 = localPlanMarkdown(payload);
+        const html2 = marked.parse(md2);
+        const aff2 = affiliatesFor(payload.destination);
+        return res.status(200).json({ id: uid(), markdown: md2, html: html2, affiliates: aff2, version: VERSION });
+      } catch (deepErr) {
+        console.error('Deep fallback failed:', deepErr);
+        return res.status(200).json({ id: uid(), markdown: '# Plan unavailable', html: '<h2>Your itinerary</h2><p>Plan temporarily unavailable. Please retry.</p>', affiliates: {}, version: VERSION });
+      }
     }
   }
 });

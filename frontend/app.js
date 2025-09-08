@@ -16,11 +16,7 @@
 
   if (!form || !previewEl) return; // nothing to wire up
 
-  // Check if we're on staging environment - but don't auto-login, let user sign up
-  const isStaging = window.location.hostname.includes('staging') || window.location.hostname.includes('onrender.com');
-  if (isStaging) {
-    console.log('🚀 Staging environment detected - user needs to sign up manually');
-  }
+  // Remove staging gating/logging
 
   const show = (el) => el && el.classList.remove('hidden');
   const hide = (el) => el && el.classList.add('hidden');
