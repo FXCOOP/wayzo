@@ -1032,25 +1032,39 @@ async function generatePlanWithAI(payload) {
   }
   
   try {
-    const safeModel = "gpt-4o-mini"; // force chat-completions compatible model for this build
-    console.log('Making OpenAI API call with model:', safeModel);
+    const modelName = process.env.WAYZO_MODEL || process.env.OPENAI_MODEL || "gpt-4o-mini";
+    const isGpt5 = /^gpt-5/i.test(modelName);
+    console.log('Making OpenAI API call with model:', modelName, 'gpt5?', isGpt5);
     console.log('API Key present:', !!process.env.OPENAI_API_KEY);
     console.log('User prompt length:', user.length);
 
     let md = "";
     for (let attempt = 1; attempt <= 2; attempt++) {
       console.log(`OpenAI attempt ${attempt}...`);
-      const resp = await client.chat.completions.create({
-        model: safeModel,
-        temperature: 0.7,
-        max_tokens: 4000,
-        messages: [
-          { role: "system", content: sys },
-          { role: "user", content: user }
-        ],
-      });
-      console.log('OpenAI API response received, status:', resp.choices?.[0]?.finish_reason);
-      md = resp.choices?.[0]?.message?.content?.trim() || "";
+      if (isGpt5 && client?.beta?.chat?.completions?.responses?.create) {
+        const resp = await client.beta.chat.completions.responses.create({
+          model: modelName,
+          instructions: sys,
+          input: user,
+          temperature: 0.7,
+          max_output_tokens: 4000,
+        });
+        const out = (resp?.output_text ?? resp?.output ?? "").toString();
+        md = out.trim();
+        console.log('Responses API finish_reason:', resp?.finish_reason || 'n/a', 'len:', md.length);
+      } else {
+        const resp = await client.chat.completions.create({
+          model: modelName,
+          temperature: 0.7,
+          max_tokens: 4000,
+          messages: [
+            { role: "system", content: sys },
+            { role: "user", content: user }
+          ],
+        });
+        console.log('Chat API finish_reason:', resp.choices?.[0]?.finish_reason);
+        md = resp.choices?.[0]?.message?.content?.trim() || "";
+      }
       if (md) {
         console.log('OpenAI response length:', md.length);
         break;
