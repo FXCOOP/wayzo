@@ -275,6 +275,236 @@ const daysBetween = (a, b) => { if (!a || !b) return 1; const s = new Date(a), e
 const seasonFromDate = (iso = "") => ([12, 1, 2].includes(new Date(iso).getMonth() + 1) ? "Winter" : [3, 4, 5].includes(new Date(iso).getMonth() + 1) ? "Spring" : [6, 7, 8].includes(new Date(iso).getMonth() + 1) ? "Summer" : "Autumn");
 const travelerLabel = (ad = 2, ch = 0) => ch > 0 ? `Family (${ad} adult${ad === 1 ? "" : "s"} + ${ch} kid${ch === 1 ? "" : "s"})` : (ad === 2 ? "Couple" : ad === 1 ? "Solo" : `${ad} adult${ad === 1 ? "" : "s"}`);
 const perPersonPerDay = (t = 0, d = 1, tr = 1) => Math.round((Number(t) || 0) / Math.max(1, d) / Math.max(1, tr));
+
+// Destination-specific information
+function getDestinationInfo(destination) {
+  const dest = destination.toLowerCase();
+  
+  if (dest.includes('philippines') || dest.includes('manila') || dest.includes('cebu') || dest.includes('boracay') || dest.includes('palawan')) {
+    return {
+      language: 'Filipino/Tagalog (official), English widely spoken',
+      currency: 'Philippine Peso (PHP)',
+      currencyConversion: '1 USD ≈ 56 PHP',
+      voltage: '220V, Type A/B/C plugs - adapter required for US devices',
+      tipping: '10-15% in restaurants, round up taxi fares, ₱20-50 per bag for porters',
+      timeZone: 'PST (UTC+8)',
+      emergency: '911 (emergency), 117 (police), 143 (medical)',
+      seasonalInfo: {
+        'Autumn': 'pleasant weather, fewer crowds, and great beach conditions',
+        'Summer': 'hot and humid, perfect for beach activities, but expect afternoon rains',
+        'Winter': 'cooler, dry season with ideal weather for outdoor activities',
+        'Spring': 'transitional weather, fewer tourists, and good beach conditions'
+      },
+      attractions: [
+        {
+          name: 'Intramuros Historic District (Manila)',
+          description: 'Spanish colonial walled city with historic churches and museums',
+          duration: '2-3 hours',
+          bestTime: 'early morning',
+          why: 'Perfect introduction to Philippine history and Spanish colonial architecture',
+          review: 'Absolutely fascinating! The San Agustin Church was stunning, and our guide was incredibly knowledgeable.',
+          tip: 'Start at Fort Santiago before 9 AM to avoid crowds and catch the best lighting for photos.'
+        },
+        {
+          name: 'Boracay White Beach',
+          description: 'World-famous white sand beach with crystal clear waters',
+          duration: 'Full day',
+          bestTime: 'anytime',
+          why: 'Iconic Philippine beach experience with water sports and stunning sunsets',
+          review: 'The beach was absolutely pristine! Perfect for families with kids - shallow waters and soft sand.',
+          tip: 'Visit during sunset for the most spectacular views. Book water activities in advance.'
+        },
+        {
+          name: 'Palawan Underground River',
+          description: 'UNESCO World Heritage subterranean river with limestone formations',
+          duration: '3-4 hours',
+          bestTime: 'morning',
+          why: 'Unique natural wonder showcasing Philippine biodiversity and geological formations',
+          review: 'Incredible experience! The limestone formations were breathtaking, and the boat tour was very informative.',
+          tip: 'Book tickets online well in advance. Bring a jacket as it gets cool inside the cave.'
+        },
+        {
+          name: 'Chocolate Hills (Bohol)',
+          description: 'Unique geological formation of 1,200+ cone-shaped hills',
+          duration: '2-3 hours',
+          bestTime: 'early morning or late afternoon',
+          why: 'Iconic Philippine landmark offering panoramic views and unique photo opportunities',
+          review: 'Amazing natural wonder! The view from the observation deck was absolutely stunning.',
+          tip: 'Best lighting for photos is during golden hour. Combine with Tarsier Sanctuary visit.'
+        }
+      ],
+      accommodation: {
+        areas: [
+          'Makati (Manila): Modern business district with luxury hotels, shopping, and nightlife',
+          'Boracay Station 2: Beachfront resorts with easy access to restaurants and water activities',
+          'El Nido (Palawan): Eco-lodges and beachfront resorts near stunning lagoons',
+          'Cebu IT Park: Modern area with business hotels and easy access to attractions'
+        ],
+        recommendations: {
+          'Manila': 'Shangri-La Makati (luxury), Hotel Celeste (boutique), Red Planet Makati (budget)',
+          'Boracay': 'Shangri-La Boracay (luxury), Discovery Shores (mid-range), Boracay Beach Club (budget)',
+          'Palawan': 'El Nido Resorts (luxury), Caalan Beach Resort (mid-range), Spin Designer Hostel (budget)',
+          'Cebu': 'Shangri-La Cebu (luxury), Radisson Blu Cebu (mid-range), Quest Hotel Cebu (budget)'
+        }
+      },
+      dining: [
+        {
+          name: 'Traditional Filipino Restaurant',
+          description: 'Authentic Filipino cuisine with regional specialties',
+          type: 'Dinner reservations recommended',
+          why: 'Experience authentic Filipino flavors including adobo, sinigang, and lechon',
+          review: 'Incredible food! The lechon was amazing, and the staff was so welcoming. Felt like dining with family.',
+          tip: 'Book dinner reservations 2-3 days in advance, especially on weekends. Try the local specialties.'
+        },
+        {
+          name: 'Jollibee or Local Fast Food',
+          description: 'Popular Filipino fast food chains',
+          type: 'Perfect for quick meals',
+          why: 'Experience Filipino fast food culture and comfort food',
+          review: 'Great for quick meals! The chicken joy and spaghetti were surprisingly good.',
+          tip: 'Perfect for families with kids. Try the halo-halo for dessert.'
+        },
+        {
+          name: 'Seaside Restaurant',
+          description: 'Fresh seafood with ocean views',
+          type: 'Lunch or dinner',
+          why: 'Fresh catch of the day prepared with local spices and cooking methods',
+          review: 'Amazing seafood! The grilled fish was incredibly fresh and flavorful.',
+          tip: 'Ask for the daily catch. Best seafood is usually available in coastal areas.'
+        }
+      ]
+    };
+  }
+  
+  // Default fallback for other destinations
+  return {
+    language: 'English widely spoken in tourist areas',
+    currency: 'Local currency',
+    currencyConversion: 'Check current exchange rates',
+    voltage: 'Check local voltage requirements',
+    tipping: '10-15% in restaurants, check local customs',
+    timeZone: 'Check local time zone',
+    emergency: '911 (emergency), check local emergency numbers',
+    seasonalInfo: {
+      'Autumn': 'pleasant weather and fewer crowds',
+      'Summer': 'warm weather perfect for outdoor activities',
+      'Winter': 'cooler weather, check for seasonal attractions',
+      'Spring': 'mild weather and blooming flowers'
+    },
+    attractions: [
+      {
+        name: 'Historic Old Town Walking Tour',
+        description: 'Explore the historic center with local architecture and culture',
+        duration: '2-3 hours',
+        bestTime: 'early morning',
+        why: 'Perfect introduction to local history and architecture',
+        review: 'Great way to get oriented! The guide was knowledgeable and showed us hidden gems.',
+        tip: 'Start early to avoid crowds and catch the best lighting for photos.'
+      }
+    ],
+    accommodation: {
+      areas: ['City Center: Convenient location near major attractions'],
+      recommendations: {'City Center': 'Check local hotel recommendations'}
+    },
+    dining: [
+      {
+        name: 'Local Restaurant',
+        description: 'Traditional local cuisine',
+        type: 'Dinner reservations recommended',
+        why: 'Experience authentic local flavors and cooking methods',
+        review: 'Great food and atmosphere! The local specialties were delicious.',
+        tip: 'Book reservations in advance, especially on weekends.'
+      }
+    ]
+  };
+}
+
+// Generate destination-specific daily activities
+function getDailyActivities(destination, nDays) {
+  const dest = destination.toLowerCase();
+  
+  if (dest.includes('philippines') || dest.includes('manila') || dest.includes('cebu') || dest.includes('boracay') || dest.includes('palawan')) {
+    return [
+      {
+        morning: "🏰 **Intramuros Historic District** (Fort Santiago → San Agustin Church → Casa Manila)",
+        afternoon: "🏛️ **National Museum of the Philippines** (Padre Burgos Ave, Manila) - Philippine history & culture",
+        evening: "🍽️ **Café Adriatico** (1790 Adriatico St, Malate) - Traditional Filipino dinner",
+        review: "Intramuros was absolutely fascinating! The Spanish colonial architecture was stunning.",
+        tip: "Start at Fort Santiago before 9 AM to avoid crowds and catch the best lighting for photos.",
+        map: "📍 Start: Fort Santiago, Intramuros, Manila"
+      },
+      {
+        morning: "🏖️ **Boracay White Beach** (Station 2) - World-famous white sand beach",
+        afternoon: "🤿 **Island Hopping Tour** (Crystal Cove → Magic Island) - Snorkeling & beach hopping",
+        evening: "🍽️ **D'Talipapa Seafood Market** (Station 2) - Fresh seafood dinner",
+        review: "Boracay was absolutely pristine! Perfect for families with kids - shallow waters and soft sand.",
+        tip: "Visit during sunset for the most spectacular views. Book water activities in advance.",
+        map: "📍 Boracay White Beach, Station 2"
+      },
+      {
+        morning: "🛍️ **Greenhills Shopping Center** (San Juan) - Local markets & artisan shops",
+        afternoon: "🏰 **Ayala Museum** (Makati Ave, Makati) - Philippine art & culture",
+        evening: "🎭 **Cultural Show** (CCP Complex, Pasay) - Traditional Filipino performance",
+        review: "The market tour gave us authentic local insights and great shopping opportunities.",
+        tip: "Markets are busiest in the morning—arrive early for the best selection.",
+        map: "📍 Greenhills Shopping Center, San Juan"
+      },
+      {
+        morning: "🌋 **Taal Volcano Tour** (Tagaytay) - Active volcano with stunning lake views",
+        afternoon: "🍷 **Local Winery Visit** (Tagaytay) - Wine tasting & scenic views",
+        evening: "🍽️ **Sonya's Garden** (Tagaytay) - Farm-to-table dining experience",
+        review: "The volcano tour was incredible! The views from Tagaytay were absolutely breathtaking.",
+        tip: "Pack comfortable walking shoes and check weather conditions before heading out.",
+        map: "📍 Taal Volcano, Tagaytay"
+      },
+      {
+        morning: "🏛️ **Rizal Park & National Museum** (Ermita, Manila) - Historic landmarks",
+        afternoon: "👨‍🍳 **Filipino Cooking Class** (Local culinary school) - Learn traditional cuisine",
+        evening: "♨️ **Spa Treatment** (Makati) - Wellness & relaxation",
+        review: "The cooking class was a highlight—we learned to make authentic Filipino dishes.",
+        tip: "Book cooking classes in advance as they often fill up quickly.",
+        map: "📍 Rizal Park, Ermita, Manila"
+      },
+      {
+        morning: "🔍 **Hidden Gems Tour** - Corregidor Island (Manila Bay) - WWII historical site",
+        afternoon: "🚤 **Manila Bay Sunset Cruise** - Scenic harbor tour",
+        evening: "🍽️ **Manila Hotel** (Rizal Park) - Historic luxury dining",
+        review: "Corregidor Island was fascinating! The WWII history was incredibly moving.",
+        tip: "Book the island tour well in advance. Bring sunscreen and water.",
+        map: "📍 Corregidor Island, Manila Bay"
+      },
+      {
+        morning: "🎨 **Art Galleries** (Makati) - Contemporary Filipino art",
+        afternoon: "🚴 **Intramuros Bike Tour** - Historic district cycling tour",
+        evening: "🎵 **Local Music Scene** - Traditional Filipino music or modern venues",
+        review: "The art galleries provided great cultural context and beautiful local artwork.",
+        tip: "Many galleries offer free admission on certain days—check schedules.",
+        map: "📍 Makati Art Galleries, Makati"
+      },
+      {
+        morning: "🌿 **Manila Ocean Park** (Quirino Grandstand) - Marine life & botanical gardens",
+        afternoon: "🚗 **Day Trip to Pampanga** - Culinary capital & heritage sites",
+        evening: "🍽️ **Abe Restaurant** (Serendra, Taguig) - Fine dining establishment",
+        review: "Manila Ocean Park was perfect for families! The kids loved the marine life exhibits.",
+        tip: "Day trips often require advance booking—plan transportation ahead of time.",
+        map: "📍 Manila Ocean Park, Quirino Grandstand"
+      }
+    ];
+  }
+  
+  // Default fallback for other destinations
+  return [
+    {
+      morning: "🏰 **Historic Old Town Walking Tour** - Explore the historic center",
+      afternoon: "🏛️ **Local Museum** - Regional history & culture",
+      evening: "🍽️ **Traditional Restaurant** - Local cuisine dinner",
+      review: "The Old Town walking tour was perfect for getting oriented—highly recommend starting here.",
+      tip: "Book museum tickets online to skip the queue, especially on weekends.",
+      map: "📍 Start: Historic Old Town"
+    }
+  ];
+}
+
 /* Local Fallback Plan */
 function localPlanMarkdown(input) {
   const { destination = 'Your destination', start = 'start', end = 'end', budget = 1500, adults = 2, children = 0, level = 'mid', prefs = '', dietary = [], currency = 'USD' } = input || {};
@@ -307,6 +537,9 @@ function localPlanMarkdown(input) {
     for (let i = 0; i < nDays; i++) days.push({ iso: startISO, label: `Day ${i+1}` });
   }
 
+  // Destination-specific information
+  const destinationInfo = getDestinationInfo(destination);
+  
   // Sections (no inline images; widgets will provide visuals)
   let md = `# ${prettyDest} — ${startISO} → ${endISO}
 **Travelers:** ${travelerLabel(adults, children)}  
@@ -315,13 +548,13 @@ function localPlanMarkdown(input) {
 **Season:** ${seasonFromDate(startISO)}
 ---
 ## 🎯 Trip Overview
-- **Language:** German (official), English widely spoken in tourist areas
-- **Currency:** Euro (EUR) - ${currency === 'USD' ? '1 USD ≈ 0.85 EUR' : 'Local currency'}
-- **Voltage:** 230V, Type C/F plugs (Schuko) - adapter required for US devices
-- **Tipping:** 5-10% in restaurants, round up taxi fares, €1-2 per bag for porters
-- **Time Zone:** CET (UTC+1), CEST (UTC+2) in summer
-- **Emergency:** 112 (EU emergency number), 144 (medical), 133 (police)
-- **Best Time to Visit:** ${seasonFromDate(startISO)} offers ${seasonFromDate(startISO) === 'Autumn' ? 'stunning fall colors, fewer crowds, and shoulder season pricing' : seasonFromDate(startISO) === 'Summer' ? 'perfect hiking weather, long days, and outdoor activities' : seasonFromDate(startISO) === 'Winter' ? 'world-class skiing, Christmas markets, and cozy alpine atmosphere' : 'mild weather, blooming flowers, and fewer tourists'}
+- **Language:** ${destinationInfo.language}
+- **Currency:** ${destinationInfo.currency} - ${currency === 'USD' ? destinationInfo.currencyConversion : 'Local currency'}
+- **Voltage:** ${destinationInfo.voltage}
+- **Tipping:** ${destinationInfo.tipping}
+- **Time Zone:** ${destinationInfo.timeZone}
+- **Emergency:** ${destinationInfo.emergency}
+- **Best Time to Visit:** ${seasonFromDate(startISO)} offers ${destinationInfo.seasonalInfo[seasonFromDate(startISO)] || 'great weather and fewer crowds'}
 ---
 ## 💰 Detailed Budget Breakdown
 <table class="budget-table">
@@ -339,28 +572,28 @@ function localPlanMarkdown(input) {
       <td><label class="budget-checkbox"><input type="checkbox" onchange="window.toggleBudgetItem(this)"/> 🏨 Accommodation</label></td>
       <td>${b.stay.total}</td>
       <td>${b.stay.perDay}</td>
-      <td>Mid-range hotels, guesthouses, or B&Bs in Tyrol</td>
+      <td>${destinationInfo.accommodation.description || 'Mid-range hotels, guesthouses, or B&Bs'}</td>
       <td><span class="status-pending">Pending</span></td>
     </tr>
     <tr>
       <td><label class="budget-checkbox"><input type="checkbox" onchange="window.toggleBudgetItem(this)"/> 🍽️ Food & Dining</label></td>
       <td>${b.food.total}</td>
       <td>${b.food.perDay}/person</td>
-      <td>Local restaurants, cafes, and traditional Tyrolean cuisine</td>
+      <td>${destinationInfo.dining.description || 'Local restaurants, cafes, and traditional cuisine'}</td>
       <td><span class="status-pending">Pending</span></td>
     </tr>
     <tr>
       <td><label class="budget-checkbox"><input type="checkbox" onchange="window.toggleBudgetItem(this)"/> 🎫 Activities & Attractions</label></td>
       <td>${b.act.total}</td>
       <td>${b.act.perDay}</td>
-      <td>Cable cars, museums, hiking, cultural sites</td>
+      <td>${destinationInfo.attractions.description || 'Museums, cultural sites, and local attractions'}</td>
       <td><span class="status-pending">Pending</span></td>
     </tr>
     <tr>
       <td><label class="budget-checkbox"><input type="checkbox" onchange="window.toggleBudgetItem(this)"/> 🚌 Transportation</label></td>
       <td>${b.transit.total}</td>
       <td>${b.transit.perDay}</td>
-      <td>Regional trains, buses, airport transfers</td>
+      <td>${destinationInfo.transportation || 'Local transport, buses, airport transfers'}</td>
       <td><span class="status-pending">Pending</span></td>
     </tr>
     <tr>
@@ -375,125 +608,31 @@ function localPlanMarkdown(input) {
 Public transport is reliable. Use regional trains and buses for intercity moves; walk or tram in the center. For remote areas, consider a 1–2 day car rental. Book airport transfers in advance for late arrivals.
 
 ## 🏙️ Best Areas to Stay
-- **Innsbruck Altstadt (Old Town)**: Historic heart with cobblestone streets, medieval architecture, and walking distance to major attractions. Perfect for first-time visitors who want to be in the center of action.
-- **Seefeld in Tirol**: Charming alpine village with traditional Tyrolean atmosphere, direct access to hiking trails and pristine lakes. Ideal for nature lovers and those seeking authentic mountain experience.
-- **Kitzbühel**: Upscale resort town known for world-class skiing and luxury accommodations. Great for those wanting premium dining, boutique shopping, and easy access to mountain activities.
+${destinationInfo.accommodation.areas.map(area => `- **${area.split(':')[0]}**: ${area.split(':')[1]}`).join('\n')}
 
 ## 🏨 Accommodation Recommendations
 Pick a well-reviewed hotel or guesthouse in a central, walkable neighborhood. Prioritize free cancellation and breakfast included if you want convenience. For families, look for family rooms or kitchenette.
 
 **Recommended Hotels by Area:**
-- **Innsbruck**: Hotel Goldener Adler (historic), Hotel Innsbruck (modern), Gasthof Weisses Kreuz (traditional)
-- **Seefeld**: Hotel Klosterbräu (luxury spa), Hotel Seespitz (family-friendly), Pension Bergkristall (budget)
-- **Kitzbühel**: Hotel Tennerhof (boutique), Hotel Kitzhof (wellness), Gasthof Eggerwirt (authentic)
+${Object.entries(destinationInfo.accommodation.recommendations).map(([area, hotels]) => `- **${area}**: ${hotels}`).join('\n')}
 
 ## 🎫 Must-See Attractions
-- **Historic Old Town Walking Tour** (2-3 hours, best in early morning)
-  - Why: Perfect introduction to local architecture, culture, and history. Cobblestone streets reveal hidden courtyards and artisan workshops.
-  - Reviews: "Absolutely magical! The morning light on the medieval buildings was perfect for photos. Our guide knew every hidden gem."
-  - Insider Tip: Start at the main square before 9 AM to avoid crowds and catch the best lighting for photos.
-
-- **Panoramic Cable Car Experience** (1-2 hours, weather dependent)
-  - Why: Breathtaking 360-degree views of the entire region. Accessible to all fitness levels with stunning photo opportunities.
-  - Reviews: "Worth every penny! The views were absolutely incredible. We could see for miles in every direction."
-  - Insider Tip: Check weather conditions before going up. Clear days offer the best visibility and photo opportunities.
-
-- **Regional History Museum** (1-2 hours, great for any weather)
-  - Why: Comprehensive collection showcasing local heritage, artifacts, and cultural evolution. Perfect for understanding the destination's story.
-  - Reviews: "Fascinating exhibits! The audio guide really brought the history to life. Great way to spend a rainy afternoon."
-  - Insider Tip: Book tickets online to skip the queue, especially on weekends. Audio guides are worth the extra cost.
-
-- **Scenic Lake Promenade** (1-2 hours, perfect for sunset)
-  - Why: Peaceful lakeside walk with stunning reflections, local wildlife, and charming cafes. Ideal for relaxation and photography.
-  - Reviews: "So peaceful and beautiful! The sunset over the lake was absolutely stunning. Perfect end to a busy day."
-  - Insider Tip: Visit during golden hour (1 hour before sunset) for the most spectacular views and photos.
+${destinationInfo.attractions.map(attraction => `- **${attraction.name}** (${attraction.duration}, ${attraction.bestTime})
+  - Why: ${attraction.why}
+  - Reviews: "${attraction.review}"
+  - Insider Tip: ${attraction.tip}`).join('\n\n')}
 
 ## 🍽️ Dining Guide
-- **Traditional Local Tavern** (Dinner reservations recommended)
-  - Why: Authentic regional cuisine in a cozy, historic setting. Generous portions showcase local ingredients and traditional cooking methods.
-  - Reviews: "Incredible food and atmosphere! The seasonal soup was amazing, and the staff was so welcoming. Felt like dining with family."
-  - Insider Tip: Book dinner reservations 2-3 days in advance, especially on weekends. Ask for the daily specials and local wine recommendations.
-
-- **Historic Market Food Hall** (Perfect for lunch)
-  - Why: Fresh, local ingredients prepared by skilled vendors. Great variety and authentic flavors at reasonable prices.
-  - Reviews: "Amazing variety and quality! We tried so many different local specialties. Perfect for a quick, delicious lunch."
-  - Insider Tip: Arrive before 12 PM for the best selection. Many vendors offer samples, so you can try before you buy.
-
-- **Artisan Cafe & Bakery** (Morning coffee break)
-  - Why: Handcrafted pastries, premium coffee, and a charming atmosphere. Perfect pause between sightseeing activities.
-  - Reviews: "Best coffee in town! The apple strudel was incredible, and the melange was perfectly prepared. Great place to relax."
-  - Insider Tip: Try the house specialty pastries and ask about the coffee bean origins. Outdoor seating offers great people-watching opportunities.
+${destinationInfo.dining.map(restaurant => `- **${restaurant.name}** (${restaurant.type})
+  - Why: ${restaurant.why}
+  - Reviews: "${restaurant.review}"
+  - Insider Tip: ${restaurant.tip}`).join('\n\n')}
 ${dietary && dietary.length ? `- Dietary-friendly options: ${dietary.join(', ')}` : ''}
 
 ## 🎭 Day-by-Day Plan`;
 
-  // Generate specific, diverse daily itineraries with Tyrol attractions
-  const dailyActivities = [
-    {
-      morning: "🏰 **Innsbruck Old Town Walking Tour** (Maria-Theresien-Straße → Golden Roof → Hofburg Palace)",
-      afternoon: "🏛️ **Tyrolean State Museum** (Museumstraße 15, Innsbruck) - Regional history & culture",
-      evening: "🍽️ **Gasthof Weisses Kreuz** (Herzog-Friedrich-Straße 31) - Traditional Tyrolean dinner",
-      review: "The Old Town walking tour was perfect for getting oriented—highly recommend starting here.",
-      tip: "Book museum tickets online to skip the queue, especially on weekends.",
-      map: "📍 Start: Maria-Theresien-Straße, Innsbruck"
-    },
-    {
-      morning: "🚠 **Nordkette Cable Car** (Höhenstraße 145, Innsbruck) - Panoramic alpine views",
-      afternoon: "🥾 **Seegrube Lake Hike** or **Alpenzoo Innsbruck** (Weiherburggasse 37)",
-      evening: "🍽️ **Restaurant Seegrube** (2,000m altitude) - Mountain restaurant with sunset views",
-      review: "The cable car ride offered breathtaking views—worth every penny for the experience.",
-      tip: "Check weather conditions before heading up; clear days provide the best visibility.",
-      map: "📍 Nordkette Cable Car Station, Innsbruck"
-    },
-    {
-      morning: "🛍️ **Innsbruck Market Hall** (Maria-Theresien-Straße 18) - Local artisan shops & markets",
-      afternoon: "🏰 **Ambras Castle** (Schlossstraße 20, Innsbruck) - Renaissance palace & gardens",
-      evening: "🎭 **Tiroler Landestheater** (Rennweg 2) - Cultural performance or local nightlife",
-      review: "The market tour gave us authentic local insights and great shopping opportunities.",
-      tip: "Markets are busiest in the morning—arrive early for the best selection.",
-      map: "📍 Market Hall, Maria-Theresien-Straße, Innsbruck"
-    },
-    {
-      morning: "🥾 **Patscherkofel Mountain Trail** (Igls, Innsbruck) - Nature trails & outdoor activities",
-      afternoon: "🍺 **Stiegl Brewery Tour** (Brunecker Straße 1, Salzburg) or **Local Winery Visit**",
-      evening: "🍽️ **Restaurant Ottoburg** (Herzog-Friedrich-Straße 1) - Riverside dining",
-      review: "The nature trails were perfect for unwinding and connecting with the local landscape.",
-      tip: "Pack comfortable walking shoes and check trail conditions before heading out.",
-      map: "📍 Patscherkofel Cable Car, Igls"
-    },
-    {
-      morning: "🏛️ **Hofburg Imperial Palace** (Rennweg 1, Innsbruck) - Architectural highlights",
-      afternoon: "👨‍🍳 **Tyrolean Cooking Class** (Local culinary school) - Learn traditional cuisine",
-      evening: "♨️ **Aqua Dome Spa** (Oberlängenfeld 140, Längenfeld) - Wellness & relaxation",
-      review: "The cooking class was a highlight—we learned to make authentic local dishes.",
-      tip: "Book cooking classes in advance as they often fill up quickly.",
-      map: "📍 Hofburg Palace, Rennweg 1, Innsbruck"
-    },
-    {
-      morning: "🔍 **Hidden Gems Tour** - Swarovski Crystal Worlds (Kristallweltenstraße 1, Wattens)",
-      afternoon: "🚤 **Achensee Lake Boat Tour** (Seestraße 2, Pertisau) - Scenic lake adventure",
-      evening: "🍽️ **Restaurant Goldener Adler** (Herzog-Friedrich-Straße 6) - Highly-rated farewell dinner",
-      review: "The hidden gems tour showed us places we never would have found on our own.",
-      tip: "Ask locals for recommendations—they know the best spots tourists miss.",
-      map: "📍 Swarovski Crystal Worlds, Wattens"
-    },
-    {
-      morning: "🎨 **Tiroler Landesmuseum Ferdinandeum** (Museumstraße 15) - Art galleries & cultural centers",
-      afternoon: "🚴 **Innsbruck City Bike Tour** - Different neighborhoods & local insights",
-      evening: "🎵 **Local Music Scene** - Traditional Tyrolean music or modern venues",
-      review: "The art galleries provided great cultural context and beautiful local artwork.",
-      tip: "Many galleries offer free admission on certain days—check schedules.",
-      map: "📍 Ferdinandeum Museum, Museumstraße 15, Innsbruck"
-    },
-    {
-      morning: "🌿 **Alpenzoo Innsbruck** (Weiherburggasse 37) - Alpine wildlife & botanical gardens",
-      afternoon: "🚗 **Day Trip to Hall in Tirol** (Rathausplatz 1) - Historic salt mining town",
-      evening: "🍽️ **Restaurant Lichtblick** (Maria-Theresien-Straße 18) - Fine dining establishment",
-      review: "The botanical gardens were peaceful and beautiful—perfect for a relaxing morning.",
-      tip: "Day trips often require advance booking—plan transportation ahead of time.",
-      map: "📍 Alpenzoo, Weiherburggasse 37, Innsbruck"
-    }
-  ];
+  // Generate destination-specific daily itineraries
+  const dailyActivities = getDailyActivities(destination, nDays);
 
   days.forEach((d, idx) => {
     const activity = dailyActivities[idx % dailyActivities.length] || dailyActivities[0];
