@@ -18,7 +18,7 @@ import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
 import { getWidgetsForDestination, generateWidgetHTML } from './lib/widgets.mjs';
-const VERSION = 'staging-v25';
+const VERSION = 'staging-v29';
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
   try {
@@ -190,6 +190,34 @@ app.get('/dashboard/billing', (req, res) => {
 });
 
 app.get('/version', (_req, res) => res.json({ version: VERSION }));
+
+// Debug endpoint for system status
+app.get('/api/debug', (_req, res) => {
+  const debugInfo = {
+    version: VERSION,
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    platform: process.platform,
+    nodeVersion: process.version,
+    environment: {
+      NODE_ENV: process.env.NODE_ENV,
+      PORT: process.env.PORT,
+      OPENAI_API_KEY: process.env.OPENAI_API_KEY ? 'SET' : 'NOT_SET',
+      WAYZO_MODEL: process.env.WAYZO_MODEL || 'gpt-4o-mini'
+    },
+    files: {
+      serverExists: fs.existsSync(path.join(__dirname, 'server.mjs')),
+      frontendExists: fs.existsSync(path.join(FRONTEND, 'index.html')),
+      linksExists: fs.existsSync(path.join(__dirname, 'lib', 'links.mjs'))
+    },
+    database: {
+      plansCount: db.prepare('SELECT COUNT(*) as count FROM plans').get().count,
+      eventsCount: db.prepare('SELECT COUNT(*) as count FROM events').get().count
+    }
+  };
+  res.json(debugInfo);
+});
 
 // Public runtime config for frontend (safe values only)
 app.get('/config.js', (_req, res) => {
