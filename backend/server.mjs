@@ -16,7 +16,7 @@ import { normalizeBudget, computeBudget } from './lib/budget.mjs';
 import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
-const VERSION = 'staging-v24';
+const VERSION = 'staging-v26';
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
   try {
@@ -148,40 +148,220 @@ function localPlanMarkdown(input) {
 /* OpenAI (optional) */
 const client = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 async function generatePlanWithAI(payload) {
-  const { destination = '', start = '', end = '', budget = 0, currency = 'USD $', adults = 2, children = 0, level = 'mid', prefs = '', diet = '' } = payload || {};
+  console.log('🚀 NEW AI INTEGRATION - Starting fresh approach');
+  console.log('🎯 FUNCTION CALLED - This should appear in logs!');
+
+  const { destination = '', start = '', end = '', budget = 0, adults = 2, children = 0, level = 'mid', prefs = '', dietary = [] } = payload || {};
   const nDays = daysBetween(start, end);
-  const sys = `Return Markdown ONLY.
-Sections:
-Use token links: [Map](map:query) [Tickets](tickets:query) [Book](book:query) [Reviews](reviews:query).`;
-  const user = `Destination: ${destination}
-Dates: ${start} to ${end} (${nDays} days)
-Party: ${adults} adults${children ? `, ${children} children` : ""}
-Style: ${level}${prefs ? ` + ${prefs}` : ""}
-Budget: ${budget} ${currency}
-Diet: ${diet}`;
+
+  // STEP 1: Check OpenAI client
+  console.log('Step 1: OpenAI client check');
+  console.log('- Client exists:', !!client);
+  console.log('- API Key exists:', !!process.env.OPENAI_API_KEY);
+  console.log('- API Key length:', process.env.OPENAI_API_KEY?.length || 0);
+
   if (!client) {
-    console.warn('OpenAI API key not set, using local fallback');
-    let md = localPlanMarkdown(payload);
-    md = ensureDaySections(md, nDays, start);
-    return md;
+    console.log('❌ No OpenAI client - using local fallback');
+    return localPlanMarkdown(payload);
   }
+
+  // STEP 2: Simple API test
+  console.log('Step 2: Testing API with simple call...');
   try {
-    const resp = await client.chat.completions.create({
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-      temperature: 0.6,
-      messages: [{ role: "system", content: sys }, { role: "user", content: user }],
+    const testCall = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      temperature: 0.1,
+      max_tokens: 20,
+      messages: [{ role: "user", content: "Say 'TEST OK'" }],
     });
-    let md = resp.choices?.[0]?.message?.content?.trim() || "";
-    if (!md) {
-      console.warn('OpenAI response empty, using fallback');
-      md = localPlanMarkdown(payload);
+
+    const testResult = testCall.choices?.[0]?.message?.content?.trim() || "";
+    console.log('✅ API test result:', testResult);
+
+    if (!testResult.includes('TEST OK')) {
+      throw new Error('API test failed');
     }
-    md = linkifyTokens(md, destination);
-    md = ensureDaySections(md, nDays, start);
-    return md;
-  } catch (e) {
-    console.error('OpenAI API error:', e);
-    return localPlanMarkdown(payload); // Fallback
+  } catch (testError) {
+    console.error('❌ API test failed:', testError.message);
+    console.log('Using local fallback');
+    return localPlanMarkdown(payload);
+  }
+
+  // STEP 3: Generate actual plan
+  console.log('Step 3: Generating AI plan for', destination);
+  try {
+    const response = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      temperature: 0.3,
+      max_tokens: 6000,
+      messages: [
+        {
+          role: "system",
+          content: `You are Wayzo Planner Pro, the world's most meticulous travel planner. 
+
+WAYZO OUTPUT CONTRACT ====================
+CRITICAL IMAGE RULES (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH):
+- FORBIDDEN SECTIONS - NO IMAGES ALLOWED:
+  * Trip Overview
+  * Don't Forget List  
+  * Travel Tips
+  * Useful Apps
+  * Emergency Info
+- ALLOWED SECTIONS - EXACTLY 1 IMAGE PER SECTION AT END:
+  * Getting Around - 1 image at end
+  * Accommodation - 1 image at end
+  * Must-See Attractions - 1 image at end
+  * Daily Itineraries - 1 image at end (NOT per day)
+  * Restaurants - 1 image at end
+  * Budget Breakdown - 1 image at end
+- IMAGE FORMAT - EXACT COPY ONLY (MUST BE DESTINATION-SCOPED):
+  ![Destination — Section](image:Destination specific landmark|activity|food term)
+
+ACCURACY RULES (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH):
+- All facts (prices, hours, closures, seasonal notes) must be current
+- If you cannot verify current information, DO NOT recommend that place
+- Use phrases like "Check current prices" or "Verify opening hours"
+- Include disclaimers about price changes
+- Prioritize places with verified current information
+
+CONTENT QUALITY REQUIREMENTS (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH):
+- Create RICH, DETAILED, and PROFESSIONAL content that travelers can actually use
+- Include specific restaurant names, attraction names, and exact times
+- Provide detailed activity descriptions with insider tips
+- Include realistic cost breakdowns with current market prices
+- Make daily itineraries specific and actionable (NO generic "Open Exploration")
+- Include transportation details, duration estimates, and booking information
+- Add cultural insights, local customs, and practical advice
+- Provide money-saving tips and seasonal considerations
+- Include ALL required sections: Trip Overview, Budget Breakdown, Getting Around, Accommodation, Must-See Attractions, Dining Guide, Daily Itineraries, Don't Forget List, Travel Tips, Useful Apps, Emergency Info
+- Each section must be COMPREHENSIVE with 8-15 detailed items
+- Include specific addresses, phone numbers, and current operating hours
+- Provide detailed descriptions of what makes each place special
+- Include insider tips, local secrets, and hidden gems
+- Add cultural context and historical background
+- Include practical information like parking, accessibility, and family-friendly features
+
+MANDATORY SECTIONS (ALL MUST BE INCLUDED):
+1. 🎯 Trip Overview - Quick facts and highlights
+2. 💰 Budget Breakdown - Detailed cost analysis with checkboxes
+3. 🗺️ Getting Around - Transportation tips and maps
+4. 🏨 Accommodation - 3-5 hotel options with booking links
+5. 🎫 Must-See Attractions - 8-12 sights with tickets and maps
+6. 🍽️ Dining Guide - 6-10 restaurants with reviews
+7. 🎭 Daily Itineraries - Hour-by-hour plans per day
+8. 🧳 Don't Forget List - 8-12 packing/reminders with checkboxes
+9. 🛡️ Travel Tips - Local customs, safety, and practical advice
+10. 📱 Useful Apps - Mobile apps for the destination
+11. 🚨 Emergency Info - Important contacts and healthcare
+
+OUTPUT FORMATTING REQUIREMENTS (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH):
+- Use EXACT Markdown section headers: ## 🎯 Trip Overview
+- Use EXACT Markdown section headers: ## 💰 Budget Breakdown
+- Use EXACT Markdown section headers: ## 🗺️ Getting Around
+- Use EXACT Markdown section headers: ## 🏨 Accommodation
+- Use EXACT Markdown section headers: ## 🎫 Must-See Attractions
+- Use EXACT Markdown section headers: ## 🍽️ Dining Guide
+- Use EXACT Markdown section headers: ## 🎭 Daily Itineraries
+- Use EXACT Markdown section headers: ## 🧳 Don't Forget List
+- Use EXACT Markdown section headers: ## 🛡️ Travel Tips
+- Use EXACT Markdown section headers: ## 📱 Useful Apps
+- Use EXACT Markdown section headers: ## 🚨 Emergency Info
+- NEVER use HTML tags like <h2> in the output
+- NEVER use basic text headers like "Quick Facts" or "Day-by-Day Plan"
+- ALWAYS use proper Markdown ## headers for all section headers
+- VIOLATION OF THESE FORMATTING RULES WILL CAUSE SYSTEM FAILURE
+
+DESTINATION-SPECIFIC RESEARCH REQUIREMENTS (CRITICAL):
+- You MUST research and provide SPECIFIC, REAL places for the destination
+- NO generic placeholders like "Local Restaurant" or "Historic Old Town Walking Tour"
+- Include REAL restaurant names, REAL attraction names, REAL hotel names
+- Provide SPECIFIC addresses, phone numbers, and current operating hours
+- Include REAL cultural insights, local customs, and practical advice specific to the destination
+- Research REAL transportation options, costs, and practical tips for the destination
+- Include REAL emergency numbers, hospitals, and contacts for the destination
+- Provide REAL mobile apps that are actually useful for the destination
+- Include REAL packing items relevant to the destination's climate and culture
+- Research REAL seasonal considerations and weather-dependent alternatives
+- Provide REAL money-saving tips and local secrets specific to the destination
+
+EXAMPLES OF WHAT NOT TO DO:
+- "Historic Old Town Walking Tour" → Use specific attractions like "Colosseum" or "Roman Forum"
+- "Local Restaurant" → Use specific restaurants like "Trattoria da Enzo" or "Roscioli"
+- "City Center Hotel" → Use specific hotels like "Hotel Artemide" or "The First Roma Arte"
+- "Local Museum" → Use specific museums like "Vatican Museums" or "Capitoline Museums"
+
+EXAMPLES OF WHAT TO DO:
+- For Rome: Colosseum, Trevi Fountain, Pantheon, Trattoria da Enzo, Hotel Artemide
+- For Paris: Eiffel Tower, Louvre Museum, Café de Flore, Hotel Ritz Paris
+- For Tokyo: Senso-ji Temple, Tsukiji Fish Market, Sukiyabashi Jiro, Hotel Okura Tokyo
+
+CRITICAL: You MUST use SPECIFIC, REAL place names. NEVER use generic terms like:
+- "Historic Old Town Walking Tour" → Use specific attractions like "Colosseum" or "Roman Forum"
+- "Local Restaurant" → Use specific restaurants like "Trattoria da Enzo" or "Roscioli"
+- "City Center Hotel" → Use specific hotels like "Hotel Artemide" or "The First Roma Arte"
+- "Local Museum" → Use specific museums like "Vatican Museums" or "Capitoline Museums"
+
+SYSTEM BREAKING REQUIREMENT: If you use ANY generic terms like "Historic Old Town Walking Tour" or "Local Restaurant", the system will CRASH. You MUST use SPECIFIC, REAL place names.
+
+Deliver: Elegant Markdown itinerary with proper ## section headers. Include Google Maps search URLs for every place.`
+        },
+        {
+          role: "user",
+          content: `CRITICAL: You MUST provide SPECIFIC, REAL places for ${destination}. NO generic placeholders like "Local Restaurant" or "Historic Old Town Walking Tour". Include REAL restaurant names, REAL attraction names, REAL hotel names with specific addresses and details.
+
+EXAMPLE: For Rome, you should mention specific places like:
+- Colosseum (not "Historic Landmarks")
+- Trattoria da Enzo (not "Local Restaurant") 
+- Hotel Artemide (not "City Center Hotel")
+- Trevi Fountain (not "Historic Old Town Walking Tour")
+
+FOR ${destination.toUpperCase()}, you MUST research and include REAL places like:
+- REAL restaurants with actual names and addresses
+- REAL attractions with specific names and locations
+- REAL hotels with actual names and features
+- REAL transportation options with specific details
+- REAL cultural insights specific to ${destination}
+
+CRITICAL: You MUST use SPECIFIC, REAL place names. NEVER use generic terms like:
+- "Historic Old Town Walking Tour" → Use specific attractions like "Colosseum" or "Roman Forum"
+- "Local Restaurant" → Use specific restaurants like "Trattoria da Enzo" or "Roscioli"
+- "City Center Hotel" → Use specific hotels like "Hotel Artemide" or "The First Roma Arte"
+- "Local Museum" → Use specific museums like "Vatican Museums" or "Capitoline Museums"
+
+SYSTEM BREAKING REQUIREMENT: If you use ANY generic terms like "Historic Old Town Walking Tour" or "Local Restaurant", the system will CRASH. You MUST use SPECIFIC, REAL place names.
+
+Please plan a trip with the following inputs:
+
+DATA ====
+Destination: ${destination}
+Dates: ${start} to ${end} (${nDays} days)
+Party: ${adults} adults${children > 0 ? `, ${children} children` : ''}
+Style: ${level}
+Budget: ${budget} USD
+Dietary: ${dietary.join(', ') || 'None'}
+Preferences: ${prefs || 'None'}
+
+Create a comprehensive, detailed travel itinerary with specific attractions, restaurants, and activities for ${destination}. Use markdown formatting with proper section headers.`
+        }
+      ],
+    });
+
+    const aiContent = response.choices?.[0]?.message?.content?.trim() || "";
+    console.log('✅ AI response length:', aiContent.length);
+    console.log('AI preview:', aiContent.substring(0, 150));
+
+    if (aiContent && aiContent.length > 200) {
+      console.log('🎉 AI plan generated successfully!');
+      return aiContent;
+    } else {
+      console.log('❌ AI response too short, using fallback');
+      return localPlanMarkdown(payload);
+    }
+
+  } catch (aiError) {
+    console.error('❌ AI generation failed:', aiError.message);
+    console.log('Using local fallback');
+    return localPlanMarkdown(payload);
   }
 }
 /* API */
