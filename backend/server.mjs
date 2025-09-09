@@ -2186,3 +2186,4 @@ app.post('/api/pay/confirm', (req, res) => {
   } catch (e) { console.warn('Payment event log failed:', e); }
   res.json({ success: true, orderID });
 });
+// Updated AI integration
