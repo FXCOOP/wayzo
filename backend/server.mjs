@@ -40,7 +40,7 @@ import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
 import { getWidgetsForDestination, generateWidgetHTML } from './lib/widgets.mjs';
 import { WIDGET_CONFIG, getGYGWidget } from './lib/widget-config.mjs';
-const VERSION = 'staging-v52';
+const VERSION = 'staging-v53';
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
   try {
@@ -1151,8 +1151,8 @@ async function generatePlanWithAI(payload) {
   console.log('- API Key length:', process.env.OPENAI_API_KEY?.length || 0);
   
   if (!client) {
-    console.log('❌ No OpenAI client - using local fallback');
-    return localPlanMarkdown(payload);
+    console.log('❌ No OpenAI client - throwing error instead of fallback');
+    throw new Error('OpenAI client not available');
   }
   
   // STEP 2: Skip noisy preflight; proceed directly to generation
@@ -1452,14 +1452,14 @@ Create a comprehensive, detailed travel itinerary with SPECIFIC attractions, res
       console.log('🎉 AI plan generated successfully!');
       return aiContent;
     } else {
-      console.log('❌ AI response too short, using fallback');
-      return localPlanMarkdown(payload);
+      console.log('❌ AI response too short, throwing error');
+      throw new Error('AI response too short');
     }
     
   } catch (aiError) {
     console.error('❌ AI generation failed:', aiError.message);
-    console.log('Using local fallback');
-    return localPlanMarkdown(payload);
+    console.log('Throwing error instead of fallback');
+    throw aiError;
   }
 }
 
@@ -1559,18 +1559,13 @@ app.post('/api/plan', async (req, res) => {
     payload.budget = normalizeBudget(payload.budget, payload.currency);
     const id = uid();
 
-    // Hard timeout to avoid Render 502s (falls back to local plan)
+    // Hard timeout to avoid Render 502s (throws error instead of fallback)
     const withTimeout = (promise, ms) => {
       let timeoutId;
-      const timeoutPromise = new Promise((resolve) => {
-        timeoutId = setTimeout(async () => {
-          console.warn(`AI call timed out after ${ms}ms, using local fallback`);
-          try { 
-            const localPlan = await localPlanMarkdown(payload);
-            resolve(localPlan); 
-          } catch { 
-            resolve('# Trip plan temporarily unavailable'); 
-          }
+      const timeoutPromise = new Promise((resolve, reject) => {
+        timeoutId = setTimeout(() => {
+          console.warn(`AI call timed out after ${ms}ms, rejecting promise`);
+          reject(new Error(`AI call timed out after ${ms}ms`));
         }, ms);
       });
       
