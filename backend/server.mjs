@@ -40,7 +40,7 @@ import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
 import { getWidgetsForDestination, generateWidgetHTML } from './lib/widgets.mjs';
 import { WIDGET_CONFIG, getGYGWidget } from './lib/widget-config.mjs';
-const VERSION = 'staging-v54';
+const VERSION = 'staging-v55';
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
   try {
@@ -1329,12 +1329,17 @@ FOR ${destination.toUpperCase()}, you MUST research and include REAL places like
 - REAL cultural insights specific to ${destination}
 
 SPECIFIC EXAMPLES FOR ${destination.toUpperCase()}:
-${destination.toLowerCase().includes('prague') ? 
-`- Attractions: Charles Bridge, Prague Castle, Old Town Square, St. Vitus Cathedral, Lennon Wall
-- Restaurants: U Fleků, Lokál, Café Savoy, Terasa U Zlaté studně, La Degustation
-- Hotels: Hotel Golden City, Hotel U Prince, Hotel Savoy, Four Seasons Hotel Prague` :
+${destination.toLowerCase().includes('el nido') ? 
+`- Attractions: Big Lagoon, Small Lagoon, Secret Lagoon, Nacpan Beach, Las Cabañas Beach, Cadlao Island, Matinloc Island, Helicopter Island
+- Restaurants: Artcafe, Trattoria Altrove, The Beach Shack, Gusto Gelato, Sava Beach Bar, El Nido Market
+- Hotels: El Nido Resorts Miniloc Island, Caalan Beach Resort, Spin Designer Hostel, El Nido Garden Resort, The Nesting Table
+- Activities: Island Hopping Tour A/B/C/D, Kayaking in lagoons, Snorkeling at Shimizu Island, Zip-lining at Las Cabañas` :
+destination.toLowerCase().includes('prague') ? 
+`- Attractions: Charles Bridge, Prague Castle, Old Town Square, St. Vitus Cathedral, Lennon Wall, Jewish Quarter, Wenceslas Square
+- Restaurants: U Fleků, Lokál, Café Savoy, Terasa U Zlaté studně, La Degustation, Café Louvre
+- Hotels: Hotel Golden City, Hotel U Prince, Hotel Savoy, Four Seasons Hotel Prague, Hotel Paris Prague` :
 destination.toLowerCase().includes('berlin') ?
-`- Attractions: Brandenburg Gate, Berlin Wall Memorial, Museum Island, Reichstag Dome, East Side Gallery
+`- Attractions: Brandenburg Gate, Berlin Wall Memorial, Museum Island, Reichstag Dome, East Side Gallery, Checkpoint Charlie
 - Restaurants: Mustafa's Gemüse Kebap, Markthalle Neun, Zur letzten Instanz, Curry 36, Café Einstein
 - Hotels: Hotel de Rome, ARCOTEL John F, Adina Apartment Hotel Hackescher Markt` :
 `- Attractions: [Research specific attractions for ${destination}]
@@ -1346,6 +1351,15 @@ CRITICAL: You MUST use SPECIFIC, REAL place names. NEVER use generic terms like:
 - "Local Restaurant" → Use specific restaurants like "Trattoria da Enzo" or "Roscioli"
 - "City Center Hotel" → Use specific hotels like "Hotel Artemide" or "The First Roma Arte"
 - "Local Museum" → Use specific museums like "Vatican Museums" or "Capitoline Museums"
+
+${destination.toLowerCase().includes('el nido') ? `
+FOR EL NIDO SPECIFICALLY - YOU MUST USE THESE EXACT PLACES:
+- Attractions: Big Lagoon, Small Lagoon, Secret Lagoon, Nacpan Beach, Las Cabañas Beach, Cadlao Island, Matinloc Island, Helicopter Island, Shimizu Island
+- Restaurants: Artcafe, Trattoria Altrove, The Beach Shack, Gusto Gelato, Sava Beach Bar, El Nido Market, Altrove Pizza, Happiness Beach Bar
+- Hotels: El Nido Resorts Miniloc Island, Caalan Beach Resort, Spin Designer Hostel, El Nido Garden Resort, The Nesting Table, Cuna Hotel, Outpost Beach Hostel
+- Activities: Island Hopping Tour A/B/C/D, Kayaking in Big Lagoon, Snorkeling at Shimizu Island, Zip-lining at Las Cabañas, Scuba diving at Miniloc Island
+
+SYSTEM BREAKING: If you use generic terms like "Local Restaurant" or "City Center Hotel" for El Nido, the system will CRASH.` : ''}
 
 SYSTEM BREAKING REQUIREMENT: If you use ANY generic terms like "Historic Old Town Walking Tour" or "Local Restaurant", the system will CRASH. You MUST use SPECIFIC, REAL place names.
 
