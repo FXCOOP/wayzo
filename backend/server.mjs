@@ -18,7 +18,7 @@ import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
 import { getWidgetsForDestination, generateWidgetHTML } from './lib/widgets.mjs';
-const VERSION = 'staging-v29';
+const VERSION = 'staging-v32';
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
   try {
@@ -2113,9 +2113,7 @@ app.get('/api', (_req, res) => {
 });
 
 // Health check for Render
-app.get('/healthz', (_req, res) => {
-  res.status(200).send('ok');
-});
+app.get('/healthz', (_req, res) => res.json({ ok: true, version: VERSION }))
 
 // Contact page
 app.get('/contact', (_req, res) => {
