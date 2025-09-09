@@ -12,6 +12,18 @@ marked.setOptions({
 });
 
 import puppeteer from 'puppeteer';
+// Derive a locale string from destination (very lightweight mapping)
+function getLocaleForDestination(dest = '') {
+  const d = (dest || '').toLowerCase();
+  if (d.includes('germany') || d.includes('berlin')) return 'de-DE';
+  if (d.includes('austria') || d.includes('tyrol') || d.includes('tirol') || d.includes('innsbruck')) return 'de-AT';
+  if (d.includes('italy') || d.includes('venice') || d.includes('venezia')) return 'it-IT';
+  if (d.includes('greece') || d.includes('santorini') || d.includes('athens')) return 'el-GR';
+  if (d.includes('spain') || d.includes('madrid') || d.includes('barcelona')) return 'es-ES';
+  if (d.includes('france') || d.includes('paris')) return 'fr-FR';
+  if (d.includes('portugal') || d.includes('lisbon') || d.includes('porto')) return 'pt-PT';
+  return 'en-US';
+}
 import OpenAI from 'openai';
 import multer from 'multer';
 import fs from 'fs';
@@ -424,7 +436,7 @@ function getDestinationInfo(destination) {
           'Mitte: Walkable to Museum Island, Brandenburg Gate, Unter den Linden',
           'Prenzlauer Berg: Leafy, cafes and family‑friendly, near Mauerpark',
           'Friedrichshain: East Side Gallery, nightlife, easy S‑Bahn',
-          'Charlottenburg: Ku’damm, Charlottenburg Palace, classic West Berlin',
+          'Charlottenburg: Ku'damm, Charlottenburg Palace, classic West Berlin',
           'Kreuzberg: Creative, food scene, canal walks'
         ],
         recommendations: {
@@ -435,7 +447,7 @@ function getDestinationInfo(destination) {
       },
       dining: [
         { name: 'Markthalle Neun', description: 'Street food hall (Thu Street Food Thursday)', type: 'Lunch or casual dinner', why: 'Variety and quality under one roof', review: 'Fantastic options; arrive hungry.', tip: 'Check event days for special vendors' },
-        { name: 'Mustafa’s Gemüse Kebap / Konnopke’s Imbiss', description: 'Beloved Berlin street‑food institutions', type: 'Quick bite', why: 'Classic Berlin flavors', review: 'Queues move fast; worth the wait.', tip: 'Go off‑peak to avoid long lines' },
+        { name: 'Mustafa's Gemüse Kebap / Konnopke's Imbiss', description: 'Beloved Berlin street‑food institutions', type: 'Quick bite', why: 'Classic Berlin flavors', review: 'Queues move fast; worth the wait.', tip: 'Go off‑peak to avoid long lines' },
         { name: 'Zur letzten Instanz', description: 'Historic German restaurant (since 1621)', type: 'Dinner reservation', why: 'Traditional cuisine in old‑world setting', review: 'Pork knuckle and dumplings are classics.', tip: 'Reserve ahead; cozy and popular' }
       ],
       reviews: [
@@ -653,7 +665,7 @@ function getDailyActivities(destination, nDays) {
       { morning: '🚶 Unter den Linden → Brandenburg Gate', afternoon: '🏛️ Reichstag Dome (booked visit)', evening: '🌳 Tiergarten stroll & Café am Neuen See', review: 'Reichstag audio guide is excellent and free.', tip: 'Bring ID for security at Reichstag', map: '📍 Reichstag' },
       { morning: '🧱 East Side Gallery mural walk', afternoon: '🌉 Oberbaum Bridge & Spree riverside', evening: '🍻 Friedrichshain dinner & craft beer', review: 'Street art + sunset over the river was perfect.', tip: 'Go early for fewer crowds/photos', map: '📍 East Side Gallery' },
       { morning: '📜 Topography of Terror (documentation center)', afternoon: '🪖 Checkpoint Charlie & Gendarmenmarkt', evening: '🍷 Dinner around Mitte/Prenzlauer Berg', review: 'Sobering but very informative exhibits.', tip: 'Most content is bilingual; allow 90–120 min', map: '📍 Niederkirchnerstraße 8' },
-      { morning: '🏰 Charlottenburg Palace & Gardens', afternoon: '🛍️ Kurfürstendamm & KaDeWe food hall', evening: '🎶 Potsdamer Platz/Philharmonie (if available)', review: 'Gardens are lovely on clear days.', tip: 'Book palace timeslot; combine with Ku’damm', map: '📍 Schloss Charlottenburg' },
+      { morning: '🏰 Charlottenburg Palace & Gardens', afternoon: '🛍️ Kurfürstendamm & KaDeWe food hall', evening: '🎶 Potsdamer Platz/Philharmonie (if available)', review: 'Gardens are lovely on clear days.', tip: 'Book palace timeslot; combine with Ku'damm', map: '📍 Schloss Charlottenburg' },
       { morning: '🚲 Tempelhofer Feld cycling or walk', afternoon: '🛍️ Markthalle Neun / food crawl', evening: '🎭 Theater/club or canal walk (Landwehrkanal)', review: 'Tempelhof runways—unique city space.', tip: 'Rent bikes or grab e‑scooters nearby', map: '📍 Tempelhofer Damm' },
       { morning: '🕍 Jewish Museum or DDR Museum (your pick)', afternoon: '🌳 Mauerpark & fleamarket (Sun)', evening: '🎤 Karaoke / street food (Sun)', review: 'Mauerpark on Sunday is peak local vibe.', tip: 'Check museum hours and market days', map: '📍 Mauerpark' },
       { morning: '🚆 Day trip (Potsdam palaces or Sachsenhausen Memorial)', afternoon: '🏞️ Sanssouci Park (if Potsdam)', evening: '🍽️ Return to Berlin—farewell dinner', review: 'Potsdam is an easy S‑Bahn ride away.', tip: 'ABC ticket covers Potsdam; validate it', map: '📍 Potsdam Hbf' }
@@ -1724,9 +1736,10 @@ function injectWidgetsIntoSections(html, widgets) {
   // Inject your original GetYourGuide auto widget into key sections (avoid duplicates)
   try {
     const pid = process.env.GYG_PID || 'PUHVJ53';
-    const gygAuto = `<div data-gyg-widget="auto" data-gyg-partner-id="${pid}"></div>`;
+    const locale = getLocaleForDestination(widgets?.[0]?.destination || '');
+    const gygAuto = `<div data-gyg-widget="auto" data-gyg-partner-id="${pid}" data-gyg-locale="${locale}"></div>`;
     let existingGygCount = (modifiedHtml.match(/data-gyg-widget="auto"/g) || []).length;
-    const maxGyg = 3;
+    const maxGyg = 2; // reduce to avoid 429s
     const injectIfSpace = (sectionRegex) => {
       if (existingGygCount >= maxGyg) return;
       const before = modifiedHtml;
@@ -1988,7 +2001,8 @@ app.get('/plan/:id', (req, res) => {
     const saved = JSON.parse(row.payload || '{}');
     const html = saved.html || marked.parse(saved.markdown || '# Plan');
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    return res.send(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Wayzo Plan</title><link rel="stylesheet" href="/frontend/style.css"><script async defer src="https://widget.getyourguide.com/dist/pa.umd.production.min.js" data-gyg-partner-id="${process.env.GYG_PID || 'PUHVJ53'}"></script></head><body><main class="container"><section class="card"><div class="card-header"><h2>Your itinerary</h2></div><div id="preview" class="preview-content">${html}</div></section></main><script>(function(){try{const planId=(location.pathname.match(/plan\/(.+)$/)||[])[1]||'preview';const LS_KEY='wayzo:checks:'+planId;const load=()=>{try{return JSON.parse(localStorage.getItem(LS_KEY)||'{}')}catch{return{}}};const save=(d)=>{try{localStorage.setItem(LS_KEY,JSON.stringify(d))}catch{}};const state=load();const all=[...document.querySelectorAll('#preview input[type="checkbox"]')];all.forEach((cb,idx)=>{const key=cb.id||cb.name||('cb_'+idx);cb.checked=!!state[key];cb.disabled=false;cb.addEventListener('change',()=>{state[key]=cb.checked;save(state);});});}catch(e){console.warn('checkbox init failed',e)}})();</script></body></html>`);
+    const locale = getLocaleForDestination(saved?.data?.destination || '');
+    return res.send(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Wayzo Plan</title><link rel="stylesheet" href="/frontend/style.css"><script async defer src="https://widget.getyourguide.com/dist/pa.umd.production.min.js" data-gyg-partner-id="${process.env.GYG_PID || 'PUHVJ53'}" data-gyg-locale="${locale}"></script></head><body><main class="container"><section class="card"><div class="card-header"><h2>Your itinerary</h2></div><div id="preview" class="preview-content">${html}</div></section></main><script>(function(){try{const planId=(location.pathname.match(/plan\/(.+)$/)||[])[1]||'preview';const LS_KEY='wayzo:checks:'+planId;const load=()=>{try{return JSON.parse(localStorage.getItem(LS_KEY)||'{}')}catch{return{}}};const save=(d)=>{try{localStorage.setItem(LS_KEY,JSON.stringify(d))}catch{}};const state=load();const all=[...document.querySelectorAll('#preview input[type=\"checkbox\"]')];all.forEach((cb,idx)=>{const key=cb.id||cb.name||('cb_'+idx);cb.checked=!!state[key];cb.disabled=false;cb.addEventListener('change',()=>{state[key]=cb.checked;save(state);});});}catch(e){console.warn('checkbox init failed',e)}})();</script></body></html>`);
   } catch (e) {
     return res.status(500).send('<!doctype html><html><body><h2>Error rendering plan</h2></body></html>');
   }
