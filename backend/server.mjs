@@ -1611,7 +1611,7 @@ app.post('/api/plan', async (req, res) => {
       console.log(`Widget ${index + 1}: ${widget.name} (${widget.category})`);
     });
     console.log('HTML before widget injection:', html.substring(0, 500));
-    const finalHTML = html; // Widgets are now injected during generation, not here
+    const finalHTML = injectWidgetsIntoSections(html, widgets);
     console.log('HTML after widget injection:', finalHTML.substring(0, 500));
     
     // Remove any duplicate content that might have been generated
@@ -1664,7 +1664,7 @@ app.post('/api/plan.pdf', async (req, res) => {
     widgets.forEach((widget, index) => {
       console.log(`PDF Widget ${index + 1}: ${widget.name} (${widget.category})`);
     });
-    const finalHTML = html; // Widgets are now injected during generation, not here
+    const finalHTML = injectWidgetsIntoSections(html, widgets);
 
     const fullHtml = `<!doctype html><html><head>
       <meta charset="utf-8">
@@ -1781,6 +1781,8 @@ function injectWidgetsIntoSections(html, widgets) {
       console.log('Widgets already exist, skipping injection to avoid duplicates');
       return modifiedHtml;
     }
+    
+    console.log('No existing widgets found, proceeding with injection');
     
     // 1. Flight Search Widget - Getting Around section
     const flightWidget = `<div class="section-widget" data-category="flights">
