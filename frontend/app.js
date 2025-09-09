@@ -568,6 +568,36 @@
       
       // Always show full plan (no paywall or signup)
       previewEl.innerHTML = result.html;
+      // If the rendered HTML contains GYG auto widgets, ensure the runtime script is present (homepage only)
+      try {
+        if (previewEl.querySelector('[data-gyg-widget="auto"]')) {
+          const EXISTING = document.querySelector('script[src*="widget.getyourguide.com"]');
+          if (!EXISTING) {
+            const s = document.createElement('script');
+            s.async = true; s.defer = true;
+            s.src = 'https://widget.getyourguide.com/dist/pa.umd.production.min.js';
+            s.setAttribute('data-gyg-partner-id', (window.GYG_PARTNER_ID || 'PUHVJ53'));
+            document.head.appendChild(s);
+          }
+        }
+      } catch(e) { console.warn('GYG loader failed', e); }
+
+      // Initialize interactive checkboxes and persist by plan id/permalink
+      try {
+        const planKey = (result.permalink || result.id || 'preview');
+        const LS_KEY = 'wayzo:checks:' + planKey;
+        const load = () => { try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch { return {}; } };
+        const save = (data) => { try { localStorage.setItem(LS_KEY, JSON.stringify(data)); } catch(e){} };
+        const state = load();
+        const all = Array.from(previewEl.querySelectorAll('input[type="checkbox"]'));
+        all.forEach((cb, idx) => {
+          const key = cb.id || cb.name || ('cb_' + idx);
+          cb.checked = !!state[key];
+          cb.disabled = false;
+          cb.addEventListener('change', () => { state[key] = cb.checked; save(state); });
+        });
+      } catch(e) { console.warn('checkbox init (homepage) failed', e); }
+
       finalizeRender(data.destination);
       saveFullPlan(result.html, data.destination);
       // Show permalink if available
