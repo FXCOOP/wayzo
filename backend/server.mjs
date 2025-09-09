@@ -1237,7 +1237,7 @@ QUALITY RULES:
 LINK RULES:
 - Use SEARCH URLs only (no made-up affiliate params): 
   flights: https://www.kayak.com/flights?query={CITY}
-  hotels: https://www.booking.com/searchresults.html?ss={CITY}
+  hotels: https://www.kayak.com/hotels?query={CITY}
   activities: https://www.getyourguide.com/s/?q={CITY}
 - For each place, add a Google Maps search URL: https://www.google.com/maps/search/?api=1&query={ENCODED_NAME_AND_CITY}
 - Use proper token format: [Book](book:destination) for booking links
@@ -1757,8 +1757,8 @@ function injectWidgetsIntoSections(html, widgets) {
         <div class="widget-content">
           ${hotelWidget.script}
           <div class="widget-fallback">
-            <a href="https://www.booking.com/searchresults.html?ss=${encodeURIComponent(widgets?.[0]?.destination || '')}" target="_blank" rel="noopener" class="widget-link">
-              Search hotels on Booking.com
+            <a href="https://www.kayak.com/hotels?query=${encodeURIComponent(widgets?.[0]?.destination || '')}" target="_blank" rel="noopener" class="widget-link">
+              Search hotels on Kayak
             </a>
           </div>
         </div>
