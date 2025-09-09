@@ -1552,7 +1552,7 @@ app.post('/api/plan', async (req, res) => {
     };
 
     console.log('🚀 About to call generatePlanWithAI for:', payload.destination);
-    const markdown = await withTimeout(generatePlanWithAI(payload), 60000); // Increased to 60 seconds
+    const markdown = await withTimeout(generatePlanWithAI(payload), 60000);
     console.log('✅ generatePlanWithAI completed, markdown length:', markdown?.length || 0);
     
     // Process image tokens and other links in the MARKDOWN first
@@ -1601,32 +1601,8 @@ app.post('/api/plan', async (req, res) => {
     return res.json({ id, markdown, html: cleanedHTML, affiliates: aff, version: VERSION, permalink: `/plan/${id}`, debug: { aiCalled: true, markdownLength: markdown?.length || 0, destination: payload.destination } });
   } catch (e) {
     console.error('Plan generation error:', e);
-    try {
-      // Last-resort graceful fallback to prevent 502
-      const payload = req.body || {};
-      const id = uid();
-      const markdown = await localPlanMarkdown(payload);
-      const processedMarkdown = linkifyTokens(markdown, payload.destination);
-      const cleanedMarkdown = enforceWayzoContracts(processedMarkdown, payload.destination);
-      const html = marked.parse(cleanedMarkdown);
-      const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
-      const finalHTML = injectWidgetsIntoSections(html, widgets);
-      const aff = affiliatesFor(payload.destination);
-      return res.status(200).json({ id, markdown, html: finalHTML, affiliates: aff, version: VERSION, permalink: `/plan/${id}` });
-    } catch (fallbackErr) {
-      console.error('Fallback also failed:', fallbackErr);
-      // Attempt a minimal but valid plan response instead of a temporary error
-      try {
-        const payload = req.body || {};
-        const md2 = localPlanMarkdown(payload);
-        const html2 = marked.parse(md2);
-        const aff2 = affiliatesFor(payload.destination);
-        return res.status(200).json({ id: uid(), markdown: md2, html: html2, affiliates: aff2, version: VERSION });
-      } catch (deepErr) {
-        console.error('Deep fallback failed:', deepErr);
-        return res.status(200).json({ id: uid(), markdown: '# Plan unavailable', html: '<h2>Your itinerary</h2><p>Plan temporarily unavailable. Please retry.</p>', affiliates: {}, version: VERSION });
-      }
-    }
+    // Do not use generic local fallback; return a clear temporary message instead
+    return res.status(200).json({ id: uid(), markdown: '# Plan temporarily unavailable', html: '<h2>Your itinerary</h2><p>Plan temporarily unavailable. Please retry in a moment.</p>', affiliates: {}, version: VERSION });
   }
 });
 

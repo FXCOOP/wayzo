@@ -567,7 +567,17 @@
       console.log('Full plan result:', result);
       
       // Always show full plan (no paywall or signup)
-      previewEl.innerHTML = result.html;
+      // Strip script-based third-party widgets on the homepage to prevent footer injection
+      let homepageHtml = (result.html || '')
+        .replace(/<script[^>]+tpwdgt\.com[^>]*><\/script>/gi, '')
+        .replace(/<div class="section-widget"[\s\S]*?<div class="widget-content">[\s\S]*?<\/div>[\s\S]*?<\/div>/gi, (m) => {
+          // Keep header but remove script content on homepage
+          try {
+            const headerMatch = m.match(/<div class=\"widget-header\">[\s\S]*?<\/div>/i);
+            return headerMatch ? `<div class="section-widget">${headerMatch[0]}<div class="widget-content"><span class="muted">Widget available in full plan view</span></div></div>` : '';
+          } catch { return ''; }
+        });
+      previewEl.innerHTML = homepageHtml;
       // If the rendered HTML contains GYG auto widgets, ensure the runtime script is present (homepage only)
       try {
         if (previewEl.querySelector('[data-gyg-widget="auto"]')) {
