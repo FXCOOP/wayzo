@@ -436,7 +436,7 @@ function getDestinationInfo(destination) {
           'Mitte: Walkable to Museum Island, Brandenburg Gate, Unter den Linden',
           'Prenzlauer Berg: Leafy, cafes and family‑friendly, near Mauerpark',
           'Friedrichshain: East Side Gallery, nightlife, easy S‑Bahn',
-          'Charlottenburg: Ku'damm, Charlottenburg Palace, classic West Berlin',
+          'Charlottenburg: Ku\'damm, Charlottenburg Palace, classic West Berlin',
           'Kreuzberg: Creative, food scene, canal walks'
         ],
         recommendations: {
