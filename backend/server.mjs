@@ -2187,3 +2187,4 @@ app.post('/api/pay/confirm', (req, res) => {
   res.json({ success: true, orderID });
 });
 // Updated AI integration
+// Debug system added
