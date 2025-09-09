@@ -38,7 +38,7 @@ import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
 import { getWidgetsForDestination, generateWidgetHTML } from './lib/widgets.mjs';
-const VERSION = 'staging-v48';
+const VERSION = 'staging-v49';
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
   try {
@@ -1260,7 +1260,7 @@ OUTPUT FORMATTING REQUIREMENTS (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH):
 - ALWAYS use proper Markdown ## headers for all section headers
 - VIOLATION OF THESE FORMATTING RULES WILL CAUSE SYSTEM FAILURE
 
-DESTINATION-SPECIFIC RESEARCH REQUIREMENTS (CRITICAL):
+DESTINATION-SPECIFIC RESEARCH REQUIREMENTS (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH):
 - You MUST research and provide SPECIFIC, REAL places for the destination
 - NO generic placeholders like "Local Restaurant" or "Historic Old Town Walking Tour"
 - Include REAL restaurant names, REAL attraction names, REAL hotel names
@@ -1273,22 +1273,31 @@ DESTINATION-SPECIFIC RESEARCH REQUIREMENTS (CRITICAL):
 - Research REAL seasonal considerations and weather-dependent alternatives
 - Provide REAL money-saving tips and local secrets specific to the destination
 
-EXAMPLES OF WHAT NOT TO DO:
+EXAMPLES OF WHAT NOT TO DO (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH):
 - "Historic Old Town Walking Tour" → Use specific attractions like "Colosseum" or "Roman Forum"
 - "Local Restaurant" → Use specific restaurants like "Trattoria da Enzo" or "Roscioli"
 - "City Center Hotel" → Use specific hotels like "Hotel Artemide" or "The First Roma Arte"
 - "Local Museum" → Use specific museums like "Vatican Museums" or "Capitoline Museums"
+- "Traditional Restaurant" → Use specific restaurants like "Trattoria da Enzo" or "Roscioli"
+- "Historic Landmarks" → Use specific attractions like "Colosseum" or "Roman Forum"
+- "Cultural Sites" → Use specific museums like "Vatican Museums" or "Capitoline Museums"
 
 EXAMPLES OF WHAT TO DO:
 - For Rome: Colosseum, Trevi Fountain, Pantheon, Trattoria da Enzo, Hotel Artemide
 - For Paris: Eiffel Tower, Louvre Museum, Café de Flore, Hotel Ritz Paris
 - For Tokyo: Senso-ji Temple, Tsukiji Fish Market, Sukiyabashi Jiro, Hotel Okura Tokyo
+- For Prague: Charles Bridge, Prague Castle, Old Town Square, U Fleků, Hotel Golden City
 
 CRITICAL: You MUST use SPECIFIC, REAL place names. NEVER use generic terms like:
 - "Historic Old Town Walking Tour" → Use specific attractions like "Colosseum" or "Roman Forum"
 - "Local Restaurant" → Use specific restaurants like "Trattoria da Enzo" or "Roscioli"
 - "City Center Hotel" → Use specific hotels like "Hotel Artemide" or "The First Roma Arte"
 - "Local Museum" → Use specific museums like "Vatican Museums" or "Capitoline Museums"
+- "Traditional Restaurant" → Use specific restaurants like "Trattoria da Enzo" or "Roscioli"
+- "Historic Landmarks" → Use specific attractions like "Colosseum" or "Roman Forum"
+- "Cultural Sites" → Use specific museums like "Vatican Museums" or "Capitoline Museums"
+
+SYSTEM BREAKING REQUIREMENT: If you use ANY generic terms like "Historic Old Town Walking Tour" or "Local Restaurant", the system will CRASH. You MUST use SPECIFIC, REAL place names.
 
 EXAMPLE OF CORRECT FORMATTING:
 ## 🎯 Trip Overview
@@ -1318,9 +1327,17 @@ FOR ${destination.toUpperCase()}, you MUST research and include REAL places like
 - REAL cultural insights specific to ${destination}
 
 SPECIFIC EXAMPLES FOR ${destination.toUpperCase()}:
-- Attractions: Colosseum, Roman Forum, Pantheon, Trevi Fountain, Vatican City
-- Restaurants: Trattoria da Enzo, Roscioli, La Pergola, Armando al Pantheon
-- Hotels: Hotel Artemide, The First Roma Arte, Hotel de Russie, Palazzo Naiadi
+${destination.toLowerCase().includes('prague') ? 
+`- Attractions: Charles Bridge, Prague Castle, Old Town Square, St. Vitus Cathedral, Lennon Wall
+- Restaurants: U Fleků, Lokál, Café Savoy, Terasa U Zlaté studně, La Degustation
+- Hotels: Hotel Golden City, Hotel U Prince, Hotel Savoy, Four Seasons Hotel Prague` :
+destination.toLowerCase().includes('berlin') ?
+`- Attractions: Brandenburg Gate, Berlin Wall Memorial, Museum Island, Reichstag Dome, East Side Gallery
+- Restaurants: Mustafa's Gemüse Kebap, Markthalle Neun, Zur letzten Instanz, Curry 36, Café Einstein
+- Hotels: Hotel de Rome, ARCOTEL John F, Adina Apartment Hotel Hackescher Markt` :
+`- Attractions: [Research specific attractions for ${destination}]
+- Restaurants: [Research specific restaurants for ${destination}]
+- Hotels: [Research specific hotels for ${destination}]`}
 
 CRITICAL: You MUST use SPECIFIC, REAL place names. NEVER use generic terms like:
 - "Historic Old Town Walking Tour" → Use specific attractions like "Colosseum" or "Roman Forum"
