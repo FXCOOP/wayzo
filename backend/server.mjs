@@ -1767,7 +1767,11 @@ function injectWidgetsIntoSections(html, widgets) {
 
   // Inject GetYourGuide automatic widget into key sections (avoid duplicates)
   try {
-    const gygAuto = '<div data-gyg-widget="auto" data-gyg-partner-id="PUHVJ53"></div>';
+    // Replace auto widget with explicit destination-scoped link block to avoid wrong country + 429s
+    const gygAuto = `<div class="section-widget" data-category="activities">
+      <div class="widget-header"><h4>Top Activities</h4><p>Curated tours for ${escapeHtml((widgets?.[0]?.destination)||'your destination')}</p></div>
+      <div class="widget-content"><a href="https://www.getyourguide.com/s/?q=${encodeURIComponent((widgets?.[0]?.destination)||'')}${process.env.GYG_PID?`&partner_id=${encodeURIComponent(process.env.GYG_PID)}`:''}" target="_blank" rel="noopener">Browse activities on GetYourGuide</a></div>
+    </div>`;
     // Count existing GYG widgets to avoid too many requests
     let existingGygCount = (modifiedHtml.match(/data-gyg-widget="auto"/g) || []).length;
     console.log(`Found ${existingGygCount} existing GYG widgets`);
