@@ -40,7 +40,7 @@ import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
 import { getWidgetsForDestination, generateWidgetHTML } from './lib/widgets.mjs';
 import { WIDGET_CONFIG, getGYGWidget } from './lib/widget-config.mjs';
-const VERSION = 'staging-v53';
+const VERSION = 'staging-v54';
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
   try {
@@ -1597,7 +1597,7 @@ app.post('/api/plan', async (req, res) => {
       console.log(`Widget ${index + 1}: ${widget.name} (${widget.category})`);
     });
     console.log('HTML before widget injection:', html.substring(0, 500));
-    const finalHTML = injectWidgetsIntoSections(html, widgets);
+    const finalHTML = html; // Widgets are now injected during generation, not here
     console.log('HTML after widget injection:', finalHTML.substring(0, 500));
     
     // Remove any duplicate content that might have been generated
@@ -1650,7 +1650,7 @@ app.post('/api/plan.pdf', async (req, res) => {
     widgets.forEach((widget, index) => {
       console.log(`PDF Widget ${index + 1}: ${widget.name} (${widget.category})`);
     });
-    const finalHTML = injectWidgetsIntoSections(html, widgets);
+    const finalHTML = html; // Widgets are now injected during generation, not here
 
     const fullHtml = `<!doctype html><html><head>
       <meta charset="utf-8">
@@ -1757,9 +1757,16 @@ function injectWidgetsIntoSections(html, widgets) {
     );
   }
 
-  // Inject specific widgets into appropriate sections
+  // Inject specific widgets into appropriate sections (SMART PLACEMENT - NO DUPLICATES)
   try {
     const destination = widgets?.[0]?.destination || '';
+    
+    // Check if widgets already exist to avoid duplicates
+    const existingWidgets = modifiedHtml.match(/<div class="section-widget"/g) || [];
+    if (existingWidgets.length > 0) {
+      console.log('Widgets already exist, skipping injection to avoid duplicates');
+      return modifiedHtml;
+    }
     
     // 1. Flight Search Widget - Getting Around section
     const flightWidget = `<div class="section-widget" data-category="flights">
@@ -1816,7 +1823,7 @@ function injectWidgetsIntoSections(html, widgets) {
       </div>
     </div>`;
     
-    // 6. GetYourGuide Activities Widget - Must-See Attractions section
+    // 6. GetYourGuide Activities Widget - Must-See Attractions section (MULTIPLE TIMES)
     const gygWidget = `<div class="section-widget" data-category="activities">
       <div class="widget-header">
         <h4>Top Activities</h4>
@@ -1849,7 +1856,7 @@ function injectWidgetsIntoSections(html, widgets) {
       </div>
     </div>`;
     
-    // Inject widgets into appropriate sections
+    // Inject widgets into appropriate sections (SMART PLACEMENT)
     modifiedHtml = modifiedHtml.replace(
       /(<h2>🗺️ Getting Around<\/h2>[\s\S]*?)(<h2>🏨|<h2>🍽️|<h2>🎭|<h2>🎫|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s,
       `$1${flightWidget}${carWidget}${transferWidget}$2`
@@ -1863,6 +1870,16 @@ function injectWidgetsIntoSections(html, widgets) {
     modifiedHtml = modifiedHtml.replace(
       /(<h2>🎫 Must-See Attractions<\/h2>[\s\S]*?)(<h2>🍽️|<h2>🎭|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s,
       `$1${eventWidget}${gygWidget}$2`
+    );
+    
+    modifiedHtml = modifiedHtml.replace(
+      /(<h2>🍽️ Dining Guide<\/h2>[\s\S]*?)(<h2>🎭|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s,
+      `$1${gygWidget}$2`
+    );
+    
+    modifiedHtml = modifiedHtml.replace(
+      /(<h2>🎭 Daily Itineraries<\/h2>[\s\S]*?)(<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s,
+      `$1${gygWidget}$2`
     );
     
     modifiedHtml = modifiedHtml.replace(
