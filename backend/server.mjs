@@ -2217,3 +2217,4 @@ app.post('/api/pay/confirm', (req, res) => {
 // Updated AI integration
 // Debug system added
 // Force deployment
+// ICS fix applied
