@@ -1775,14 +1775,7 @@ function injectWidgetsIntoSections(html, widgets) {
   try {
     const destination = widgets?.[0]?.destination || '';
     
-    // Check if widgets already exist to avoid duplicates
-    const existingWidgets = modifiedHtml.match(/<div class="section-widget"/g) || [];
-    if (existingWidgets.length > 0) {
-      console.log('Widgets already exist, skipping injection to avoid duplicates');
-      return modifiedHtml;
-    }
-    
-    console.log('No existing widgets found, proceeding with injection');
+    console.log('Proceeding with widget injection');
     
     // 1. Flight Search Widget - Getting Around section
     const flightWidget = `<div class="section-widget" data-category="flights">
@@ -1839,7 +1832,7 @@ function injectWidgetsIntoSections(html, widgets) {
       </div>
     </div>`;
     
-    // 6. GetYourGuide Activities Widget - Must-See Attractions section (MULTIPLE TIMES)
+    // 6. GetYourGuide Activities Widget - Must-See Attractions section (ONLY ONCE)
     const gygWidget = `<div class="section-widget" data-category="activities">
       <div class="widget-header">
         <h4>Top Activities</h4>
@@ -1847,6 +1840,7 @@ function injectWidgetsIntoSections(html, widgets) {
       </div>
       <div class="widget-content">
         ${getGYGWidget(destination)}
+        <script async defer src="https://widget.getyourguide.com/dist/pa.umd.production.min.js" data-gyg-partner-id="PUHVJ53"></script>
       </div>
     </div>`;
     
@@ -2076,7 +2070,7 @@ app.get('/plan/:id', (req, res) => {
     const html = saved.html || marked.parse(saved.markdown || '# Plan');
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     const locale = getLocaleForDestination(saved?.data?.destination || '');
-    return res.send(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Wayzo Plan</title><link rel="stylesheet" href="/frontend/style.css"><script async defer src="https://widget.getyourguide.com/dist/pa.umd.production.min.js" data-gyg-partner-id="${process.env.GYG_PID || 'PUHVJ53'}"></script></head><body><main class="container"><section class="card"><div class="card-header"><h2>Your itinerary</h2></div><div id="preview" class="preview-content">${html}</div></section></main><script>(function(){try{const planId=(location.pathname.match(/plan\/(.+)$/)||[])[1]||'preview';const LS_KEY='wayzo:checks:'+planId;const load=()=>{try{return JSON.parse(localStorage.getItem(LS_KEY)||'{}')}catch{return{}}};const save=(d)=>{try{localStorage.setItem(LS_KEY,JSON.stringify(d))}catch{}};const state=load();const all=[...document.querySelectorAll('#preview input[type=\"checkbox\"]')];all.forEach((cb,idx)=>{const key=cb.id||cb.name||('cb_'+idx);cb.checked=!!state[key];cb.disabled=false;cb.addEventListener('change',()=>{state[key]=cb.checked;save(state);});});}catch(e){console.warn('checkbox init failed',e)}})();</script></body></html>`);
+    return res.send(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Wayzo Plan</title><link rel="stylesheet" href="/frontend/style.css"></head><body><main class="container"><section class="card"><div class="card-header"><h2>Your itinerary</h2></div><div id="preview" class="preview-content">${html}</div></section></main><script>(function(){try{const planId=(location.pathname.match(/plan\/(.+)$/)||[])[1]||'preview';const LS_KEY='wayzo:checks:'+planId;const load=()=>{try{return JSON.parse(localStorage.getItem(LS_KEY)||'{}')}catch{return{}}};const save=(d)=>{try{localStorage.setItem(LS_KEY,JSON.stringify(d))}catch{}};const state=load();const all=[...document.querySelectorAll('#preview input[type=\"checkbox\"]')];all.forEach((cb,idx)=>{const key=cb.id||cb.name||('cb_'+idx);cb.checked=!!state[key];cb.disabled=false;cb.addEventListener('change',()=>{state[key]=cb.checked;save(state);});});}catch(e){console.warn('checkbox init failed',e)}})();</script></body></html>`);
   } catch (e) {
     return res.status(500).send('<!doctype html><html><body><h2>Error rendering plan</h2></body></html>');
   }
