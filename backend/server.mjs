@@ -26,7 +26,7 @@ import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
 import { getWidgetsForDestination, generateWidgetHTML } from './lib/widgets.mjs';
-const VERSION = 'staging-v39';
+const VERSION = 'staging-v40';
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
   try {
@@ -1176,31 +1176,6 @@ async function generatePlanWithAI(payload) {
           content: `You are Wayzo Planner Pro, the world's most meticulous travel planner. 
 
 WAYZO OUTPUT CONTRACT ====================
-CRITICAL IMAGE RULES (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH):
-- FORBIDDEN SECTIONS - NO IMAGES ALLOWED:
-  * Trip Overview
-  * Don't Forget List  
-  * Travel Tips
-  * Useful Apps
-  * Emergency Info
-- ALLOWED SECTIONS - EXACTLY 1 IMAGE PER SECTION AT END:
-  * Getting Around - 1 image at end
-  * Accommodation - 1 image at end
-  * Must-See Attractions - 1 image at end
-  * Daily Itineraries - 1 image at end (NOT per day)
-  * Restaurants - 1 image at end
-  * Budget Breakdown - 1 image at end
-- IMAGE FORMAT - EXACT COPY ONLY (MUST BE DESTINATION-SCOPED):
-  ![Destination — Section](image:Destination specific landmark|activity|food term)
-- ADDITIONAL IMAGE CONSTRAINTS:
-  * Exactly 1 image per allowed section, placed at the END of that section
-  * The image query MUST include the destination name and be highly specific
-  * Do NOT duplicate the same image query in multiple sections
-  * No placeholder text like "Image loading..." anywhere
-  * ALWAYS use the exact format: ![Destination — Section](image:Destination specific term)
-  * NEVER use text like "Tirol — Accommodation" - ALWAYS use proper image tokens
-  * Examples: ![Tirol — Getting Around](image:Tirol public transportation), ![Tirol — Accommodation](image:Tirol luxury hotel mountain view)
-
 ACCURACY RULES (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH):
 - All facts (prices, hours, closures, seasonal notes) must be current
 - If you cannot verify current information, DO NOT recommend that place
@@ -1432,7 +1407,6 @@ Before submitting your response, verify:
 □ Transportation details and duration estimates provided
 □ Money-saving tips and seasonal considerations included
 □ ALL 11 MANDATORY SECTIONS are included
-□ Images use EXACT format: ![Destination — Section](image:Destination specific term)
 □ Family-specific recommendations based on children's ages
 □ All possible recommendations matching user preferences included
 □ Detailed descriptions and insider tips for each recommendation
