@@ -1141,27 +1141,7 @@ async function generatePlanWithAI(payload) {
     return localPlanMarkdown(payload);
   }
   
-  // STEP 2: Simple API test
-  console.log('Step 2: Testing API with simple call...');
-  try {
-    const testCall = await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      temperature: 0.1,
-      max_tokens: 20,
-      messages: [{ role: "user", content: "Say 'TEST OK'" }],
-    });
-    
-    const testResult = testCall.choices?.[0]?.message?.content?.trim() || "";
-    console.log('✅ API test result:', testResult);
-    
-    if (!testResult.includes('TEST OK')) {
-      throw new Error('API test failed');
-    }
-  } catch (testError) {
-    console.error('❌ API test failed:', testError.message);
-    console.log('Using local fallback');
-    return localPlanMarkdown(payload);
-  }
+  // STEP 2: Skip noisy preflight; proceed directly to generation
   
   // STEP 3: Generate actual plan
   console.log('Step 3: Generating AI plan for', destination);
@@ -1765,34 +1745,23 @@ function injectWidgetsIntoSections(html, widgets) {
     );
   }
 
-  // Inject GetYourGuide automatic widget into key sections (avoid duplicates)
+  // Inject your original GetYourGuide auto widget into key sections (avoid duplicates)
   try {
-    // Replace auto widget with explicit destination-scoped link block to avoid wrong country + 429s
-    const gygAuto = `<div class="section-widget" data-category="activities">
-      <div class="widget-header"><h4>Top Activities</h4><p>Curated tours for ${escapeHtml((widgets?.[0]?.destination)||'your destination')}</p></div>
-      <div class="widget-content"><a href="https://www.getyourguide.com/s/?q=${encodeURIComponent((widgets?.[0]?.destination)||'')}${process.env.GYG_PID?`&partner_id=${encodeURIComponent(process.env.GYG_PID)}`:''}" target="_blank" rel="noopener">Browse activities on GetYourGuide</a></div>
-    </div>`;
-    // Count existing GYG widgets to avoid too many requests
+    const pid = process.env.GYG_PID || 'PUHVJ53';
+    const gygAuto = `<div data-gyg-widget="auto" data-gyg-partner-id="${pid}"></div>`;
     let existingGygCount = (modifiedHtml.match(/data-gyg-widget="auto"/g) || []).length;
-    console.log(`Found ${existingGygCount} existing GYG widgets`);
-    // Allow up to 4 auto GYG widgets across sections
-    const maxGyg = 4;
+    const maxGyg = 3;
     const injectIfSpace = (sectionRegex) => {
       if (existingGygCount >= maxGyg) return;
       const before = modifiedHtml;
       modifiedHtml = modifiedHtml.replace(sectionRegex, `$1${gygAuto}$2`);
-      if (modifiedHtml !== before) {
-        existingGygCount += 1;
-      }
+      if (modifiedHtml !== before) existingGygCount += 1;
     };
-    // Must-See Attractions
     injectIfSpace(/(<h2>🎫 Must-See Attractions<\/h2>[\s\S]*?)(<h2>🍽️|<h2>🎭|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s);
-    // Dining Guide
     injectIfSpace(/(<h2>🍽️ Dining Guide<\/h2>[\s\S]*?)(<h2>🎭|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s);
-    // Daily Itineraries (end)
     injectIfSpace(/(<h2>🎭 Daily Itineraries<\/h2>[\s\S]*?)(<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s);
   } catch (e) {
-    console.warn('Failed to inject GYG widget:', e);
+    console.warn('Failed to inject original GYG auto widget:', e);
   }
 
   // Remove per-day GYG widget injection to prevent 429 errors
@@ -2043,7 +2012,7 @@ app.get('/plan/:id', (req, res) => {
     const saved = JSON.parse(row.payload || '{}');
     const html = saved.html || marked.parse(saved.markdown || '# Plan');
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    return res.send(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Wayzo Plan</title><link rel="stylesheet" href="/frontend/style.css"></head><body><main class="container"><section class="card"><div class="card-header"><h2>Your itinerary</h2></div><div id="preview" class="preview-content">${html}</div></section></main></body></html>`);
+    return res.send(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Wayzo Plan</title><link rel="stylesheet" href="/frontend/style.css"><script async defer src="https://widget.getyourguide.com/dist/pa.umd.production.min.js" data-gyg-partner-id="${process.env.GYG_PID || 'PUHVJ53'}"></script></head><body><main class="container"><section class="card"><div class="card-header"><h2>Your itinerary</h2></div><div id="preview" class="preview-content">${html}</div></section></main><script>(function(){try{const planId=(location.pathname.match(/plan\/(.+)$/)||[])[1]||'preview';const LS_KEY='wayzo:checks:'+planId;const load=()=>{try{return JSON.parse(localStorage.getItem(LS_KEY)||'{}')}catch{return{}}};const save=(d)=>{try{localStorage.setItem(LS_KEY,JSON.stringify(d))}catch{}};const state=load();const all=[...document.querySelectorAll('#preview input[type="checkbox"]')];all.forEach((cb,idx)=>{const key=cb.id||cb.name||('cb_'+idx);cb.checked=!!state[key];cb.disabled=false;cb.addEventListener('change',()=>{state[key]=cb.checked;save(state);});});}catch(e){console.warn('checkbox init failed',e)}})();</script></body></html>`);
   } catch (e) {
     return res.status(500).send('<!doctype html><html><body><h2>Error rendering plan</h2></body></html>');
   }
