@@ -1872,7 +1872,7 @@ function injectWidgetsIntoSections(html, widgets) {
       </div>
     </div>`;
     
-    // Inject widgets into appropriate sections (SMART PLACEMENT)
+    // Inject widgets into appropriate sections (SMART PLACEMENT - NO DUPLICATES)
     modifiedHtml = modifiedHtml.replace(
       /(<h2>🗺️ Getting Around<\/h2>[\s\S]*?)(<h2>🏨|<h2>🍽️|<h2>🎭|<h2>🎫|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s,
       `$1${flightWidget}${carWidget}${transferWidget}$2`
@@ -1886,16 +1886,6 @@ function injectWidgetsIntoSections(html, widgets) {
     modifiedHtml = modifiedHtml.replace(
       /(<h2>🎫 Must-See Attractions<\/h2>[\s\S]*?)(<h2>🍽️|<h2>🎭|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s,
       `$1${eventWidget}${gygWidget}$2`
-    );
-    
-    modifiedHtml = modifiedHtml.replace(
-      /(<h2>🍽️ Dining Guide<\/h2>[\s\S]*?)(<h2>🎭|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s,
-      `$1${gygWidget}$2`
-    );
-    
-    modifiedHtml = modifiedHtml.replace(
-      /(<h2>🎭 Daily Itineraries<\/h2>[\s\S]*?)(<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s,
-      `$1${gygWidget}$2`
     );
     
     modifiedHtml = modifiedHtml.replace(
