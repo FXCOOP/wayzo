@@ -3,6 +3,14 @@ import express from 'express';
 import compression from 'compression';
 import helmet from 'helmet';
 import { marked } from 'marked';
+
+// Configure marked to allow JavaScript event handlers for interactive checkboxes
+marked.setOptions({
+  sanitize: false, // Allow HTML and JavaScript event handlers
+  breaks: true,    // Convert line breaks to <br>
+  gfm: true        // GitHub Flavored Markdown
+});
+
 import puppeteer from 'puppeteer';
 import OpenAI from 'openai';
 import multer from 'multer';
@@ -18,7 +26,7 @@ import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
 import { getWidgetsForDestination, generateWidgetHTML } from './lib/widgets.mjs';
-const VERSION = 'staging-v32';
+const VERSION = 'staging-v39';
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
   try {
@@ -1077,36 +1085,20 @@ function enforceWayzoContracts(markdown, destination) {
     processed += '\n\n## 🚨 Emergency Info\nEmergency contacts and important information.\n';
   }
   
-  // 1. Remove images from forbidden sections
-  const forbiddenSections = [
-    'Trip Overview',
-    'Don\'t Forget List', 
-    'Travel Tips',
-    'Useful Apps',
-    'Emergency Info'
-  ];
-  
-  forbiddenSections.forEach(section => {
-    const sectionRegex = new RegExp(`(##\\s*${section}[^#]*?)(![^\\n]*\\n)`, 'gis');
-    processed = processed.replace(sectionRegex, '$1');
-    console.log(`Removed images from forbidden section: ${section}`);
-  });
-  
-  // 2. Don't process image tokens here - linkifyTokens handles this
-  // After linkifyTokens processes images, they become Unsplash URLs and should be preserved
-  
-  // 3. Remove any "Image Ideas" sections completely
+  // 1. Remove any "Image Ideas" sections completely
   processed = processed.replace(/## 🖼️ Image Ideas[\s\S]*?(?=\n## |\n---|$)/g, '');
   processed = processed.replace(/## Image Ideas[\s\S]*?(?=\n## |\n---|$)/g, '');
   processed = processed.replace(/🖼️ Image Ideas[\s\S]*?(?=\n## |\n---|$)/g, '');
   processed = processed.replace(/Enhance your travel experience[\s\S]*?(?=\n## |\n---|$)/g, '');
   processed = processed.replace(/Here are some beautiful images[\s\S]*?(?=\n## |\n---|$)/g, '');
   
-  // 4. Remove generic "Open Exploration" days
+  // 2. Remove generic "Open Exploration" days
   processed = processed.replace(/### Day \d+ — Open Exploration[\s\S]*?(?=\n### |\n## |$)/g, '');
   processed = processed.replace(/## Day \d+ — Open Exploration[\s\S]*?(?=\n## |$)/g, '');
   
-  // 5. Don't remove properly formatted images - they should be preserved after linkifyTokens processing
+  // 3. Remove any image markdown syntax completely
+  processed = processed.replace(/!\[.*?\]\([^)]+\)/g, '');
+  processed = processed.replace(/<img[^>]*>/g, '');
   
   console.log('WAYZO OUTPUT CONTRACT enforcement complete');
   // 6. Strip any raw code blocks or JSON blobs the model might have appended
@@ -2024,7 +2016,7 @@ app.get('/plan/:id', (req, res) => {
     const saved = JSON.parse(row.payload || '{}');
     const html = saved.html || marked.parse(saved.markdown || '# Plan');
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    return res.send(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Wayzo Plan</title><link rel="stylesheet" href="/frontend/style.css"><script async defer src="https://widget.getyourguide.com/dist/pa.umd.production.min.js" data-gyg-partner-id="PUHVJ53"></script></head><body><main class="container"><section class="card"><div class="card-header"><h2>Your itinerary</h2></div><div id="preview" class="preview-content">${html}</div></section></main></body></html>`);
+    return res.send(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Wayzo Plan</title><link rel="stylesheet" href="/frontend/style.css"></head><body><main class="container"><section class="card"><div class="card-header"><h2>Your itinerary</h2></div><div id="preview" class="preview-content">${html}</div></section></main></body></html>`);
   } catch (e) {
     return res.status(500).send('<!doctype html><html><body><h2>Error rendering plan</h2></body></html>');
   }

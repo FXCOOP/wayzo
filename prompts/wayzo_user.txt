@@ -66,11 +66,6 @@ FINAL CHECKLIST
 
 Before submitting your response, verify:
 
-□ All images follow WAYZO OUTPUT CONTRACT rules exactly
-□ No images in forbidden sections (Trip Overview, Don't Forget List, Travel Tips, Useful Apps, Emergency Info)
-□ Exactly 1 image per allowed section, placed at the END of that section
-□ All image queries include the destination name and are highly specific
-□ No duplicate image queries across sections
 □ All facts (prices, hours, closures) are current and accurate
 □ If information cannot be verified, place is not recommended
 □ All prices include disclaimers about verification
@@ -86,7 +81,6 @@ Before submitting your response, verify:
 □ Transportation details and duration estimates provided
 □ Money-saving tips and seasonal considerations included
 □ ALL 11 MANDATORY SECTIONS are included
-□ Images use EXACT format: ![Destination — Section](image:Destination specific term)
 □ Family-specific recommendations based on children's ages
 □ All possible recommendations matching user preferences included
 □ Detailed descriptions and insider tips for each recommendation
@@ -123,16 +117,6 @@ REQUIRED SECTIONS (USE EXACT MARKDOWN HEADERS - ALL MUST BE INCLUDED):
 - ## 🛡️ Travel Tips - Local customs, safety, and practical advice (MUST include specific local customs, safety tips, cultural insights)
 - ## 📱 Useful Apps - Mobile apps for the destination (MUST include specific apps with descriptions)
 - ## 🚨 Emergency Info - Important contacts and healthcare (MUST include specific emergency numbers, hospitals, contacts)
-
-IMAGE REQUIREMENTS (CRITICAL):
-- Use EXACT format: ![Destination — Section](image:Destination specific term)
-- Examples:
-  * ![Tirol — Getting Around](image:Tirol public transportation map)
-  * ![Tirol — Accommodation](image:Tirol luxury hotel mountain view)
-  * ![Tirol — Must-See Attractions](image:Innsbruck Nordkette cable car)
-  * ![Tirol — Dining Guide](image:Tirol traditional restaurant)
-  * ![Tirol — Daily Itineraries](image:Tirol itinerary map)
-  * ![Tirol — Budget Breakdown](image:Tirol budget planning)
 
 Deliver:
 
