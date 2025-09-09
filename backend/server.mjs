@@ -1768,22 +1768,25 @@ function injectWidgetsIntoSections(html, widgets) {
   // Inject GetYourGuide automatic widget into key sections (avoid duplicates)
   try {
     const gygAuto = '<div data-gyg-widget="auto" data-gyg-partner-id="PUHVJ53"></div>';
-    
     // Count existing GYG widgets to avoid too many requests
-    const existingGygCount = (modifiedHtml.match(/data-gyg-widget="auto"/g) || []).length;
+    let existingGygCount = (modifiedHtml.match(/data-gyg-widget="auto"/g) || []).length;
     console.log(`Found ${existingGygCount} existing GYG widgets`);
-    
-    // Only inject if we have fewer than 2 GYG widgets total
-    if (existingGygCount < 2) {
-      // Inject into Must-See Attractions section (most important)
-      if (!modifiedHtml.includes('data-gyg-widget="auto"')) {
-        modifiedHtml = modifiedHtml.replace(
-          /(<h2>🎫 Must-See Attractions<\/h2>[\s\S]*?)(<h2>🍽️|<h2>🎭|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s,
-          `$1${gygAuto}$2`
-        );
-        console.log('Injected GYG widget into Must-See Attractions');
+    // Allow up to 4 auto GYG widgets across sections
+    const maxGyg = 4;
+    const injectIfSpace = (sectionRegex) => {
+      if (existingGygCount >= maxGyg) return;
+      const before = modifiedHtml;
+      modifiedHtml = modifiedHtml.replace(sectionRegex, `$1${gygAuto}$2`);
+      if (modifiedHtml !== before) {
+        existingGygCount += 1;
       }
-    }
+    };
+    // Must-See Attractions
+    injectIfSpace(/(<h2>🎫 Must-See Attractions<\/h2>[\s\S]*?)(<h2>🍽️|<h2>🎭|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s);
+    // Dining Guide
+    injectIfSpace(/(<h2>🍽️ Dining Guide<\/h2>[\s\S]*?)(<h2>🎭|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s);
+    // Daily Itineraries (end)
+    injectIfSpace(/(<h2>🎭 Daily Itineraries<\/h2>[\s\S]*?)(<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s);
   } catch (e) {
     console.warn('Failed to inject GYG widget:', e);
   }
@@ -1833,6 +1836,31 @@ function injectWidgetsIntoSections(html, widgets) {
       /(<h2>📱 Useful Apps<\/h2>[\s\S]*?)(<h2>🚨|<h2>🖼️)/s,
       `$1${esimWidgetHTML}$2`
     );
+  }
+  
+  // Suppress external booking/ticket links when corresponding widgets are present
+  try {
+    // If hotel widget present, strip [Book] anchors inside Accommodation section
+    if (hotelWidget) {
+      modifiedHtml = modifiedHtml.replace(/(<h2>🏨 Accommodation<\/h2>[\s\S]*?)(<h2>🍽️|<h2>🎭|<h2>🎫|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s, (_m, a, b) => {
+        const cleaned = a.replace(/<a[^>]*>(\s*Book\s*)<\/a>/gi, '<span class="muted">$1</span>');
+        return cleaned + b;
+      });
+    }
+    // If we injected any GYG auto widgets, strip Tickets anchors inside Must-See Attractions and Dining Guide
+    if (modifiedHtml.includes('data-gyg-widget="auto"')) {
+      const stripTickets = (sectionHeader) => {
+        const rx = new RegExp(`(<h2>${sectionHeader}<\\/h2>[\\s\\S]*?)(<h2>[^<]|$)`, 's');
+        modifiedHtml = modifiedHtml.replace(rx, (_m, a, b) => {
+          const cleaned = a.replace(/<a[^>]*>(\s*Tickets\s*)<\/a>/gi, '<span class="muted">$1</span>');
+          return cleaned + b;
+        });
+      };
+      stripTickets('🎫 Must-See Attractions');
+      stripTickets('🍽️ Dining Guide');
+    }
+  } catch (e) {
+    console.warn('Failed to suppress external links:', e);
   }
   
   // Do NOT append unplaced widgets at the footer to avoid layout gaps
@@ -1976,7 +2004,28 @@ app.get('/api/plan/:id/pdf', (req, res) => {
 </footer>
 </body></html>`;
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.send(html);
+  // Add inline script to enable interactive checkboxes and persist state per-plan
+  const enhanced = html.replace('</body></html>', `
+<script>(function(){
+  try{
+    const planId = (location.pathname.match(/plan\/(.+)$/)||[])[1] || 'preview';
+    const LS_KEY = 'wayzo:checks:'+planId;
+    const load = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)||'{}'); } catch { return {}; } };
+    const save = (data) => { try { localStorage.setItem(LS_KEY, JSON.stringify(data)); } catch(e){} };
+    const state = load();
+    const root = document;
+    // Make all checkboxes interactive (remove disabled) and bind handlers
+    const all = Array.from(root.querySelectorAll('input[type="checkbox"]'));
+    all.forEach((cb, idx) => {
+      cb.removeAttribute('disabled');
+      const key = cb.closest('.dont-forget-item') ? 'df:'+idx : (cb.closest('table') ? 'bd:'+idx : 'cb:'+idx);
+      if (state[key]) cb.checked = true;
+      cb.addEventListener('change', () => { state[key] = cb.checked; save(state); });
+    });
+  }catch(e){}
+})();</script>
+</body></html>`);
+  res.send(enhanced);
 });
 
 // Public permalink to view a saved plan HTML

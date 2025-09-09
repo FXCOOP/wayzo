@@ -1106,8 +1106,8 @@ fieldset.field .chip {
 .markdown h1{ font-size:2rem; }
 .markdown h2{ font-size:1.6rem; }
 .markdown h3{ font-size:1.3rem; }
-.markdown p{ margin:12px 0; }
-.markdown ul, .markdown ol{ margin:12px 0; padding-left:22px; }
+.markdown p{ margin:10px 0; }
+.markdown ul, .markdown ol{ margin:8px 0; padding-left:22px; }
 .markdown li{ margin:8px 0; }
 .markdown h2 + .section-widgets, .markdown h3 + .section-widgets { margin-top:12px; }
 .markdown table{ width:100%; border-collapse:collapse; }
@@ -2552,7 +2552,7 @@ fieldset.field .chip {
   height: 300px !important;
   object-fit: cover !important;
   border-radius: 12px !important;
-  margin: 20px auto !important;
+  margin: 12px auto !important;
   display: block !important;
   box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
   transition: all 0.3s ease !important;
@@ -2642,7 +2642,19 @@ fieldset.field .chip {
   .trip-report img,
   #preview img {
     max-width: 100% !important;
-    height: 250px !important;
-    margin: 15px auto !important;
+    height: 220px !important;
+    margin: 10px auto !important;
   }
+}
+
+/* Print tightening */
+@media print {
+  body { padding: 0 !important; }
+  .container { width: auto !important; margin: 0 !important; }
+  .card { box-shadow: none !important; padding: 12px !important; }
+  .markdown h1, .markdown h2, .markdown h3 { margin: 10px 0 6px 0 !important; }
+  .markdown p { margin: 6px 0 !important; }
+  .markdown ul, .markdown ol { margin: 6px 0 !important; }
+  .section-widget { page-break-inside: avoid; margin: 4px 0 !important; }
+  img { page-break-inside: avoid; }
 }
