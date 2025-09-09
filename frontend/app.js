@@ -569,19 +569,19 @@
       // Always show full plan (no paywall or signup)
       // Don't strip widgets in full plan view - they should be visible
       previewEl.innerHTML = result.html || '';
-      // If the rendered HTML contains GYG auto widgets, ensure the runtime script is present
-      try {
-        if (previewEl.querySelector('[data-gyg-widget="auto"]')) {
-          const EXISTING = document.querySelector('script[src*="widget.getyourguide.com"]');
-          if (!EXISTING) {
-            const s = document.createElement('script');
-            s.async = true; s.defer = true;
-            s.src = 'https://widget.getyourguide.com/dist/pa.umd.production.min.js';
-            s.setAttribute('data-gyg-partner-id', (window.GYG_PARTNER_ID || 'PUHVJ53'));
-            document.head.appendChild(s);
-          }
-        }
-      } catch(e) { console.warn('GYG loader failed', e); }
+      // Don't auto-inject GetYourGuide script - let backend handle it
+      // try {
+      //   if (previewEl.querySelector('[data-gyg-widget="auto"]')) {
+      //     const EXISTING = document.querySelector('script[src*="widget.getyourguide.com"]');
+      //     if (!EXISTING) {
+      //       const s = document.createElement('script');
+      //       s.async = true; s.defer = true;
+      //       s.src = 'https://widget.getyourguide.com/dist/pa.umd.production.min.js';
+      //       s.setAttribute('data-gyg-partner-id', (window.GYG_PARTNER_ID || 'PUHVJ53'));
+      //       document.head.appendChild(s);
+      //     }
+      //   }
+      // } catch(e) { console.warn('GYG loader failed', e); }
 
       // Initialize interactive checkboxes and persist by plan id/permalink
       try {
