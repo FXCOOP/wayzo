@@ -38,7 +38,7 @@ import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
 import { getWidgetsForDestination, generateWidgetHTML } from './lib/widgets.mjs';
-const VERSION = 'staging-v41';
+const VERSION = 'staging-v48';
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
   try {
@@ -1701,6 +1701,11 @@ function injectWidgetsIntoSections(html, widgets) {
         </div>
         <div class="widget-content">
           ${flightWidget.script}
+          <div class="widget-fallback">
+            <a href="https://www.kayak.com/flights?query=${encodeURIComponent(widgets?.[0]?.destination || '')}" target="_blank" rel="noopener" class="widget-link">
+              Search flights on Kayak
+            </a>
+          </div>
         </div>
       </div>
     `;
@@ -1723,6 +1728,11 @@ function injectWidgetsIntoSections(html, widgets) {
         </div>
         <div class="widget-content">
           ${hotelWidget.script}
+          <div class="widget-fallback">
+            <a href="https://www.booking.com/searchresults.html?ss=${encodeURIComponent(widgets?.[0]?.destination || '')}" target="_blank" rel="noopener" class="widget-link">
+              Search hotels on Booking.com
+            </a>
+          </div>
         </div>
       </div>
     `;
@@ -1733,24 +1743,37 @@ function injectWidgetsIntoSections(html, widgets) {
     );
   }
 
-  // Inject your original GetYourGuide auto widget into key sections (avoid duplicates)
+  // Inject GetYourGuide widgets into key sections with proper HTML blocks
   try {
     const pid = process.env.GYG_PID || 'PUHVJ53';
     const locale = getLocaleForDestination(widgets?.[0]?.destination || '');
-    const gygAuto = `<div data-gyg-widget="auto" data-gyg-partner-id="${pid}" data-gyg-locale="${locale}"></div>`;
+    const destination = widgets?.[0]?.destination || '';
+    
+    const gygWidget = `<div class="section-widget" data-category="activities">
+      <div class="widget-header">
+        <h4>Top Activities</h4>
+        <p>Curated tours for ${escapeHtml(destination)}</p>
+      </div>
+      <div class="widget-content">
+        <a href="https://www.getyourguide.com/s/?q=${encodeURIComponent(destination)}${pid ? `&partner_id=${encodeURIComponent(pid)}` : ''}&locale=${locale}" target="_blank" rel="noopener" class="gyg-search-link">
+          Browse activities on GetYourGuide
+        </a>
+        <div data-gyg-widget="auto" data-gyg-partner-id="${pid}" data-gyg-locale="${locale}"></div>
+      </div>
+    </div>`;
+    
     let existingGygCount = (modifiedHtml.match(/data-gyg-widget="auto"/g) || []).length;
     const maxGyg = 2; // reduce to avoid 429s
     const injectIfSpace = (sectionRegex) => {
       if (existingGygCount >= maxGyg) return;
       const before = modifiedHtml;
-      modifiedHtml = modifiedHtml.replace(sectionRegex, `$1${gygAuto}$2`);
+      modifiedHtml = modifiedHtml.replace(sectionRegex, `$1${gygWidget}$2`);
       if (modifiedHtml !== before) existingGygCount += 1;
     };
     injectIfSpace(/(<h2>🎫 Must-See Attractions<\/h2>[\s\S]*?)(<h2>🍽️|<h2>🎭|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s);
     injectIfSpace(/(<h2>🍽️ Dining Guide<\/h2>[\s\S]*?)(<h2>🎭|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s);
-    injectIfSpace(/(<h2>🎭 Daily Itineraries<\/h2>[\s\S]*?)(<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s);
   } catch (e) {
-    console.warn('Failed to inject original GYG auto widget:', e);
+    console.warn('Failed to inject GYG widget:', e);
   }
 
   // Remove per-day GYG widget injection to prevent 429 errors
@@ -1768,6 +1791,11 @@ function injectWidgetsIntoSections(html, widgets) {
         </div>
         <div class="widget-content">
           ${carWidget.script}
+          <div class="widget-fallback">
+            <a href="https://www.rentalcars.com/en/city/de/berlin/" target="_blank" rel="noopener" class="widget-link">
+              Rent a car in ${escapeHtml(widgets?.[0]?.destination || 'Berlin')}
+            </a>
+          </div>
         </div>
       </div>
     `;
@@ -1790,6 +1818,11 @@ function injectWidgetsIntoSections(html, widgets) {
         </div>
         <div class="widget-content">
           ${esimWidget.script}
+          <div class="widget-fallback">
+            <a href="https://www.airalo.com/" target="_blank" rel="noopener" class="widget-link">
+              Get eSIM for ${escapeHtml(widgets?.[0]?.destination || 'your destination')}
+            </a>
+          </div>
         </div>
       </div>
     `;
