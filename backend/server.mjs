@@ -1722,8 +1722,6 @@ function injectWidgetsIntoSections(html, widgets) {
     const destination = widgets?.[0]?.destination || '';
     
     console.log('Proceeding with widget injection');
-    console.log('WIDGET_CONFIG available:', !!WIDGET_CONFIG);
-    console.log('WIDGET_CONFIG.flights:', !!WIDGET_CONFIG?.flights);
     
     // 1. Flight Search Widget - Getting Around section
     const flightWidget = `<div class="section-widget" data-category="flights">
@@ -1735,8 +1733,6 @@ function injectWidgetsIntoSections(html, widgets) {
         ${WIDGET_CONFIG.flights.script}
       </div>
     </div>`;
-    
-    console.log('Flight widget created:', flightWidget.substring(0, 100));
     
     // 2. Car Rental Widget - Getting Around section
     const carWidget = `<div class="section-widget" data-category="transport">
