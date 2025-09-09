@@ -1717,60 +1717,6 @@ function injectWidgetsIntoSections(html, widgets) {
     }
   );
   
-  // Now inject widgets into their proper sections
-  const flightWidget = widgets.find(w => w.category === 'flights');
-  if (flightWidget) {
-    console.log('Injecting flight widget into Getting Around section');
-    const flightWidgetHTML = `
-      <div class="section-widget" data-category="flights">
-        <div class="widget-header">
-          <h4>${flightWidget.name}</h4>
-          <p>${flightWidget.description}</p>
-        </div>
-        <div class="widget-content">
-          ${flightWidget.script}
-          <div class="widget-fallback">
-            <a href="https://www.kayak.com/flights?query=${encodeURIComponent(widgets?.[0]?.destination || '')}" target="_blank" rel="noopener" class="widget-link">
-              Search flights on Kayak
-            </a>
-          </div>
-        </div>
-      </div>
-    `;
-    // Inject into "Getting Around" section AFTER the content
-    modifiedHtml = modifiedHtml.replace(
-      /(<h2>🗺️ Getting Around<\/h2>[\s\S]*?)(<h2>🏨|<h2>🍽️|<h2>🎭|<h2>🎫|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s,
-      `$1${flightWidgetHTML}$2`
-    );
-  }
-  
-  // Find hotel widget
-  const hotelWidget = widgets.find(w => w.category === 'accommodation');
-  if (hotelWidget) {
-    console.log('Injecting hotel widget into Accommodation section');
-    const hotelWidgetHTML = `
-      <div class="section-widget" data-category="accommodation">
-        <div class="widget-header">
-          <h4>${hotelWidget.name}</h4>
-          <p>${hotelWidget.description}</p>
-        </div>
-        <div class="widget-content">
-          ${hotelWidget.script}
-          <div class="widget-fallback">
-            <a href="https://www.kayak.com/hotels?query=${encodeURIComponent(widgets?.[0]?.destination || '')}" target="_blank" rel="noopener" class="widget-link">
-              Search hotels on Kayak
-            </a>
-          </div>
-        </div>
-      </div>
-    `;
-    // Inject into "Accommodation" section AFTER the content
-    modifiedHtml = modifiedHtml.replace(
-      /(<h2>🏨 Accommodation<\/h2>[\s\S]*?)(<h2>🍽️|<h2>🎭|<h2>🎫|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s,
-      `$1${hotelWidgetHTML}$2`
-    );
-  }
-
   // Inject specific widgets into appropriate sections (SMART PLACEMENT - NO DUPLICATES)
   try {
     const destination = widgets?.[0]?.destination || '';
