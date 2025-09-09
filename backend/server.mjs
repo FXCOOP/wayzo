@@ -22,6 +22,7 @@ function getLocaleForDestination(dest = '') {
   if (d.includes('spain') || d.includes('madrid') || d.includes('barcelona')) return 'es-ES';
   if (d.includes('france') || d.includes('paris')) return 'fr-FR';
   if (d.includes('portugal') || d.includes('lisbon') || d.includes('porto')) return 'pt-PT';
+  if (d.includes('czech') || d.includes('prague')) return 'cs-CZ';
   return 'en-US';
 }
 import OpenAI from 'openai';
@@ -38,7 +39,7 @@ import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
 import { getWidgetsForDestination, generateWidgetHTML } from './lib/widgets.mjs';
-const VERSION = 'staging-v50';
+const VERSION = 'staging-v51';
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
   try {
@@ -1780,7 +1781,7 @@ function injectWidgetsIntoSections(html, widgets) {
     </div>`;
     
     let existingGygCount = (modifiedHtml.match(/data-gyg-widget="auto"/g) || []).length;
-    const maxGyg = 2; // reduce to avoid 429s
+    const maxGyg = 4; // increase to show more widgets
     const injectIfSpace = (sectionRegex) => {
       if (existingGygCount >= maxGyg) return;
       const before = modifiedHtml;
@@ -1789,6 +1790,8 @@ function injectWidgetsIntoSections(html, widgets) {
     };
     injectIfSpace(/(<h2>🎫 Must-See Attractions<\/h2>[\s\S]*?)(<h2>🍽️|<h2>🎭|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s);
     injectIfSpace(/(<h2>🍽️ Dining Guide<\/h2>[\s\S]*?)(<h2>🎭|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s);
+    injectIfSpace(/(<h2>🎭 Daily Itineraries<\/h2>[\s\S]*?)(<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s);
+    injectIfSpace(/(<h2>🗺️ Getting Around<\/h2>[\s\S]*?)(<h2>🏨|<h2>🍽️|<h2>🎭|<h2>🎫|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s);
   } catch (e) {
     console.warn('Failed to inject GYG widget:', e);
   }
@@ -2052,7 +2055,7 @@ app.get('/plan/:id', (req, res) => {
     const html = saved.html || marked.parse(saved.markdown || '# Plan');
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     const locale = getLocaleForDestination(saved?.data?.destination || '');
-    return res.send(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Wayzo Plan</title><link rel="stylesheet" href="/frontend/style.css"><script async defer src="https://widget.getyourguide.com/dist/pa.umd.production.min.js" data-gyg-partner-id="${process.env.GYG_PID || 'PUHVJ53'}" data-gyg-locale="${locale}"></script></head><body><main class="container"><section class="card"><div class="card-header"><h2>Your itinerary</h2></div><div id="preview" class="preview-content">${html}</div></section></main><script>(function(){try{const planId=(location.pathname.match(/plan\/(.+)$/)||[])[1]||'preview';const LS_KEY='wayzo:checks:'+planId;const load=()=>{try{return JSON.parse(localStorage.getItem(LS_KEY)||'{}')}catch{return{}}};const save=(d)=>{try{localStorage.setItem(LS_KEY,JSON.stringify(d))}catch{}};const state=load();const all=[...document.querySelectorAll('#preview input[type=\"checkbox\"]')];all.forEach((cb,idx)=>{const key=cb.id||cb.name||('cb_'+idx);cb.checked=!!state[key];cb.disabled=false;cb.addEventListener('change',()=>{state[key]=cb.checked;save(state);});});}catch(e){console.warn('checkbox init failed',e)}})();</script></body></html>`);
+    return res.send(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Wayzo Plan</title><link rel="stylesheet" href="/frontend/style.css"><script async defer src="https://widget.getyourguide.com/dist/pa.umd.production.min.js" data-gyg-partner-id="${process.env.GYG_PID || 'PUHVJ53'}"></script></head><body><main class="container"><section class="card"><div class="card-header"><h2>Your itinerary</h2></div><div id="preview" class="preview-content">${html}</div></section></main><script>(function(){try{const planId=(location.pathname.match(/plan\/(.+)$/)||[])[1]||'preview';const LS_KEY='wayzo:checks:'+planId;const load=()=>{try{return JSON.parse(localStorage.getItem(LS_KEY)||'{}')}catch{return{}}};const save=(d)=>{try{localStorage.setItem(LS_KEY,JSON.stringify(d))}catch{}};const state=load();const all=[...document.querySelectorAll('#preview input[type=\"checkbox\"]')];all.forEach((cb,idx)=>{const key=cb.id||cb.name||('cb_'+idx);cb.checked=!!state[key];cb.disabled=false;cb.addEventListener('change',()=>{state[key]=cb.checked;save(state);});});}catch(e){console.warn('checkbox init failed',e)}})();</script></body></html>`);
   } catch (e) {
     return res.status(500).send('<!doctype html><html><body><h2>Error rendering plan</h2></body></html>');
   }
