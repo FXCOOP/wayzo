@@ -39,7 +39,8 @@ import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
 import { getWidgetsForDestination, generateWidgetHTML } from './lib/widgets.mjs';
-const VERSION = 'staging-v51';
+import { WIDGET_CONFIG, getGYGWidget } from './lib/widget-config.mjs';
+const VERSION = 'staging-v52';
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
   try {
@@ -1761,122 +1762,124 @@ function injectWidgetsIntoSections(html, widgets) {
     );
   }
 
-  // Inject GetYourGuide widgets into key sections with proper HTML blocks
+  // Inject specific widgets into appropriate sections
   try {
-    const pid = process.env.GYG_PID || 'PUHVJ53';
-    const locale = getLocaleForDestination(widgets?.[0]?.destination || '');
     const destination = widgets?.[0]?.destination || '';
     
+    // 1. Flight Search Widget - Getting Around section
+    const flightWidget = `<div class="section-widget" data-category="flights">
+      <div class="widget-header">
+        <h4>Flight Search</h4>
+        <p>Find the best flight deals</p>
+      </div>
+      <div class="widget-content">
+        ${WIDGET_CONFIG.flights.script}
+      </div>
+    </div>`;
+    
+    // 2. Car Rental Widget - Getting Around section
+    const carWidget = `<div class="section-widget" data-category="transport">
+      <div class="widget-header">
+        <h4>Car Rental</h4>
+        <p>Find the best car rental deals</p>
+      </div>
+      <div class="widget-content">
+        ${WIDGET_CONFIG.carRental.script}
+      </div>
+    </div>`;
+    
+    // 3. Airport Transfers Widget - Getting Around section
+    const transferWidget = `<div class="section-widget" data-category="transport">
+      <div class="widget-header">
+        <h4>Airport Transfers</h4>
+        <p>Book reliable airport pickup and drop-off</p>
+      </div>
+      <div class="widget-content">
+        ${WIDGET_CONFIG.airportTransfers.script}
+      </div>
+    </div>`;
+    
+    // 4. Hotel Booking Widget - Accommodation section
+    const hotelWidget = `<div class="section-widget" data-category="accommodation">
+      <div class="widget-header">
+        <h4>Hotel Booking</h4>
+        <p>Search and compare hotel prices</p>
+      </div>
+      <div class="widget-content">
+        ${WIDGET_CONFIG.hotels.script}
+      </div>
+    </div>`;
+    
+    // 5. Event Tickets Widget - Must-See Attractions section
+    const eventWidget = `<div class="section-widget" data-category="events">
+      <div class="widget-header">
+        <h4>Event Tickets</h4>
+        <p>Find tickets for events and shows</p>
+      </div>
+      <div class="widget-content">
+        ${WIDGET_CONFIG.eventTickets.script}
+      </div>
+    </div>`;
+    
+    // 6. GetYourGuide Activities Widget - Must-See Attractions section
     const gygWidget = `<div class="section-widget" data-category="activities">
       <div class="widget-header">
         <h4>Top Activities</h4>
         <p>Curated tours for ${escapeHtml(destination)}</p>
       </div>
       <div class="widget-content">
-        <a href="https://www.getyourguide.com/s/?q=${encodeURIComponent(destination)}${pid ? `&partner_id=${encodeURIComponent(pid)}` : ''}&locale=${locale}" target="_blank" rel="noopener" class="gyg-search-link">
-          Browse activities on GetYourGuide
-        </a>
-        <div data-gyg-widget="auto" data-gyg-partner-id="${pid}" data-gyg-locale="${locale}"></div>
+        ${getGYGWidget(destination)}
       </div>
     </div>`;
     
-    let existingGygCount = (modifiedHtml.match(/data-gyg-widget="auto"/g) || []).length;
-    const maxGyg = 4; // increase to show more widgets
-    const injectIfSpace = (sectionRegex) => {
-      if (existingGygCount >= maxGyg) return;
-      const before = modifiedHtml;
-      modifiedHtml = modifiedHtml.replace(sectionRegex, `$1${gygWidget}$2`);
-      if (modifiedHtml !== before) existingGygCount += 1;
-    };
-    injectIfSpace(/(<h2>🎫 Must-See Attractions<\/h2>[\s\S]*?)(<h2>🍽️|<h2>🎭|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s);
-    injectIfSpace(/(<h2>🍽️ Dining Guide<\/h2>[\s\S]*?)(<h2>🎭|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s);
-    injectIfSpace(/(<h2>🎭 Daily Itineraries<\/h2>[\s\S]*?)(<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s);
-    injectIfSpace(/(<h2>🗺️ Getting Around<\/h2>[\s\S]*?)(<h2>🏨|<h2>🍽️|<h2>🎭|<h2>🎫|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s);
-  } catch (e) {
-    console.warn('Failed to inject GYG widget:', e);
-  }
-
-  // Remove per-day GYG widget injection to prevent 429 errors
-  // (This was causing too many requests to GetYourGuide API)
-  
-  // Find car rental widget
-  const carWidget = widgets.find(w => w.category === 'transport');
-  if (carWidget) {
-    console.log('Injecting car rental widget into Getting Around section');
-    const carWidgetHTML = `
-      <div class="section-widget" data-category="transport">
-        <div class="widget-header">
-          <h4>${carWidget.name}</h4>
-          <p>${carWidget.description}</p>
-        </div>
-        <div class="widget-content">
-          ${carWidget.script}
-          <div class="widget-fallback">
-            <a href="https://www.rentalcars.com/en/city/de/berlin/" target="_blank" rel="noopener" class="widget-link">
-              Rent a car in ${escapeHtml(widgets?.[0]?.destination || 'Berlin')}
-            </a>
-          </div>
-        </div>
+    // 7. eSIM Widget - Travel Tips section
+    const esimWidget = `<div class="section-widget" data-category="connectivity">
+      <div class="widget-header">
+        <h4>eSIM</h4>
+        <p>Stay connected with local eSIM</p>
       </div>
-    `;
-    // Inject into "Getting Around" section AFTER the content
+      <div class="widget-content">
+        ${WIDGET_CONFIG.esim.script}
+      </div>
+    </div>`;
+    
+    // 8. Flight Delay Compensation Widget - Travel Tips section
+    const delayWidget = `<div class="section-widget" data-category="insurance">
+      <div class="widget-header">
+        <h4>Flight Delay Compensation</h4>
+        <p>Claim compensation for delayed flights</p>
+      </div>
+      <div class="widget-content">
+        ${WIDGET_CONFIG.flightDelay.script}
+      </div>
+    </div>`;
+    
+    // Inject widgets into appropriate sections
     modifiedHtml = modifiedHtml.replace(
       /(<h2>🗺️ Getting Around<\/h2>[\s\S]*?)(<h2>🏨|<h2>🍽️|<h2>🎭|<h2>🎫|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s,
-      `$1${carWidgetHTML}$2`
+      `$1${flightWidget}${carWidget}${transferWidget}$2`
     );
-  }
-  
-  // Find eSIM widget
-  const esimWidget = widgets.find(w => w.category === 'connectivity');
-  if (esimWidget) {
-    console.log('Injecting eSIM widget into Travel Tips section');
-    const esimWidgetHTML = `
-      <div class="section-widget" data-category="connectivity">
-        <div class="widget-header">
-          <h4>${esimWidget.name}</h4>
-          <p>${esimWidget.description}</p>
-        </div>
-        <div class="widget-content">
-          ${esimWidget.script}
-          <div class="widget-fallback">
-            <a href="https://www.airalo.com/" target="_blank" rel="noopener" class="widget-link">
-              Get eSIM for ${escapeHtml(widgets?.[0]?.destination || 'your destination')}
-            </a>
-          </div>
-        </div>
-      </div>
-    `;
-    // Inject into "Useful Apps" section AFTER the content
+    
     modifiedHtml = modifiedHtml.replace(
-      /(<h2>📱 Useful Apps<\/h2>[\s\S]*?)(<h2>🚨|<h2>🖼️)/s,
-      `$1${esimWidgetHTML}$2`
+      /(<h2>🏨 Accommodation<\/h2>[\s\S]*?)(<h2>🍽️|<h2>🎭|<h2>🎫|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s,
+      `$1${hotelWidget}$2`
     );
-  }
-  
-  // Suppress external booking/ticket links when corresponding widgets are present
-  try {
-    // If hotel widget present, strip [Book] anchors inside Accommodation section
-    if (hotelWidget) {
-      modifiedHtml = modifiedHtml.replace(/(<h2>🏨 Accommodation<\/h2>[\s\S]*?)(<h2>🍽️|<h2>🎭|<h2>🎫|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s, (_m, a, b) => {
-        const cleaned = a.replace(/<a[^>]*>(\s*Book\s*)<\/a>/gi, '<span class="muted">$1</span>');
-        return cleaned + b;
-      });
-    }
-    // If we injected any GYG auto widgets, strip Tickets anchors inside Must-See Attractions and Dining Guide
-    if (modifiedHtml.includes('data-gyg-widget="auto"')) {
-      const stripTickets = (sectionHeader) => {
-        const rx = new RegExp(`(<h2>${sectionHeader}<\\/h2>[\\s\\S]*?)(<h2>[^<]|$)`, 's');
-        modifiedHtml = modifiedHtml.replace(rx, (_m, a, b) => {
-          const cleaned = a.replace(/<a[^>]*>(\s*Tickets\s*)<\/a>/gi, '<span class="muted">$1</span>');
-          return cleaned + b;
-        });
-      };
-      stripTickets('🎫 Must-See Attractions');
-      stripTickets('🍽️ Dining Guide');
-    }
+    
+    modifiedHtml = modifiedHtml.replace(
+      /(<h2>🎫 Must-See Attractions<\/h2>[\s\S]*?)(<h2>🍽️|<h2>🎭|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨|<h2>🖼️)/s,
+      `$1${eventWidget}${gygWidget}$2`
+    );
+    
+    modifiedHtml = modifiedHtml.replace(
+      /(<h2>🛡️ Travel Tips<\/h2>[\s\S]*?)(<h2>📱|<h2>🚨|<h2>🖼️)/s,
+      `$1${esimWidget}${delayWidget}$2`
+    );
+    
   } catch (e) {
-    console.warn('Failed to suppress external links:', e);
+    console.warn('Failed to inject specific widgets:', e);
   }
+
+  // All widgets are now injected using the specific widget configuration above
   
   // Do NOT append unplaced widgets at the footer to avoid layout gaps
   
