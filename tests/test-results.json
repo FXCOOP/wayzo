@@ -3,58 +3,58 @@
     "total": 6,
     "passed": 0,
     "failed": 6,
-    "duration": "24s"
+    "duration": "28s"
   },
   "errors": [
-    "Berlin, Germany: Test Suite - No element found for selector: #dest",
-    "London, UK: Test Suite - Element is not a <select> element.",
-    "Dubai, UAE: Test Suite - No element found for selector: #dest",
-    "Matera, Italy: Test Suite - No element found for selector: #dest",
-    "Ghent, Belgium: Test Suite - No element found for selector: #dest",
-    "Tbilisi, Georgia: Test Suite - Element is not a <select> element."
+    "Berlin, Germany: Test Suite - Node is either not clickable or not an Element",
+    "London, UK: Test Suite - Node is either not clickable or not an Element",
+    "Dubai, UAE: Test Suite - Node is either not clickable or not an Element",
+    "Matera, Italy: Test Suite - Node is either not clickable or not an Element",
+    "Ghent, Belgium: Test Suite - Node is either not clickable or not an Element",
+    "Tbilisi, Georgia: Test Suite - Node is either not clickable or not an Element"
   ],
   "details": [
     {
       "destination": "Berlin, Germany",
       "test": "Test Suite",
       "passed": false,
-      "error": "No element found for selector: #dest",
-      "timestamp": "2025-09-10T18:38:42.106Z"
+      "error": "Node is either not clickable or not an Element",
+      "timestamp": "2025-09-10T18:43:45.462Z"
     },
     {
       "destination": "London, UK",
       "test": "Test Suite",
       "passed": false,
-      "error": "Element is not a <select> element.",
-      "timestamp": "2025-09-10T18:38:46.550Z"
+      "error": "Node is either not clickable or not an Element",
+      "timestamp": "2025-09-10T18:43:50.167Z"
     },
     {
       "destination": "Dubai, UAE",
       "test": "Test Suite",
       "passed": false,
-      "error": "No element found for selector: #dest",
-      "timestamp": "2025-09-10T18:38:50.394Z"
+      "error": "Node is either not clickable or not an Element",
+      "timestamp": "2025-09-10T18:43:54.594Z"
     },
     {
       "destination": "Matera, Italy",
       "test": "Test Suite",
       "passed": false,
-      "error": "No element found for selector: #dest",
-      "timestamp": "2025-09-10T18:38:54.245Z"
+      "error": "Node is either not clickable or not an Element",
+      "timestamp": "2025-09-10T18:43:59.192Z"
     },
     {
       "destination": "Ghent, Belgium",
       "test": "Test Suite",
       "passed": false,
-      "error": "No element found for selector: #dest",
-      "timestamp": "2025-09-10T18:38:58.056Z"
+      "error": "Node is either not clickable or not an Element",
+      "timestamp": "2025-09-10T18:44:03.958Z"
     },
     {
       "destination": "Tbilisi, Georgia",
       "test": "Test Suite",
       "passed": false,
-      "error": "Element is not a <select> element.",
-      "timestamp": "2025-09-10T18:39:03.103Z"
+      "error": "Node is either not clickable or not an Element",
+      "timestamp": "2025-09-10T18:44:08.485Z"
     }
   ]
 }

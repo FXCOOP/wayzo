@@ -16,27 +16,32 @@ try {
   console.log('Using in-memory database as fallback');
 }
 
-// Initialize tables
-db.exec(`
-  CREATE TABLE IF NOT EXISTS plans (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    input TEXT,
-    output TEXT,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-  )
-`);
+// Initialize tables with error handling
+try {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS plans (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      input TEXT,
+      output TEXT,
+      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS requests (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    endpoint TEXT,
-    destination TEXT,
-    success BOOLEAN,
-    error TEXT,
-    response_time INTEGER,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-  )
-`);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      endpoint TEXT,
+      destination TEXT,
+      success BOOLEAN,
+      error TEXT,
+      response_time INTEGER,
+      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  console.log('Database tables initialized successfully');
+} catch (error) {
+  console.error('Failed to initialize database tables:', error);
+}
 
 // Plan storage functions
 export function storePlan(input, output) {
