@@ -40,7 +40,7 @@ import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
 import { getWidgetsForDestination, generateWidgetHTML } from './lib/widgets.mjs';
 import { WIDGET_CONFIG, getGYGWidget } from './lib/widget-config.mjs';
-const VERSION = 'staging-v74';
+const VERSION = 'staging-v75';
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
   try {
@@ -1481,6 +1481,60 @@ Create a comprehensive, detailed travel itinerary with SPECIFIC attractions, res
 }
 
 /* API */
+// AI Content Validation Function
+function validateSpecificContent(html) {
+  const genericPatterns = [
+    /Local Restaurant/i,
+    /Historic Site/i,
+    /City Center Hotel/i,
+    /Local Cafe/i,
+    /Traditional Restaurant/i,
+    /Popular Attraction/i,
+    /Famous Landmark/i,
+    /Local Market/i,
+    /City Center/i,
+    /Downtown Area/i
+  ];
+  
+  for (const pattern of genericPatterns) {
+    if (pattern.test(html)) {
+      console.warn('Generic content detected:', pattern.source);
+      throw new Error(`Generic content detected: ${pattern.source}`);
+    }
+  }
+  
+  return html;
+}
+
+// Enhanced widget injection with GYG in multiple sections
+function injectWidgetsIntoSections(html, widgets, destination) {
+  let result = html;
+  
+  // Inject GYG widget before Must-See Attractions and Daily Itineraries
+  const gygWidget = getGYGWidget(destination);
+  
+  const sections = [
+    { header: '## 🎫 Must-See Attractions', widget: gygWidget },
+    { header: '## 🎭 Daily Itineraries', widget: gygWidget }
+  ];
+  
+  for (const { header, widget } of sections) {
+    const widgetHTML = `<div class="section-widget" data-category="activities">
+      <div class="widget-header">
+        <h4>Top Activities</h4>
+        <p>Curated tours for ${destination}</p>
+      </div>
+      <div class="widget-content">
+        ${widget}
+        <script async defer src="https://widget.getyourguide.com/dist/pa.umd.production.min.js" data-gyg-partner-id="PUHVJ53"></script>
+      </div>
+    </div>`;
+    
+    result = result.replace(new RegExp(`(${header})`), `${widgetHTML}\n$1`);
+  }
+  
+  return result;
+}
 app.post('/api/preview', async (req, res) => {
   const debug = process.env.DEBUG_WAYZO === 'true';
   try {
@@ -1524,7 +1578,10 @@ app.post('/api/preview', async (req, res) => {
     // Convert to HTML and inject widgets (sections only)
     const html = marked.parse(cleanedMarkdown);
     const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
-    let finalHTML = injectWidgetsIntoSections(html, widgets);
+    let finalHTML = injectWidgetsIntoSections(html, widgets, payload.destination);
+    
+    // Validate content for specific places
+    finalHTML = validateSpecificContent(finalHTML);
     // Strip legacy affiliate blocks and footer-like nodes (defense in depth)
     finalHTML = finalHTML
       .replace(/<footer[\s\S]*?<\/footer>/gi, '')

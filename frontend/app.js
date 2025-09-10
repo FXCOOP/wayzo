@@ -431,9 +431,15 @@
     const data = readForm();
     console.log('Form data:', data);
     
-    // Show loading
-    hide(previewEl);
-    show(loadingEl);
+      // Show loading memo
+      hide(previewEl);
+      show(loadingEl);
+      loadingEl.innerHTML = `
+        <div class="loading">
+          Your itinerary<br />
+          Generating your perfect trip...
+        </div>
+      `;
     
     try {
       // Call preview API
@@ -455,6 +461,9 @@
       // Show preview and hide loading
       hide(loadingEl);
       show(previewEl);
+      
+      // Add post-load note
+      previewEl.innerHTML = `${previewEl.innerHTML}<p class="muted">Plan loaded.</p>`;
       
       // Buttons shown by finalizeRender
       
