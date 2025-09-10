@@ -39,10 +39,11 @@ export function linkifyTokens(markdown = '', dest = '') {
   console.log('Original markdown length:', markdown.length);
   
   const processed = (markdown || '')
+    // Allow only Maps to external google; all other tokens become plain text to avoid external sites
     .replace(/\[(Map)\]\(map:([^)]+)\)/gi,        (_m, _t, q) => `[Map](${aff.maps(q.trim())})`)
-    .replace(/\[(Book)\]\(book:([^)]+)\)/gi,      (_m, _t, q) => `[Book](${aff.hotels(q.trim())})`)
-    .replace(/\[(Tickets)\]\(tickets:([^)]+)\)/gi,(_m, _t, q) => `[Tickets](${aff.activities(q.trim())})`)
-    .replace(/\[(Reviews)\]\(reviews:([^)]+)\)/gi,(_m, _t, q) => `[Reviews](${aff.reviews(q.trim())})`)
+    .replace(/\[(Book)\]\(book:([^)]+)\)/gi,      (_m, _t, q) => `Book: ${q.trim()}`)
+    .replace(/\[(Tickets)\]\(tickets:([^)]+)\)/gi,(_m, _t, q) => `Tickets: ${q.trim()}`)
+    .replace(/\[(Reviews)\]\(reviews:([^)]+)\)/gi,(_m, _t, q) => `Reviews: ${q.trim()}`)
     .replace(/!\[([^\]]*)\]\(image:([^)]+)\)/gi,  (_m, alt, q) => ''); // Remove all image tokens
   
   console.log('Processed markdown length:', processed.length);
