@@ -326,10 +326,10 @@
       }
     };
     
-    // Set affiliate links
-    set('#flightsLink', `https://www.skyscanner.com/transport/flights-from/${q}/`);
-    set('#hotelsLink', `https://www.booking.com/searchresults.html?ss=${q}`);
-    set('#activitiesLink', `https://www.viator.com/search?q=${q}`);
+    // Disable external affiliates per policy; use internal widgets only
+    set('#flightsLink', `https://wayzo-staging.onrender.com`);
+    set('#hotelsLink', `https://wayzo-staging.onrender.com`);
+    set('#activitiesLink', `https://wayzo-staging.onrender.com`);
     set('#carsLink', `https://www.rentalcars.com/search?query=${q}`);
     set('#reviewsLink', `https://www.tripadvisor.com/Search?q=${q}`);
   };
@@ -353,11 +353,11 @@
   // Append affiliate section to preview
   const appendAffiliateSection = (dest, out) => {
     const affiliateSection = createAffiliateSection({
-      flights: `https://www.skyscanner.com/transport/flights-from/${encodeURIComponent(dest)}/`,
-      hotels: `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(dest)}`,
-      activities: `https://www.viator.com/search?q=${encodeURIComponent(dest)}`,
-      cars: `https://www.rentalcars.com/search?query=${encodeURIComponent(dest)}`,
-      reviews: `https://www.tripadvisor.com/Search?q=${encodeURIComponent(dest)}`
+      flights: `#`,
+      hotels: `#`,
+      activities: `#`,
+      cars: `#`,
+      reviews: `#`
     });
     out.innerHTML += affiliateSection;
     setAffiliates(dest);

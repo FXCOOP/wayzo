@@ -28,9 +28,9 @@
     const set = (id, url) => { const a = $(id); if (a) a.href = url; };
 
     set('#linkMaps',      `https://www.google.com/maps/search/?api=1&query=${q}`);
-    set('#linkFlights',   `https://www.kayak.com/flights?search=${q}`);
-    set('#linkHotels',    `https://www.booking.com/searchresults.html?ss=${q}`);
-    set('#linkActivities',`https://www.getyourguide.com/s/?q=${q}`);
+    set('#linkFlights',   `#`);
+    set('#linkHotels',    `#`);
+    set('#linkActivities',`#`);
     set('#linkCars',      `https://www.rentalcars.com/SearchResults.do?destination=${q}`);
     set('#linkInsurance', `https://www.worldnomads.com/`);
     set('#linkReviews',   `https://www.tripadvisor.com/Search?q=${q}`);

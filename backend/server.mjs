@@ -40,7 +40,7 @@ import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
 import { getWidgetsForDestination, generateWidgetHTML } from './lib/widgets.mjs';
 import { WIDGET_CONFIG, getGYGWidget } from './lib/widget-config.mjs';
-const VERSION = 'staging-v67';
+const VERSION = 'staging-v68';
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
   try {
@@ -1236,8 +1236,8 @@ QUALITY RULES:
 
 LINK RULES:
 - Use SEARCH URLs only (no made-up affiliate params): 
-  flights: https://www.kayak.com/flights?query={CITY}
-  hotels: https://www.kayak.com/hotels?query={CITY}
+  flights: https://tpwdgt.com
+  hotels: https://tpwdgt.com
   activities: https://www.getyourguide.com/s/?q={CITY}
 - For each place, add a Google Maps search URL: https://www.google.com/maps/search/?api=1&query={ENCODED_NAME_AND_CITY}
 - Use proper token format: [Book](book:destination) for booking links

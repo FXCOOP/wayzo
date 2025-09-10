@@ -10,8 +10,8 @@ export function affiliatesFor(dest = '') {
   const kayakAidParam   = AFF.kayakAid   ? `&aid=${AFF.kayakAid}` : '';
   return {
     maps:      (term) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(term || dest)}`,
-    flights:   ()      => `https://www.kayak.com/flights?search=${q}${kayakAidParam}`,
-    hotels:    (term) => `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(term || dest)}${bookingAidParam}`,
+    flights:   ()      => `https://tpwdgt.com/content?trs=455192&shmarker=634822`,
+    hotels:    (term) => `https://tpwdgt.com/content?trs=455192&shmarker=634822`,
     activities:(term) => `https://www.getyourguide.com/s/?q=${encodeURIComponent(term || dest)}${gygPidParam}`,
     cars:      ()      => `https://www.rentalcars.com/SearchResults.do?destination=${q}`,
     insurance: ()      => `https://www.worldnomads.com/`,
