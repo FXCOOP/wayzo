@@ -40,7 +40,7 @@ import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
 import { getWidgetsForDestination, generateWidgetHTML } from './lib/widgets.mjs';
 import { WIDGET_CONFIG, getGYGWidget } from './lib/widget-config.mjs';
-const VERSION = 'staging-v70';
+const VERSION = 'staging-v71';
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
   try {
@@ -1351,6 +1351,9 @@ CRITICAL: You MUST use SPECIFIC, REAL place names. NEVER use generic terms like:
 - "Local Restaurant" → Use specific restaurants like "Trattoria da Enzo" or "Roscioli"
 - "City Center Hotel" → Use specific hotels like "Hotel Artemide" or "The First Roma Arte"
 - "Local Museum" → Use specific museums like "Vatican Museums" or "Capitoline Museums"
+- "Traditional Restaurant" → Use specific restaurants like "Trattoria da Enzo" or "Roscioli"
+- "Historic Landmarks" → Use specific attractions like "Colosseum" or "Roman Forum"
+- "Cultural Sites" → Use specific museums like "Vatican Museums" or "Capitoline Museums"
 
 ${destination.toLowerCase().includes('el nido') ? `
 FOR EL NIDO SPECIFICALLY - YOU MUST USE THESE EXACT PLACES:
@@ -1478,90 +1481,51 @@ Create a comprehensive, detailed travel itinerary with SPECIFIC attractions, res
 }
 
 /* API */
-app.post('/api/preview', (req, res) => {
+app.post('/api/preview', async (req, res) => {
+  const debug = process.env.DEBUG_WAYZO === 'true';
   try {
-    console.log('Preview request received:', req.body); // Debug
     const payload = req.body || {};
-    const currency = payload.currency || 'USD';
-    const budgetNum = Number(payload.budget || 0);
-    const level = payload.level || 'mid';
-    const destination = (payload.destination || 'your destination').toString();
-    const from = payload.from || 'your location';
-    const dateMode = payload.dateMode || 'exact';
-    const adults = Number(payload.adults || 2);
-    const children = Number(payload.children || 0);
-    const totalTravelers = Math.max(1, adults + children);
+    if (debug) console.debug('[PREVIEW] payload:', { dest: payload.destination, start: payload.start, end: payload.end, level: payload.level });
 
-    // Normalize budget safely
-    payload.budget = normalizeBudget(budgetNum, currency);
+    // Normalize inputs
+    payload.currency = payload.currency || 'USD';
+    payload.budget = normalizeBudget(payload.budget, payload.currency);
 
-    // Duration handling (supports flexible dates)
-    const nDays = payload.flexibleDates && Number(payload.flexibleDates.duration)
-      ? Number(payload.flexibleDates.duration)
-      : (payload.start && payload.end ? daysBetween(payload.start, payload.end) : 5);
-
-    const style = level === 'luxury' ? 'Luxury' : level === 'budget' ? 'Budget' : 'Mid-range';
-    const aff = affiliatesFor(destination);
     const id = uid();
 
-    const teaser_html = `
-    <div class="preview-teaser">
-      <h3>🎯 ${escapeHtml(destination)} Trip Preview</h3>
-      <div class="preview-stats">
-        <div class="stat">
-          <span class="stat-label">Duration</span>
-          <span class="stat-value">${nDays} days</span>
-        </div>
-        <div class="stat">
-          <span class="stat-label">Style</span>
-          <span class="stat-value">${escapeHtml(style)}</span>
-        </div>
-        <div class="stat">
-          <span class="stat-label">Travelers</span>
-          <span class="stat-value">${adults} adults${children ? ` + ${children} children` : ''}</span>
-        </div>
-        <div class="stat">
-          <span class="stat-label">Budget</span>
-          <span class="stat-value">$${Number(budgetNum || 0).toLocaleString()}</span>
-        </div>
-        ${from !== 'your location' ? `
-        <div class="stat">
-          <span class="stat-label">From</span>
-          <span class="stat-value">${from}</span>
-        </div>
-        ` : ''}
-        ${dateMode === 'flexible' ? `
-        <div class="stat">
-          <span class="stat-label">Date Mode</span>
-          <span class="stat-value">Flexible (best prices)</span>
-        </div>
-        ` : ''}
-      </div>
-      <p class="preview-description">
-        Ready to create your personalized ${nDays}-day ${style.toLowerCase()} adventure in ${escapeHtml(destination)}?
-        Our AI will craft a detailed itinerary with hotels, activities, dining, and insider tips.
-        ${children > 0 ? 'We\'ll include family-friendly activities and accommodations suitable for children.' : ''}
-      </p>
-      <div class="preview-features">
-        <span class="feature">🗺️ Custom routes</span>
-        <span class="feature">🏨 Hotel picks</span>
-        <span class="feature">🍽️ Restaurant guide</span>
-        <span class="feature">🎫 Activity booking</span>
-        <span class="feature">📱 Mobile-friendly</span>
-        <span class="feature">📄 PDF export</span>
-        ${children > 0 ? '<span class="feature">👶 Family-friendly</span>' : ''}
-        ${payload.dietary && payload.dietary.length > 0 ? '<span class="feature">🥗 Dietary options</span>' : ''}
-      </div>
-      <p class="preview-cta">
-        <strong>Click "Generate full plan" to create your complete itinerary!</strong>
-      </p>
-    </div>
-    `;
+    // Hard timeout for AI call
+    const withTimeout = (promise, ms) => {
+      let timeoutId;
+      const timeoutPromise = new Promise((resolve, reject) => {
+        timeoutId = setTimeout(() => reject(new Error(`AI call timed out after ${ms}ms`)), ms);
+      });
+      return Promise.race([
+        promise.finally(() => { if (timeoutId) clearTimeout(timeoutId); }),
+        timeoutPromise
+      ]);
+    };
 
-    res.json({ id, teaser_html, affiliates: aff, version: VERSION });
+    if (debug) console.debug('[PREVIEW] openai_call_start');
+    const markdown = await withTimeout(generatePlanWithAI(payload), 60000);
+    if (debug) console.debug('[PREVIEW] openai_call_success mdLen=', markdown?.length || 0);
+
+    // Sanitize links (maps only) and enforce contract
+    const processedMarkdown = linkifyTokens(markdown, payload.destination);
+    const cleanedMarkdown = enforceWayzoContracts(processedMarkdown, payload.destination);
+
+    // Convert to HTML and inject widgets (sections only)
+    const html = marked.parse(cleanedMarkdown);
+    const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
+    const finalHTML = injectWidgetsIntoSections(html, widgets);
+
+    if (debug) console.debug('[PREVIEW] widgets:', widgets.map(w => w.name).join(','));
+    if (debug) console.debug('[PREVIEW] output hLen=', finalHTML.length);
+
+    // Return as teaser_html for the preview renderer (no legacy blocks)
+    res.json({ id, teaser_html: finalHTML, affiliates: {}, version: VERSION, debug: { aiCalled: true } });
   } catch (e) {
-    console.error('Preview endpoint error:', e);
-    res.status(200).json({ id: uid(), teaser_html: '<p class="error">Unable to build preview right now.</p>', affiliates: {}, version: VERSION });
+    console.error('Preview endpoint error:', e.message);
+    res.status(500).json({ id: uid(), teaser_html: '<p class="error">Preview temporarily unavailable. Please retry.</p>', affiliates: {}, version: VERSION });
   }
 });
 
