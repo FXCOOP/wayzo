@@ -4,7 +4,7 @@
 export const WIDGET_CONFIG = {
   // Car Rentals
   carRental: {
-    script: `<script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&powered_by=true&border_radius=5&plain=true&show_logo=true&color_background=%23ffca28&color_button=%2355a539&color_text=%23000000&color_input_text=%23000000&color_button_text=%23ffffff&promo_id=4480&campaign_id=10" charset="utf-8"></script>`,
+    script: `<script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&powered_by=false&border_radius=5&plain=true&show_logo=true&color_background=%23ffca28&color_button=%2355a539&color_text=%23000000&color_input_text=%23000000&color_button_text=%23ffffff&promo_id=4480&campaign_id=10" charset="utf-8"></script>`,
     category: 'transport',
     section: 'Getting Around',
     title: 'Car Rental',
@@ -13,7 +13,7 @@ export const WIDGET_CONFIG = {
 
   // Airport Transfers
   airportTransfers: {
-    script: `<script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&city=68511&show_header=true&powered_by=true&campaign_id=627&promo_id=8951" charset="utf-8"></script>`,
+    script: `<script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&city=68511&show_header=true&powered_by=false&campaign_id=627&promo_id=8951" charset="utf-8"></script>`,
     category: 'transport',
     section: 'Getting Around',
     title: 'Airport Transfers',
@@ -22,7 +22,7 @@ export const WIDGET_CONFIG = {
 
   // eSIM
   esim: {
-    script: `<script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&powered_by=true&color_button=%23f2685f&color_focused=%23f2685f&secondary=%23FFFFFF&dark=%2311100f&light=%23FFFFFF&special=%23C4C4C4&border_radius=5&plain=false&no_labels=true&promo_id=8588&campaign_id=541" charset="utf-8"></script>`,
+    script: `<script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&powered_by=false&color_button=%23f2685f&color_focused=%23f2685f&secondary=%23FFFFFF&dark=%2311100f&light=%23FFFFFF&special=%23C4C4C4&border_radius=5&plain=false&no_labels=true&promo_id=8588&campaign_id=541" charset="utf-8"></script>`,
     category: 'connectivity',
     section: 'Travel Tips',
     title: 'eSIM',
@@ -31,7 +31,7 @@ export const WIDGET_CONFIG = {
 
   // Cheap Flights
   flights: {
-    script: `<script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en_us&Checkbox_9=false&powered_by=true&primary=%230C131D&dark=%230C131D&light=%23FFFFFF&secondary=%23F1EDFC&promo_id=7293&campaign_id=200" charset="utf-8"></script>`,
+    script: `<script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en_us&Checkbox_9=false&powered_by=false&primary=%230C131D&dark=%230C131D&light=%23FFFFFF&secondary=%23F1EDFC&promo_id=7293&campaign_id=200" charset="utf-8"></script>`,
     category: 'flights',
     section: 'Getting Around',
     title: 'Flight Search',
@@ -40,7 +40,7 @@ export const WIDGET_CONFIG = {
 
   // Event Tickets
   eventTickets: {
-    script: `<script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&bg_color=%23112266&title=Need%20tickets%3F&title_color=%23ffffff&icon_color=%230077ff&search_text=Search%20by%20artist%2C%20team%2C%20event%2C%20etc...&footer_color=%23ffffff&powered_by=true&campaign_id=72&promo_id=8505" charset="utf-8"></script>`,
+    script: `<script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&bg_color=%23112266&title=Need%20tickets%3F&title_color=%23ffffff&icon_color=%230077ff&search_text=Search%20by%20artist%2C%20team%2C%20event%2C%20etc...&footer_color=%23ffffff&powered_by=false&campaign_id=72&promo_id=8505" charset="utf-8"></script>`,
     category: 'events',
     section: 'Must-See Attractions',
     title: 'Event Tickets',
@@ -49,7 +49,7 @@ export const WIDGET_CONFIG = {
 
   // Hotel Booking
   hotels: {
-    script: `<script async src="https://tpwdgt.com/content?currency=usd&trs=455192&shmarker=634822&show_hotels=true&powered_by=true&locale=en&primary_override=%23FF8E01&color_button=%23FF8E01&color_icons=%23FF8E01&secondary=%23FFFFFF&dark=%23262626&light=%23FFFFFF&special=%23C4C4C4&color_focused=%23FF8E01&border_radius=5&plain=false&promo_id=7873&campaign_id=101" charset="utf-8"></script>`,
+    script: `<script async src="https://tpwdgt.com/content?currency=usd&trs=455192&shmarker=634822&show_hotels=true&powered_by=false&locale=en&primary_override=%23FF8E01&color_button=%23FF8E01&color_icons=%23FF8E01&secondary=%23FFFFFF&dark=%23262626&light=%23FFFFFF&special=%23C4C4C4&color_focused=%23FF8E01&border_radius=5&plain=false&promo_id=7873&campaign_id=101" charset="utf-8"></script>`,
     category: 'accommodation',
     section: 'Accommodation',
     title: 'Hotel Booking',
@@ -58,7 +58,7 @@ export const WIDGET_CONFIG = {
 
   // Flight Delay Compensation
   flightDelay: {
-    script: `<script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&border_radius=5&plain=true&powered_by=true&promo_id=3408&campaign_id=86" charset="utf-8"></script>`,
+    script: `<script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&border_radius=5&plain=true&powered_by=false&promo_id=3408&campaign_id=86" charset="utf-8"></script>`,
     category: 'insurance',
     section: 'Travel Tips',
     title: 'Flight Delay Compensation',
