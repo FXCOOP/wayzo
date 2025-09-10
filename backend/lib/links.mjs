@@ -38,13 +38,16 @@ export function linkifyTokens(markdown = '', dest = '') {
   console.log('Processing markdown for destination:', dest);
   console.log('Original markdown length:', markdown.length);
   
-  const processed = (markdown || '')
+  let processed = (markdown || '')
     // Allow only Maps to external google; all other tokens become plain text to avoid external sites
     .replace(/\[(Map)\]\(map:([^)]+)\)/gi,        (_m, _t, q) => `[Map](${aff.maps(q.trim())})`)
     .replace(/\[(Book)\]\(book:([^)]+)\)/gi,      (_m, _t, q) => `Book: ${q.trim()}`)
     .replace(/\[(Tickets)\]\(tickets:([^)]+)\)/gi,(_m, _t, q) => `Tickets: ${q.trim()}`)
     .replace(/\[(Reviews)\]\(reviews:([^)]+)\)/gi,(_m, _t, q) => `Reviews: ${q.trim()}`)
     .replace(/!\[([^\]]*)\]\(image:([^)]+)\)/gi,  (_m, alt, q) => ''); // Remove all image tokens
+  
+  // Final sweep to remove any stray external affiliate URLs
+  processed = processed.replace(/https?:\/\/(www\.)?(booking\.com|wayaway|ticketnetwork|kayak\.com|skyscanner\.com|viator\.com)\S*/gi, '');
   
   console.log('Processed markdown length:', processed.length);
   console.log('Final processed markdown preview:', processed.substring(0, 500));

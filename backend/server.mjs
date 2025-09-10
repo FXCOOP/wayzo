@@ -34,14 +34,30 @@ import morgan from 'morgan';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import Database from 'better-sqlite3';
+import pino from 'pino';
 import { normalizeBudget, computeBudget } from './lib/budget.mjs';
 import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
 import { getWidgetsForDestination, generateWidgetHTML } from './lib/widgets.mjs';
 import { WIDGET_CONFIG, getGYGWidget } from './lib/widget-config.mjs';
+import { storePlan, getPlan, getAllPlans, storeRequest, getRequestStats } from './lib/db.mjs';
 const VERSION = 'staging-v75';
-// Load .env locally only; on Render we rely on real env vars.
+
+// Initialize structured logging with Pino
+const logger = pino({
+  level: 'info',
+  transport: {
+    target: 'pino-pretty',
+    options: {
+      destination: 'wayzo.log',
+      colorize: false,
+      translateTime: 'SYS:standard'
+    }
+  }
+});
+
+logger.info({ version: VERSION }, 'Wayzo server starting');
 if (process.env.NODE_ENV !== 'production') {
   try {
     const { config } = await import('dotenv');
@@ -301,12 +317,7 @@ app.post('/api/upload', multerUpload.array('files', 10), (req, res) => {
   res.json({ files });
 });
 
-/* DB */
-const db = new Database(path.join(ROOT, 'tripmaster.sqlite'));
-db.exec(`CREATE TABLE IF NOT EXISTS plans (id TEXT PRIMARY KEY, created_at TEXT NOT NULL, payload TEXT NOT NULL);`);
-db.exec(`CREATE TABLE IF NOT EXISTS events (id TEXT PRIMARY KEY, event_type TEXT NOT NULL, user_id TEXT, data TEXT, created_at TEXT NOT NULL);`);
-const savePlan = db.prepare('INSERT OR REPLACE INTO plans (id, created_at, payload) VALUES (?, ?, ?)');
-const getPlan = db.prepare('SELECT payload FROM plans WHERE id = ?');
+/* DB - Using new db module */
 const nowIso = () => new Date().toISOString();
 const uid = () => (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
 
@@ -1493,22 +1504,35 @@ function validateSpecificContent(html) {
     /Famous Landmark/i,
     /Local Market/i,
     /City Center/i,
-    /Downtown Area/i
+    /Downtown Area/i,
+    /Local Bar/i,
+    /Traditional Cafe/i,
+    /Historic Building/i,
+    /Famous Museum/i,
+    /Popular Restaurant/i,
+    /Local Shop/i,
+    /Traditional Market/i,
+    /Historic District/i,
+    /Famous Square/i,
+    /Popular Area/i
   ];
   
   for (const pattern of genericPatterns) {
     if (pattern.test(html)) {
-      console.warn('Generic content detected:', pattern.source);
+      logger.warn({ pattern: pattern.source, html: html.substring(0, 200) }, 'Generic content detected');
       throw new Error(`Generic content detected: ${pattern.source}`);
     }
   }
   
+  logger.info('AI content validation passed - no generic terms found');
   return html;
 }
 
 // Enhanced widget injection with GYG in multiple sections
 function injectWidgetsIntoSections(html, widgets, destination) {
   let result = html;
+  
+  logger.info({ destination, widgetCount: widgets.length }, 'Injecting widgets into sections');
   
   // Inject GYG widget before Must-See Attractions and Daily Itineraries
   const gygWidget = getGYGWidget(destination);
@@ -1518,6 +1542,7 @@ function injectWidgetsIntoSections(html, widgets, destination) {
     { header: '## 🎭 Daily Itineraries', widget: gygWidget }
   ];
   
+  let injectedCount = 0;
   for (const { header, widget } of sections) {
     const widgetHTML = `<div class="section-widget" data-category="activities">
       <div class="widget-header">
@@ -1530,15 +1555,30 @@ function injectWidgetsIntoSections(html, widgets, destination) {
       </div>
     </div>`;
     
+    const beforeLength = result.length;
     result = result.replace(new RegExp(`(${header})`), `${widgetHTML}\n$1`);
+    if (result.length > beforeLength) {
+      injectedCount++;
+      logger.debug({ section: header }, 'GYG widget injected');
+    }
   }
   
+  logger.info({ injectedCount, totalSections: sections.length }, 'Widget injection completed');
   return result;
 }
 app.post('/api/preview', async (req, res) => {
   const debug = process.env.DEBUG_WAYZO === 'true';
+  const startTime = Date.now();
+  
   try {
     const payload = req.body || {};
+    logger.info({ 
+      destination: payload.destination, 
+      budget: payload.budget, 
+      travelers: payload.travelers,
+      style: payload.style 
+    }, 'Preview request received');
+    
     if (debug) console.debug('[PREVIEW] payload:', { dest: payload.destination, start: payload.start, end: payload.end, level: payload.level });
 
     // Normalize inputs
@@ -1596,10 +1636,47 @@ app.post('/api/preview', async (req, res) => {
     // Return as teaser_html for the preview renderer (no legacy blocks)
     // Ensure no footer container is included in preview output
     const sanitizedHTML = finalHTML.replace(/<footer[\s\S]*?<\/footer>/gi, '');
-    res.json({ id, teaser_html: sanitizedHTML, affiliates: {}, version: VERSION, debug: { aiCalled: true } });
+    
+    // Store the plan in database
+    const planId = storePlan(payload, sanitizedHTML);
+    const responseTime = Date.now() - startTime;
+    
+    // Log successful request
+    storeRequest('/api/preview', payload.destination, true, null, responseTime);
+    
+    logger.info({ 
+      planId, 
+      responseTime, 
+      destination: payload.destination,
+      htmlLength: sanitizedHTML.length 
+    }, 'Preview generated successfully');
+    
+    res.json({ 
+      id, 
+      teaser_html: sanitizedHTML, 
+      affiliates: {}, 
+      version: VERSION, 
+      debug: { aiCalled: true, planId, responseTime } 
+    });
   } catch (e) {
+    const responseTime = Date.now() - startTime;
+    logger.error({ 
+      error: e.message, 
+      destination: payload.destination,
+      responseTime 
+    }, 'Preview generation failed');
+    
+    // Log failed request
+    storeRequest('/api/preview', payload.destination, false, e.message, responseTime);
+    
     console.error('Preview endpoint error:', e.message);
-    res.status(200).json({ id: uid(), teaser_html: '<div class="preview-error"><p>Preview temporarily unavailable. Please retry in a moment.</p></div>', affiliates: {}, version: VERSION });
+    res.status(200).json({ 
+      id: uid(), 
+      teaser_html: '<div class="preview-error"><p>Preview temporarily unavailable. Please retry in a moment.</p></div>', 
+      affiliates: {}, 
+      version: VERSION,
+      debug: { aiCalled: false, error: e.message, responseTime }
+    });
   }
 });
 
@@ -2043,6 +2120,47 @@ app.get(/^\/(?!api\/).*/, (_req, res) => {
   console.log('Serving index:', INDEX);
   res.sendFile(INDEX);
 });
+
+// Debug endpoints for plan storage and request tracking
+app.get('/debug/plan/:id', (req, res) => {
+  try {
+    const plan = getPlan(req.params.id);
+    if (plan) {
+      logger.info({ planId: req.params.id }, 'Debug plan requested');
+      res.json(plan);
+    } else {
+      logger.warn({ planId: req.params.id }, 'Plan not found');
+      res.status(404).json({ error: 'Plan not found' });
+    }
+  } catch (error) {
+    logger.error({ error: error.message, planId: req.params.id }, 'Debug plan error');
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/debug/plans', (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 50;
+    const plans = getAllPlans(limit);
+    logger.info({ limit, count: plans.length }, 'Debug plans list requested');
+    res.json({ plans, count: plans.length, limit });
+  } catch (error) {
+    logger.error({ error: error.message }, 'Debug plans error');
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/debug/stats', (req, res) => {
+  try {
+    const stats = getRequestStats();
+    logger.info(stats, 'Debug stats requested');
+    res.json(stats);
+  } catch (error) {
+    logger.error({ error: error.message }, 'Debug stats error');
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Wayzo backend running on :${PORT}`);
   console.log('Version:', VERSION);

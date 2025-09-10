@@ -463,7 +463,7 @@
       show(previewEl);
       
       // Add post-load note
-      previewEl.innerHTML = `${previewEl.innerHTML}<p class="muted">Plan loaded.</p>`;
+      previewEl.innerHTML = `${previewEl.innerHTML}<p class="muted" style="color: #666; font-size: 0.9em; margin-top: 20px; text-align: center;">Plan loaded.</p>`;
       
       // Buttons shown by finalizeRender
       
@@ -594,6 +594,9 @@
       // Hide loading
       hide(loadingEl);
       show(previewEl);
+      
+      // Add post-load note for full plan
+      previewEl.innerHTML = `${previewEl.innerHTML}<p class="muted" style="color: #666; font-size: 0.9em; margin-top: 20px; text-align: center;">Plan loaded.</p>`;
       
       // Track plan generation
       trackEvent('plan_generated', { destination: data.destination, budget: data.budget });
