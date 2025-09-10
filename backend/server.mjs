@@ -40,7 +40,7 @@ import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
 import { getWidgetsForDestination, generateWidgetHTML } from './lib/widgets.mjs';
 import { WIDGET_CONFIG, getGYGWidget } from './lib/widget-config.mjs';
-const VERSION = 'staging-v73';
+const VERSION = 'staging-v74';
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
   try {
@@ -1505,8 +1505,16 @@ app.post('/api/preview', async (req, res) => {
       ]);
     };
 
+    // Try once, retry once on failure with brief backoff
     if (debug) console.debug('[PREVIEW] openai_call_start');
-    const markdown = await withTimeout(generatePlanWithAI(payload), 45000);
+    let markdown;
+    try {
+      markdown = await withTimeout(generatePlanWithAI(payload), 60000);
+    } catch (firstErr) {
+      if (debug) console.debug('[PREVIEW] openai first attempt failed:', firstErr?.message);
+      await new Promise(r => setTimeout(r, 1500));
+      markdown = await withTimeout(generatePlanWithAI(payload), 60000);
+    }
     if (debug) console.debug('[PREVIEW] openai_call_success mdLen=', markdown?.length || 0);
 
     // Sanitize links (maps only) and enforce contract
