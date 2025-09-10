@@ -606,6 +606,18 @@ fieldset.field .chip {
   position: relative;
 }
 
+/* Block any third-party widgets or affiliate elements from rendering in footer */
+.footer script[src*="tpwdgt.com"],
+.footer iframe[src*="tpwdgt.com"],
+.footer [data-gyg-widget],
+.footer [data-gyg-href],
+.footer [class*="tpw"],
+.footer [id*="tpwdgt"],
+.footer a[href*="ticketnetwork" i],
+.footer *[href*="ticketnetwork" i] {
+  display: none !important;
+}
+
 .footer::before {
   content: '';
   position: absolute;
