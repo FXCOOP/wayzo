@@ -40,7 +40,7 @@ import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
 import { getWidgetsForDestination, generateWidgetHTML } from './lib/widgets.mjs';
 import { WIDGET_CONFIG, getGYGWidget } from './lib/widget-config.mjs';
-const VERSION = 'staging-v66';
+const VERSION = 'staging-v67';
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
   try {

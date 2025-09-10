@@ -2,112 +2,70 @@
 // This file contains all the specific widget codes provided by the user
 
 export const WIDGET_CONFIG = {
-  // Car Rentals - Custom inline widget
+  // Car Rentals - YOUR ORIGINAL WIDGET
   carRental: {
-    script: `<div class="affiliate-widget">
-      <div class="widget-content">
-        <h4>🚗 Car Rental</h4>
-        <p>Find the best car rental deals</p>
-        <a href="https://www.kayak.com/cars" target="_blank" rel="sponsored" class="affiliate-button">Search Car Rentals</a>
-      </div>
-    </div>`,
+    script: `<script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&border_radius=5&plain=true&show_logo=true&color_background=%23ffca28&color_button=%2355a539&color_text=%23000000&color_input_text=%23000000&color_button_text=%23ffffff&promo_id=4480&campaign_id=10" charset="utf-8"></script>`,
     category: 'transport',
     section: 'Getting Around',
     title: 'Car Rental',
     description: 'Find the best car rental deals'
   },
 
-  // Airport Transfers - Custom inline widget
+  // Airport Transfers - YOUR ORIGINAL WIDGET
   airportTransfers: {
-    script: `<div class="affiliate-widget">
-      <div class="widget-content">
-        <h4>🚌 Airport Transfers</h4>
-        <p>Book reliable airport pickup and drop-off</p>
-        <a href="https://www.kayak.com/airport-transfers" target="_blank" rel="sponsored" class="affiliate-button">Book Transfer</a>
-      </div>
-    </div>`,
+    script: `<script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&city=68511&show_header=true&campaign_id=627&promo_id=8951" charset="utf-8"></script>`,
     category: 'transport',
     section: 'Getting Around',
     title: 'Airport Transfers',
     description: 'Book reliable airport pickup and drop-off'
   },
 
-  // eSIM - Custom inline widget
+  // eSIM - YOUR ORIGINAL WIDGET
   esim: {
-    script: `<div class="affiliate-widget">
-      <div class="widget-content">
-        <h4>📱 eSIM</h4>
-        <p>Stay connected with local eSIM</p>
-        <a href="https://www.airalo.com" target="_blank" rel="sponsored" class="affiliate-button">Get eSIM</a>
-      </div>
-    </div>`,
+    script: `<script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&color_button=%23f2685f&color_focused=%23f2685f&secondary=%23FFFFFF&dark=%2311100f&light=%23FFFFFF&special=%23C4C4C4&border_radius=5&plain=false&no_labels=true&promo_id=8588&campaign_id=541" charset="utf-8"></script>`,
     category: 'connectivity',
     section: 'Travel Tips',
     title: 'eSIM',
     description: 'Stay connected with local eSIM'
   },
 
-  // Cheap Flights - Custom inline widget
+  // Cheap Flights - YOUR ORIGINAL WIDGET
   flights: {
-    script: `<div class="affiliate-widget">
-      <div class="widget-content">
-        <h4>✈️ Flight Search</h4>
-        <p>Find the best flight deals</p>
-        <a href="https://www.kayak.com/flights" target="_blank" rel="sponsored" class="affiliate-button">Search Flights</a>
-      </div>
-    </div>`,
+    script: `<script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en_us&Checkbox_9=false&primary=%230C131D&dark=%230C131D&light=%23FFFFFF&secondary=%23F1EDFC&promo_id=7293&campaign_id=200" charset="utf-8"></script>`,
     category: 'flights',
     section: 'Getting Around',
     title: 'Flight Search',
     description: 'Find the best flight deals'
   },
 
-  // Event Tickets - Custom inline widget
+  // Event Tickets - YOUR ORIGINAL WIDGET
   eventTickets: {
-    script: `<div class="affiliate-widget">
-      <div class="widget-content">
-        <h4>🎫 Event Tickets</h4>
-        <p>Find tickets for events and shows</p>
-        <a href="https://www.ticketmaster.com" target="_blank" rel="sponsored" class="affiliate-button">Find Events</a>
-      </div>
-    </div>`,
+    script: `<script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&bg_color=%23112266&title=Need%20tickets%3F&title_color=%23ffffff&icon_color=%230077ff&search_text=Search%20by%20artist%2C%20team%2C%20event%2C%20etc...&footer_color=%23ffffff&campaign_id=72&promo_id=8505" charset="utf-8"></script>`,
     category: 'events',
     section: 'Must-See Attractions',
     title: 'Event Tickets',
     description: 'Find tickets for events and shows'
   },
 
-  // Hotel Booking - Custom inline widget
+  // Hotel Booking - YOUR ORIGINAL WIDGET
   hotels: {
-    script: `<div class="affiliate-widget">
-      <div class="widget-content">
-        <h4>🏨 Hotel Booking</h4>
-        <p>Search and compare hotel prices</p>
-        <a href="https://www.kayak.com/hotels" target="_blank" rel="sponsored" class="affiliate-button">Search Hotels</a>
-      </div>
-    </div>`,
+    script: `<script async src="https://tpwdgt.com/content?currency=usd&trs=455192&shmarker=634822&show_hotels=true&locale=en&primary_override=%23FF8E01&color_button=%23FF8E01&color_icons=%23FF8E01&secondary=%23FFFFFF&dark=%23262626&light=%23FFFFFF&special=%23C4C4C4&color_focused=%23FF8E01&border_radius=5&plain=false&promo_id=7873&campaign_id=101" charset="utf-8"></script>`,
     category: 'accommodation',
     section: 'Accommodation',
     title: 'Hotel Booking',
     description: 'Search and compare hotel prices'
   },
 
-  // Flight Delay Compensation - Custom inline widget
+  // Flight Delay Compensation - YOUR ORIGINAL WIDGET
   flightDelay: {
-    script: `<div class="affiliate-widget">
-      <div class="widget-content">
-        <h4>🛡️ Flight Delay Compensation</h4>
-        <p>Claim compensation for delayed flights</p>
-        <a href="https://www.flightright.com" target="_blank" rel="sponsored" class="affiliate-button">Check Eligibility</a>
-      </div>
-    </div>`,
+    script: `<script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&border_radius=5&plain=true&promo_id=3408&campaign_id=86" charset="utf-8"></script>`,
     category: 'insurance',
     section: 'Travel Tips',
     title: 'Flight Delay Compensation',
     description: 'Claim compensation for delayed flights'
   },
 
-  // GetYourGuide Activities Widget - Keep original (works fine)
+  // GetYourGuide Activities Widget - YOUR ORIGINAL WIDGET
   getYourGuide: {
     script: `<div data-gyg-href="https://widget.getyourguide.com/default/activities.frame" data-gyg-locale-code="en-US" data-gyg-widget="activities" data-gyg-number-of-items="3" data-gyg-partner-id="PUHVJ53"><span>Powered by <a target="_blank" rel="sponsored" href="https://www.getyourguide.com/">GetYourGuide</a></span></div>`,
     analytics: `<script async defer src="https://widget.getyourguide.com/dist/pa.umd.production.min.js" data-gyg-partner-id="PUHVJ53"></script>`,
