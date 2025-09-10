@@ -262,8 +262,8 @@ app.get('/api/debug', (_req, res) => {
       linksExists: fs.existsSync(path.join(__dirname, 'lib', 'links.mjs'))
     },
     database: {
-      plansCount: db.prepare('SELECT COUNT(*) as count FROM plans').get().count,
-      eventsCount: db.prepare('SELECT COUNT(*) as count FROM events').get().count
+      plansCount: getAllPlans().length,
+      eventsCount: 0 // Events table not implemented in new db module
     }
   };
   res.json(debugInfo);
@@ -337,25 +337,8 @@ const uid = () => (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(3
 const trackPlanGeneration = (payload) => {
   try {
     const eventId = uid();
-    db.prepare(`
-      INSERT INTO events (id, event_type, user_id, data, created_at) 
-      VALUES (?, ?, ?, ?, ?)
-    `).run(
-      eventId,
-      'plan_generated',
-      'anonymous', // Will be updated when user auth is implemented
-      JSON.stringify({
-        destination: payload.destination,
-        adults: payload.adults,
-        children: payload.children,
-        budget: payload.budget,
-        style: payload.level,
-        dateMode: payload.dateMode,
-        hasDietary: payload.dietary && payload.dietary.length > 0,
-        hasFiles: payload.uploadedFiles && payload.uploadedFiles.length > 0
-      }),
-      new Date().toISOString()
-    );
+    // Plan generation tracking not implemented in new db module
+    // TODO: Implement plan tracking in lib/db.mjs
   } catch (e) {
     console.error('Failed to track plan generation:', e);
   }
@@ -1833,24 +1816,34 @@ app.post('/api/plan.pdf', async (req, res) => {
 app.get('/api/analytics', (req, res) => {
   try {
     // Get basic analytics from database
-    const totalPlans = db.prepare('SELECT COUNT(*) as count FROM plans').get().count;
+    const allPlans = getAllPlans();
+    const totalPlans = allPlans.length;
     const today = new Date().toISOString().split('T')[0];
-    const todayPlans = db.prepare('SELECT COUNT(*) as count FROM plans WHERE DATE(created_at) = ?').get(today).count;
+    const todayPlans = allPlans.filter(plan => plan.timestamp.startsWith(today)).length;
     
     // Get destination breakdown
-    const destinations = db.prepare(`
-      SELECT 
-        JSON_EXTRACT(payload, '$.data.destination') as destination,
-        COUNT(*) as count
-      FROM plans 
-      WHERE JSON_EXTRACT(payload, '$.data.destination') IS NOT NULL
-      GROUP BY JSON_EXTRACT(payload, '$.data.destination')
-      ORDER BY count DESC
-      LIMIT 10
-    `).all();
+    const destinations = allPlans
+      .map(plan => {
+        try {
+          const input = JSON.parse(plan.input);
+          return input.destination;
+        } catch {
+          return null;
+        }
+      })
+      .filter(dest => dest)
+      .reduce((acc, dest) => {
+        acc[dest] = (acc[dest] || 0) + 1;
+        return acc;
+      }, {});
+    
+    const topDestinations = Object.entries(destinations)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 10)
+      .map(([destination, count]) => ({ destination, count }));
     
     const destinationData = {};
-    destinations.forEach(row => {
+    topDestinations.forEach(row => {
       if (row.destination) {
         destinationData[row.destination] = row.count;
       }
@@ -1883,16 +1876,8 @@ app.post('/api/track', (req, res) => {
     
     // Store event in database for analytics
     const eventId = uid();
-    db.prepare(`
-      INSERT INTO events (id, event_type, user_id, data, created_at) 
-      VALUES (?, ?, ?, ?, ?)
-    `).run(
-      eventId,
-      eventData.event,
-      eventData.userId || 'anonymous',
-      JSON.stringify(eventData),
-      new Date().toISOString()
-    );
+    // Event tracking not implemented in new db module
+    // TODO: Implement event tracking in lib/db.mjs
     
     res.json({ success: true, eventId });
   } catch (e) {
@@ -2104,8 +2089,8 @@ app.post('/api/contact', (req, res) => {
   try {
     const id = uid();
     const payload = req.body || {};
-    db.prepare('INSERT INTO events (id, event_type, user_id, data, created_at) VALUES (?, ?, ?, ?, ?)')
-      .run(id, 'contact', payload.email || 'anonymous', JSON.stringify(payload), new Date().toISOString());
+    // Contact tracking not implemented in new db module
+    // TODO: Implement contact tracking in lib/db.mjs
     res.json({ success: true, id });
   } catch (e) {
     console.error('Contact submission error:', e);
@@ -2196,16 +2181,8 @@ app.post('/api/track', (req, res) => {
     console.log('Event tracked:', eventData);
     // Store event in database for analytics
     const eventId = uid();
-    db.prepare(`
-      INSERT INTO events (id, event_type, user_id, data, created_at) 
-      VALUES (?, ?, ?, ?, ?)
-    `).run(
-      eventId,
-      eventData.event || 'unknown',
-      eventData.userId || 'anonymous',
-      JSON.stringify(eventData),
-      new Date().toISOString()
-    );
+    // Event tracking not implemented in new db module
+    // TODO: Implement event tracking in lib/db.mjs
     res.json({ success: true, eventId });
   } catch (e) {
     console.warn('Event tracking error (non-fatal):', e);
@@ -2220,15 +2197,8 @@ app.post('/api/pay/confirm', (req, res) => {
   console.log('Payment confirmed:', { orderID, total, currency });
   try {
     const eventId = uid();
-    db.prepare(`
-      INSERT INTO events (id, event_type, user_id, data, created_at)
-      VALUES (?, 'payment_confirmed', ?, ?, ?)
-    `).run(
-      eventId,
-      'anonymous',
-      JSON.stringify({ orderID, total, currency }),
-      new Date().toISOString()
-    );
+    // Payment tracking not implemented in new db module
+    // TODO: Implement payment tracking in lib/db.mjs
   } catch (e) { console.warn('Payment event log failed:', e); }
   res.json({ success: true, orderID });
 });

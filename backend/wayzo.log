@@ -1,0 +1,31 @@
+[2025-09-10 18:49:24.332 +0000] INFO (239781): Wayzo server starting
+    version: "staging-v75"
+[2025-09-10 18:49:25.592 +0000] INFO (239811): Wayzo server starting
+    version: "staging-v75"
+[2025-09-10 18:50:02.420 +0000] INFO (240311): Wayzo server starting
+    version: "staging-v75"
+[2025-09-10 18:50:04.448 +0000] INFO (240352): Wayzo server starting
+    version: "staging-v75"
+[2025-09-10 18:50:37.038 +0000] INFO (240864): Wayzo server starting
+    version: "staging-v75"
+[2025-09-10 18:50:51.754 +0000] INFO (241024): Wayzo server starting
+    version: "staging-v75"
+[2025-09-10 18:51:05.602 +0000] INFO (241024): Debug stats requested
+    total: 0
+    successful: 0
+    errors: 0
+    avgResponseTime: 0
+[2025-09-10 18:51:09.780 +0000] INFO (241024): Debug plans list requested
+    limit: 50
+    count: 0
+[2025-09-10 18:51:32.497 +0000] INFO (241443): Wayzo server starting
+    version: "staging-v75"
+[2025-09-10 19:08:08.034 +0000] INFO (244891): Wayzo server starting
+    version: "staging-v75"
+[2025-09-10 19:08:21.098 +0000] INFO (244974): Wayzo server starting
+    version: "staging-v75"
+[2025-09-10 19:08:33.949 +0000] INFO (244974): Debug stats requested
+    total: 0
+    successful: 0
+    errors: 0
+    avgResponseTime: 0
