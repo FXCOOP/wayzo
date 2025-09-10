@@ -40,7 +40,7 @@ import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
 import { getWidgetsForDestination, generateWidgetHTML } from './lib/widgets.mjs';
 import { WIDGET_CONFIG, getGYGWidget } from './lib/widget-config.mjs';
-const VERSION = 'staging-v71';
+const VERSION = 'staging-v72';
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
   try {
@@ -1522,7 +1522,9 @@ app.post('/api/preview', async (req, res) => {
     if (debug) console.debug('[PREVIEW] output hLen=', finalHTML.length);
 
     // Return as teaser_html for the preview renderer (no legacy blocks)
-    res.json({ id, teaser_html: finalHTML, affiliates: {}, version: VERSION, debug: { aiCalled: true } });
+    // Ensure no footer container is included in preview output
+    const sanitizedHTML = finalHTML.replace(/<footer[\s\S]*?<\/footer>/gi, '');
+    res.json({ id, teaser_html: sanitizedHTML, affiliates: {}, version: VERSION, debug: { aiCalled: true } });
   } catch (e) {
     console.error('Preview endpoint error:', e.message);
     res.status(500).json({ id: uid(), teaser_html: '<p class="error">Preview temporarily unavailable. Please retry.</p>', affiliates: {}, version: VERSION });

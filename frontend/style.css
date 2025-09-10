@@ -618,6 +618,13 @@ fieldset.field .chip {
   display: none !important;
 }
 
+/* Also block when preview HTML is inserted inside a footer container */
+.footer .preview-teaser script[src*="tpwdgt.com"],
+.footer .preview-teaser [data-gyg-widget],
+.footer .preview-teaser [data-gyg-href] {
+  display: none !important;
+}
+
 .footer::before {
   content: '';
   position: absolute;
