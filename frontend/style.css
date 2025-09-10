@@ -2658,3 +2658,52 @@ fieldset.field .chip {
   .section-widget { page-break-inside: avoid; margin: 4px 0 !important; }
   img { page-break-inside: avoid; }
 }
+
+/* Custom Affiliate Widget Styles */
+.affiliate-widget {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 15px 0;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.affiliate-widget:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.affiliate-widget .widget-content h4 {
+  color: white;
+  margin: 0 0 10px 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.affiliate-widget .widget-content p {
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 0 15px 0;
+  font-size: 14px;
+}
+
+.affiliate-button {
+  display: inline-block;
+  background: white;
+  color: #667eea;
+  padding: 12px 24px;
+  border-radius: 25px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.affiliate-button:hover {
+  background: #f8f9fa;
+  color: #5a6fd8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  text-decoration: none;
+}
