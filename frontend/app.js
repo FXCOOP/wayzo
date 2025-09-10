@@ -314,54 +314,12 @@
     update();
   };
 
-  // Set affiliate links for the destination
-  const setAffiliates = (dest) => {
-    const q = encodeURIComponent(dest || '');
-    const set = (id, url) => { 
-      const a = $(id); 
-      if (a) {
-        a.href = url;
-        a.target = '_blank';
-        a.rel = 'noopener noreferrer';
-      }
-    };
-    
-    // Disable external affiliates per policy; use internal widgets only
-    set('#flightsLink', `https://wayzo-staging.onrender.com`);
-    set('#hotelsLink', `https://wayzo-staging.onrender.com`);
-    set('#activitiesLink', `https://wayzo-staging.onrender.com`);
-    set('#carsLink', `https://www.rentalcars.com/search?query=${q}`);
-    set('#reviewsLink', `https://www.tripadvisor.com/Search?q=${q}`);
-  };
+  // External affiliate links disabled — no client-side affiliate rewrites
+  const setAffiliates = null;
 
-  // Create affiliate section HTML
-  const createAffiliateSection = (links) => {
-    return `
-      <div class="affiliate-section">
-        <h3>Book your trip:</h3>
-        <div class="affiliate-links">
-          <a id="flightsLink" href="${links.flights}" target="_blank" rel="noopener noreferrer" class="affiliate-link">✈️ Flights</a>
-          <a id="hotelsLink" href="${links.hotels}" target="_blank" rel="noopener noreferrer" class="affiliate-link">🏨 Hotels</a>
-          <a id="activitiesLink" href="${links.activities}" target="_blank" rel="noopener noreferrer" class="affiliate-link">🎟️ Activities</a>
-          <a id="carsLink" href="${links.cars}" target="_blank" rel="noopener noreferrer" class="affiliate-link">🚗 Cars</a>
-          <a id="reviewsLink" href="${links.reviews}" target="_blank" rel="noopener noreferrer" class="affiliate-link">⭐ Reviews</a>
-        </div>
-      </div>
-    `;
-  };
+  // Legacy affiliate section removed
 
-  // Append affiliate section to preview
-  const appendAffiliateSection = (dest, out) => {
-    const affiliateSection = createAffiliateSection({
-      flights: `#`,
-      hotels: `#`,
-      activities: `#`,
-      cars: `#`,
-      reviews: `#`
-    });
-    out.innerHTML += affiliateSection;
-    setAffiliates(dest);
-  };
+  // Legacy affiliate appender removed
 
   // Remove any leftover test banners in rendered HTML (defensive)
   const stripTestBanners = () => {
@@ -391,7 +349,7 @@
     stripTestBanners();
     show(pdfBtn); show(icsBtn); show($('#excelBtn')); show($('#shareBtn')); show(saveBtn);
     hide($('#purchaseActions'));
-    setAffiliates(destination);
+    // No client-side affiliate rewrites
     // Inject live weather widget at bottom of the report
     try { injectWeatherWidget(destination, { position: 'bottom' }); } catch(_){}
   };
