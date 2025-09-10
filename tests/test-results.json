@@ -1,0 +1,60 @@
+{
+  "summary": {
+    "total": 6,
+    "passed": 0,
+    "failed": 6,
+    "duration": "24s"
+  },
+  "errors": [
+    "Berlin, Germany: Test Suite - No element found for selector: #dest",
+    "London, UK: Test Suite - Element is not a <select> element.",
+    "Dubai, UAE: Test Suite - No element found for selector: #dest",
+    "Matera, Italy: Test Suite - No element found for selector: #dest",
+    "Ghent, Belgium: Test Suite - No element found for selector: #dest",
+    "Tbilisi, Georgia: Test Suite - Element is not a <select> element."
+  ],
+  "details": [
+    {
+      "destination": "Berlin, Germany",
+      "test": "Test Suite",
+      "passed": false,
+      "error": "No element found for selector: #dest",
+      "timestamp": "2025-09-10T18:38:42.106Z"
+    },
+    {
+      "destination": "London, UK",
+      "test": "Test Suite",
+      "passed": false,
+      "error": "Element is not a <select> element.",
+      "timestamp": "2025-09-10T18:38:46.550Z"
+    },
+    {
+      "destination": "Dubai, UAE",
+      "test": "Test Suite",
+      "passed": false,
+      "error": "No element found for selector: #dest",
+      "timestamp": "2025-09-10T18:38:50.394Z"
+    },
+    {
+      "destination": "Matera, Italy",
+      "test": "Test Suite",
+      "passed": false,
+      "error": "No element found for selector: #dest",
+      "timestamp": "2025-09-10T18:38:54.245Z"
+    },
+    {
+      "destination": "Ghent, Belgium",
+      "test": "Test Suite",
+      "passed": false,
+      "error": "No element found for selector: #dest",
+      "timestamp": "2025-09-10T18:38:58.056Z"
+    },
+    {
+      "destination": "Tbilisi, Georgia",
+      "test": "Test Suite",
+      "passed": false,
+      "error": "Element is not a <select> element.",
+      "timestamp": "2025-09-10T18:39:03.103Z"
+    }
+  ]
+}

@@ -45,19 +45,31 @@ import { storePlan, getPlan, getAllPlans, storeRequest, getRequestStats } from '
 const VERSION = 'staging-v75';
 
 // Initialize structured logging with Pino
-const logger = pino({
-  level: 'info',
-  transport: {
-    target: 'pino-pretty',
-    options: {
-      destination: 'wayzo.log',
-      colorize: false,
-      translateTime: 'SYS:standard'
+let logger;
+try {
+  logger = pino({
+    level: 'info',
+    transport: {
+      target: 'pino-pretty',
+      options: {
+        destination: 'wayzo.log',
+        colorize: false,
+        translateTime: 'SYS:standard'
+      }
     }
-  }
-});
-
-logger.info({ version: VERSION }, 'Wayzo server starting');
+  });
+  logger.info({ version: VERSION }, 'Wayzo server starting');
+} catch (error) {
+  console.error('Failed to initialize logger:', error);
+  // Fallback to console logging
+  logger = {
+    info: (obj, msg) => console.log(`[INFO] ${msg}`, obj || ''),
+    warn: (obj, msg) => console.warn(`[WARN] ${msg}`, obj || ''),
+    error: (obj, msg) => console.error(`[ERROR] ${msg}`, obj || ''),
+    debug: (obj, msg) => console.debug(`[DEBUG] ${msg}`, obj || '')
+  };
+  logger.info({ version: VERSION }, 'Wayzo server starting (console fallback)');
+}
 if (process.env.NODE_ENV !== 'production') {
   try {
     const { config } = await import('dotenv');

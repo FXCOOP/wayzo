@@ -3,8 +3,18 @@ import fs from 'fs';
 import path from 'path';
 
 // Create database file in backend directory
-const dbPath = path.join(process.cwd(), 'backend', 'wayzo.db');
-const db = new Database(dbPath);
+const dbPath = path.join(process.cwd(), 'wayzo.db');
+let db;
+
+try {
+  db = new Database(dbPath);
+  console.log('Database initialized at:', dbPath);
+} catch (error) {
+  console.error('Failed to initialize database:', error);
+  // Fallback to in-memory database for testing
+  db = new Database(':memory:');
+  console.log('Using in-memory database as fallback');
+}
 
 // Initialize tables
 db.exec(`

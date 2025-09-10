@@ -201,13 +201,13 @@ async function testWayzo(destination) {
     await page.goto(BASE_URL, { waitUntil: 'networkidle2' });
     
     // Fill form
-    await page.type('#destination', destination);
-    await page.select('#budget', '2000');
-    await page.select('#travelers', '2');
-    await page.select('#style', 'Mid-range');
+    await page.type('input[name="destination"]', destination);
+    await page.type('input[name="budget"]', '2000');
+    await page.type('input[name="adults"]', '2');
+    await page.click('input[name="level"][value="mid"]');
     
     // Generate preview
-    await page.click('#generate-preview');
+    await page.click('#previewBtn');
     
     // Run tests
     await testLoadingMemo(page, destination);
