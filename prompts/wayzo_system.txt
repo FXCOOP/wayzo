@@ -69,10 +69,10 @@ QUALITY RULES
 
 LINK RULES
 - Use SEARCH URLs only (no made-up affiliate params):
-  flights: https://www.kayak.com/flights?query={CITY}
-  hotels:  https://www.booking.com/searchresults.html?ss={CITY}
-  activities: https://www.getyourguide.com/s/?q={CITY}
-  (Wayzo injects affiliate parameters later.)
+  flights: [DISABLED]
+  hotels:  [DISABLED]
+  activities: [DISABLED]
+  (Wayzo injects internal widgets; do not include external booking links.)
 - For each place, add a Google Maps search URL:
   https://www.google.com/maps/search/?api=1&query={ENCODED_NAME_AND_CITY}
 - NEVER use double-encoded URLs or malformed links

@@ -78,7 +78,9 @@ export const WIDGET_CONFIG = {
 
 // GetYourGuide widget generator
 export function getGYGWidget(destination) {
-  return `<div data-gyg-href="https://widget.getyourguide.com/default/activities.frame" data-gyg-locale-code="en-US" data-gyg-widget="activities" data-gyg-number-of-items="3" data-gyg-partner-id="PUHVJ53"><span>Powered by <a target="_blank" rel="sponsored" href="https://www.getyourguide.com/">GetYourGuide</a></span></div>`;
+  const q = encodeURIComponent(String(destination || '').trim());
+  const locale = 'en-US';
+  return `<div data-gyg-href="https://widget.getyourguide.com/default/activities.frame?q=${q}" data-gyg-locale-code="${locale}" data-gyg-widget="activities" data-gyg-number-of-items="3" data-gyg-partner-id="PUHVJ53"><span>Powered by <a target="_blank" rel="sponsored" href="https://www.getyourguide.com/">GetYourGuide</a></span></div>`;
 }
 
 // Get locale for destination

@@ -1524,7 +1524,14 @@ app.post('/api/preview', async (req, res) => {
     // Convert to HTML and inject widgets (sections only)
     const html = marked.parse(cleanedMarkdown);
     const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
-    const finalHTML = injectWidgetsIntoSections(html, widgets);
+    let finalHTML = injectWidgetsIntoSections(html, widgets);
+    // Strip legacy affiliate blocks and footer-like nodes (defense in depth)
+    finalHTML = finalHTML
+      .replace(/<footer[\s\S]*?<\/footer>/gi, '')
+      .replace(/Search and compare hotel prices/gi, '')
+      .replace(/TicketNetwork/gi, '')
+      .replace(/WayAway/gi, '')
+      .replace(/Cheap flights/gi, '');
 
     if (debug) console.debug('[PREVIEW] widgets:', widgets.map(w => w.name).join(','));
     if (debug) console.debug('[PREVIEW] output hLen=', finalHTML.length);
@@ -1585,7 +1592,13 @@ app.post('/api/plan', async (req, res) => {
       console.log(`Widget ${index + 1}: ${widget.name} (${widget.category})`);
     });
     console.log('HTML before widget injection:', html.substring(0, 500));
-    const finalHTML = injectWidgetsIntoSections(html, widgets);
+    let finalHTML = injectWidgetsIntoSections(html, widgets);
+    finalHTML = finalHTML
+      .replace(/<footer[\s\S]*?<\/footer>/gi, '')
+      .replace(/Search and compare hotel prices/gi, '')
+      .replace(/TicketNetwork/gi, '')
+      .replace(/WayAway/gi, '')
+      .replace(/Cheap flights/gi, '');
     console.log('HTML after widget injection:', finalHTML.substring(0, 500));
     
     // Remove any duplicate content that might have been generated
