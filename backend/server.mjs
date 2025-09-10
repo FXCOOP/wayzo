@@ -2123,7 +2123,7 @@ app.get('/contact', (_req, res) => {
 });
 
 /* SPA Catch-All */
-app.get(/^\/(?!api\/).*/, (_req, res) => {
+app.get(/^\/(?!api\/|debug\/).*/, (_req, res) => {
   res.setHeader('X-Wayzo-Version', VERSION);
   if (!fs.existsSync(INDEX)) {
     console.error('Index file missing:', INDEX);
