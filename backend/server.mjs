@@ -40,7 +40,7 @@ import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
 import { getWidgetsForDestination, generateWidgetHTML } from './lib/widgets.mjs';
 import { WIDGET_CONFIG, getGYGWidget } from './lib/widget-config.mjs';
-const VERSION = 'staging-v72';
+const VERSION = 'staging-v73';
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
   try {
@@ -1506,7 +1506,7 @@ app.post('/api/preview', async (req, res) => {
     };
 
     if (debug) console.debug('[PREVIEW] openai_call_start');
-    const markdown = await withTimeout(generatePlanWithAI(payload), 60000);
+    const markdown = await withTimeout(generatePlanWithAI(payload), 45000);
     if (debug) console.debug('[PREVIEW] openai_call_success mdLen=', markdown?.length || 0);
 
     // Sanitize links (maps only) and enforce contract
@@ -1527,7 +1527,7 @@ app.post('/api/preview', async (req, res) => {
     res.json({ id, teaser_html: sanitizedHTML, affiliates: {}, version: VERSION, debug: { aiCalled: true } });
   } catch (e) {
     console.error('Preview endpoint error:', e.message);
-    res.status(500).json({ id: uid(), teaser_html: '<p class="error">Preview temporarily unavailable. Please retry.</p>', affiliates: {}, version: VERSION });
+    res.status(200).json({ id: uid(), teaser_html: '<div class="preview-error"><p>Preview temporarily unavailable. Please retry in a moment.</p></div>', affiliates: {}, version: VERSION });
   }
 });
 
