@@ -1,0 +1,19 @@
+[04:09:40.787] INFO (2677): Wayzo backend started
+    port: 10000
+    version: "staging-v75"
+[04:10:26.561] INFO (5007): Wayzo backend started
+    port: 10000
+    version: "staging-v75"
+[04:25:31.472] INFO (7326): Wayzo backend started
+    port: 10000
+    version: "staging-v75"
+[04:25:49.539] INFO (7326): Preview request received
+    payload: {
+      "destination": "Berlin, Germany",
+      "start": "2025-09-12",
+      "end": "2025-09-19",
+      "budget": 2000
+    }
+[04:26:13.908] INFO (8755): Wayzo backend started
+    port: 10000
+    version: "staging-v75"

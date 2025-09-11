@@ -1,0 +1,34 @@
+{
+  "timestamp": "2025-09-11T04:25:46.546Z",
+  "duration": 7884,
+  "results": {
+    "passed": 0,
+    "failed": 6,
+    "errors": [
+      {
+        "destination": "Berlin, Germany",
+        "error": "Missing post-load note"
+      },
+      {
+        "destination": "London, UK",
+        "error": "Missing post-load note"
+      },
+      {
+        "destination": "Dubai, UAE",
+        "error": "Missing post-load note"
+      },
+      {
+        "destination": "Matera, Italy",
+        "error": "Missing post-load note"
+      },
+      {
+        "destination": "Ghent, Belgium",
+        "error": "Missing post-load note"
+      },
+      {
+        "destination": "Tbilisi, Georgia",
+        "error": "Missing post-load note"
+      }
+    ]
+  }
+}
