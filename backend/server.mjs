@@ -1205,7 +1205,8 @@ async function generatePlanWithAI(payload) {
   // STEP 3: Generate actual plan
   console.log('Step 3: Generating AI plan for', destination);
   try {
-    const response = await client.chat.completions.create({
+    // Add timeout wrapper for the AI call
+    const aiCallPromise = client.chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0.3,
       max_tokens: 6000,
@@ -1506,8 +1507,14 @@ Create a comprehensive, detailed travel itinerary with SPECIFIC attractions, res
       ],
     });
     
+    // Add timeout wrapper for the AI call
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('AI call timed out after 45 seconds')), 45000);
+    });
+    
+    const response = await Promise.race([aiCallPromise, timeoutPromise]);
+    
     const aiContent = response.choices?.[0]?.message?.content?.trim() || "";
-    console.log('✅ AI response length:', aiContent.length);
     console.log('AI preview:', aiContent.substring(0, 150));
     
     if (aiContent && aiContent.length > 200) {
