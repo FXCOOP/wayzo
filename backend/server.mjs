@@ -1724,7 +1724,7 @@ app.post('/api/plan', async (req, res) => {
       console.log(`Widget ${index + 1}: ${widget.name} (${widget.category})`);
     });
     console.log('HTML before widget injection:', html.substring(0, 500));
-    let finalHTML = injectWidgetsIntoSections(html, widgets);
+    let finalHTML = injectWidgetsIntoSections(html, payload.destination);
     finalHTML = finalHTML
       .replace(/<footer[\s\S]*?<\/footer>/gi, '')
       .replace(/Search and compare hotel prices/gi, '')
@@ -1783,7 +1783,7 @@ app.post('/api/plan.pdf', async (req, res) => {
     widgets.forEach((widget, index) => {
       console.log(`PDF Widget ${index + 1}: ${widget.name} (${widget.category})`);
     });
-    const finalHTML = injectWidgetsIntoSections(html, widgets);
+    const finalHTML = injectWidgetsIntoSections(html, payload.destination);
 
     const fullHtml = `<!doctype html><html><head>
       <meta charset="utf-8">
