@@ -108,6 +108,23 @@ app.use(morgan('combined')); // Detailed logging
 app.use(cors());
 app.use(rateLimit({ windowMs: 60_000, limit: 200 }));
 app.use(express.json({ limit: '5mb' }));
+
+// Global safety nets to avoid process crashes -> convert to 500 responses
+process.on('unhandledRejection', (reason) => {
+  try {
+    logger?.error({ reason }, 'Unhandled Promise Rejection');
+  } catch (_) { /* noop */ }
+});
+process.on('uncaughtException', (err) => {
+  try {
+    logger?.error({ err: err?.message, stack: err?.stack }, 'Uncaught Exception');
+  } catch (_) { /* noop */ }
+});
+
+// Lightweight debug endpoint
+app.get('/debug/ping', (req, res) => {
+  res.json({ ok: true, time: new Date().toISOString(), version: VERSION });
+});
 /* Admin basic auth middleware */
 function adminBasicAuth(req, res, next) {
   const adminUser = process.env.ADMIN_USER;
@@ -157,6 +174,17 @@ app.use('/docs', express.static(DOCS, {
 app.use('/uploads', express.static(UPLOADS, { setHeaders: (res) => res.setHeader('Cache-Control', 'public, max-age=1209600') }));
 /* Root / Health */
 app.get('/', (_req, res) => {
+  res.setHeader('X-Wayzo-Version', VERSION);
+  if (!fs.existsSync(INDEX)) {
+    console.error('Index file missing:', INDEX);
+    return res.status(500).send('Index file missing. Check server logs.');
+  }
+  console.log('Serving index:', INDEX);
+  res.sendFile(INDEX);
+});
+
+// SPA fallback for client routes, but exclude API/static/debug
+app.get(/^\/(?!api|frontend|uploads|docs|healthz|debug).*/, (_req, res) => {
   res.setHeader('X-Wayzo-Version', VERSION);
   if (!fs.existsSync(INDEX)) {
     console.error('Index file missing:', INDEX);
@@ -1536,6 +1564,7 @@ function validateSpecificContent(html) {
 
 // Enhanced widget injection with GYG in multiple sections - now imported from widget-config.mjs
 app.post('/api/preview', async (req, res) => {
+  logger.info({ route: '/api/preview' }, 'Route entered');
   const debug = process.env.DEBUG_WAYZO === 'true';
   const startTime = Date.now();
   
@@ -1650,7 +1679,7 @@ app.post('/api/preview', async (req, res) => {
 });
 
 app.post('/api/plan', async (req, res) => {
-  console.log('Plan request received:', req.body); // Debug
+  logger.info({ route: '/api/plan' }, 'Route entered');
   try {
     const payload = req.body || {};
     payload.currency = payload.currency || 'USD';
