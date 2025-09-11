@@ -1534,44 +1534,7 @@ function validateSpecificContent(html) {
   return html;
 }
 
-// Enhanced widget injection with GYG in multiple sections
-function injectWidgetsIntoSections(html, widgets, destination) {
-  let result = html;
-  
-  logger.info({ destination, widgetCount: widgets.length }, 'Injecting widgets into sections');
-  
-  // Inject GYG widget before Must-See Attractions and Daily Itineraries
-  const gygWidget = getGYGWidget(destination);
-  
-  const sections = [
-    { header: '## 🎫 Must-See Attractions', widget: gygWidget },
-    { header: '## 🎭 Daily Itineraries', widget: gygWidget }
-  ];
-  
-  let injectedCount = 0;
-  for (const { header, widget } of sections) {
-    const widgetHTML = `<div class="section-widget" data-category="activities">
-      <div class="widget-header">
-        <h4>Top Activities</h4>
-        <p>Curated tours for ${destination}</p>
-      </div>
-      <div class="widget-content">
-        ${widget}
-        <script async defer src="https://widget.getyourguide.com/dist/pa.umd.production.min.js" data-gyg-partner-id="PUHVJ53"></script>
-      </div>
-    </div>`;
-    
-    const beforeLength = result.length;
-    result = result.replace(new RegExp(`(${header})`), `${widgetHTML}\n$1`);
-    if (result.length > beforeLength) {
-      injectedCount++;
-      logger.debug({ section: header }, 'GYG widget injected');
-    }
-  }
-  
-  logger.info({ injectedCount, totalSections: sections.length }, 'Widget injection completed');
-  return result;
-}
+// Enhanced widget injection with GYG in multiple sections - now imported from widget-config.mjs
 app.post('/api/preview', async (req, res) => {
   const debug = process.env.DEBUG_WAYZO === 'true';
   const startTime = Date.now();
