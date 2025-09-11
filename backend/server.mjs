@@ -16,21 +16,33 @@ import { normalizeBudget, computeBudget } from './lib/budget.mjs';
 import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
-import { storePlan, getPlan, getAllPlans } from './lib/db.mjs';
+import { storePlan, getPlan, getAllPlans, getDbStatus } from './lib/db.mjs';
 import { injectWidgetsIntoSections, sanitizeAffiliateLinks, validateWidgets } from './lib/widget-config.mjs';
 const VERSION = 'staging-v75';
 
-// Initialize Pino logger
-const logger = pino({ 
-  level: 'info', 
-  transport: { 
-    target: 'pino-pretty', 
-    options: { 
-      destination: 'wayzo.log',
-      colorize: false
-    } 
-  } 
-});
+// Initialize Pino logger with fallback
+let logger;
+try {
+  logger = pino({ 
+    level: 'info', 
+    transport: process.env.NODE_ENV === 'production' ? undefined : {
+      target: 'pino-pretty', 
+      options: { 
+        destination: 'wayzo.log',
+        colorize: false
+      } 
+    }
+  });
+} catch (e) {
+  console.error('Failed to initialize Pino logger:', e);
+  // Fallback to console logger
+  logger = {
+    info: (obj, msg) => console.log(`[INFO] ${msg}`, obj || ''),
+    error: (obj, msg) => console.error(`[ERROR] ${msg}`, obj || ''),
+    warn: (obj, msg) => console.warn(`[WARN] ${msg}`, obj || ''),
+    debug: (obj, msg) => console.debug(`[DEBUG] ${msg}`, obj || '')
+  };
+}
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
   try {
@@ -449,6 +461,8 @@ app.listen(PORT, () => {
   console.log('Index file:', INDEX);
   console.log('Frontend path:', FRONTEND);
   console.log('Log file: wayzo.log');
+  console.log('Environment:', process.env.NODE_ENV || 'development');
+  console.log('Database status:', getDbStatus());
 });
 // Escape HTML helper
 function escapeHtml(s = "") {

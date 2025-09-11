@@ -27,11 +27,20 @@ const db = (() => {
     return database;
   } catch (e) {
     console.error('DB init error:', e);
+    // In production, we might want to continue without database
+    if (process.env.NODE_ENV === 'production') {
+      console.warn('Database initialization failed, continuing without database');
+      return null;
+    }
     throw new Error(`Failed to initialize database: ${e.message}`);
   }
 })();
 
 export function storePlan(input, output) {
+  if (!db) {
+    console.warn('Database not available, skipping plan storage');
+    return Math.random().toString(36).slice(2); // Return a fake ID
+  }
   try {
     const stmt = db.prepare('INSERT INTO plans (input, output) VALUES (?, ?)');
     const result = stmt.run(JSON.stringify(input), output);
@@ -44,6 +53,10 @@ export function storePlan(input, output) {
 }
 
 export function getPlan(id) {
+  if (!db) {
+    console.warn('Database not available, returning null');
+    return null;
+  }
   try {
     const stmt = db.prepare('SELECT * FROM plans WHERE id = ?');
     const result = stmt.get(id);
@@ -60,6 +73,10 @@ export function getPlan(id) {
 }
 
 export function getAllPlans() {
+  if (!db) {
+    console.warn('Database not available, returning empty array');
+    return [];
+  }
   try {
     const stmt = db.prepare('SELECT * FROM plans ORDER BY timestamp DESC LIMIT 100');
     return stmt.all();
@@ -67,4 +84,8 @@ export function getAllPlans() {
     console.error('Get all plans error:', e);
     throw new Error(`Failed to get plans: ${e.message}`);
   }
+}
+
+export function getDbStatus() {
+  return db ? 'Connected' : 'Not available';
 }
