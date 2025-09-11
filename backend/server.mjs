@@ -129,9 +129,14 @@ app.get('/debug/ping', (req, res) => {
 // Test AI endpoint
 app.get('/debug/test-ai', async (req, res) => {
   try {
+    console.log('Debug AI endpoint called');
+    
     if (!client) {
+      console.log('No OpenAI client available');
       return res.json({ error: 'No OpenAI client' });
     }
+    
+    console.log('OpenAI client exists, making API call...');
     
     const response = await client.chat.completions.create({
       model: "gpt-4o-mini",
@@ -140,11 +145,14 @@ app.get('/debug/test-ai', async (req, res) => {
       messages: [{ role: "user", content: "Say hello" }]
     });
     
+    console.log('AI response received:', response?.choices?.[0]?.message?.content?.substring(0, 50));
+    
     res.json({ 
       success: true, 
       response: response.choices?.[0]?.message?.content || 'No response' 
     });
   } catch (error) {
+    console.log('AI call error:', error.message);
     res.json({ error: error.message });
   }
 });
