@@ -40,7 +40,7 @@ import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
 import { getWidgetsForDestination, generateWidgetHTML } from './lib/widgets.mjs';
-import { WIDGET_CONFIG, getGYGWidget } from './lib/widget-config.mjs';
+import { WIDGET_CONFIG, getGYGWidget, injectWidgetsIntoSections } from './lib/widget-config.mjs';
 import { storePlan, getPlan, getAllPlans, storeRequest, getRequestStats } from './lib/db.mjs';
 const VERSION = 'staging-v75';
 
@@ -1624,7 +1624,7 @@ app.post('/api/preview', async (req, res) => {
     // Convert to HTML and inject widgets (sections only)
     const html = marked.parse(cleanedMarkdown);
     const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
-    let finalHTML = injectWidgetsIntoSections(html, widgets, payload.destination);
+    let finalHTML = injectWidgetsIntoSections(html, payload.destination);
     
     // Validate content for specific places
     finalHTML = validateSpecificContent(finalHTML);
