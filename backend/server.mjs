@@ -11,12 +11,26 @@ import { fileURLToPath } from 'url';
 import morgan from 'morgan';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
-import Database from 'better-sqlite3';
+import pino from 'pino';
 import { normalizeBudget, computeBudget } from './lib/budget.mjs';
 import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
-const VERSION = 'staging-v24';
+import { storePlan, getPlan, getAllPlans } from './lib/db.mjs';
+import { injectWidgetsIntoSections, sanitizeAffiliateLinks, validateWidgets } from './lib/widget-config.mjs';
+const VERSION = 'staging-v75';
+
+// Initialize Pino logger
+const logger = pino({ 
+  level: 'info', 
+  transport: { 
+    target: 'pino-pretty', 
+    options: { 
+      destination: 'wayzo.log',
+      colorize: false
+    } 
+  } 
+});
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
   try {
@@ -92,10 +106,7 @@ app.post('/api/upload', multerUpload.array('files', 10), (req, res) => {
   res.json({ files });
 });
 /* DB */
-const db = new Database(path.join(ROOT, 'wayzo.sqlite'));
-db.exec(`CREATE TABLE IF NOT EXISTS plans (id TEXT PRIMARY KEY, created_at TEXT NOT NULL, payload TEXT NOT NULL);`);
-const savePlan = db.prepare('INSERT OR REPLACE INTO plans (id, created_at, payload) VALUES (?, ?, ?)');
-const getPlan = db.prepare('SELECT payload FROM plans WHERE id = ?');
+// Database is now handled by lib/db.mjs with proper error handling
 const nowIso = () => new Date().toISOString();
 const uid = () => (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
 /* Helpers */
@@ -103,6 +114,27 @@ const daysBetween = (a, b) => { if (!a || !b) return 1; const s = new Date(a), e
 const seasonFromDate = (iso = "") => ([12, 1, 2].includes(new Date(iso).getMonth() + 1) ? "Winter" : [3, 4, 5].includes(new Date(iso).getMonth() + 1) ? "Spring" : [6, 7, 8].includes(new Date(iso).getMonth() + 1) ? "Summer" : "Autumn");
 const travelerLabel = (ad = 2, ch = 0) => ch > 0 ? `Family (${ad} adult${ad === 1 ? "" : "s"} + ${ch} kid${ch === 1 ? "" : "s"})` : (ad === 2 ? "Couple" : ad === 1 ? "Solo" : `${ad} adult${ad === 1 ? "" : "s"}`);
 const perPersonPerDay = (t = 0, d = 1, tr = 1) => Math.round((Number(t) || 0) / Math.max(1, d) / Math.max(1, tr));
+
+// AI Content Validation
+function validateSpecificContent(html) {
+  // Check for generic content
+  if (/Local Restaurant|Historic Site|City Center Hotel/i.test(html)) {
+    throw new Error('Generic content detected; retrying...');
+  }
+  
+  // Check for price disclaimer
+  if (!/Check current prices/i.test(html)) {
+    throw new Error('Missing price disclaimer');
+  }
+  
+  // Validate widgets
+  const widgetErrors = validateWidgets(html);
+  if (widgetErrors.length > 0) {
+    throw new Error(`Widget validation failed: ${widgetErrors.join(', ')}`);
+  }
+  
+  return html;
+}
 /* Local Fallback Plan */
 function localPlanMarkdown(input) {
   const { destination = 'Your destination', start = 'start', end = 'end', budget = 1500, adults = 2, children = 0, level = 'mid', prefs = '', diet = '', currency = 'USD $' } = input || {};
@@ -150,43 +182,82 @@ const client = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPE
 async function generatePlanWithAI(payload) {
   const { destination = '', start = '', end = '', budget = 0, currency = 'USD $', adults = 2, children = 0, level = 'mid', prefs = '', diet = '' } = payload || {};
   const nDays = daysBetween(start, end);
-  const sys = `Return Markdown ONLY.
-Sections:
-Use token links: [Map](map:query) [Tickets](tickets:query) [Book](book:query) [Reviews](reviews:query).`;
+  
+  // Enhanced system prompt for specific content
+  const sys = `You are Wayzo Planner Pro, the world's most meticulous travel planner.
+
+GOALS
+- Produce a realistic, day-by-day itinerary that fits dates, party, pace, style, and budget.
+- Include clear booking shortcuts (flight/hotel/activity search URLs) and cost ranges.
+- Structure outputs so Wayzo can render a web view, PDF, and a shareable map.
+
+QUALITY RULES
+- Pacing: ~3 anchor items/day (morning / afternoon / evening) + optional extras.
+- Logistics: Group sights by neighborhood; minimize backtracking; prefer transit/walkability.
+- Kids/family: Respect nap windows, early dinners, playground stops where relevant.
+- Costs: Give ranges in local currency; note spikes (festivals/peak season). If unsure, say "verify on booking."
+- Seasonality: Weather-aware; include Plan B indoor options for rain/heat/cold.
+- Authenticity: 1–2 local experiences per day (food market, neighborhood stroll, viewpoint).
+- Sustainability (when asked): trains/public transit, city cards, local vendors.
+
+LINK RULES
+- Use SEARCH URLs only (no made-up affiliate params):
+  flights: https://www.kayak.com/flights?query={CITY}
+  hotels:  https://www.booking.com/searchresults.html?ss={CITY}
+  activities: https://www.getyourguide.com/s/?q={CITY}
+- For each place, add a Google Maps search URL:
+  https://www.google.com/maps/search/?api=1&query={ENCODED_NAME_AND_CITY}
+
+MANDATORY REQUIREMENTS:
+- Use ChatGPT API (gpt-4o-mini-2024-07-18) for accurate, specific places (e.g., Brandenburg Gate, Mustafa's Gemüse Kebap).
+- Include addresses, hours, costs, disclaimers ("Check current prices").
+- NEVER use generics like "Local Restaurant", "Historic Site", "City Center Hotel".
+- Return Markdown ONLY with token links: [Map](map:query) [Tickets](tickets:query) [Book](book:query) [Reviews](reviews:query).`;
+
   const user = `Destination: ${destination}
 Dates: ${start} to ${end} (${nDays} days)
 Party: ${adults} adults${children ? `, ${children} children` : ""}
 Style: ${level}${prefs ? ` + ${prefs}` : ""}
 Budget: ${budget} ${currency}
 Diet: ${diet}`;
+
   if (!client) {
-    console.warn('OpenAI API key not set, using local fallback');
+    logger.warn('OpenAI API key not set, using local fallback');
     let md = localPlanMarkdown(payload);
     md = ensureDaySections(md, nDays, start);
     return md;
   }
+  
   try {
+    logger.info({ payload }, 'Generating AI plan');
     const resp = await client.chat.completions.create({
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      model: "gpt-4o-mini-2024-07-18",
       temperature: 0.6,
       messages: [{ role: "system", content: sys }, { role: "user", content: user }],
     });
+    
     let md = resp.choices?.[0]?.message?.content?.trim() || "";
     if (!md) {
-      console.warn('OpenAI response empty, using fallback');
+      logger.warn('OpenAI response empty, using fallback');
       md = localPlanMarkdown(payload);
     }
+    
     md = linkifyTokens(md, destination);
     md = ensureDaySections(md, nDays, start);
+    
+    // Inject widgets into sections
+    md = injectWidgetsIntoSections(md, destination);
+    
+    logger.debug({ markdown: md }, 'AI plan generated');
     return md;
   } catch (e) {
-    console.error('OpenAI API error:', e);
+    logger.error({ err: e }, 'OpenAI API error');
     return localPlanMarkdown(payload); // Fallback
   }
 }
 /* API */
 app.post('/api/preview', (req, res) => {
-  console.log('Preview request received:', req.body);
+  logger.info({ payload: req.body }, 'Preview request received');
   const payload = req.body || {};
   payload.budget = normalizeBudget(payload.budget, payload.currency);
   const id = uid();
@@ -209,29 +280,41 @@ app.post('/api/preview', (req, res) => {
   res.json({ id, teaser_html, affiliates: aff, version: VERSION });
 });
 app.post('/api/plan', async (req, res) => {
-  console.log('Plan request received:', req.body); // Debug
+  logger.info({ payload: req.body }, 'Plan request received');
   try {
     const payload = req.body || {};
     payload.budget = normalizeBudget(payload.budget, payload.currency);
-    const id = uid();
+    
     const markdown = await generatePlanWithAI(payload);
-    const html = marked.parse(markdown);
+    let html = marked.parse(markdown);
+    
+    // Sanitize affiliate links
+    html = sanitizeAffiliateLinks(html);
+    
+    // Validate content
+    html = validateSpecificContent(html);
+    
+    // Store plan in database
+    const planId = storePlan(payload, html);
+    
     const aff = affiliatesFor(payload.destination);
-    savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: payload, markdown }));
-    res.json({ id, markdown, html, affiliates: aff, version: VERSION });
+    logger.info({ planId, destination: payload.destination }, 'Plan generated and stored');
+    
+    res.json({ id: planId, markdown, html, affiliates: aff, version: VERSION });
   } catch (e) {
-    console.error('Plan generation error:', e);
+    logger.error({ err: e }, 'Plan generation error');
     res.status(500).json({ error: 'Failed to generate plan. Check server logs.', version: VERSION });
   }
 });
 app.get('/api/plan/:id/pdf', (req, res) => {
   const { id } = req.params;
-  const row = getPlan.get(id);
-  if (!row) return res.status(404).json({ error: 'Plan not found' });
-  const saved = JSON.parse(row.payload || '{}');
-  const d = saved?.data || {};
-  const md = saved?.markdown || '';
-  const htmlBody = marked.parse(md);
+  const plan = getPlan(id);
+  if (!plan) return res.status(404).json({ error: 'Plan not found' });
+  
+  const payload = JSON.parse(plan.input || '{}');
+  const html = plan.output || '';
+  
+  const d = payload;
   const style = d.level === "luxury" ? "Luxury" : d.level === "budget" ? "Budget" : "Mid-range";
   const season = seasonFromDate(d.start);
   const days = daysBetween(d.start, d.end);
@@ -241,7 +324,8 @@ app.get('/api/plan/:id/pdf', (req, res) => {
   const pdfUrl = `${base}/api/plan/${id}/pdf`;
   const icsUrl = `${base}/api/plan/${id}/ics`;
   const shareX = `https://twitter.com/intent/tweet?text=${encodeURIComponent(`My ${d.destination} plan by Wayzo`)}&url=${encodeURIComponent(pdfUrl)}`;
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
+  const htmlBody = html;
+  const fullHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Wayzo Trip Report</title>
 <style>
@@ -264,6 +348,11 @@ app.get('/api/plan/:id/pdf', (req, res) => {
 </style>
 </head><body>
 <header>
+  <div class="logo">
+    <div class="badge">WZ</div>
+    <div><strong>Wayzo</strong> Trip Report</div>
+  </div>
+  <div class="pill">${VERSION}</div>
 </header>
 <div class="summary">
   <span class="chip"><b>Travelers:</b> ${traveler}</span>
@@ -271,23 +360,32 @@ app.get('/api/plan/:id/pdf', (req, res) => {
   <span class="chip"><b>Budget:</b> ${normalizeBudget(d.budget, d.currency)} ${d.currency} (${pppd}/day/person)</span>
   <span class="chip"><b>Season:</b> ${season}</span>
 </div>
+<div class="actions">
+  <a href="${icsUrl}">📅 Download Calendar</a>
+  <a href="${shareX}">🐦 Share on Twitter</a>
+</div>
+${htmlBody}
+<footer>
+  <p>Generated by <strong>Wayzo</strong> • <a href="https://wayzo-staging.onrender.com">wayzo-staging.onrender.com</a></p>
+</footer>
 </body></html>`;
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.send(html);
+  res.send(fullHtml);
 });
 app.get('/api/plan/:id/ics', (req, res) => {
   const { id } = req.params;
-  const row = getPlan.get(id);
-  if (!row) return res.status(404).json({ error: 'Plan not found' });
-  const saved = JSON.parse(row.payload || '{}');
-  const md = saved.markdown || '';
-  const dest = saved?.data?.destination || 'Trip';
+  const plan = getPlan(id);
+  if (!plan) return res.status(404).json({ error: 'Plan not found' });
+  
+  const payload = JSON.parse(plan.input || '{}');
+  const html = plan.output || '';
+  const dest = payload?.destination || 'Trip';
   const events = [];
   const rx = /^### Day (\d+)\s*(?:[—-]\s*(.+))?/gm;
-  const startIso = saved?.data?.start || null;
+  const startIso = payload?.start || null;
   const startDate = startIso ? new Date(startIso) : null;
   let m;
-  while ((m = rx.exec(md))) {
+  while ((m = rx.exec(html))) {
     const dayNumber = Number(m[1] || 1);
     const title = (m[2] || `Day ${dayNumber}`).trim();
     let date = null;
@@ -305,6 +403,35 @@ app.get('/api/plan/:id/ics', (req, res) => {
   res.setHeader('Content-Disposition', `attachment; filename="wayzo-${id}.ics"`);
   res.send(ics);
 });
+
+/* Debug Routes - Must be before SPA catch-all */
+app.use('/debug', (req, res, next) => next());
+
+app.get('/debug/plan/:id', (req, res) => {
+  const { id } = req.params;
+  logger.info({ planId: id }, 'Debug plan request');
+  const plan = getPlan(id);
+  if (plan) {
+    res.json({
+      id: plan.id,
+      input: JSON.parse(plan.input || '{}'),
+      output: plan.output,
+      timestamp: plan.timestamp
+    });
+  } else {
+    res.status(404).json({ error: 'Plan not found' });
+  }
+});
+
+app.get('/debug/plans', (req, res) => {
+  logger.info('Debug plans list request');
+  const plans = getAllPlans();
+  res.json(plans.map(plan => ({
+    id: plan.id,
+    input: JSON.parse(plan.input || '{}'),
+    timestamp: plan.timestamp
+  })));
+});
 /* SPA Catch-All */
 app.get(/^\/(?!api\/).*/, (_req, res) => {
   res.setHeader('X-Wayzo-Version', VERSION);
@@ -316,10 +443,12 @@ app.get(/^\/(?!api\/).*/, (_req, res) => {
   res.sendFile(INDEX);
 });
 app.listen(PORT, () => {
+  logger.info({ port: PORT, version: VERSION }, 'Wayzo backend started');
   console.log(`Wayzo backend running on :${PORT}`);
   console.log('Version:', VERSION);
   console.log('Index file:', INDEX);
   console.log('Frontend path:', FRONTEND);
+  console.log('Log file: wayzo.log');
 });
 // Escape HTML helper
 function escapeHtml(s = "") {

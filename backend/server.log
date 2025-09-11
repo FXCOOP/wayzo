@@ -1,0 +1,109 @@
+nohup: ignoring input
+Initializing SQLite database at: /workspace/backend/wayzo.db
+Database initialized successfully
+Wayzo backend running on :10000
+Version: staging-v75
+Index file: /workspace/frontend/index.backend.html
+Frontend path: /workspace/frontend
+Log file: wayzo.log
+Serving index: /workspace/frontend/index.backend.html
+::1 - - [11/Sep/2025:04:25:36 +0000] "GET / HTTP/1.1" 200 6846 "-" "curl/8.12.1"
+Serving index: /workspace/frontend/index.backend.html
+::1 - - [11/Sep/2025:04:25:39 +0000] "GET / HTTP/1.1" 200 - "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+Serving static file: /workspace/frontend/style.css
+Serving static file: /workspace/frontend/hero-bg.jpg
+Serving image: /workspace/frontend/hero-bg.jpg Size: 130884
+Serving static file: /workspace/frontend/hero-card.jpg
+Serving image: /workspace/frontend/hero-card.jpg Size: 55194
+::1 - - [11/Sep/2025:04:25:39 +0000] "GET /frontend/hero-card.jpg HTTP/1.1" 200 55194 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+::1 - - [11/Sep/2025:04:25:39 +0000] "GET /frontend/hero-bg.jpg HTTP/1.1" 200 130884 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+::1 - - [11/Sep/2025:04:25:39 +0000] "GET /frontend/style.css HTTP/1.1" 200 - "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+Serving static file: /workspace/frontend/app.js
+::1 - - [11/Sep/2025:04:25:39 +0000] "GET /frontend/app.js HTTP/1.1" 200 - "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+Serving index: /workspace/frontend/index.backend.html
+::1 - - [11/Sep/2025:04:25:39 +0000] "GET /favicon.ico HTTP/1.1" 200 - "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+Serving index: /workspace/frontend/index.backend.html
+::1 - - [11/Sep/2025:04:25:40 +0000] "GET / HTTP/1.1" 200 - "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+Serving static file: /workspace/frontend/style.css
+Serving static file: /workspace/frontend/hero-bg.jpg
+Serving image: /workspace/frontend/hero-bg.jpg Size: 130884
+Serving static file: /workspace/frontend/hero-card.jpg
+Serving image: /workspace/frontend/hero-card.jpg Size: 55194
+::1 - - [11/Sep/2025:04:25:40 +0000] "GET /frontend/hero-card.jpg HTTP/1.1" 200 55194 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+::1 - - [11/Sep/2025:04:25:40 +0000] "GET /frontend/hero-bg.jpg HTTP/1.1" 200 130884 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+::1 - - [11/Sep/2025:04:25:40 +0000] "GET /frontend/style.css HTTP/1.1" 200 - "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+Serving static file: /workspace/frontend/app.js
+::1 - - [11/Sep/2025:04:25:40 +0000] "GET /frontend/app.js HTTP/1.1" 200 - "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+Serving index: /workspace/frontend/index.backend.html
+::1 - - [11/Sep/2025:04:25:40 +0000] "GET /favicon.ico HTTP/1.1" 200 - "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+Serving index: /workspace/frontend/index.backend.html
+::1 - - [11/Sep/2025:04:25:41 +0000] "GET / HTTP/1.1" 200 - "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+Serving static file: /workspace/frontend/style.css
+::1 - - [11/Sep/2025:04:25:41 +0000] "GET /frontend/style.css HTTP/1.1" 200 - "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+Serving static file: /workspace/frontend/hero-bg.jpg
+Serving image: /workspace/frontend/hero-bg.jpg Size: 130884
+Serving static file: /workspace/frontend/hero-card.jpg
+Serving image: /workspace/frontend/hero-card.jpg Size: 55194
+::1 - - [11/Sep/2025:04:25:41 +0000] "GET /frontend/hero-card.jpg HTTP/1.1" 200 55194 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+::1 - - [11/Sep/2025:04:25:41 +0000] "GET /frontend/hero-bg.jpg HTTP/1.1" 200 130884 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+Serving static file: /workspace/frontend/app.js
+::1 - - [11/Sep/2025:04:25:41 +0000] "GET /frontend/app.js HTTP/1.1" 200 - "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+Serving index: /workspace/frontend/index.backend.html
+::1 - - [11/Sep/2025:04:25:41 +0000] "GET /favicon.ico HTTP/1.1" 200 - "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+Serving index: /workspace/frontend/index.backend.html
+::1 - - [11/Sep/2025:04:25:42 +0000] "GET / HTTP/1.1" 200 - "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+Serving static file: /workspace/frontend/style.css
+Serving static file: /workspace/frontend/hero-bg.jpg
+Serving image: /workspace/frontend/hero-bg.jpg Size: 130884
+Serving static file: /workspace/frontend/hero-card.jpg
+Serving image: /workspace/frontend/hero-card.jpg Size: 55194
+::1 - - [11/Sep/2025:04:25:42 +0000] "GET /frontend/hero-card.jpg HTTP/1.1" 200 55194 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+::1 - - [11/Sep/2025:04:25:42 +0000] "GET /frontend/hero-bg.jpg HTTP/1.1" 200 130884 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+::1 - - [11/Sep/2025:04:25:42 +0000] "GET /frontend/style.css HTTP/1.1" 200 - "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+Serving static file: /workspace/frontend/app.js
+::1 - - [11/Sep/2025:04:25:42 +0000] "GET /frontend/app.js HTTP/1.1" 200 - "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+Serving index: /workspace/frontend/index.backend.html
+::1 - - [11/Sep/2025:04:25:43 +0000] "GET /favicon.ico HTTP/1.1" 200 - "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+Serving index: /workspace/frontend/index.backend.html
+::1 - - [11/Sep/2025:04:25:44 +0000] "GET / HTTP/1.1" 200 - "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+Serving static file: /workspace/frontend/style.css
+Serving static file: /workspace/frontend/hero-bg.jpg
+Serving image: /workspace/frontend/hero-bg.jpg Size: 130884
+Serving static file: /workspace/frontend/hero-card.jpg
+Serving image: /workspace/frontend/hero-card.jpg Size: 55194
+::1 - - [11/Sep/2025:04:25:44 +0000] "GET /frontend/hero-card.jpg HTTP/1.1" 200 55194 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+::1 - - [11/Sep/2025:04:25:44 +0000] "GET /frontend/hero-bg.jpg HTTP/1.1" 200 130884 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+::1 - - [11/Sep/2025:04:25:44 +0000] "GET /frontend/style.css HTTP/1.1" 200 - "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+Serving static file: /workspace/frontend/app.js
+::1 - - [11/Sep/2025:04:25:44 +0000] "GET /frontend/app.js HTTP/1.1" 200 - "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+Serving index: /workspace/frontend/index.backend.html
+::1 - - [11/Sep/2025:04:25:44 +0000] "GET /favicon.ico HTTP/1.1" 200 - "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+Serving index: /workspace/frontend/index.backend.html
+::1 - - [11/Sep/2025:04:25:45 +0000] "GET / HTTP/1.1" 200 - "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+Serving static file: /workspace/frontend/style.css
+Serving static file: /workspace/frontend/hero-bg.jpg
+Serving image: /workspace/frontend/hero-bg.jpg Size: 130884
+Serving static file: /workspace/frontend/hero-card.jpg
+Serving image: /workspace/frontend/hero-card.jpg Size: 55194
+::1 - - [11/Sep/2025:04:25:45 +0000] "GET /frontend/style.css HTTP/1.1" 200 - "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+::1 - - [11/Sep/2025:04:25:45 +0000] "GET /frontend/hero-card.jpg HTTP/1.1" 200 55194 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+::1 - - [11/Sep/2025:04:25:45 +0000] "GET /frontend/hero-bg.jpg HTTP/1.1" 200 130884 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+Serving static file: /workspace/frontend/app.js
+::1 - - [11/Sep/2025:04:25:45 +0000] "GET /frontend/app.js HTTP/1.1" 200 - "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+Serving index: /workspace/frontend/index.backend.html
+::1 - - [11/Sep/2025:04:25:45 +0000] "GET /favicon.ico HTTP/1.1" 200 - "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+::1 - - [11/Sep/2025:04:25:49 +0000] "POST /api/preview HTTP/1.1" 200 455 "-" "curl/8.12.1"
+Serving index: /workspace/frontend/index.backend.html
+::1 - - [11/Sep/2025:04:25:59 +0000] "GET / HTTP/1.1" 200 - "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+Serving static file: /workspace/frontend/style.css
+Serving static file: /workspace/frontend/hero-bg.jpg
+Serving image: /workspace/frontend/hero-bg.jpg Size: 130884
+Serving static file: /workspace/frontend/hero-card.jpg
+Serving image: /workspace/frontend/hero-card.jpg Size: 55194
+::1 - - [11/Sep/2025:04:25:59 +0000] "GET /frontend/style.css HTTP/1.1" 200 - "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+::1 - - [11/Sep/2025:04:25:59 +0000] "GET /frontend/hero-card.jpg HTTP/1.1" 200 55194 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+::1 - - [11/Sep/2025:04:25:59 +0000] "GET /frontend/hero-bg.jpg HTTP/1.1" 200 130884 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+Serving static file: /workspace/frontend/app.js
+::1 - - [11/Sep/2025:04:25:59 +0000] "GET /frontend/app.js HTTP/1.1" 200 - "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"
+Serving index: /workspace/frontend/index.backend.html
+::1 - - [11/Sep/2025:04:25:59 +0000] "GET /favicon.ico HTTP/1.1" 200 - "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"

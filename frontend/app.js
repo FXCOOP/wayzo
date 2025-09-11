@@ -109,7 +109,12 @@ function preparePayload() {
 // Loading state management
 function showLoading(show = true) {
   if (loading) {
-    loading.style.display = show ? 'flex' : 'none';
+    if (show) {
+      loading.innerHTML = 'Your itinerary<br />Generating your perfect trip...';
+      loading.style.display = 'flex';
+    } else {
+      loading.style.display = 'none';
+    }
   }
   document.body.style.cursor = show ? 'wait' : 'default';
   [submitBtn, buyBtn, saveBtn, buildPlanBtn, demoBtn].forEach(btn => {
@@ -120,7 +125,11 @@ function showLoading(show = true) {
 // Preview innerHTML
 function setPreviewHTML(html = '') {
   if (previewBox) {
-    previewBox.innerHTML = html || '<div class="muted">Enter your trip details and generate a plan to see a detailed itinerary here.</div>';
+    if (html) {
+      previewBox.innerHTML = html + '<p class="muted" style="color: #666; font-size: 0.9em; margin-top: 16px;">Plan loaded.</p>';
+    } else {
+      previewBox.innerHTML = '<div class="muted">Enter your trip details and generate a plan to see a detailed itinerary here.</div>';
+    }
     previewBox.classList.add('markdown'); // Apply rich styles
     previewBox.querySelectorAll('img[src^="https://unsplash.com"]').forEach(img => {
       img.loading = 'lazy';
