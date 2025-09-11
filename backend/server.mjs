@@ -125,6 +125,29 @@ process.on('uncaughtException', (err) => {
 app.get('/debug/ping', (req, res) => {
   res.json({ ok: true, time: new Date().toISOString(), version: VERSION });
 });
+
+// Test AI endpoint
+app.get('/debug/test-ai', async (req, res) => {
+  try {
+    if (!client) {
+      return res.json({ error: 'No OpenAI client' });
+    }
+    
+    const response = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      temperature: 0.3,
+      max_tokens: 100,
+      messages: [{ role: "user", content: "Say hello" }]
+    });
+    
+    res.json({ 
+      success: true, 
+      response: response.choices?.[0]?.message?.content || 'No response' 
+    });
+  } catch (error) {
+    res.json({ error: error.message });
+  }
+});
 /* Admin basic auth middleware */
 function adminBasicAuth(req, res, next) {
   const adminUser = process.env.ADMIN_USER;
