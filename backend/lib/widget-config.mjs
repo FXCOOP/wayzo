@@ -76,11 +76,29 @@ export const WIDGET_CONFIG = {
   }
 };
 
-// GetYourGuide widget generator
+// GetYourGuide widget generator (en-US, q={destination})
 export function getGYGWidget(destination) {
   const q = encodeURIComponent(String(destination || '').trim());
-  const locale = 'en-US';
-  return `<div data-gyg-href="https://widget.getyourguide.com/default/activities.frame?q=${q}" data-gyg-locale-code="${locale}" data-gyg-widget="activities" data-gyg-number-of-items="3" data-gyg-partner-id="PUHVJ53"><span>Powered by <a target="_blank" rel="sponsored" href="https://www.getyourguide.com/">GetYourGuide</a></span></div>`;
+  return `<div data-gyg-href="https://widget.getyourguide.com/default/activities.frame?q=${q}&locale=en-US" data-gyg-locale-code="en-US" data-gyg-widget="activities" data-gyg-number-of-items="3"></div>`;
+}
+
+export function getTpwdgtWidget(destination) {
+  const q = encodeURIComponent(String(destination || '').trim());
+  return `<div data-tpwdgt-href="https://tpwdgt.com/widget?q=${q}" data-tpwdgt-powered-by="false"></div>`;
+}
+
+export function injectWidgetsIntoSections(html, destination) {
+  const gyg = getGYGWidget(destination);
+  let out = html;
+  out = out.replace(/(## 🎫 Must-See Attractions)/, `${gyg}\n$1`);
+  out = out.replace(/(## 🎭 Daily Itineraries)/, `${gyg}\n$1`);
+  return out;
+}
+
+export function sanitizeAffiliateLinks(html) {
+  let processed = html || '';
+  processed = processed.replace(/https?:\/\/(www\.)?(booking\.com|wayaway|ticketnetwork|kayak\.com|flights|car rental)\S*/gi, '');
+  return processed;
 }
 
 // Get locale for destination
