@@ -47,17 +47,28 @@ const VERSION = 'staging-v75';
 // Initialize structured logging with Pino
 let logger;
 try {
-  logger = pino({
-    level: 'info',
-    transport: {
-      target: 'pino-pretty',
-      options: {
-        destination: 'wayzo.log',
-        colorize: false,
-        translateTime: 'SYS:standard'
+  // In production, use simple JSON logging without pino-pretty
+  if (process.env.NODE_ENV === 'production') {
+    logger = pino({
+      level: 'info',
+      formatters: {
+        level: (label) => ({ level: label })
       }
-    }
-  });
+    });
+  } else {
+    // In development, use pino-pretty if available
+    logger = pino({
+      level: 'info',
+      transport: {
+        target: 'pino-pretty',
+        options: {
+          destination: 'wayzo.log',
+          colorize: false,
+          translateTime: 'SYS:standard'
+        }
+      }
+    });
+  }
   logger.info({ version: VERSION }, 'Wayzo server starting');
 } catch (error) {
   console.error('Failed to initialize logger:', error);
