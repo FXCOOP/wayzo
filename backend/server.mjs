@@ -1205,18 +1205,15 @@ async function generatePlanWithAI(payload) {
   // STEP 3: Generate actual plan
   console.log('Step 3: Generating AI plan for', destination);
   try {
-    // Add timeout wrapper for the AI call using AbortController
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      console.log('AI call timed out after 45 seconds, aborting...');
-      controller.abort();
-    }, 45000);
+    // Simple timeout wrapper for the AI call
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('AI call timed out after 30 seconds')), 30000);
+    });
     
     const aiCallPromise = client.chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0.3,
-      max_tokens: 6000,
-      signal: controller.signal,
+      max_tokens: 4000, // Reduced to speed up response
       messages: [
         {
           role: "system",
@@ -1514,8 +1511,7 @@ Create a comprehensive, detailed travel itinerary with SPECIFIC attractions, res
       ],
     });
     
-    const response = await aiCallPromise;
-    clearTimeout(timeoutId); // Clear the timeout since we got a response
+    const response = await Promise.race([aiCallPromise, timeoutPromise]);
     
     const aiContent = response.choices?.[0]?.message?.content?.trim() || "";
     console.log('AI preview:', aiContent.substring(0, 150));
