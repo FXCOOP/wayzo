@@ -1337,18 +1337,18 @@ async function generatePlanWithAI(payload) {
   
   console.log('🤖 Making simplified OpenAI API call...');
   try {
-    // Shorter timeout for faster response
+    // Very short timeout for fastest response
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => {
-        console.log('⏰ AI call timed out after 15 seconds');
-        reject(new Error('AI call timed out after 15 seconds'));
-      }, 15000);
+        console.log('⏰ AI call timed out after 10 seconds');
+        reject(new Error('AI call timed out after 10 seconds'));
+      }, 10000);
     });
     
     const aiCallPromise = client.chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0.3,
-      max_tokens: 1000, // Smaller for faster response
+      max_tokens: 500, // Very small for fastest response
       messages: [
         {
           role: "system",
@@ -1500,7 +1500,7 @@ app.post('/api/preview', async (req, res) => {
     if (debug) console.debug('[PREVIEW] openai_call_start');
     let markdown;
     try {
-      markdown = await withTimeout(generatePlanWithAI(payload), 20000);
+      markdown = await withTimeout(generatePlanWithAI(payload), 15000);
     } catch (firstErr) {
       if (debug) console.debug('[PREVIEW] openai first attempt failed:', firstErr?.message);
       
@@ -1512,7 +1512,7 @@ app.post('/api/preview', async (req, res) => {
       
       await new Promise(r => setTimeout(r, 1500));
       try {
-        markdown = await withTimeout(generatePlanWithAI(payload), 20000);
+        markdown = await withTimeout(generatePlanWithAI(payload), 15000);
       } catch (secondErr) {
         console.log('🚫 Both AI attempts failed, providing fallback');
         // Provide a basic fallback response
@@ -1681,7 +1681,7 @@ app.post('/api/plan', async (req, res) => {
     console.log('🚀 About to call generatePlanWithAI for:', payload.destination);
     let markdown;
     try {
-      markdown = await withTimeout(generatePlanWithAI(payload), 20000);
+      markdown = await withTimeout(generatePlanWithAI(payload), 15000);
     } catch (firstErr) {
       console.log('🚫 First AI attempt failed:', firstErr.message);
       
