@@ -131,29 +131,50 @@ app.get('/debug/test-ai', async (req, res) => {
   try {
     console.log('Debug AI endpoint called');
     
-    if (!client) {
-      console.log('No OpenAI client available');
-      return res.json({ error: 'No OpenAI client' });
+    if (!client || !process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'sk-your-openai-api-key-here') {
+      console.log('OpenAI not properly configured');
+      return res.json({ 
+        error: 'OpenAI not properly configured',
+        apiKeyConfigured: !!process.env.OPENAI_API_KEY,
+        apiKeyLength: process.env.OPENAI_API_KEY?.length || 0,
+        apiKeyIsPlaceholder: process.env.OPENAI_API_KEY === 'sk-your-openai-api-key-here',
+        suggestion: 'Please set a valid OPENAI_API_KEY in your environment variables'
+      });
     }
     
     console.log('OpenAI client exists, making API call...');
     
-    const response = await client.chat.completions.create({
+    // Add timeout to prevent hanging
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('AI call timed out after 10 seconds')), 10000);
+    });
+    
+    const aiCallPromise = client.chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0.3,
       max_tokens: 100,
       messages: [{ role: "user", content: "Say hello" }]
     });
     
+    const response = await Promise.race([aiCallPromise, timeoutPromise]);
+    
     console.log('AI response received:', response?.choices?.[0]?.message?.content?.substring(0, 50));
     
     res.json({ 
       success: true, 
-      response: response.choices?.[0]?.message?.content || 'No response' 
+      response: response?.choices?.[0]?.message?.content,
+      apiKeyConfigured: !!process.env.OPENAI_API_KEY,
+      apiKeyLength: process.env.OPENAI_API_KEY?.length || 0
     });
   } catch (error) {
-    console.log('AI call error:', error.message);
-    res.json({ error: error.message });
+    console.error('Debug AI endpoint error:', error.message);
+    res.status(502).json({ 
+      error: error.message,
+      apiKeyConfigured: !!process.env.OPENAI_API_KEY,
+      apiKeyLength: process.env.OPENAI_API_KEY?.length || 0,
+      apiKeyIsPlaceholder: process.env.OPENAI_API_KEY === 'sk-your-openai-api-key-here',
+      suggestion: error.message.includes('timeout') ? 'AI call timed out - check API key validity' : 'Check OpenAI API configuration'
+    });
   }
 });
 /* Admin basic auth middleware */
@@ -1213,6 +1234,119 @@ console.log('OPENAI_API_KEY preview:', process.env.OPENAI_API_KEY?.substring(0, 
 const client = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 console.log('OpenAI client created:', !!client);
 console.log('Client type:', typeof client);
+
+// Fallback plan generator when AI is unavailable
+function generateFallbackPlan(payload) {
+  const { destination = '', start = '', end = '', budget = 0, adults = 2, children = 0, level = 'mid', prefs = '', dietary = [] } = payload || {};
+  const nDays = daysBetween(start, end);
+  
+  console.log('🔄 Generating fallback plan for', destination);
+  
+  return `# ${destination} Travel Plan
+
+## 🎯 Trip Overview
+Welcome to ${destination}! This is a ${nDays}-day trip for ${adults} adults${children > 0 ? ` and ${children} children` : ''} with a ${level} budget level.
+
+**Trip Highlights:**
+- ${nDays} days of exploration
+- Budget: $${budget} USD
+- Travel style: ${level}
+- ${children > 0 ? `Family-friendly activities included` : `Adult-focused experiences`}
+
+## 💰 Budget Breakdown
+- **Accommodation**: $${Math.round(budget * 0.4)} (40% of budget)
+- **Food & Dining**: $${Math.round(budget * 0.3)} (30% of budget)
+- **Activities & Attractions**: $${Math.round(budget * 0.2)} (20% of budget)
+- **Transportation**: $${Math.round(budget * 0.1)} (10% of budget)
+
+## 🗺️ Getting Around
+- **Public Transportation**: Check local transit options
+- **Walking**: Many attractions are within walking distance
+- **Taxis/Rideshare**: Available for longer distances
+- **Rental Car**: Consider for day trips outside the city
+
+## 🏨 Accommodation
+- **Budget Option**: Search for hostels or budget hotels
+- **Mid-range**: Look for 3-star hotels with good reviews
+- **Luxury**: Consider 4-5 star hotels for special occasions
+
+## 🎫 Must-See Attractions
+- **Historic Sites**: Research local historical landmarks
+- **Museums**: Visit cultural and art museums
+- **Parks & Nature**: Explore local parks and natural areas
+- **Markets**: Experience local food and craft markets
+
+## 🍽️ Dining Guide
+- **Local Cuisine**: Try traditional dishes
+- **Street Food**: Sample local street food vendors
+- **Restaurants**: Mix of casual and fine dining
+- **Cafes**: Enjoy local coffee culture
+
+## 🎭 Daily Itineraries
+
+### Day 1 - Arrival & Orientation
+- **Morning**: Arrive and check into accommodation
+- **Afternoon**: Explore the city center and get oriented
+- **Evening**: Enjoy a welcome dinner at a local restaurant
+
+### Day 2 - Main Attractions
+- **Morning**: Visit top historical sites
+- **Afternoon**: Explore museums or cultural centers
+- **Evening**: Relax at a local park or waterfront
+
+${nDays > 2 ? `### Day 3 - Local Experiences
+- **Morning**: Visit local markets or neighborhoods
+- **Afternoon**: Take a guided tour or activity
+- **Evening**: Experience local nightlife or entertainment` : ''}
+
+${nDays > 3 ? `### Day 4 - Day Trip
+- **Morning**: Take a day trip to nearby attractions
+- **Afternoon**: Continue exploring the area
+- **Evening**: Return to base city` : ''}
+
+${nDays > 4 ? `### Day 5 - Final Day
+- **Morning**: Visit any remaining must-see attractions
+- **Afternoon**: Last-minute shopping or relaxation
+- **Evening**: Farewell dinner` : ''}
+
+## 🧳 Don't Forget List
+- [ ] Valid passport and travel documents
+- [ ] Travel insurance
+- [ ] Comfortable walking shoes
+- [ ] Weather-appropriate clothing
+- [ ] Camera or smartphone for photos
+- [ ] Local currency or credit cards
+- [ ] Phone charger and adapter
+- [ ] Medications and first aid kit
+- [ ] Guidebook or offline maps
+- [ ] Emergency contact information
+
+## 🛡️ Travel Tips
+- **Safety**: Keep valuables secure and be aware of surroundings
+- **Language**: Learn basic phrases in the local language
+- **Currency**: Understand local currency and exchange rates
+- **Weather**: Check weather forecasts and pack accordingly
+- **Culture**: Respect local customs and traditions
+
+## 📱 Useful Apps
+- **Maps**: Google Maps or Apple Maps for navigation
+- **Translation**: Google Translate for language assistance
+- **Currency**: XE Currency for exchange rates
+- **Weather**: Local weather app for forecasts
+- **Transportation**: Local transit apps if available
+
+## 🚨 Emergency Info
+- **Emergency Number**: Research local emergency services
+- **Embassy**: Note your country's embassy location
+- **Hospital**: Find nearest hospital or medical center
+- **Police**: Know how to contact local police
+- **Insurance**: Keep travel insurance details handy
+
+---
+
+*Note: This is a template plan. For specific recommendations, please ensure your OpenAI API key is properly configured.*`;
+}
+
 async function generatePlanWithAI(payload) {
   console.log('🚀 NEW AI INTEGRATION - Starting fresh approach');
   console.log('🎯 FUNCTION CALLED - This should appear in logs!');
@@ -1220,15 +1354,16 @@ async function generatePlanWithAI(payload) {
   const { destination = '', start = '', end = '', budget = 0, adults = 2, children = 0, level = 'mid', prefs = '', dietary = [] } = payload || {};
   const nDays = daysBetween(start, end);
   
-  // STEP 1: Check OpenAI client
+  // STEP 1: Check OpenAI client and API key validity
   console.log('Step 1: OpenAI client check');
   console.log('- Client exists:', !!client);
   console.log('- API Key exists:', !!process.env.OPENAI_API_KEY);
   console.log('- API Key length:', process.env.OPENAI_API_KEY?.length || 0);
+  console.log('- API Key is placeholder:', process.env.OPENAI_API_KEY === 'sk-your-openai-api-key-here');
   
-  if (!client) {
-    console.log('❌ No OpenAI client - throwing error instead of fallback');
-    throw new Error('OpenAI client not available');
+  if (!client || !process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'sk-your-openai-api-key-here') {
+    console.log('❌ OpenAI not properly configured - using fallback content');
+    return generateFallbackPlan(payload);
   }
   
   // STEP 2: Skip noisy preflight; proceed directly to generation
@@ -1551,14 +1686,14 @@ Create a comprehensive, detailed travel itinerary with SPECIFIC attractions, res
       console.log('🎉 AI plan generated successfully!');
       return aiContent;
     } else {
-      console.log('❌ AI response too short, throwing error');
-      throw new Error('AI response too short');
+      console.log('❌ AI response too short, using fallback');
+      return generateFallbackPlan(payload);
     }
     
   } catch (aiError) {
     console.error('❌ AI generation failed:', aiError.message);
-    console.log('Throwing error instead of fallback');
-    throw aiError;
+    console.log('🔄 Using fallback plan due to AI error');
+    return generateFallbackPlan(payload);
   }
 }
 
