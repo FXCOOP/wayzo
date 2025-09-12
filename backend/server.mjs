@@ -1457,9 +1457,14 @@ async function generatePlanWithAI(payload, mode = 'preview') {
   }
   
   // Use queued AI call to prevent rate limits
-  return await queueAICall(async () => {
+  const result = await queueAICall(async () => {
     return await generateAIContent(payload, nDays, destination, budget, adults, children, mode);
   });
+  
+  console.log('🔍 Final AI result preview:', result.substring(0, 100));
+  console.log('🔍 Is result from fallback?', result.includes('This is a basic template plan'));
+  
+  return result;
 }
 
 async function generateAIContent(payload, nDays, destination, budget, adults, children, mode = 'preview') {
