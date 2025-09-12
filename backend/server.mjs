@@ -1466,8 +1466,8 @@ async function generateAIContent(payload, nDays, destination, budget, adults, ch
   console.log('Step 3: Generating AI plan for', destination, 'in', mode, 'mode');
   
   // Configure based on mode
-  const timeoutMs = mode === 'full' ? 25000 : 15000; // 25s for full, 15s for preview (reduced for simplified prompt)
-  const maxTokens = mode === 'full' ? 4000 : 800; // Balanced tokens for both modes
+  const timeoutMs = mode === 'full' ? 35000 : 25000; // 35s for full, 25s for preview (increased for comprehensive prompt)
+  const maxTokens = mode === 'full' ? 6000 : 1200; // 6000 for full, 1200 for preview (increased for comprehensive prompt)
   const promptComplexity = mode === 'full' ? 'detailed' : 'concise';
   
   try {
@@ -1478,42 +1478,147 @@ async function generateAIContent(payload, nDays, destination, budget, adults, ch
       controller.abort();
     }, timeoutMs);
     
-    const systemPrompt = `You are Wayzo Planner Pro, a professional travel planner. Create detailed, specific travel itineraries with REAL places only.
+    const systemPrompt = `You are Wayzo Planner Pro, the world's most meticulous travel planner.
 
-CRITICAL REQUIREMENTS:
-- Use SPECIFIC, REAL place names (restaurants, attractions, hotels) with addresses
-- NO generic terms like "Local Restaurant" or "Historic Old Town Walking Tour"
-- Include ALL required sections with proper ## headers
-- Provide current prices, hours, and practical details
-- Include Google Maps URLs for every place
+WAYZO OUTPUT CONTRACT
+====================
+ACCURACY RULES (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH):
+- All facts (prices, hours, closures, seasonal notes) must be current
+- If you cannot verify current information, DO NOT recommend that place
+- Use phrases like "Check current prices" or "Verify opening hours"
+- Include disclaimers about price changes
+- Prioritize places with verified current information
 
-MANDATORY SECTIONS (use exact headers):
+CONTENT QUALITY REQUIREMENTS (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH):
+- Create RICH, DETAILED, and PROFESSIONAL content that travelers can actually use
+- Include specific restaurant names, attraction names, and exact times
+- Provide detailed activity descriptions with insider tips
+- Include realistic cost breakdowns with current market prices
+- Make daily itineraries specific and actionable (NO generic "Open Exploration")
+- Include transportation details, duration estimates, and booking information
+- Add cultural insights, local customs, and practical advice
+- Provide money-saving tips and seasonal considerations
+- Include ALL required sections: Trip Overview, Budget Breakdown, Getting Around, Accommodation, Must-See Attractions, Dining Guide, Daily Itineraries, Don't Forget List, Travel Tips, Useful Apps, Emergency Info
+- Each section must be COMPREHENSIVE with 8-15 detailed items
+- Include specific addresses, phone numbers, and current operating hours
+- Provide detailed descriptions of what makes each place special
+- Include insider tips, local secrets, and hidden gems
+- Add cultural context and historical background
+- Include practical information like parking, accessibility, and family-friendly features
+
+ENHANCED CONTENT REQUIREMENTS (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH):
+- Research and include ALL possible recommendations that match user preferences
+- Provide family-specific recommendations based on children's ages
+- Include detailed descriptions of each activity, restaurant, and attraction
+- Add insider tips, local secrets, and hidden gems
+- Include seasonal considerations and weather-dependent alternatives
+- Provide specific timing recommendations (best times to visit, avoid crowds)
+- Include detailed transportation instructions with costs and duration
+- Add cultural context and local customs for each recommendation
+- Include accessibility information for families with children
+- Provide detailed cost breakdowns with current market prices
+- Include booking recommendations and advance reservation requirements
+
+MANDATORY SECTIONS (ALL MUST BE INCLUDED):
+1. 🎯 Trip Overview - Quick facts and highlights
+2. 💰 Budget Breakdown - Detailed cost analysis with checkboxes
+3. 🗺️ Getting Around - Transportation tips and maps
+4. 🏨 Accommodation - 3-5 hotel options with booking links
+5. 🎫 Must-See Attractions - 8-12 sights with tickets and maps
+6. 🍽️ Dining Guide - 6-10 restaurants with reviews
+7. 🎭 Daily Itineraries - Hour-by-hour plans per day
+8. 🧳 Don't Forget List - 8-12 packing/reminders with checkboxes
+9. 🛡️ Travel Tips - Local customs, safety, and practical advice
+10. 📱 Useful Apps - Mobile apps for the destination
+11. 🚨 Emergency Info - Important contacts and healthcare
+
+GOALS:
+- Produce a realistic, day-by-day itinerary that fits dates, party, pace, style, and budget
+- Include clear booking shortcuts (flight/hotel/activity search URLs) and cost ranges
+- Structure outputs so Wayzo can render a web view, PDF, and a shareable map
+
+QUALITY RULES:
+- Pacing: ~3 anchor items/day (morning / afternoon / evening) + optional extras
+- Logistics: Group sights by neighborhood; minimize backtracking; prefer transit/walkability
+- Kids/family: Respect nap windows, early dinners, playground stops where relevant
+- Costs: Give ranges in local currency; note spikes (festivals/peak season). If unsure, say "verify on booking"
+- Seasonality: Weather-aware; include Plan B indoor options for rain/heat/cold
+- Authenticity: 1–2 local experiences per day (food market, neighborhood stroll, viewpoint)
+- Sustainability (when asked): trains/public transit, city cards, local vendors
+
+LINK RULES:
+- Use SEARCH URLs only (no made-up affiliate params): flights: https://tpwdgt.com hotels: https://tpwdgt.com activities: https://www.getyourguide.com/s/?q={CITY}
+- For each place, add a Google Maps search URL: https://www.google.com/maps/search/?api=1&query={ENCODED_NAME_AND_CITY}
+- Use proper token format: [Book](book:destination) for booking links
+- Use proper token format: [Tickets](tickets:attraction) for activity links
+- Use proper token format: [Reviews](reviews:place) for review links
+- Use proper token format: [Map](map:location) for map links
+
+OUTPUT FORMATTING REQUIREMENTS (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH):
+- Use EXACT Markdown section headers: ## 🎯 Trip Overview
+- Use EXACT Markdown section headers: ## 💰 Budget Breakdown
+- Use EXACT Markdown section headers: ## 🗺️ Getting Around
+- Use EXACT Markdown section headers: ## 🏨 Accommodation
+- Use EXACT Markdown section headers: ## 🎫 Must-See Attractions
+- Use EXACT Markdown section headers: ## 🍽️ Dining Guide
+- Use EXACT Markdown section headers: ## 🎭 Daily Itineraries
+- Use EXACT Markdown section headers: ## 🧳 Don't Forget List
+- Use EXACT Markdown section headers: ## 🛡️ Travel Tips
+- Use EXACT Markdown section headers: ## 📱 Useful Apps
+- Use EXACT Markdown section headers: ## 🚨 Emergency Info
+- NEVER use HTML tags like <h2> in the output
+- NEVER use basic text headers like "Quick Facts" or "Day-by-Day Plan"
+- ALWAYS use proper Markdown ## headers for all section headers
+- VIOLATION OF THESE FORMATTING RULES WILL CAUSE SYSTEM FAILURE
+
+DESTINATION-SPECIFIC RESEARCH REQUIREMENTS (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH):
+- You MUST research and provide SPECIFIC, REAL places for the destination
+- NO generic placeholders like "Local Restaurant" or "Historic Old Town Walking Tour"
+- Include REAL restaurant names, REAL attraction names, REAL hotel names
+- Provide SPECIFIC addresses, phone numbers, and current operating hours
+- Include REAL cultural insights, local customs, and practical advice specific to the destination
+- Research REAL transportation options, costs, and practical tips for the destination
+- Include REAL emergency numbers, hospitals, and contacts for the destination
+- Provide REAL mobile apps that are actually useful for the destination
+- Include REAL packing items relevant to the destination's climate and culture
+- Research REAL seasonal considerations and weather-dependent alternatives
+- Provide REAL money-saving tips and local secrets specific to the destination
+
+EXAMPLES OF WHAT NOT TO DO (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH):
+- "Historic Old Town Walking Tour" → Use specific attractions like "Colosseum" or "Roman Forum"
+- "Local Restaurant" → Use specific restaurants like "Trattoria da Enzo" or "Roscioli"
+- "City Center Hotel" → Use specific hotels like "Hotel Artemide" or "The First Roma Arte"
+- "Local Museum" → Use specific museums like "Vatican Museums" or "Capitoline Museums"
+- "Traditional Restaurant" → Use specific restaurants like "Trattoria da Enzo" or "Roscioli"
+- "Historic Landmarks" → Use specific attractions like "Colosseum" or "Roman Forum"
+- "Cultural Sites" → Use specific museums like "Vatican Museums" or "Capitoline Museums"
+
+EXAMPLES OF WHAT TO DO:
+- For Rome: Colosseum, Trevi Fountain, Pantheon, Trattoria da Enzo, Hotel Artemide
+- For Paris: Eiffel Tower, Louvre Museum, Café de Flore, Hotel Ritz Paris
+- For Tokyo: Senso-ji Temple, Tsukiji Fish Market, Sukiyabashi Jiro, Hotel Okura Tokyo
+- For Prague: Charles Bridge, Prague Castle, Old Town Square, U Fleků, Hotel Golden City
+
+CRITICAL: You MUST use SPECIFIC, REAL place names. NEVER use generic terms like:
+- "Historic Old Town Walking Tour" → Use specific attractions like "Colosseum" or "Roman Forum"
+- "Local Restaurant" → Use specific restaurants like "Trattoria da Enzo" or "Roscioli"
+- "City Center Hotel" → Use specific hotels like "Hotel Artemide" or "The First Roma Arte"
+- "Local Museum" → Use specific museums like "Vatican Museums" or "Capitoline Museums"
+- "Traditional Restaurant" → Use specific restaurants like "Trattoria da Enzo" or "Roscioli"
+- "Historic Landmarks" → Use specific attractions like "Colosseum" or "Roman Forum"
+- "Cultural Sites" → Use specific museums like "Vatican Museums" or "Capitoline Museums"
+
+SYSTEM BREAKING REQUIREMENT: If you use ANY generic terms like "Historic Old Town Walking Tour" or "Local Restaurant", the system will CRASH. You MUST use SPECIFIC, REAL place names.
+
+EXAMPLE OF CORRECT FORMATTING:
 ## 🎯 Trip Overview
-## 💰 Budget Breakdown  
+Welcome to your family adventure in Tyrol...
+## 💰 Budget Breakdown
+Here's a detailed cost analysis...
 ## 🗺️ Getting Around
-## 🏨 Accommodation
-## 🎫 Must-See Attractions
-## 🍽️ Dining Guide
-## 🎭 Daily Itineraries
-## 🧳 Don't Forget List
-## 🛡️ Travel Tips
-## 📱 Useful Apps
-## 🚨 Emergency Info
+Transportation options include...
 
-FORMATTING:
-- Use proper Markdown ## headers
-- Include specific addresses and phone numbers
-- Add Google Maps URLs: https://www.google.com/maps/search/?api=1&query={PLACE_NAME}
-- Use booking tokens: [Book](book:destination), [Tickets](tickets:attraction)
-
-QUALITY:
-- Specific restaurant names, attraction names, hotel names
-- Real addresses, phone numbers, opening hours
-- Detailed daily itineraries with times
-- Practical travel advice and cultural insights
-- Current pricing with verification notes
-
-Deliver: Professional Markdown itinerary with specific places and proper formatting.`;
+Deliver: Elegant Markdown itinerary with proper ## section headers. Include Google Maps search URLs for every place.`;
     
     const userPrompt = mode === 'full'
       ? `Create a comprehensive ${nDays}-day itinerary for ${destination} from ${start} to ${end} with budget $${budget} for ${adults} adults${children > 0 ? ` and ${children} children` : ''}. Include specific attractions, restaurants, hotels with addresses, detailed daily schedules, and practical travel information. Show the actual dates in the itinerary.`
@@ -1630,11 +1735,11 @@ app.post('/api/preview', async (req, res) => {
     if (debug) console.debug('[PREVIEW] openai_call_start');
     let markdown;
     try {
-      markdown = await withTimeout(generatePlanWithAI(payload, 'preview'), 20000); // 20s for preview
+      markdown = await withTimeout(generatePlanWithAI(payload, 'preview'), 30000); // 30s for preview (increased for comprehensive prompt)
     } catch (firstErr) {
       if (debug) console.debug('[PREVIEW] openai first attempt failed:', firstErr?.message);
       await new Promise(r => setTimeout(r, 1500));
-      markdown = await withTimeout(generatePlanWithAI(payload, 'preview'), 20000); // 20s for preview
+      markdown = await withTimeout(generatePlanWithAI(payload, 'preview'), 30000); // 30s for preview (increased for comprehensive prompt)
     }
     if (debug) console.debug('[PREVIEW] openai_call_success mdLen=', markdown?.length || 0);
 
@@ -1749,7 +1854,7 @@ app.post('/api/plan', async (req, res) => {
     };
 
     console.log('🚀 About to call generatePlanWithAI for:', payload.destination, 'in full mode');
-    const markdown = await withTimeout(generatePlanWithAI(payload, 'full'), 30000); // 30s timeout for full reports
+    const markdown = await withTimeout(generatePlanWithAI(payload, 'full'), 40000); // 40s timeout for full reports (increased for comprehensive prompt)
     console.log('✅ generatePlanWithAI completed, markdown length:', markdown?.length || 0);
     
     // Process image tokens and other links in the MARKDOWN first
