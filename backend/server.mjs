@@ -1446,7 +1446,7 @@ app.post('/api/preview', async (req, res) => {
     if (debug) console.debug('[PREVIEW] openai_call_start');
     let markdown;
     try {
-      markdown = await withTimeout(generatePlanWithAI(payload), 60000);
+      markdown = await withTimeout(generatePlanWithAI(payload), 25000);
     } catch (firstErr) {
       if (debug) console.debug('[PREVIEW] openai first attempt failed:', firstErr?.message);
       
@@ -1458,7 +1458,7 @@ app.post('/api/preview', async (req, res) => {
       
       await new Promise(r => setTimeout(r, 1500));
       try {
-        markdown = await withTimeout(generatePlanWithAI(payload), 60000);
+        markdown = await withTimeout(generatePlanWithAI(payload), 25000);
       } catch (secondErr) {
         console.log('🚫 Both AI attempts failed, providing fallback');
         // Provide a basic fallback response
@@ -1627,7 +1627,7 @@ app.post('/api/plan', async (req, res) => {
     console.log('🚀 About to call generatePlanWithAI for:', payload.destination);
     let markdown;
     try {
-      markdown = await withTimeout(generatePlanWithAI(payload), 60000);
+      markdown = await withTimeout(generatePlanWithAI(payload), 25000);
     } catch (firstErr) {
       console.log('🚫 First AI attempt failed:', firstErr.message);
       
