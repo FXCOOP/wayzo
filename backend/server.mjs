@@ -1342,52 +1342,37 @@ async function generatePlanWithAI(payload) {
     // Shorter timeout for faster response
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => {
-        console.log('⏰ AI call timed out after 20 seconds');
-        reject(new Error('AI call timed out after 20 seconds'));
-      }, 20000);
+        console.log('⏰ AI call timed out after 10 seconds');
+        reject(new Error('AI call timed out after 10 seconds'));
+      }, 10000);
     });
     
     const aiCallPromise = client.chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0.3,
-      max_tokens: 2000, // Much smaller for faster response
+      max_tokens: 500, // Very small for fastest response
       messages: [
         {
           role: "system",
-          content: `You are Wayzo Planner Pro. Create detailed travel itineraries with specific, real places.
-
-REQUIRED SECTIONS (use exact headers):
+          content: `Create a simple travel plan with these sections:
 ## 🎯 Trip Overview
 ## 💰 Budget Breakdown  
-## 🗺️ Getting Around
-## 🏨 Accommodation
 ## 🎫 Must-See Attractions
 ## 🍽️ Dining Guide
 ## 🎭 Daily Itineraries
 ## 🧳 Don't Forget List
-## 🛡️ Travel Tips
-## 📱 Useful Apps
-## 🚨 Emergency Info
 
-RULES:
-- Use SPECIFIC, REAL place names (not generic terms)
-- Include Google Maps URLs: https://www.google.com/maps/search/?api=1&query={PLACE_NAME}
-- Provide realistic costs and practical details
-- Keep content concise but informative`
+Keep it concise and practical.`
         },
         {
           role: "user",
           content: `Create a travel plan for ${destination}:
-
-Trip Details:
 - Dates: ${start} to ${end} (${nDays} days)
-- Travelers: ${adults} adults${children > 0 ? `, ${children} children` : ''}
-- Style: ${level}
+- Travelers: ${adults} adults
 - Budget: $${budget} USD
-- Dietary: ${dietary.join(', ') || 'None'}
-- Preferences: ${prefs || 'None'}
+- Style: ${level}
 
-Use specific, real places for ${destination}. Include actual restaurant names, attractions, and hotels with addresses and practical details.`
+Make it simple and practical.`
         }
       ],
     });
