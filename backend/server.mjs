@@ -4,6 +4,33 @@ import compression from 'compression';
 import helmet from 'helmet';
 import { marked } from 'marked';
 
+// Global error handling to prevent crashes
+process.on('uncaughtException', (err) => {
+  console.error('🚨 Uncaught Exception:', err.message);
+  console.error('Stack:', err.stack);
+  // Don't exit immediately - let the process handle it gracefully
+  setTimeout(() => {
+    console.error('🚨 Exiting due to uncaught exception');
+    process.exit(1);
+  }, 1000);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('🚨 Unhandled Rejection at:', promise);
+  console.error('Reason:', reason);
+  // Log but don't exit for unhandled rejections
+});
+
+process.on('SIGTERM', () => {
+  console.log('🚨 SIGTERM received, shutting down gracefully');
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('🚨 SIGINT received, shutting down gracefully');
+  process.exit(0);
+});
+
 // Configure marked to allow JavaScript event handlers for interactive checkboxes
 marked.setOptions({
   sanitize: false, // Allow HTML and JavaScript event handlers
@@ -121,9 +148,26 @@ process.on('uncaughtException', (err) => {
   } catch (_) { /* noop */ }
 });
 
-// Lightweight debug endpoint
+// Enhanced health check endpoint
 app.get('/debug/ping', (req, res) => {
-  res.json({ ok: true, time: new Date().toISOString(), version: VERSION });
+  const health = {
+    ok: true,
+    time: new Date().toISOString(),
+    version: VERSION,
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    aiQueue: aiQueue.length,
+    isProcessingAI: isProcessingAI,
+    openaiConfigured: !!process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'sk-your-openai-api-key-here'
+  };
+  
+  console.log('🏥 Health check:', { 
+    uptime: Math.round(health.uptime), 
+    memory: Math.round(health.memory.heapUsed / 1024 / 1024) + 'MB',
+    aiQueue: health.aiQueue 
+  });
+  
+  res.json(health);
 });
 
 // Test AI endpoint
@@ -1235,6 +1279,39 @@ const client = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPE
 console.log('OpenAI client created:', !!client);
 console.log('Client type:', typeof client);
 
+// AI Call Queue to prevent rate limits
+let aiQueue = [];
+let isProcessingAI = false;
+
+async function queueAICall(aiFunction) {
+  return new Promise((resolve, reject) => {
+    aiQueue.push({ aiFunction, resolve, reject });
+    processAIQueue();
+  });
+}
+
+async function processAIQueue() {
+  if (isProcessingAI || aiQueue.length === 0) return;
+  
+  isProcessingAI = true;
+  const { aiFunction, resolve, reject } = aiQueue.shift();
+  
+  try {
+    console.log('🔄 Processing AI call from queue');
+    const result = await aiFunction();
+    resolve(result);
+  } catch (error) {
+    console.error('❌ AI call failed:', error.message);
+    reject(error);
+  } finally {
+    isProcessingAI = false;
+    // Process next in queue
+    if (aiQueue.length > 0) {
+      setTimeout(processAIQueue, 1000); // 1s delay between calls
+    }
+  }
+}
+
 // Fallback plan generator when AI is unavailable
 function generateFallbackPlan(payload) {
   const { destination = '', start = '', end = '', budget = 0, adults = 2, children = 0, level = 'mid', prefs = '', dietary = [] } = payload || {};
@@ -1348,8 +1425,7 @@ ${nDays > 4 ? `### Day 5 - Final Day
 }
 
 async function generatePlanWithAI(payload) {
-  console.log('🚀 NEW AI INTEGRATION - Starting fresh approach');
-  console.log('🎯 FUNCTION CALLED - This should appear in logs!');
+  console.log('🚀 AI INTEGRATION - Starting optimized approach');
   
   const { destination = '', start = '', end = '', budget = 0, adults = 2, children = 0, level = 'mid', prefs = '', dietary = [] } = payload || {};
   const nDays = daysBetween(start, end);
@@ -1366,323 +1442,45 @@ async function generatePlanWithAI(payload) {
     return generateFallbackPlan(payload);
   }
   
-  // STEP 2: Skip noisy preflight; proceed directly to generation
-  
-  // STEP 3: Generate actual plan
+  // Use queued AI call to prevent rate limits
+  return await queueAICall(async () => {
+    return await generateAIContent(payload, nDays, destination, budget, adults, children);
+  });
+}
+
+async function generateAIContent(payload, nDays, destination, budget, adults, children) {
   console.log('Step 3: Generating AI plan for', destination);
   try {
-    // Simple timeout wrapper for the AI call
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('AI call timed out after 10 seconds')), 10000);
-    });
+    // Use AbortController for hard timeout enforcement
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      console.log('⏰ AI call timeout - aborting request');
+      controller.abort();
+    }, 8000); // 8s buffer for network overhead
     
-    const aiCallPromise = client.chat.completions.create({
-      model: "gpt-4o-mini",
-      temperature: 0.3,
-      max_tokens: 4000, // Reduced to speed up response
+    const completion = await client.chat.completions.create({
+      model: 'gpt-4o-mini', // Fastest, low-latency model
       messages: [
         {
           role: "system",
-          content: `You are Wayzo Planner Pro, the world's most meticulous travel planner. 
-
-WAYZO OUTPUT CONTRACT ====================
-ACCURACY RULES (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH):
-- All facts (prices, hours, closures, seasonal notes) must be current
-- If you cannot verify current information, DO NOT recommend that place
-- Use phrases like "Check current prices" or "Verify opening hours"
-- Include disclaimers about price changes
-- Prioritize places with verified current information
-
-CONTENT QUALITY REQUIREMENTS (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH):
-- Create RICH, DETAILED, and PROFESSIONAL content that travelers can actually use
-- Include specific restaurant names, attraction names, and exact times
-- Provide detailed activity descriptions with insider tips
-- Include realistic cost breakdowns with current market prices
-- Make daily itineraries specific and actionable (NO generic "Open Exploration")
-- Include transportation details, duration estimates, and booking information
-- Add cultural insights, local customs, and practical advice
-- Provide money-saving tips and seasonal considerations
-- Include ALL required sections: Trip Overview, Budget Breakdown, Getting Around, Accommodation, Must-See Attractions, Dining Guide, Daily Itineraries, Don't Forget List, Travel Tips, Useful Apps, Emergency Info
-- Each section must be COMPREHENSIVE with 8-15 detailed items
-- Include specific addresses, phone numbers, and current operating hours
-- Provide detailed descriptions of what makes each place special
-- Include insider tips, local secrets, and hidden gems
-- Add cultural context and historical background
-- Include practical information like parking, accessibility, and family-friendly features
-
-ENHANCED CONTENT REQUIREMENTS (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH):
-- Research and include ALL possible recommendations that match user preferences
-- Provide family-specific recommendations based on children's ages
-- Include detailed descriptions of each activity, restaurant, and attraction
-- Add insider tips, local secrets, and hidden gems
-- Include seasonal considerations and weather-dependent alternatives
-- Provide specific timing recommendations (best times to visit, avoid crowds)
-- Include detailed transportation instructions with costs and duration
-- Add cultural context and local customs for each recommendation
-- Include accessibility information for families with children
-- Provide detailed cost breakdowns with current market prices
-- Include booking recommendations and advance reservation requirements
-
-MANDATORY SECTIONS (ALL MUST BE INCLUDED):
-1. 🎯 Trip Overview - Quick facts and highlights
-2. 💰 Budget Breakdown - Detailed cost analysis with checkboxes
-3. 🗺️ Getting Around - Transportation tips and maps
-4. 🏨 Accommodation - 3-5 hotel options with booking links
-5. 🎫 Must-See Attractions - 8-12 sights with tickets and maps
-6. 🍽️ Dining Guide - 6-10 restaurants with reviews
-7. 🎭 Daily Itineraries - Hour-by-hour plans per day
-8. 🧳 Don't Forget List - 8-12 packing/reminders with checkboxes
-9. 🛡️ Travel Tips - Local customs, safety, and practical advice
-10. 📱 Useful Apps - Mobile apps for the destination
-11. 🚨 Emergency Info - Important contacts and healthcare
-
-GOALS:
-- Produce a realistic, day-by-day itinerary that fits dates, party, pace, style, and budget
-- Include clear booking shortcuts (flight/hotel/activity search URLs) and cost ranges
-- Structure outputs so Wayzo can render a web view, PDF, and a shareable map
-
-QUALITY RULES:
-- Pacing: ~3 anchor items/day (morning / afternoon / evening) + optional extras
-- Logistics: Group sights by neighborhood; minimize backtracking; prefer transit/walkability
-- Kids/family: Respect nap windows, early dinners, playground stops where relevant
-- Costs: Give ranges in local currency; note spikes (festivals/peak season). If unsure, say "verify on booking"
-- Seasonality: Weather-aware; include Plan B indoor options for rain/heat/cold
-- Authenticity: 1–2 local experiences per day (food market, neighborhood stroll, viewpoint)
-- Sustainability (when asked): trains/public transit, city cards, local vendors
-
-LINK RULES:
-- Use SEARCH URLs only (no made-up affiliate params): 
-  flights: https://tpwdgt.com
-  hotels: https://tpwdgt.com
-  activities: https://www.getyourguide.com/s/?q={CITY}
-- For each place, add a Google Maps search URL: https://www.google.com/maps/search/?api=1&query={ENCODED_NAME_AND_CITY}
-- Use proper token format: [Book](book:destination) for booking links
-- Use proper token format: [Tickets](tickets:attraction) for activity links
-- Use proper token format: [Reviews](reviews:place) for review links
-- Use proper token format: [Map](map:location) for map links
-
-OUTPUT FORMATTING REQUIREMENTS (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH):
-- Use EXACT Markdown section headers: ## 🎯 Trip Overview
-- Use EXACT Markdown section headers: ## 💰 Budget Breakdown
-- Use EXACT Markdown section headers: ## 🗺️ Getting Around
-- Use EXACT Markdown section headers: ## 🏨 Accommodation
-- Use EXACT Markdown section headers: ## 🎫 Must-See Attractions
-- Use EXACT Markdown section headers: ## 🍽️ Dining Guide
-- Use EXACT Markdown section headers: ## 🎭 Daily Itineraries
-- Use EXACT Markdown section headers: ## 🧳 Don't Forget List
-- Use EXACT Markdown section headers: ## 🛡️ Travel Tips
-- Use EXACT Markdown section headers: ## 📱 Useful Apps
-- Use EXACT Markdown section headers: ## 🚨 Emergency Info
-- NEVER use HTML tags like <h2> in the output
-- NEVER use basic text headers like "Quick Facts" or "Day-by-Day Plan"
-- ALWAYS use proper Markdown ## headers for all section headers
-- VIOLATION OF THESE FORMATTING RULES WILL CAUSE SYSTEM FAILURE
-
-DESTINATION-SPECIFIC RESEARCH REQUIREMENTS (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH):
-- You MUST research and provide SPECIFIC, REAL places for the destination
-- NO generic placeholders like "Local Restaurant" or "Historic Old Town Walking Tour"
-- Include REAL restaurant names, REAL attraction names, REAL hotel names
-- Provide SPECIFIC addresses, phone numbers, and current operating hours
-- Include REAL cultural insights, local customs, and practical advice specific to the destination
-- Research REAL transportation options, costs, and practical tips for the destination
-- Include REAL emergency numbers, hospitals, and contacts for the destination
-- Provide REAL mobile apps that are actually useful for the destination
-- Include REAL packing items relevant to the destination's climate and culture
-- Research REAL seasonal considerations and weather-dependent alternatives
-- Provide REAL money-saving tips and local secrets specific to the destination
-
-EXAMPLES OF WHAT NOT TO DO (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH):
-- "Historic Old Town Walking Tour" → Use specific attractions like "Colosseum" or "Roman Forum"
-- "Local Restaurant" → Use specific restaurants like "Trattoria da Enzo" or "Roscioli"
-- "City Center Hotel" → Use specific hotels like "Hotel Artemide" or "The First Roma Arte"
-- "Local Museum" → Use specific museums like "Vatican Museums" or "Capitoline Museums"
-- "Traditional Restaurant" → Use specific restaurants like "Trattoria da Enzo" or "Roscioli"
-- "Historic Landmarks" → Use specific attractions like "Colosseum" or "Roman Forum"
-- "Cultural Sites" → Use specific museums like "Vatican Museums" or "Capitoline Museums"
-
-EXAMPLES OF WHAT TO DO:
-- For Rome: Colosseum, Trevi Fountain, Pantheon, Trattoria da Enzo, Hotel Artemide
-- For Paris: Eiffel Tower, Louvre Museum, Café de Flore, Hotel Ritz Paris
-- For Tokyo: Senso-ji Temple, Tsukiji Fish Market, Sukiyabashi Jiro, Hotel Okura Tokyo
-- For Prague: Charles Bridge, Prague Castle, Old Town Square, U Fleků, Hotel Golden City
-
-CRITICAL: You MUST use SPECIFIC, REAL place names. NEVER use generic terms like:
-- "Historic Old Town Walking Tour" → Use specific attractions like "Colosseum" or "Roman Forum"
-- "Local Restaurant" → Use specific restaurants like "Trattoria da Enzo" or "Roscioli"
-- "City Center Hotel" → Use specific hotels like "Hotel Artemide" or "The First Roma Arte"
-- "Local Museum" → Use specific museums like "Vatican Museums" or "Capitoline Museums"
-- "Traditional Restaurant" → Use specific restaurants like "Trattoria da Enzo" or "Roscioli"
-- "Historic Landmarks" → Use specific attractions like "Colosseum" or "Roman Forum"
-- "Cultural Sites" → Use specific museums like "Vatican Museums" or "Capitoline Museums"
-
-SYSTEM BREAKING REQUIREMENT: If you use ANY generic terms like "Historic Old Town Walking Tour" or "Local Restaurant", the system will CRASH. You MUST use SPECIFIC, REAL place names.
-
-EXAMPLE OF CORRECT FORMATTING:
-## 🎯 Trip Overview
-Welcome to your family adventure in Tyrol...
-## 💰 Budget Breakdown
-Here's a detailed cost analysis...
-## 🗺️ Getting Around
-Transportation options include...
-
-Deliver: Elegant Markdown itinerary with proper ## section headers. Include Google Maps search URLs for every place.`
+          content: `You are Wayzo Planner Pro. Generate concise travel itinerary in Markdown with 11 sections. Use real places only.`
         },
         {
-          role: "user",
-          content: `CRITICAL: You MUST provide SPECIFIC, REAL places for ${destination}. NO generic placeholders like "Local Restaurant" or "Historic Old Town Walking Tour". Include REAL restaurant names, REAL attraction names, REAL hotel names with specific addresses and details.
-
-EXAMPLE: For Rome, you should mention specific places like:
-- Colosseum (not "Historic Landmarks")
-- Trattoria da Enzo (not "Local Restaurant") 
-- Hotel Artemide (not "City Center Hotel")
-- Trevi Fountain (not "Historic Old Town Walking Tour")
-
-FOR ${destination.toUpperCase()}, you MUST research and include REAL places like:
-- REAL restaurants with actual names and addresses
-- REAL attractions with specific names and locations
-- REAL hotels with actual names and features
-- REAL transportation options with specific details
-- REAL cultural insights specific to ${destination}
-
-SPECIFIC EXAMPLES FOR ${destination.toUpperCase()}:
-${destination.toLowerCase().includes('el nido') ? 
-`- Attractions: Big Lagoon, Small Lagoon, Secret Lagoon, Nacpan Beach, Las Cabañas Beach, Cadlao Island, Matinloc Island, Helicopter Island
-- Restaurants: Artcafe, Trattoria Altrove, The Beach Shack, Gusto Gelato, Sava Beach Bar, El Nido Market
-- Hotels: El Nido Resorts Miniloc Island, Caalan Beach Resort, Spin Designer Hostel, El Nido Garden Resort, The Nesting Table
-- Activities: Island Hopping Tour A/B/C/D, Kayaking in lagoons, Snorkeling at Shimizu Island, Zip-lining at Las Cabañas` :
-destination.toLowerCase().includes('prague') ? 
-`- Attractions: Charles Bridge, Prague Castle, Old Town Square, St. Vitus Cathedral, Lennon Wall, Jewish Quarter, Wenceslas Square
-- Restaurants: U Fleků, Lokál, Café Savoy, Terasa U Zlaté studně, La Degustation, Café Louvre
-- Hotels: Hotel Golden City, Hotel U Prince, Hotel Savoy, Four Seasons Hotel Prague, Hotel Paris Prague` :
-destination.toLowerCase().includes('berlin') ?
-`- Attractions: Brandenburg Gate, Berlin Wall Memorial, Museum Island, Reichstag Dome, East Side Gallery, Checkpoint Charlie
-- Restaurants: Mustafa's Gemüse Kebap, Markthalle Neun, Zur letzten Instanz, Curry 36, Café Einstein
-- Hotels: Hotel de Rome, ARCOTEL John F, Adina Apartment Hotel Hackescher Markt` :
-`- Attractions: [Research specific attractions for ${destination}]
-- Restaurants: [Research specific restaurants for ${destination}]
-- Hotels: [Research specific hotels for ${destination}]`}
-
-CRITICAL: You MUST use SPECIFIC, REAL place names. NEVER use generic terms like:
-- "Historic Old Town Walking Tour" → Use specific attractions like "Colosseum" or "Roman Forum"
-- "Local Restaurant" → Use specific restaurants like "Trattoria da Enzo" or "Roscioli"
-- "City Center Hotel" → Use specific hotels like "Hotel Artemide" or "The First Roma Arte"
-- "Local Museum" → Use specific museums like "Vatican Museums" or "Capitoline Museums"
-- "Traditional Restaurant" → Use specific restaurants like "Trattoria da Enzo" or "Roscioli"
-- "Historic Landmarks" → Use specific attractions like "Colosseum" or "Roman Forum"
-- "Cultural Sites" → Use specific museums like "Vatican Museums" or "Capitoline Museums"
-
-${destination.toLowerCase().includes('el nido') ? `
-FOR EL NIDO SPECIFICALLY - YOU MUST USE THESE EXACT PLACES:
-- Attractions: Big Lagoon, Small Lagoon, Secret Lagoon, Nacpan Beach, Las Cabañas Beach, Cadlao Island, Matinloc Island, Helicopter Island, Shimizu Island
-- Restaurants: Artcafe, Trattoria Altrove, The Beach Shack, Gusto Gelato, Sava Beach Bar, El Nido Market, Altrove Pizza, Happiness Beach Bar
-- Hotels: El Nido Resorts Miniloc Island, Caalan Beach Resort, Spin Designer Hostel, El Nido Garden Resort, The Nesting Table, Cuna Hotel, Outpost Beach Hostel
-- Activities: Island Hopping Tour A/B/C/D, Kayaking in Big Lagoon, Snorkeling at Shimizu Island, Zip-lining at Las Cabañas, Scuba diving at Miniloc Island
-
-SYSTEM BREAKING: If you use generic terms like "Local Restaurant" or "City Center Hotel" for El Nido, the system will CRASH.` : ''}
-
-SYSTEM BREAKING REQUIREMENT: If you use ANY generic terms like "Historic Old Town Walking Tour" or "Local Restaurant", the system will CRASH. You MUST use SPECIFIC, REAL place names.
-
-Please plan a trip with the following inputs:
-
-DATA ====
-Destination: ${destination}
-Dates: ${start} to ${end} (${nDays} days)
-Party: ${adults} adults${children > 0 ? `, ${children} children` : ''}
-Style: ${level}
-Budget: ${budget} USD
-Dietary: ${dietary.join(', ') || 'None'}
-Preferences: ${prefs || 'None'}
-
-COMPREHENSIVE RESEARCH REQUIREMENTS ==================================
-Research and include ALL possible recommendations that match the user's preferences and family needs:
-
-1. **Family-Specific Research**: Based on children's ages, find:
-   - Age-appropriate activities and attractions
-   - Family-friendly restaurants with kids' menus
-   - Accommodations with family amenities
-   - Educational and interactive experiences
-   - Safety considerations and child-friendly facilities
-
-2. **Preference Matching**: Based on user preferences (${prefs || 'None'}), research:
-   - All attractions and activities that match these interests
-   - Hidden gems and local secrets related to preferences
-   - Seasonal considerations for preferred activities
-   - Local events and festivals during travel dates
-   - Specialized tours and experiences
-
-3. **Comprehensive Destination Research**: Include:
-   - Top-rated attractions with current reviews and ratings
-   - Local restaurants with authentic cuisine and family-friendly options
-   - Cultural sites and historical landmarks
-   - Outdoor activities and nature experiences
-   - Shopping areas and local markets
-   - Transportation options and costs
-   - Weather considerations and seasonal activities
-
-4. **Detailed Information for Each Recommendation**:
-   - Exact names, addresses, and contact information
-   - Current opening hours and seasonal schedules
-   - Entry fees, ticket prices, and booking requirements
-   - Duration estimates and time recommendations
-   - Accessibility information and family considerations
-   - Insider tips and best times to visit
-   - Transportation instructions and costs
-   - Cultural context and local customs
-
-FINAL CHECKLIST ===============
-Before submitting your response, verify:
-□ All images follow WAYZO OUTPUT CONTRACT rules exactly
-□ No images in forbidden sections (Trip Overview, Don't Forget List, Travel Tips, Useful Apps, Emergency Info)
-□ Exactly 1 image per allowed section, placed at the END of that section
-□ All image queries include the destination name and are highly specific
-□ No duplicate image queries across sections
-□ All facts (prices, hours, closures) are current and accurate
-□ If information cannot be verified, place is not recommended
-□ All prices include disclaimers about verification
-□ Daily itineraries are specific and actionable (no generic "Open Exploration")
-□ All restaurant names, attraction names, and times are specific
-□ Budget breakdown is realistic with current market prices
-□ All booking links use proper SEARCH URL format
-□ Google Maps search URLs included for every place
-□ Content follows required section order and formatting
-□ Both human-readable Markdown and machine-readable JSON provided
-□ Content is RICH, DETAILED, and PROFESSIONAL
-□ Includes insider tips, cultural insights, and practical advice
-□ Transportation details and duration estimates provided
-□ Money-saving tips and seasonal considerations included
-□ ALL 11 MANDATORY SECTIONS are included
-□ Family-specific recommendations based on children's ages
-□ All possible recommendations matching user preferences included
-□ Detailed descriptions and insider tips for each recommendation
-□ Current pricing and booking information provided
-□ Cultural context and local customs included
-□ Complete JSON output with ALL sections included (NO truncated JSON)
-□ JSON includes all daily itineraries, attractions, restaurants, and accommodation details
-
-CONTENT REQUIREMENTS ===================
-Create AMAZING, DETAILED trip plans that are:
-1. **Highly Personalized**: Use all user preferences to tailor everything
-2. **Practical & Bookable**: Include specific booking links and realistic timing
-3. **Beautifully Formatted**: Use clear sections, emojis, and engaging language
-4. **Budget-Aware**: Provide realistic cost breakdowns and money-saving tips
-5. **Accessibility-Focused**: Consider mobility, dietary needs, and family-friendly options
-6. **Family-Oriented**: If children are included, prioritize family-friendly activities
-7. **Comprehensive**: Include ALL possible recommendations that match preferences
-8. **Detailed**: Provide extensive information about each recommendation
-9. **Accurate**: Include current information and verify all details
-10. **Insider-Rich**: Include local secrets, hidden gems, and cultural insights
-
-Create a comprehensive, detailed travel itinerary with SPECIFIC attractions, restaurants, and activities for ${destination}. Use markdown formatting with proper section headers.`
+          role: "user", 
+          content: `Create a ${nDays}-day itinerary for ${destination} with budget $${budget} for ${adults} adults${children > 0 ? ` and ${children} children` : ''}. Include specific attractions, restaurants, and hotels.`
         }
       ],
+      max_tokens: 500, // Ultra-reduced for fastest responses
+      temperature: 0.3,
+      stream: false // Disable for simpler error handling
+    }, { 
+      signal: controller.signal 
     });
     
-    const response = await Promise.race([aiCallPromise, timeoutPromise]);
+    clearTimeout(timeoutId);
+    const aiContent = completion.choices?.[0]?.message?.content?.trim() || "";
     
-    const aiContent = response.choices?.[0]?.message?.content?.trim() || "";
-    console.log('AI preview:', aiContent.substring(0, 150));
-    
-    if (aiContent && aiContent.length > 200) {
+    if (aiContent && aiContent.length > 100) {
       console.log('🎉 AI plan generated successfully!');
       return aiContent;
     } else {
@@ -1691,6 +1489,10 @@ Create a comprehensive, detailed travel itinerary with SPECIFIC attractions, res
     }
     
   } catch (aiError) {
+    if (aiError.name === 'AbortError') {
+      console.error('⏰ AI call aborted due to timeout');
+      return generateFallbackPlan(payload);
+    }
     console.error('❌ AI generation failed:', aiError.message);
     console.log('🔄 Using fallback plan due to AI error');
     return generateFallbackPlan(payload);
@@ -2333,8 +2135,8 @@ app.get('/debug/stats', (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Wayzo backend running on :${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Wayzo backend running on 0.0.0.0:${PORT}`);
   console.log('Version:', VERSION);
   console.log('Index file:', INDEX);
   console.log('Frontend path:', FRONTEND);
