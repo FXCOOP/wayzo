@@ -136,24 +136,57 @@ app.get('/debug/test-ai', async (req, res) => {
       return res.json({ error: 'No OpenAI client' });
     }
     
-    console.log('OpenAI client exists, making API call...');
+    // Check API key validity
+    if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'sk-your-openai-api-key-here' || !process.env.OPENAI_API_KEY.startsWith('sk-')) {
+      console.log('Invalid API key detected');
+      return res.json({ 
+        error: 'Invalid API key', 
+        apiKeyExists: !!process.env.OPENAI_API_KEY,
+        apiKeyLength: process.env.OPENAI_API_KEY?.length || 0,
+        apiKeyStartsWithSk: process.env.OPENAI_API_KEY?.startsWith('sk-') || false,
+        apiKeyPreview: process.env.OPENAI_API_KEY?.substring(0, 20) + '...'
+      });
+    }
     
-    const response = await client.chat.completions.create({
+    console.log('OpenAI client exists, making simple API call...');
+    
+    // Simple test call with timeout
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Test call timed out after 10 seconds')), 10000);
+    });
+    
+    const testCallPromise = client.chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0.3,
       max_tokens: 100,
-      messages: [{ role: "user", content: "Say hello" }]
+      messages: [
+        {
+          role: "user",
+          content: "Say 'Hello from Wayzo AI test' and nothing else."
+        }
+      ],
     });
     
-    console.log('AI response received:', response?.choices?.[0]?.message?.content?.substring(0, 50));
+    const response = await Promise.race([testCallPromise, timeoutPromise]);
+    const content = response.choices?.[0]?.message?.content?.trim() || "";
     
+    console.log('Test API call successful:', content);
     res.json({ 
       success: true, 
-      response: response.choices?.[0]?.message?.content || 'No response' 
+      response: content,
+      model: response.model,
+      usage: response.usage
     });
+    
   } catch (error) {
-    console.log('AI call error:', error.message);
-    res.json({ error: error.message });
+    console.error('Debug AI endpoint error:', error.message);
+    res.status(500).json({ 
+      error: error.message,
+      type: error.constructor.name,
+      apiKeyExists: !!process.env.OPENAI_API_KEY,
+      apiKeyLength: process.env.OPENAI_API_KEY?.length || 0,
+      apiKeyStartsWithSk: process.env.OPENAI_API_KEY?.startsWith('sk-') || false
+    });
   }
 });
 /* Admin basic auth middleware */
@@ -1220,15 +1253,22 @@ async function generatePlanWithAI(payload) {
   const { destination = '', start = '', end = '', budget = 0, adults = 2, children = 0, level = 'mid', prefs = '', dietary = [] } = payload || {};
   const nDays = daysBetween(start, end);
   
-  // STEP 1: Check OpenAI client
+  // STEP 1: Check OpenAI client and API key validity
   console.log('Step 1: OpenAI client check');
   console.log('- Client exists:', !!client);
   console.log('- API Key exists:', !!process.env.OPENAI_API_KEY);
   console.log('- API Key length:', process.env.OPENAI_API_KEY?.length || 0);
+  console.log('- API Key starts with sk-:', process.env.OPENAI_API_KEY?.startsWith('sk-') || false);
   
   if (!client) {
     console.log('❌ No OpenAI client - throwing error instead of fallback');
     throw new Error('OpenAI client not available');
+  }
+  
+  // Check if API key is valid (not placeholder)
+  if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'sk-your-openai-api-key-here' || !process.env.OPENAI_API_KEY.startsWith('sk-')) {
+    console.log('❌ Invalid OpenAI API key - throwing error');
+    throw new Error('Invalid OpenAI API key configuration');
   }
   
   // STEP 2: Skip noisy preflight; proceed directly to generation
@@ -1236,11 +1276,15 @@ async function generatePlanWithAI(payload) {
   // STEP 3: Generate actual plan
   console.log('Step 3: Generating AI plan for', destination);
   try {
-    // Simple timeout wrapper for the AI call
+    // Enhanced timeout wrapper with better error handling
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('AI call timed out after 30 seconds')), 30000);
+      setTimeout(() => {
+        console.log('⏰ AI call timed out after 30 seconds');
+        reject(new Error('AI call timed out after 30 seconds'));
+      }, 30000);
     });
     
+    console.log('🤖 Making OpenAI API call...');
     const aiCallPromise = client.chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0.3,
@@ -1557,6 +1601,20 @@ Create a comprehensive, detailed travel itinerary with SPECIFIC attractions, res
     
   } catch (aiError) {
     console.error('❌ AI generation failed:', aiError.message);
+    console.error('❌ Error type:', aiError.constructor.name);
+    console.error('❌ Error stack:', aiError.stack);
+    
+    // Provide more specific error messages
+    if (aiError.message.includes('timeout')) {
+      console.log('⏰ Timeout error detected');
+    } else if (aiError.message.includes('API key')) {
+      console.log('🔑 API key error detected');
+    } else if (aiError.message.includes('rate limit')) {
+      console.log('🚫 Rate limit error detected');
+    } else if (aiError.message.includes('network')) {
+      console.log('🌐 Network error detected');
+    }
+    
     console.log('Throwing error instead of fallback');
     throw aiError;
   }
@@ -1641,8 +1699,83 @@ app.post('/api/preview', async (req, res) => {
       markdown = await withTimeout(generatePlanWithAI(payload), 60000);
     } catch (firstErr) {
       if (debug) console.debug('[PREVIEW] openai first attempt failed:', firstErr?.message);
+      
+      // Check if it's an API key issue - don't retry
+      if (firstErr.message.includes('API key') || firstErr.message.includes('Invalid OpenAI')) {
+        console.log('🚫 API key issue detected, not retrying');
+        throw firstErr;
+      }
+      
       await new Promise(r => setTimeout(r, 1500));
-      markdown = await withTimeout(generatePlanWithAI(payload), 60000);
+      try {
+        markdown = await withTimeout(generatePlanWithAI(payload), 60000);
+      } catch (secondErr) {
+        console.log('🚫 Both AI attempts failed, providing fallback');
+        // Provide a basic fallback response
+        markdown = `# ${payload.destination} Travel Plan
+
+## 🎯 Trip Overview
+Welcome to ${payload.destination}! This is a basic travel plan generated while our AI service is temporarily unavailable.
+
+## 💰 Budget Breakdown
+- Accommodation: $${Math.round(payload.budget * 0.4)} (40%)
+- Food & Dining: $${Math.round(payload.budget * 0.3)} (30%)
+- Activities: $${Math.round(payload.budget * 0.2)} (20%)
+- Transportation: $${Math.round(payload.budget * 0.1)} (10%)
+
+## 🗺️ Getting Around
+- Research local transportation options
+- Consider walking tours for city centers
+- Check for day passes or tourist cards
+
+## 🏨 Accommodation
+- Search for hotels in city center
+- Consider vacation rentals for families
+- Book in advance for better rates
+
+## 🎫 Must-See Attractions
+- Research top attractions for ${payload.destination}
+- Check opening hours and ticket prices
+- Consider guided tours for historical sites
+
+## 🍽️ Dining Guide
+- Try local cuisine and specialties
+- Research popular restaurants
+- Make reservations for fine dining
+
+## 🎭 Daily Itineraries
+**Day 1**: Arrival and city orientation
+**Day 2**: Main attractions and sightseeing
+**Day 3**: Local experiences and culture
+
+## 🧳 Don't Forget List
+- [ ] Passport and travel documents
+- [ ] Travel insurance
+- [ ] Local currency
+- [ ] Weather-appropriate clothing
+- [ ] Camera and chargers
+- [ ] Medications and first aid
+
+## 🛡️ Travel Tips
+- Research local customs and etiquette
+- Check visa requirements
+- Learn basic local phrases
+- Keep emergency contacts handy
+
+## 📱 Useful Apps
+- Maps and navigation apps
+- Translation apps
+- Local transportation apps
+- Weather apps
+
+## 🚨 Emergency Info
+- Local emergency numbers
+- Embassy/consulate contacts
+- Nearest hospital locations
+- Travel insurance contacts
+
+*Note: This is a basic template. For detailed recommendations, please try again when our AI service is available.*`;
+      }
     }
     if (debug) console.debug('[PREVIEW] openai_call_success mdLen=', markdown?.length || 0);
 
