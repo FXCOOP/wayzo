@@ -575,8 +575,7 @@
           linkBar.className = 'preview-cta';
           linkBar.innerHTML = `🔗 Shareable link: <a href="${result.permalink}" target="_blank" rel="noopener">${location.origin}${result.permalink}</a>`;
           previewEl.parentElement.insertBefore(linkBar, previewEl.nextSibling);
-          // Auto-open permalink in a new tab
-          window.open(result.permalink, '_blank');
+          // Do not auto-open permalink; show link for explicit user action
           // Add rich share buttons
           const shareBar = document.createElement('div');
           shareBar.className = 'actions';
