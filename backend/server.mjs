@@ -1337,10 +1337,11 @@ function generateFallbackPlan(payload, mode = 'preview') {
 ## 🎯 Trip Overview
 Welcome to ${destination}! This is a ${nDays}-day trip for ${adults} adults${children > 0 ? ` and ${children} children` : ''} with a ${level} budget level.
 
-**Trip Highlights:**
-- ${nDays} days of exploration
-- Budget: $${budget} USD
-- Travel style: ${level}
+**Trip Details:**
+- **Dates**: ${start} to ${end} (${nDays} days)
+- **Budget**: $${budget} USD
+- **Travel style**: ${level}
+- **Travelers**: ${adults} adults${children > 0 ? `, ${children} children` : ''}
 - ${children > 0 ? `Family-friendly activities included` : `Adult-focused experiences`}
 
 ## 💰 Budget Breakdown
@@ -1482,8 +1483,8 @@ async function generateAIContent(payload, nDays, destination, budget, adults, ch
       : `You are Wayzo Planner Pro. Generate a concise travel itinerary in Markdown with 11 sections. Use real places only.`;
     
     const userPrompt = mode === 'full'
-      ? `Create a comprehensive ${nDays}-day itinerary for ${destination} with budget $${budget} for ${adults} adults${children > 0 ? ` and ${children} children` : ''}. Include specific attractions, restaurants, hotels with addresses, detailed daily schedules, and practical travel information.`
-      : `Create a ${nDays}-day itinerary for ${destination} with budget $${budget} for ${adults} adults${children > 0 ? ` and ${children} children` : ''}. Include specific attractions, restaurants, and hotels.`;
+      ? `Create a comprehensive ${nDays}-day itinerary for ${destination} from ${start} to ${end} with budget $${budget} for ${adults} adults${children > 0 ? ` and ${children} children` : ''}. Include specific attractions, restaurants, hotels with addresses, detailed daily schedules, and practical travel information. Show the actual dates in the itinerary.`
+      : `Create a ${nDays}-day itinerary for ${destination} from ${start} to ${end} with budget $${budget} for ${adults} adults${children > 0 ? ` and ${children} children` : ''}. Include specific attractions, restaurants, and hotels. Show the actual dates in the itinerary.`;
     
     const completion = await client.chat.completions.create({
       model: 'gpt-4o-mini', // Fastest, low-latency model
