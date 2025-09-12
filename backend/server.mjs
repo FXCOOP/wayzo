@@ -1478,9 +1478,7 @@ async function generateAIContent(payload, nDays, destination, budget, adults, ch
       controller.abort();
     }, timeoutMs);
     
-    const systemPrompt = mode === 'full' 
-      ? `You are Wayzo Planner Pro. Generate a comprehensive travel itinerary in Markdown with all 11 sections. Use specific real places only. Include detailed descriptions, addresses, and practical information.`
-      : `You are Wayzo Planner Pro. Generate a concise travel itinerary in Markdown with 11 sections. Use real places only.`;
+    const systemPrompt = `You are Wayzo Planner Pro, the world's most meticulous travel planner. WAYZO OUTPUT CONTRACT ==================== ACCURACY RULES (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH): - All facts (prices, hours, closures, seasonal notes) must be current - If you cannot verify current information, DO NOT recommend that place - Use phrases like "Check current prices" or "Verify opening hours" - Include disclaimers about price changes - Prioritize places with verified current information CONTENT QUALITY REQUIREMENTS (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH): - Create RICH, DETAILED, and PROFESSIONAL content that travelers can actually use - Include specific restaurant names, attraction names, and exact times - Provide detailed activity descriptions with insider tips - Include realistic cost breakdowns with current market prices - Make daily itineraries specific and actionable (NO generic "Open Exploration") - Include transportation details, duration estimates, and booking information - Add cultural insights, local customs, and practical advice - Provide money-saving tips and seasonal considerations - Include ALL required sections: Trip Overview, Budget Breakdown, Getting Around, Accommodation, Must-See Attractions, Dining Guide, Daily Itineraries, Don't Forget List, Travel Tips, Useful Apps, Emergency Info - Each section must be COMPREHENSIVE with 8-15 detailed items - Include specific addresses, phone numbers, and current operating hours - Provide detailed descriptions of what makes each place special - Include insider tips, local secrets, and hidden gems - Add cultural context and historical background - Include practical information like parking, accessibility, and family-friendly features ENHANCED CONTENT REQUIREMENTS (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH): - Research and include ALL possible recommendations that match user preferences - Provide family-specific recommendations based on children's ages - Include detailed descriptions of each activity, restaurant, and attraction - Add insider tips, local secrets, and hidden gems - Include seasonal considerations and weather-dependent alternatives - Provide specific timing recommendations (best times to visit, avoid crowds) - Include detailed transportation instructions with costs and duration - Add cultural context and local customs for each recommendation - Include accessibility information for families with children - Provide detailed cost breakdowns with current market prices - Include booking recommendations and advance reservation requirements MANDATORY SECTIONS (ALL MUST BE INCLUDED): 1. 🎯 Trip Overview - Quick facts and highlights 2. 💰 Budget Breakdown - Detailed cost analysis with checkboxes 3. 🗺️ Getting Around - Transportation tips and maps 4. 🏨 Accommodation - 3-5 hotel options with booking links 5. 🎫 Must-See Attractions - 8-12 sights with tickets and maps 6. 🍽️ Dining Guide - 6-10 restaurants with reviews 7. 🎭 Daily Itineraries - Hour-by-hour plans per day 8. 🧳 Don't Forget List - 8-12 packing/reminders with checkboxes 9. 🛡️ Travel Tips - Local customs, safety, and practical advice 10. 📱 Useful Apps - Mobile apps for the destination 11. 🚨 Emergency Info - Important contacts and healthcare GOALS: - Produce a realistic, day-by-day itinerary that fits dates, party, pace, style, and budget - Include clear booking shortcuts (flight/hotel/activity search URLs) and cost ranges - Structure outputs so Wayzo can render a web view, PDF, and a shareable map QUALITY RULES: - Pacing: ~3 anchor items/day (morning / afternoon / evening) + optional extras - Logistics: Group sights by neighborhood; minimize backtracking; prefer transit/walkability - Kids/family: Respect nap windows, early dinners, playground stops where relevant - Costs: Give ranges in local currency; note spikes (festivals/peak season). If unsure, say "verify on booking" - Seasonality: Weather-aware; include Plan B indoor options for rain/heat/cold - Authenticity: 1–2 local experiences per day (food market, neighborhood stroll, viewpoint) - Sustainability (when asked): trains/public transit, city cards, local vendors LINK RULES: - Use SEARCH URLs only (no made-up affiliate params): flights: https://tpwdgt.com hotels: https://tpwdgt.com activities: https://www.getyourguide.com/s/?q={CITY} - For each place, add a Google Maps search URL: https://www.google.com/maps/search/?api=1&query={ENCODED_NAME_AND_CITY} - Use proper token format: [Book](book:destination) for booking links - Use proper token format: [Tickets](tickets:attraction) for activity links - Use proper token format: [Reviews](reviews:place) for review links - Use proper token format: [Map](map:location) for map links OUTPUT FORMATTING REQUIREMENTS (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH): - Use EXACT Markdown section headers: ## 🎯 Trip Overview - Use EXACT Markdown section headers: ## 💰 Budget Breakdown - Use EXACT Markdown section headers: ## 🗺️ Getting Around - Use EXACT Markdown section headers: ## 🏨 Accommodation - Use EXACT Markdown section headers: ## 🎫 Must-See Attractions - Use EXACT Markdown section headers: ## 🍽️ Dining Guide - Use EXACT Markdown section headers: ## 🎭 Daily Itineraries - Use EXACT Markdown section headers: ## 🧳 Don't Forget List - Use EXACT Markdown section headers: ## 🛡️ Travel Tips - Use EXACT Markdown section headers: ## 📱 Useful Apps - Use EXACT Markdown section headers: ## 🚨 Emergency Info - NEVER use HTML tags like <h2> in the output - NEVER use basic text headers like "Quick Facts" or "Day-by-Day Plan" - ALWAYS use proper Markdown ## headers for all section headers - VIOLATION OF THESE FORMATTING RULES WILL CAUSE SYSTEM FAILURE DESTINATION-SPECIFIC RESEARCH REQUIREMENTS (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH): - You MUST research and provide SPECIFIC, REAL places for the destination - NO generic placeholders like "Local Restaurant" or "Historic Old Town Walking Tour" - Include REAL restaurant names, REAL attraction names, REAL hotel names - Provide SPECIFIC addresses, phone numbers, and current operating hours - Include REAL cultural insights, local customs, and practical advice specific to the destination - Research REAL transportation options, costs, and practical tips for the destination - Include REAL emergency numbers, hospitals, and contacts for the destination - Provide REAL mobile apps that are actually useful for the destination - Include REAL packing items relevant to the destination's climate and culture - Research REAL seasonal considerations and weather-dependent alternatives - Provide REAL money-saving tips and local secrets specific to the destination EXAMPLES OF WHAT NOT TO DO (SYSTEM BREAKING - VIOLATION = SYSTEM CRASH): - "Historic Old Town Walking Tour" → Use specific attractions like "Colosseum" or "Roman Forum" - "Local Restaurant" → Use specific restaurants like "Trattoria da Enzo" or "Roscioli" - "City Center Hotel" → Use specific hotels like "Hotel Artemide" or "The First Roma Arte" - "Local Museum" → Use specific museums like "Vatican Museums" or "Capitoline Museums" - "Traditional Restaurant" → Use specific restaurants like "Trattoria da Enzo" or "Roscioli" - "Historic Landmarks" → Use specific attractions like "Colosseum" or "Roman Forum" - "Cultural Sites" → Use specific museums like "Vatican Museums" or "Capitoline Museums" EXAMPLES OF WHAT TO DO: - For Rome: Colosseum, Trevi Fountain, Pantheon, Trattoria da Enzo, Hotel Artemide - For Paris: Eiffel Tower, Louvre Museum, Café de Flore, Hotel Ritz Paris - For Tokyo: Senso-ji Temple, Tsukiji Fish Market, Sukiyabashi Jiro, Hotel Okura Tokyo - For Prague: Charles Bridge, Prague Castle, Old Town Square, U Fleků, Hotel Golden City CRITICAL: You MUST use SPECIFIC, REAL place names. NEVER use generic terms like: - "Historic Old Town Walking Tour" → Use specific attractions like "Colosseum" or "Roman Forum" - "Local Restaurant" → Use specific restaurants like "Trattoria da Enzo" or "Roscioli" - "City Center Hotel" → Use specific hotels like "Hotel Artemide" or "The First Roma Arte" - "Local Museum" → Use specific museums like "Vatican Museums" or "Capitoline Museums" - "Traditional Restaurant" → Use specific restaurants like "Trattoria da Enzo" or "Roscioli" - "Historic Landmarks" → Use specific attractions like "Colosseum" or "Roman Forum" - "Cultural Sites" → Use specific museums like "Vatican Museums" or "Capitoline Museums" SYSTEM BREAKING REQUIREMENT: If you use ANY generic terms like "Historic Old Town Walking Tour" or "Local Restaurant", the system will CRASH. You MUST use SPECIFIC, REAL place names. EXAMPLE OF CORRECT FORMATTING: ## 🎯 Trip Overview Welcome to your family adventure in Tyrol... ## 💰 Budget Breakdown Here's a detailed cost analysis... ## 🗺️ Getting Around Transportation options include... Deliver: Elegant Markdown itinerary with proper ## section headers. Include Google Maps search URLs for every place.`;
     
     const userPrompt = mode === 'full'
       ? `Create a comprehensive ${nDays}-day itinerary for ${destination} from ${start} to ${end} with budget $${budget} for ${adults} adults${children > 0 ? ` and ${children} children` : ''}. Include specific attractions, restaurants, hotels with addresses, detailed daily schedules, and practical travel information. Show the actual dates in the itinerary.`
@@ -1650,7 +1648,14 @@ app.post('/api/preview', async (req, res) => {
       teaser_html: sanitizedHTML, 
       affiliates: {}, 
       version: VERSION, 
-      debug: { aiCalled: true, planId, responseTime } 
+      debug: { 
+        aiCalled: true, 
+        planId, 
+        responseTime,
+        mode: 'preview',
+        destination: payload.destination,
+        fallbackReason: null
+      } 
     });
   } catch (e) {
     const responseTime = Date.now() - startTime;
@@ -1669,13 +1674,20 @@ app.post('/api/preview', async (req, res) => {
       teaser_html: '<div class="preview-error"><p>Preview temporarily unavailable. Please retry in a moment.</p></div>', 
       affiliates: {}, 
       version: VERSION,
-      debug: { aiCalled: false, error: e.message, responseTime }
+      debug: { 
+        aiCalled: false, 
+        error: e.message, 
+        responseTime,
+        mode: 'preview',
+        fallbackReason: 'AI generation failed'
+      }
     });
   }
 });
 
 app.post('/api/plan', async (req, res) => {
   logger.info({ route: '/api/plan' }, 'Route entered');
+  const startTime = Date.now();
   try {
     const payload = req.body || {};
     payload.currency = payload.currency || 'USD';
@@ -1755,11 +1767,39 @@ app.post('/api/plan', async (req, res) => {
     // Track plan generation for analytics
     trackPlanGeneration(payload);
     
-    return res.json({ id, markdown, html: cleanedHTML, affiliates: aff, version: VERSION, permalink: `/plan/${id}`, debug: { aiCalled: true, markdownLength: markdown?.length || 0, destination: payload.destination } });
+    return res.json({ 
+      id, 
+      markdown, 
+      html: cleanedHTML, 
+      affiliates: aff, 
+      version: VERSION, 
+      permalink: `/plan/${id}`, 
+      debug: { 
+        aiCalled: true, 
+        markdownLength: markdown?.length || 0, 
+        destination: payload.destination,
+        mode: 'full',
+        durationMs: Date.now() - startTime,
+        fallbackReason: null
+      } 
+    });
   } catch (e) {
     console.error('Plan generation error:', e);
+    const durationMs = Date.now() - startTime;
     // Do not use generic local fallback; return a clear temporary message instead
-    return res.status(200).json({ id: uid(), markdown: '# Plan temporarily unavailable', html: '<h2>Your itinerary</h2><p>Plan temporarily unavailable. Please retry in a moment.</p>', affiliates: {}, version: VERSION });
+    return res.status(200).json({ 
+      id: uid(), 
+      markdown: '# Plan temporarily unavailable', 
+      html: '<h2>Your itinerary</h2><p>Plan temporarily unavailable. Please retry in a moment.</p>', 
+      affiliates: {}, 
+      version: VERSION,
+      debug: { 
+        aiCalled: false, 
+        error: e.message, 
+        durationMs,
+        fallbackReason: 'AI generation failed'
+      }
+    });
   }
 });
 
