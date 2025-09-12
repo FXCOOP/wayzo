@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Contact Us — Wayzo</title>
+  <link rel="stylesheet" href="/frontend/style.css" />
+</head>
+<body>
+  <main class="container">
+    <section class="card">
+      <div class="card-header"><h2>Contact Us</h2></div>
+      <form id="contactForm" class="form">
+        <div class="field"><label>Your Name</label><input id="cName" required /></div>
+        <div class="field"><label>Email</label><input id="cEmail" type="email" required /></div>
+        <div class="field"><label>Subject</label><input id="cSubject" /></div>
+        <div class="field"><label>Message</label><textarea id="cMessage" rows="6" required></textarea></div>
+        <div class="actions"><button class="btn btn-primary" type="submit">Send</button></div>
+      </form>
+      <p id="cStatus" class="muted"></p>
+    </section>
+  </main>
+  <script>
+    document.getElementById('contactForm').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const status = document.getElementById('cStatus');
+      status.textContent = 'Sending...';
+      try {
+        const resp = await fetch('/api/contact', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+          name: document.getElementById('cName').value,
+          email: document.getElementById('cEmail').value,
+          subject: document.getElementById('cSubject').value,
+          message: document.getElementById('cMessage').value,
+          origin: location.href
+        })});
+        if (!resp.ok) throw new Error('Failed');
+        status.textContent = 'Thanks! We received your message and will reply shortly.';
+        e.target.reset();
+      } catch (_) {
+        status.textContent = 'Sorry, something went wrong. Please try again later.';
+      }
+    });
+  </script>
+</body>
+</html>

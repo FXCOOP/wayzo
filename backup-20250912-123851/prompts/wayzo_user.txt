@@ -1,0 +1,126 @@
+Please plan a trip with the following inputs:
+
+DATA
+====
+
+Destination: {{destination}}
+Dates: {{start}} to {{end}} (flexible: {{flex_enabled}}, ±{{flex_days}} days)
+Party: {{adults}} adults{{children_suffix}}
+Style: {{style}} Pace: {{pace}} Daily start: {{daily_start}}
+Budget: {{currency}} {{budget_total}} (includes flights: {{includes_flights}})
+Dietary: {{dietary}}
+Lodging preference: {{lodging_type}}
+Purpose: {{purpose_list}}
+Preferences: {{prefs}}
+
+Constraints:
+
+Max single drive: {{max_drive_minutes}} minutes
+
+Accessibility: {{access_needs}}
+
+Nap windows: {{nap_windows}}
+
+Weather notes: {{weather_notes}}
+
+COMPREHENSIVE RESEARCH REQUIREMENTS
+==================================
+
+Research and include ALL possible recommendations that match the user's preferences and family needs:
+
+1. **Family-Specific Research**: Based on children's ages ({{children_ages}}), find:
+   - Age-appropriate activities and attractions
+   - Family-friendly restaurants with kids' menus
+   - Accommodations with family amenities
+   - Educational and interactive experiences
+   - Safety considerations and child-friendly facilities
+
+2. **Preference Matching**: Based on user preferences ({{prefs}}), research:
+   - All attractions and activities that match these interests
+   - Hidden gems and local secrets related to preferences
+   - Seasonal considerations for preferred activities
+   - Local events and festivals during travel dates
+   - Specialized tours and experiences
+
+3. **Comprehensive Destination Research**: Include:
+   - Top-rated attractions with current reviews and ratings
+   - Local restaurants with authentic cuisine and family-friendly options
+   - Cultural sites and historical landmarks
+   - Outdoor activities and nature experiences
+   - Shopping areas and local markets
+   - Transportation options and costs
+   - Weather considerations and seasonal activities
+
+4. **Detailed Information for Each Recommendation**:
+   - Exact names, addresses, and contact information
+   - Current opening hours and seasonal schedules
+   - Entry fees, ticket prices, and booking requirements
+   - Duration estimates and time recommendations
+   - Accessibility information and family considerations
+   - Insider tips and best times to visit
+   - Transportation instructions and costs
+   - Cultural context and local customs
+
+FINAL CHECKLIST
+===============
+
+Before submitting your response, verify:
+
+□ All facts (prices, hours, closures) are current and accurate
+□ If information cannot be verified, place is not recommended
+□ All prices include disclaimers about verification
+□ Daily itineraries are specific and actionable (no generic "Open Exploration")
+□ All restaurant names, attraction names, and times are specific
+□ Budget breakdown is realistic with current market prices
+□ All booking links use proper SEARCH URL format
+□ Google Maps search URLs included for every place
+□ Content follows required section order and formatting
+□ Both human-readable Markdown and machine-readable JSON provided
+□ Content is RICH, DETAILED, and PROFESSIONAL
+□ Includes insider tips, cultural insights, and practical advice
+□ Transportation details and duration estimates provided
+□ Money-saving tips and seasonal considerations included
+□ ALL 11 MANDATORY SECTIONS are included
+□ Family-specific recommendations based on children's ages
+□ All possible recommendations matching user preferences included
+□ Detailed descriptions and insider tips for each recommendation
+□ Current pricing and booking information provided
+□ Cultural context and local customs included
+□ Complete JSON output with ALL sections included (NO truncated JSON)
+□ JSON includes all daily itineraries, attractions, restaurants, and accommodation details
+
+CONTENT REQUIREMENTS
+===================
+
+Create AMAZING, DETAILED trip plans that are:
+
+1. **Highly Personalized**: Use all user preferences to tailor everything
+2. **Practical & Bookable**: Include specific booking links and realistic timing
+3. **Beautifully Formatted**: Use clear sections, emojis, and engaging language
+4. **Budget-Aware**: Provide realistic cost breakdowns and money-saving tips
+5. **Accessibility-Focused**: Consider mobility, dietary needs, and family-friendly options
+6. **Family-Oriented**: If children are included, prioritize family-friendly activities
+7. **Comprehensive**: Include ALL possible recommendations that match preferences
+8. **Detailed**: Provide extensive information about each recommendation
+9. **Accurate**: Include current information and verify all details
+10. **Insider-Rich**: Include local secrets, hidden gems, and cultural insights
+
+REQUIRED SECTIONS (USE EXACT MARKDOWN HEADERS - ALL MUST BE INCLUDED):
+- ## 🎯 Trip Overview - Quick facts and highlights (MUST include specific highlights, travel dates, party details, budget)
+- ## 💰 Budget Breakdown - Detailed cost analysis per person with checkboxes for tracking (MUST include specific costs for flights, accommodation, food, activities, transportation, miscellaneous)
+- ## 🗺️ Getting Around - Transportation tips and maps with [Map](map:...) (MUST include specific transportation options, costs, and practical tips)
+- ## 🏨 Accommodation - 3–5 hotel options (Budget/Mid/Luxury) with [Book](book:...), [Reviews](reviews:...) (MUST include specific hotels with names, locations, features, prices)
+- ## 🎫 Must-See Attractions - 8–12 sights with [Tickets](tickets:...) (MUST include specific attractions with descriptions, entry fees, hours)
+- ## 🍽️ Dining Guide - 6–10 restaurants by neighborhood with [Reviews](reviews:...) (MUST include specific restaurants with cuisine types, locations, kid-friendly info)
+- ## 🎭 Daily Itineraries - Hour-by-hour plans per day with [Tickets](tickets:...), [Map](map:...) (MUST include specific times, activities, and locations for each day)
+- ## 🧳 Don't Forget List - 8–12 packing/reminders with checkboxes for tracking (MUST include specific items relevant to destination and family)
+- ## 🛡️ Travel Tips - Local customs, safety, and practical advice (MUST include specific local customs, safety tips, cultural insights)
+- ## 📱 Useful Apps - Mobile apps for the destination (MUST include specific apps with descriptions)
+- ## 🚨 Emergency Info - Important contacts and healthcare (MUST include specific emergency numbers, hospitals, contacts)
+
+Deliver:
+
+Elegant Markdown itinerary.
+
+A single fenced JSON block named wayzo that matches the Wayzo schema exactly (see system message).
+Include Google Maps search URLs for every place.

@@ -1,0 +1,71 @@
+[2025-09-10 18:49:24.332 +0000] INFO (239781): Wayzo server starting
+    version: "staging-v75"
+[2025-09-10 18:49:25.592 +0000] INFO (239811): Wayzo server starting
+    version: "staging-v75"
+[2025-09-10 18:50:02.420 +0000] INFO (240311): Wayzo server starting
+    version: "staging-v75"
+[2025-09-10 18:50:04.448 +0000] INFO (240352): Wayzo server starting
+    version: "staging-v75"
+[2025-09-10 18:50:37.038 +0000] INFO (240864): Wayzo server starting
+    version: "staging-v75"
+[2025-09-10 18:50:51.754 +0000] INFO (241024): Wayzo server starting
+    version: "staging-v75"
+[2025-09-10 18:51:05.602 +0000] INFO (241024): Debug stats requested
+    total: 0
+    successful: 0
+    errors: 0
+    avgResponseTime: 0
+[2025-09-10 18:51:09.780 +0000] INFO (241024): Debug plans list requested
+    limit: 50
+    count: 0
+[2025-09-10 18:51:32.497 +0000] INFO (241443): Wayzo server starting
+    version: "staging-v75"
+[2025-09-10 19:08:08.034 +0000] INFO (244891): Wayzo server starting
+    version: "staging-v75"
+[2025-09-10 19:08:21.098 +0000] INFO (244974): Wayzo server starting
+    version: "staging-v75"
+[2025-09-10 19:08:33.949 +0000] INFO (244974): Debug stats requested
+    total: 0
+    successful: 0
+    errors: 0
+    avgResponseTime: 0
+[2025-09-10 19:12:07.290 +0000] INFO (246426): Wayzo server starting
+    version: "staging-v75"
+[2025-09-10 19:12:43.451 +0000] INFO (246702): Wayzo server starting
+    version: "staging-v75"
+[2025-09-10 19:13:01.206 +0000] INFO (247116): Wayzo server starting
+    version: "staging-v75"
+[2025-09-10 19:13:02.641 +0000] INFO (247146): Wayzo server starting
+    version: "staging-v75"
+[2025-09-10 19:13:13.861 +0000] INFO (247415): Wayzo server starting
+    version: "staging-v75"
+[2025-09-10 19:14:12.503 +0000] INFO (247952): Wayzo server starting
+    version: "staging-v75"
+[2025-09-10 19:14:26.293 +0000] INFO (248057): Wayzo server starting
+    version: "staging-v75"
+[2025-09-10 19:14:37.045 +0000] INFO (248057): Debug stats requested
+    total: 0
+    successful: 0
+    errors: 0
+    avgResponseTime: 0
+[2025-09-10 19:14:40.934 +0000] INFO (248057): Debug plans list requested
+    limit: 50
+    count: 0
+[2025-09-10 19:14:57.564 +0000] INFO (248454): Wayzo server starting
+    version: "staging-v75"
+[2025-09-10 19:15:02.370 +0000] INFO (248674): Wayzo server starting
+    version: "staging-v75"
+[2025-09-11 05:21:18.937 +0000] INFO (16483): Wayzo server starting
+    version: "staging-v75"
+[2025-09-12 05:20:50.784 +0000] INFO (3056): Wayzo server starting
+    version: "staging-v75"
+[2025-09-12 05:20:55.890 +0000] INFO (3056): Route entered
+    route: "/api/preview"
+[2025-09-12 05:20:55.890 +0000] INFO (3056): Preview request received
+    destination: "Paris"
+    budget: 1000
+[2025-09-12 05:20:55.907 +0000] WARN (3056): Generic content detected
+    pattern: "Local Restaurant"
+    html: "<h1>Paris Travel Plan</h1>\n<h2>🎯 Trip Overview</h2>\n<p>Welcome to Paris! This is a 3-day trip for 2 adults with a mid budget level.</p>\n<p><strong>Trip Highlights:</strong></p>\n<ul>\n<li>3 days of exp"
+[2025-09-12 05:20:55.907 +0000] ERROR (3056): Unhandled Promise Rejection
+    reason: {}

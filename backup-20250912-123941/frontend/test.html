@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wayzo Test Page</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <h1>Wayzo Test Page</h1>
+    <p>This is a test page to verify the multi-language and authentication features.</p>
+    
+    <button onclick="testLanguage()">Test Language Change</button>
+    <button onclick="testAuth()">Test Authentication</button>
+    
+    <div id="testOutput"></div>
+    
+    <script src="translations.js"></script>
+    <script src="app.js"></script>
+    
+    <script>
+        function testLanguage() {
+            const output = document.getElementById('testOutput');
+            if (window.wayzoApp && window.wayzoApp.languageManager) {
+                const currentLang = window.wayzoApp.languageManager.currentLanguage;
+                const nextLang = currentLang === 'en' ? 'es' : 'en';
+                window.wayzoApp.languageManager.setLanguage(nextLang);
+                output.innerHTML = `<p>Language changed from ${currentLang} to ${nextLang}</p>`;
+            } else {
+                output.innerHTML = '<p>Language manager not initialized</p>';
+            }
+        }
+        
+        function testAuth() {
+            const output = document.getElementById('testOutput');
+            if (window.wayzoApp && window.wayzoApp.authManager) {
+                const isAuth = window.wayzoApp.authManager.isAuthenticated;
+                output.innerHTML = `<p>Authentication status: ${isAuth ? 'Authenticated' : 'Not authenticated'}</p>`;
+                if (isAuth) {
+                    output.innerHTML += `<p>User: ${window.wayzoApp.authManager.currentUser?.name || 'Unknown'}</p>`;
+                }
+            } else {
+                output.innerHTML = '<p>Authentication manager not initialized</p>';
+            }
+        }
+        
+        // Test on page load
+        window.addEventListener('load', () => {
+            const output = document.getElementById('testOutput');
+            output.innerHTML = '<p>Page loaded. Testing initialization...</p>';
+            
+            setTimeout(() => {
+                if (window.wayzoApp) {
+                    output.innerHTML += '<p>✅ Wayzo app initialized successfully!</p>';
+                    output.innerHTML += `<p>Language: ${window.wayzoApp.currentLanguage}</p>`;
+                    output.innerHTML += `<p>Authenticated: ${window.wayzoApp.isAuthenticated}</p>`;
+                } else {
+                    output.innerHTML += '<p>❌ Wayzo app failed to initialize</p>';
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

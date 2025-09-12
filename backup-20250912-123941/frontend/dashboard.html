@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Dashboard - Wayzo</title>
+    <link rel="stylesheet" href="/frontend/style.css">
+    <link rel="stylesheet" href="/frontend/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header Navigation -->
+    <header class="dashboard-header">
+        <div class="container">
+            <div class="header-content">
+                <div class="header-left">
+                    <a href="/" class="back-btn">
+                        <i class="fas fa-arrow-left"></i> Back to Wayzo
+                    </a>
+                    <h1>My Dashboard</h1>
+                </div>
+                <div class="header-right">
+                    <div class="user-info">
+                        <img id="userAvatar" src="/frontend/assets/default-avatar.svg" alt="User Avatar" />
+                        <div class="user-details">
+                            <div id="userName">User Name</div>
+                            <div id="userEmail">user@example.com</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-ghost" onclick="signOut()">Sign Out</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Dashboard Content -->
+    <main class="dashboard-main">
+        <div class="container">
+            <!-- Stats Overview -->
+            <section class="stats-section">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="totalPlans">0</div>
+                            <div class="stat-label">Plans Created</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="totalSaved">$0</div>
+                            <div class="stat-label">Total Saved</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="totalReferrals">0</div>
+                            <div class="stat-label">Referrals</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⭐</div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="activePlans">0</div>
+                            <div class="stat-label">Active Plans</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Recent Plans -->
+            <section class="plans-section">
+                <div class="section-header">
+                    <h2>Recent Plans</h2>
+                    <button class="btn btn-primary" onclick="createNewPlan()">Create New Plan</button>
+                </div>
+                <div class="plans-grid" id="plansGrid">
+                    <!-- Plans will be loaded here -->
+                </div>
+            </section>
+
+            <!-- Referrals -->
+            <section class="referrals-section">
+                <div class="section-header">
+                    <h2>Referral Program</h2>
+                    <button class="btn btn-ghost" onclick="showReferralModal()">Share & Earn</button>
+                </div>
+                <div class="referral-content">
+                    <div class="referral-stats">
+                        <div class="referral-stat">
+                            <span class="stat-number" id="referralCount">0</span>
+                            <span class="stat-label">Total Referrals</span>
+                        </div>
+                        <div class="referral-stat">
+                            <span class="stat-number" id="referralEarnings">$0</span>
+                            <span class="stat-label">Total Earnings</span>
+                        </div>
+                    </div>
+                    <div class="referral-code-section">
+                        <h3>Your Referral Code</h3>
+                        <div class="referral-code-display">
+                            <input type="text" id="referralCode" readonly value="WAYZOFN4V0A" />
+                            <button class="btn btn-primary" onclick="copyReferralCode()">Copy</button>
+                        </div>
+                        <p class="referral-info">Share this code with friends and earn $5 off your next plan for each successful referral!</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Billing & Subscriptions -->
+            <section class="billing-section">
+                <div class="section-header">
+                    <h2>Billing & Subscriptions</h2>
+                </div>
+                <div class="billing-content">
+                    <div class="billing-summary">
+                        <div class="billing-stat">
+                            <span class="stat-label">Total Spent</span>
+                            <span class="stat-number" id="totalSpent">$0</span>
+                        </div>
+                        <div class="billing-stat">
+                            <span class="stat-label">Reports Purchased</span>
+                            <span class="stat-number" id="reportsPurchased">0</span>
+                        </div>
+                    </div>
+                    <div class="purchase-history" id="purchaseHistory">
+                        <!-- Purchase history will be loaded here -->
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Referral Modal -->
+    <div id="referralModal" class="referral-modal hidden">
+        <div class="referral-modal-content">
+            <div class="referral-modal-header">
+                <h3>Share Wayzo & Earn Rewards</h3>
+                <button class="btn-close" onclick="hideReferralModal()">×</button>
+            </div>
+            <div class="referral-modal-body">
+                <p>Share your referral code with friends and family. For every successful referral, you'll earn $5 off your next trip plan!</p>
+                <div class="share-options">
+                    <button class="share-btn social" onclick="shareReferral('facebook')">
+                        <i class="fab fa-facebook-f"></i> Facebook
+                    </button>
+                    <button class="share-btn social" onclick="shareReferral('twitter')">
+                        <i class="fab fa-twitter"></i> Twitter
+                    </button>
+                    <button class="share-btn social" onclick="shareReferral('whatsapp')">
+                        <i class="fab fa-whatsapp"></i> WhatsApp
+                    </button>
+                    <button class="share-btn social" onclick="shareReferral('email')">
+                        <i class="fas fa-envelope"></i> Email
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/frontend/dashboard.js"></script>
+</body>
+</html>
