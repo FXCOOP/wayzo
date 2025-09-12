@@ -1474,7 +1474,7 @@ async function generateAIContent(payload, nDays, destination, budget, adults, ch
   const { start = '', end = '' } = payload || {};
   
   // Configure based on mode
-  const timeoutMs = mode === 'full' ? 30000 : 20000; // 30s for full, 20s for preview (balanced for simplified prompt)
+  const timeoutMs = mode === 'full' ? 20000 : 15000; // 20s for full, 15s for preview (reduced for faster response)
   const maxTokens = mode === 'full' ? 6000 : 1200; // 6000 for full, 1200 for preview (increased for comprehensive prompt)
   const promptComplexity = mode === 'full' ? 'detailed' : 'concise';
   
@@ -1653,11 +1653,11 @@ app.post('/api/preview', async (req, res) => {
     if (debug) console.debug('[PREVIEW] openai_call_start');
     let markdown;
     try {
-      markdown = await withTimeout(generatePlanWithAI(payload, 'preview'), 25000); // 25s for preview (balanced for simplified prompt)
+      markdown = await withTimeout(generatePlanWithAI(payload, 'preview'), 20000); // 20s for preview (reduced for faster response)
     } catch (firstErr) {
       if (debug) console.debug('[PREVIEW] openai first attempt failed:', firstErr?.message);
       await new Promise(r => setTimeout(r, 1500));
-      markdown = await withTimeout(generatePlanWithAI(payload, 'preview'), 25000); // 25s for preview (balanced for simplified prompt)
+      markdown = await withTimeout(generatePlanWithAI(payload, 'preview'), 20000); // 20s for preview (reduced for faster response)
     }
     if (debug) console.debug('[PREVIEW] openai_call_success mdLen=', markdown?.length || 0);
 
@@ -1772,7 +1772,7 @@ app.post('/api/plan', async (req, res) => {
     };
 
     console.log('🚀 About to call generatePlanWithAI for:', payload.destination, 'in full mode');
-    const markdown = await withTimeout(generatePlanWithAI(payload, 'full'), 35000); // 35s timeout for full reports (balanced for simplified prompt)
+    const markdown = await withTimeout(generatePlanWithAI(payload, 'full'), 25000); // 25s timeout for full reports (reduced for faster response)
     console.log('✅ generatePlanWithAI completed, markdown length:', markdown?.length || 0);
     
     // Process image tokens and other links in the MARKDOWN first
