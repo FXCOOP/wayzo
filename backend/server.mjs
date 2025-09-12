@@ -1466,7 +1466,7 @@ async function generateAIContent(payload, nDays, destination, budget, adults, ch
   console.log('Step 3: Generating AI plan for', destination, 'in', mode, 'mode');
   
   // Configure based on mode
-  const timeoutMs = mode === 'full' ? 15000 : 8000; // 15s for full, 8s for preview
+  const timeoutMs = mode === 'full' ? 25000 : 12000; // 25s for full, 12s for preview
   const maxTokens = mode === 'full' ? 6000 : 500; // More tokens for full reports
   const promptComplexity = mode === 'full' ? 'detailed' : 'concise';
   
@@ -1597,11 +1597,11 @@ app.post('/api/preview', async (req, res) => {
     if (debug) console.debug('[PREVIEW] openai_call_start');
     let markdown;
     try {
-      markdown = await withTimeout(generatePlanWithAI(payload, 'preview'), 10000);
+      markdown = await withTimeout(generatePlanWithAI(payload, 'preview'), 12000);
     } catch (firstErr) {
       if (debug) console.debug('[PREVIEW] openai first attempt failed:', firstErr?.message);
       await new Promise(r => setTimeout(r, 1500));
-      markdown = await withTimeout(generatePlanWithAI(payload, 'preview'), 10000);
+      markdown = await withTimeout(generatePlanWithAI(payload, 'preview'), 12000);
     }
     if (debug) console.debug('[PREVIEW] openai_call_success mdLen=', markdown?.length || 0);
 
@@ -1701,7 +1701,7 @@ app.post('/api/plan', async (req, res) => {
     };
 
     console.log('🚀 About to call generatePlanWithAI for:', payload.destination, 'in full mode');
-    const markdown = await withTimeout(generatePlanWithAI(payload, 'full'), 20000); // 20s timeout for full reports
+    const markdown = await withTimeout(generatePlanWithAI(payload, 'full'), 30000); // 30s timeout for full reports
     console.log('✅ generatePlanWithAI completed, markdown length:', markdown?.length || 0);
     
     // Process image tokens and other links in the MARKDOWN first
