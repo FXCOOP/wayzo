@@ -57,3 +57,15 @@
     err: "listen EADDRINUSE: address already in use 0.0.0.0:10000"
 [2025-09-12 06:09:34.483 +0000] INFO (9821): Wayzo server starting
     version: "staging-v75"
+[2025-09-12 06:40:50.259 +0000] INFO (12032): Wayzo server starting
+    version: "staging-v75"
+[2025-09-12 06:40:56.220 +0000] INFO (12032): Route entered
+    route: "/api/preview"
+[2025-09-12 06:40:56.220 +0000] INFO (12032): Preview request received
+    destination: "Paris"
+    budget: 1000
+[2025-09-12 06:40:56.237 +0000] WARN (12032): Generic content detected
+    pattern: "Local Restaurant"
+    html: "<h1>Paris Travel Plan</h1>\n<h2>🎯 Trip Overview</h2>\n<p>Welcome to Paris! This is a 3-day trip for 2 adults with a mid budget level.</p>\n<p><strong>Trip Highlights:</strong></p>\n<ul>\n<li>3 days of exp"
+[2025-09-12 06:40:56.238 +0000] ERROR (12032): Unhandled Promise Rejection
+    reason: {}

@@ -170,6 +170,16 @@ app.get('/debug/ping', (req, res) => {
   res.json(health);
 });
 
+// Keep-alive endpoint for Render free tier
+app.get('/keep-alive', (req, res) => {
+  console.log('🔄 Keep-alive ping received');
+  res.json({ 
+    ok: true, 
+    time: new Date().toISOString(),
+    message: 'Server is alive and warm'
+  });
+});
+
 // Test AI endpoint
 app.get('/debug/test-ai', async (req, res) => {
   try {
@@ -1307,17 +1317,20 @@ async function processAIQueue() {
     isProcessingAI = false;
     // Process next in queue
     if (aiQueue.length > 0) {
-      setTimeout(processAIQueue, 1000); // 1s delay between calls
+      setTimeout(processAIQueue, 2000); // 2s delay between calls to avoid rate limits
     }
   }
 }
 
 // Fallback plan generator when AI is unavailable
-function generateFallbackPlan(payload) {
+function generateFallbackPlan(payload, mode = 'preview') {
   const { destination = '', start = '', end = '', budget = 0, adults = 2, children = 0, level = 'mid', prefs = '', dietary = [] } = payload || {};
   const nDays = daysBetween(start, end);
   
-  console.log('🔄 Generating fallback plan for', destination);
+  console.log('🔄 Generating fallback plan for', destination, 'in', mode, 'mode');
+  
+  const isFullMode = mode === 'full';
+  const detailLevel = isFullMode ? 'comprehensive' : 'basic';
   
   return `# ${destination} Travel Plan
 
@@ -1421,11 +1434,11 @@ ${nDays > 4 ? `### Day 5 - Final Day
 
 ---
 
-*Note: This is a template plan. For specific recommendations, please ensure your OpenAI API key is properly configured.*`;
+*Note: This is a ${detailLevel} template plan. For specific recommendations, please ensure your OpenAI API key is properly configured.*`;
 }
 
-async function generatePlanWithAI(payload) {
-  console.log('🚀 AI INTEGRATION - Starting optimized approach');
+async function generatePlanWithAI(payload, mode = 'preview') {
+  console.log('🚀 AI INTEGRATION - Starting optimized approach for mode:', mode);
   
   const { destination = '', start = '', end = '', budget = 0, adults = 2, children = 0, level = 'mid', prefs = '', dietary = [] } = payload || {};
   const nDays = daysBetween(start, end);
@@ -1439,38 +1452,46 @@ async function generatePlanWithAI(payload) {
   
   if (!client || !process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'sk-your-openai-api-key-here') {
     console.log('❌ OpenAI not properly configured - using fallback content');
-    return generateFallbackPlan(payload);
+    return generateFallbackPlan(payload, mode);
   }
   
   // Use queued AI call to prevent rate limits
   return await queueAICall(async () => {
-    return await generateAIContent(payload, nDays, destination, budget, adults, children);
+    return await generateAIContent(payload, nDays, destination, budget, adults, children, mode);
   });
 }
 
-async function generateAIContent(payload, nDays, destination, budget, adults, children) {
-  console.log('Step 3: Generating AI plan for', destination);
+async function generateAIContent(payload, nDays, destination, budget, adults, children, mode = 'preview') {
+  console.log('Step 3: Generating AI plan for', destination, 'in', mode, 'mode');
+  
+  // Configure based on mode
+  const timeoutMs = mode === 'full' ? 15000 : 8000; // 15s for full, 8s for preview
+  const maxTokens = mode === 'full' ? 2000 : 500; // More tokens for full reports
+  const promptComplexity = mode === 'full' ? 'detailed' : 'concise';
+  
   try {
     // Use AbortController for hard timeout enforcement
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
-      console.log('⏰ AI call timeout - aborting request');
+      console.log(`⏰ AI call timeout (${timeoutMs}ms) - aborting request for ${mode} mode`);
       controller.abort();
-    }, 8000); // 8s buffer for network overhead
+    }, timeoutMs);
+    
+    const systemPrompt = mode === 'full' 
+      ? `You are Wayzo Planner Pro. Generate a comprehensive travel itinerary in Markdown with all 11 sections. Use specific real places only. Include detailed descriptions, addresses, and practical information.`
+      : `You are Wayzo Planner Pro. Generate a concise travel itinerary in Markdown with 11 sections. Use real places only.`;
+    
+    const userPrompt = mode === 'full'
+      ? `Create a comprehensive ${nDays}-day itinerary for ${destination} with budget $${budget} for ${adults} adults${children > 0 ? ` and ${children} children` : ''}. Include specific attractions, restaurants, hotels with addresses, detailed daily schedules, and practical travel information.`
+      : `Create a ${nDays}-day itinerary for ${destination} with budget $${budget} for ${adults} adults${children > 0 ? ` and ${children} children` : ''}. Include specific attractions, restaurants, and hotels.`;
     
     const completion = await client.chat.completions.create({
       model: 'gpt-4o-mini', // Fastest, low-latency model
       messages: [
-        {
-          role: "system",
-          content: `You are Wayzo Planner Pro. Generate concise travel itinerary in Markdown with 11 sections. Use real places only.`
-        },
-        {
-          role: "user", 
-          content: `Create a ${nDays}-day itinerary for ${destination} with budget $${budget} for ${adults} adults${children > 0 ? ` and ${children} children` : ''}. Include specific attractions, restaurants, and hotels.`
-        }
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
       ],
-      max_tokens: 500, // Ultra-reduced for fastest responses
+      max_tokens: maxTokens,
       temperature: 0.3,
       stream: false // Disable for simpler error handling
     }, { 
@@ -1481,21 +1502,21 @@ async function generateAIContent(payload, nDays, destination, budget, adults, ch
     const aiContent = completion.choices?.[0]?.message?.content?.trim() || "";
     
     if (aiContent && aiContent.length > 100) {
-      console.log('🎉 AI plan generated successfully!');
+      console.log(`🎉 AI plan generated successfully for ${mode} mode! Length:`, aiContent.length);
       return aiContent;
     } else {
-      console.log('❌ AI response too short, using fallback');
-      return generateFallbackPlan(payload);
+      console.log(`❌ AI response too short for ${mode} mode, using fallback`);
+      return generateFallbackPlan(payload, mode);
     }
     
   } catch (aiError) {
     if (aiError.name === 'AbortError') {
-      console.error('⏰ AI call aborted due to timeout');
-      return generateFallbackPlan(payload);
+      console.error(`⏰ AI call aborted due to timeout in ${mode} mode`);
+      return generateFallbackPlan(payload, mode);
     }
-    console.error('❌ AI generation failed:', aiError.message);
+    console.error(`❌ AI generation failed for ${mode} mode:`, aiError.message);
     console.log('🔄 Using fallback plan due to AI error');
-    return generateFallbackPlan(payload);
+    return generateFallbackPlan(payload, mode);
   }
 }
 
@@ -1575,11 +1596,11 @@ app.post('/api/preview', async (req, res) => {
     if (debug) console.debug('[PREVIEW] openai_call_start');
     let markdown;
     try {
-      markdown = await withTimeout(generatePlanWithAI(payload), 10000);
+      markdown = await withTimeout(generatePlanWithAI(payload, 'preview'), 10000);
     } catch (firstErr) {
       if (debug) console.debug('[PREVIEW] openai first attempt failed:', firstErr?.message);
       await new Promise(r => setTimeout(r, 1500));
-      markdown = await withTimeout(generatePlanWithAI(payload), 10000);
+      markdown = await withTimeout(generatePlanWithAI(payload, 'preview'), 10000);
     }
     if (debug) console.debug('[PREVIEW] openai_call_success mdLen=', markdown?.length || 0);
 
@@ -1678,8 +1699,8 @@ app.post('/api/plan', async (req, res) => {
       ]);
     };
 
-    console.log('🚀 About to call generatePlanWithAI for:', payload.destination);
-    const markdown = await withTimeout(generatePlanWithAI(payload), 10000);
+    console.log('🚀 About to call generatePlanWithAI for:', payload.destination, 'in full mode');
+    const markdown = await withTimeout(generatePlanWithAI(payload, 'full'), 20000); // 20s timeout for full reports
     console.log('✅ generatePlanWithAI completed, markdown length:', markdown?.length || 0);
     
     // Process image tokens and other links in the MARKDOWN first
@@ -1726,7 +1747,9 @@ app.post('/api/plan', async (req, res) => {
     );
     
     const aff = affiliatesFor(payload.destination);
-    savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: payload, markdown, html: finalHTML }));
+    // Fix: Use storePlan instead of savePlan.run
+    const planId = storePlan({ id, type: 'plan', data: payload, markdown, html: finalHTML }, JSON.stringify({ id, type: 'plan', data: payload, markdown, html: finalHTML }));
+    console.log('Plan saved with ID:', planId);
     
     // Track plan generation for analytics
     trackPlanGeneration(payload);
@@ -2140,6 +2163,21 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log('Version:', VERSION);
   console.log('Index file:', INDEX);
   console.log('Frontend path:', FRONTEND);
+  
+  // Keep-alive for Render free tier (ping every 10 minutes)
+  if (process.env.NODE_ENV === 'production') {
+    setInterval(async () => {
+      try {
+        const response = await fetch(`http://localhost:${PORT}/keep-alive`);
+        if (response.ok) {
+          console.log('🔄 Keep-alive ping successful');
+        }
+      } catch (error) {
+        console.log('🔄 Keep-alive ping failed:', error.message);
+      }
+    }, 10 * 60 * 1000); // 10 minutes
+    console.log('🔄 Keep-alive interval started (10 minutes)');
+  }
 });
 // Escape HTML helper
 function escapeHtml(s = "") {
