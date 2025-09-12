@@ -1470,6 +1470,9 @@ async function generatePlanWithAI(payload, mode = 'preview') {
 async function generateAIContent(payload, nDays, destination, budget, adults, children, mode = 'preview') {
   console.log('Step 3: Generating AI plan for', destination, 'in', mode, 'mode');
   
+  // Extract start and end dates from payload
+  const { start = '', end = '' } = payload || {};
+  
   // Configure based on mode
   const timeoutMs = mode === 'full' ? 30000 : 20000; // 30s for full, 20s for preview (balanced for simplified prompt)
   const maxTokens = mode === 'full' ? 6000 : 1200; // 6000 for full, 1200 for preview (increased for comprehensive prompt)
