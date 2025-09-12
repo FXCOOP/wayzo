@@ -126,6 +126,24 @@ app.get('/debug/ping', (req, res) => {
   res.json({ ok: true, time: new Date().toISOString(), version: VERSION });
 });
 
+// API key status endpoint
+app.get('/debug/api-key-status', (req, res) => {
+  const apiKeyExists = !!process.env.OPENAI_API_KEY;
+  const apiKeyLength = process.env.OPENAI_API_KEY?.length || 0;
+  const apiKeyStartsWithSk = process.env.OPENAI_API_KEY?.startsWith('sk-') || false;
+  const isPlaceholder = process.env.OPENAI_API_KEY === 'sk-your-openai-api-key-here';
+  
+  res.json({
+    apiKeyExists,
+    apiKeyLength,
+    apiKeyStartsWithSk,
+    isPlaceholder,
+    clientExists: !!client,
+    status: isPlaceholder ? 'INVALID_PLACEHOLDER' : (apiKeyExists && apiKeyStartsWithSk ? 'VALID' : 'INVALID'),
+    preview: process.env.OPENAI_API_KEY?.substring(0, 20) + '...'
+  });
+});
+
 // Test AI endpoint
 app.get('/debug/test-ai', async (req, res) => {
   try {
@@ -1875,7 +1893,90 @@ app.post('/api/plan', async (req, res) => {
     };
 
     console.log('🚀 About to call generatePlanWithAI for:', payload.destination);
-    const markdown = await withTimeout(generatePlanWithAI(payload), 60000);
+    let markdown;
+    try {
+      markdown = await withTimeout(generatePlanWithAI(payload), 60000);
+    } catch (firstErr) {
+      console.log('🚫 First AI attempt failed:', firstErr.message);
+      
+      // Check if it's an API key issue - don't retry
+      if (firstErr.message.includes('API key') || firstErr.message.includes('Invalid OpenAI')) {
+        console.log('🚫 API key issue detected, not retrying');
+        throw firstErr;
+      }
+      
+      // Try once more with a shorter timeout
+      try {
+        console.log('🔄 Retrying AI call with shorter timeout...');
+        markdown = await withTimeout(generatePlanWithAI(payload), 30000);
+      } catch (secondErr) {
+        console.log('🚫 Both AI attempts failed, providing fallback');
+        // Provide a basic fallback response
+        markdown = `# ${payload.destination} Travel Plan
+
+## 🎯 Trip Overview
+Welcome to ${payload.destination}! This is a basic travel plan generated while our AI service is temporarily unavailable.
+
+## 💰 Budget Breakdown
+- Accommodation: $${Math.round(payload.budget * 0.4)} (40%)
+- Food & Dining: $${Math.round(payload.budget * 0.3)} (30%)
+- Activities: $${Math.round(payload.budget * 0.2)} (20%)
+- Transportation: $${Math.round(payload.budget * 0.1)} (10%)
+
+## 🗺️ Getting Around
+- Research local transportation options
+- Consider walking tours for city centers
+- Check for day passes or tourist cards
+
+## 🏨 Accommodation
+- Search for hotels in city center
+- Consider vacation rentals for families
+- Book in advance for better rates
+
+## 🎫 Must-See Attractions
+- Research top attractions for ${payload.destination}
+- Check opening hours and ticket prices
+- Consider guided tours for historical sites
+
+## 🍽️ Dining Guide
+- Try local cuisine and specialties
+- Research popular restaurants
+- Make reservations for fine dining
+
+## 🎭 Daily Itineraries
+**Day 1**: Arrival and city orientation
+**Day 2**: Main attractions and sightseeing
+**Day 3**: Local experiences and culture
+
+## 🧳 Don't Forget List
+- [ ] Passport and travel documents
+- [ ] Travel insurance
+- [ ] Local currency
+- [ ] Weather-appropriate clothing
+- [ ] Camera and chargers
+- [ ] Medications and first aid
+
+## 🛡️ Travel Tips
+- Research local customs and etiquette
+- Check visa requirements
+- Learn basic local phrases
+- Keep emergency contacts handy
+
+## 📱 Useful Apps
+- Maps and navigation apps
+- Translation apps
+- Local transportation apps
+- Weather apps
+
+## 🚨 Emergency Info
+- Local emergency numbers
+- Embassy/consulate contacts
+- Nearest hospital locations
+- Travel insurance contacts
+
+*Note: This is a basic template. For detailed recommendations, please try again when our AI service is available.*`;
+      }
+    }
     console.log('✅ generatePlanWithAI completed, markdown length:', markdown?.length || 0);
     
     // Process image tokens and other links in the MARKDOWN first
