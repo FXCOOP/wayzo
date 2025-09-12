@@ -1379,7 +1379,7 @@ async function generatePlanWithAI(payload) {
     const aiCallPromise = client.chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0.3,
-      max_tokens: 500, // Ultra-reduced for fastest responses
+      max_tokens: 4000, // Reduced to speed up response
       messages: [
         {
           role: "system",
