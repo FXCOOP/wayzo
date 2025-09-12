@@ -207,6 +207,60 @@ app.get('/debug/test-ai', async (req, res) => {
     });
   }
 });
+
+// Test endpoint that mimics preview without AI
+app.post('/debug/test-preview', async (req, res) => {
+  console.log('🧪 Testing preview endpoint without AI...');
+  
+  try {
+    const payload = req.body || {};
+    console.log('📝 Payload received:', payload);
+    
+    // Simulate processing time
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    const mockMarkdown = `# ${payload.destination || 'Test Destination'} Travel Plan
+
+## 🎯 Trip Overview
+This is a test response to verify the preview endpoint is working correctly.
+
+## 💰 Budget Breakdown
+- Test budget: $${payload.budget || 1000}
+- Travelers: ${payload.adults || 2} adults
+
+## 🎫 Must-See Attractions
+- Test attraction 1
+- Test attraction 2
+
+## 🍽️ Dining Guide
+- Test restaurant 1
+- Test restaurant 2
+
+## 🎭 Daily Itineraries
+**Day 1**: Test itinerary
+**Day 2**: Test itinerary
+
+## 🧳 Don't Forget List
+- [ ] Test item 1
+- [ ] Test item 2
+
+This is a test response generated without AI to verify the endpoint is working.`;
+
+    res.json({
+      success: true,
+      markdown: mockMarkdown,
+      id: 'test-' + Date.now(),
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('❌ Test preview error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 /* Admin basic auth middleware */
 function adminBasicAuth(req, res, next) {
   const adminUser = process.env.ADMIN_USER;
