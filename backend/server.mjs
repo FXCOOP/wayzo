@@ -1467,7 +1467,7 @@ async function generateAIContent(payload, nDays, destination, budget, adults, ch
   
   // Configure based on mode
   const timeoutMs = mode === 'full' ? 15000 : 8000; // 15s for full, 8s for preview
-  const maxTokens = mode === 'full' ? 2000 : 500; // More tokens for full reports
+  const maxTokens = mode === 'full' ? 6000 : 500; // More tokens for full reports
   const promptComplexity = mode === 'full' ? 'detailed' : 'concise';
   
   try {
