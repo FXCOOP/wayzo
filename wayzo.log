@@ -1,0 +1,52 @@
+[2025-09-12 05:36:10.738 +0000] INFO (4683): Wayzo server starting
+    version: "staging-v75"
+[2025-09-12 05:36:13.212 +0000] INFO (4683): Route entered
+    route: "/api/preview"
+[2025-09-12 05:36:13.212 +0000] INFO (4683): Preview request received
+    destination: "Paris"
+    budget: 1000
+[2025-09-12 05:36:13.228 +0000] WARN (4683): Generic content detected
+    pattern: "Local Restaurant"
+    html: "<h1>Paris Travel Plan</h1>\n<h2>🎯 Trip Overview</h2>\n<p>Welcome to Paris! This is a 3-day trip for 2 adults with a mid budget level.</p>\n<p><strong>Trip Highlights:</strong></p>\n<ul>\n<li>3 days of exp"
+[2025-09-12 05:36:13.229 +0000] ERROR (4683): Unhandled Promise Rejection
+    reason: {}
+[2025-09-12 05:51:21.038 +0000] INFO (4683): Route entered
+    route: "/api/preview"
+[2025-09-12 05:51:21.038 +0000] INFO (4683): Preview request received
+    destination: "Paris"
+    budget: 1000
+[2025-09-12 05:51:21.041 +0000] WARN (4683): Generic content detected
+    pattern: "Local Restaurant"
+    html: "<h1>Paris Travel Plan</h1>\n<h2>🎯 Trip Overview</h2>\n<p>Welcome to Paris! This is a 3-day trip for 2 adults with a mid budget level.</p>\n<p><strong>Trip Highlights:</strong></p>\n<ul>\n<li>3 days of exp"
+[2025-09-12 05:51:21.041 +0000] ERROR (4683): Unhandled Promise Rejection
+    reason: {}
+[2025-09-12 05:51:34.304 +0000] INFO (6416): Wayzo server starting
+    version: "staging-v75"
+[2025-09-12 05:51:34.313 +0000] ERROR (6416): Uncaught Exception
+    stack: "Error: listen EADDRINUSE: address already in use :::10000\n    at Server.setupListenHandle [as _listen2] (node:net:1939:16)\n    at listenInCluster (node:net:1996:12)\n    at Server.listen (node:net:2101:7)\n    at Function.listen (/workspace/backend/node_modules/express/lib/application.js:635:24)\n    at file:///workspace/backend/server.mjs:2336:5"
+    err: "listen EADDRINUSE: address already in use :::10000"
+[2025-09-12 05:51:38.520 +0000] INFO (6465): Wayzo server starting
+    version: "staging-v75"
+[2025-09-12 05:51:38.529 +0000] ERROR (6465): Uncaught Exception
+    stack: "Error: listen EADDRINUSE: address already in use :::10000\n    at Server.setupListenHandle [as _listen2] (node:net:1939:16)\n    at listenInCluster (node:net:1996:12)\n    at Server.listen (node:net:2101:7)\n    at Function.listen (/workspace/backend/node_modules/express/lib/application.js:635:24)\n    at file:///workspace/backend/server.mjs:2336:5"
+    err: "listen EADDRINUSE: address already in use :::10000"
+[2025-09-12 05:51:54.695 +0000] INFO (4683): Route entered
+    route: "/api/preview"
+[2025-09-12 05:51:54.695 +0000] INFO (4683): Preview request received
+    destination: "Paris"
+    budget: 1000
+[2025-09-12 05:51:54.697 +0000] WARN (4683): Generic content detected
+    pattern: "Local Restaurant"
+    html: "<h1>Paris Travel Plan</h1>\n<h2>🎯 Trip Overview</h2>\n<p>Welcome to Paris! This is a 3-day trip for 2 adults with a mid budget level.</p>\n<p><strong>Trip Highlights:</strong></p>\n<ul>\n<li>3 days of exp"
+[2025-09-12 05:51:54.697 +0000] ERROR (4683): Unhandled Promise Rejection
+    reason: {}
+[2025-09-12 05:54:45.865 +0000] INFO (4683): Route entered
+    route: "/api/preview"
+[2025-09-12 05:54:45.865 +0000] INFO (4683): Preview request received
+    destination: "Paris"
+    budget: 1000
+[2025-09-12 05:54:45.867 +0000] WARN (4683): Generic content detected
+    pattern: "Local Restaurant"
+    html: "<h1>Paris Travel Plan</h1>\n<h2>🎯 Trip Overview</h2>\n<p>Welcome to Paris! This is a 3-day trip for 2 adults with a mid budget level.</p>\n<p><strong>Trip Highlights:</strong></p>\n<ul>\n<li>3 days of exp"
+[2025-09-12 05:54:45.867 +0000] ERROR (4683): Unhandled Promise Rejection
+    reason: {}
