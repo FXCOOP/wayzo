@@ -1373,13 +1373,13 @@ async function generatePlanWithAI(payload) {
   try {
     // Simple timeout wrapper for the AI call
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('AI call timed out after 30 seconds')), 30000);
+      setTimeout(() => reject(new Error('AI call timed out after 10 seconds')), 10000);
     });
     
     const aiCallPromise = client.chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0.3,
-      max_tokens: 4000, // Reduced to speed up response
+      max_tokens: 500, // Ultra-reduced for fastest responses
       messages: [
         {
           role: "system",
@@ -1773,11 +1773,11 @@ app.post('/api/preview', async (req, res) => {
     if (debug) console.debug('[PREVIEW] openai_call_start');
     let markdown;
     try {
-      markdown = await withTimeout(generatePlanWithAI(payload), 60000);
+      markdown = await withTimeout(generatePlanWithAI(payload), 10000);
     } catch (firstErr) {
       if (debug) console.debug('[PREVIEW] openai first attempt failed:', firstErr?.message);
       await new Promise(r => setTimeout(r, 1500));
-      markdown = await withTimeout(generatePlanWithAI(payload), 60000);
+      markdown = await withTimeout(generatePlanWithAI(payload), 10000);
     }
     if (debug) console.debug('[PREVIEW] openai_call_success mdLen=', markdown?.length || 0);
 
@@ -1877,7 +1877,7 @@ app.post('/api/plan', async (req, res) => {
     };
 
     console.log('🚀 About to call generatePlanWithAI for:', payload.destination);
-    const markdown = await withTimeout(generatePlanWithAI(payload), 60000);
+    const markdown = await withTimeout(generatePlanWithAI(payload), 10000);
     console.log('✅ generatePlanWithAI completed, markdown length:', markdown?.length || 0);
     
     // Process image tokens and other links in the MARKDOWN first
