@@ -1547,6 +1547,9 @@ Deliver: Professional Markdown itinerary with specific places and proper formatt
     clearTimeout(timeoutId);
     const aiContent = completion.choices?.[0]?.message?.content?.trim() || "";
     
+    console.log(`🔍 AI response preview for ${mode} mode:`, aiContent.substring(0, 200));
+    console.log(`📏 AI response length:`, aiContent.length);
+    
     if (aiContent && aiContent.length > 100) {
       console.log(`🎉 AI plan generated successfully for ${mode} mode! Length:`, aiContent.length);
       return aiContent;
