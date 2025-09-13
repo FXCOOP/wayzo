@@ -40,38 +40,32 @@ const AFFILIATE_WIDGETS = {
   hotel_booking: {
     name: "Hotel Booking",
     description: "Book your accommodation",
-    script: `<script async src="https://tpwdgt.com/content?currency=usd&trs=455192&shmarker=634822&show_hotels=true&locale=en&searchUrl=www.aviasales.com%2Fsearch&primary_override=%2332a8dd&color_button=%2355a539&color_icons=%2332a8dd&secondary=%23FFFFFF&dark=%23262626&light=%23FFFFFF&special=%23C4C4C4&color_focused=%2332a8dd&border_radius=5&plain=false&promo_id=7873&campaign_id=101" charset="utf-8"></script>`,
+    script: `<script async src="https://tpwdgt.com/content?currency=usd&trs=455192&shmarker=634822&show_hotels=true&locale=en&powered_by=false&searchUrl=www.aviasales.com%2Fsearch&primary_override=%2332a8dd&color_button=%2355a539&color_icons=%2332a8dd&secondary=%23FFFFFF&dark=%23262626&light=%23FFFFFF&special=%23C4C4C4&color_focused=%2332a8dd&border_radius=5&plain=false&promo_id=7873&campaign_id=101" charset="utf-8"></script>`,
     category: "accommodation",
     placement: "after_arrival"
+  },
+
+  // GetYourGuide Activities - Your Partner ID PUHVJ53
+  getyourguide: {
+    name: "Activities & Tours",
+    description: "Curated tours and activities",
+    script: `<div data-gyg-href="https://widget.getyourguide.com/default/activities.frame" data-gyg-locale-code="en-US" data-gyg-widget="activities" data-gyg-number-of-items="3" data-gyg-partner-id="PUHVJ53" style="margin: 20px 0;"></div><script async defer src="https://widget.getyourguide.com/dist/pa.umd.production.min.js" data-gyg-partner-id="PUHVJ53"></script>`,
+    category: "activities",
+    placement: "must_see"
   }
 };
 
-// Widget placement logic
+// Widget placement logic - INCLUDE ALL REQUESTED WIDGETS
 function getWidgetsForDestination(destination, tripType, interests = []) {
   const widgets = [];
   
-  // Always include eSIM for international travel
-  if (destination.toLowerCase().includes('santorini') || 
-      destination.toLowerCase().includes('greece') ||
-      destination.toLowerCase().includes('international')) {
-    widgets.push(AFFILIATE_WIDGETS.esim);
-  }
-  
-  // Add flight search for most trips
-  widgets.push(AFFILIATE_WIDGETS.flight_search);
-  
-  // Add hotel booking
-  widgets.push(AFFILIATE_WIDGETS.hotel_booking);
-  
-  // Add car rentals for destinations where it makes sense
-  if (destination.toLowerCase().includes('santorini') ||
-      destination.toLowerCase().includes('island') ||
-      destination.toLowerCase().includes('rural')) {
-    widgets.push(AFFILIATE_WIDGETS.car_rentals);
-  }
-  
-  // Add airport transfers for convenience
-  widgets.push(AFFILIATE_WIDGETS.airport_transfers);
+  // ALWAYS include ALL your requested widgets for every destination
+  widgets.push(AFFILIATE_WIDGETS.flight_search);      // ✈️ Flight Search
+  widgets.push(AFFILIATE_WIDGETS.hotel_booking);      // 🏨 Hotel Booking  
+  widgets.push(AFFILIATE_WIDGETS.car_rentals);        // 🚗 Car Rentals
+  widgets.push(AFFILIATE_WIDGETS.airport_transfers);  // 🚌 Airport Transfers
+  widgets.push(AFFILIATE_WIDGETS.esim);              // 📶 eSIM
+  widgets.push(AFFILIATE_WIDGETS.getyourguide);      // 🎫 GetYourGuide
   
   return widgets;
 }
