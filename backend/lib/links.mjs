@@ -44,13 +44,9 @@ export function linkifyTokens(markdown = '', dest = '') {
     .replace(/\[(Tickets)\]\(tickets:([^)]+)\)/gi,(_m, _t, q) => `[Tickets](${aff.activities(q.trim())})`)
     .replace(/\[(Reviews)\]\(reviews:([^)]+)\)/gi,(_m, _t, q) => `[Reviews](${aff.reviews(q.trim())})`)
     .replace(/!\[([^\]]*)\]\(image:([^)]+)\)/gi,  (_m, alt, q) => {
-      const imageUrl = aff.image(q.trim());
-      console.log('Processing image token:', { alt, query: q.trim(), generatedUrl: imageUrl });
-      
-      // Add error handling for images
-      const imgTag = `![${alt || 'Photo'}](${imageUrl})`;
-      console.log('Generated img tag:', imgTag);
-      return imgTag;
+      // REMOVE IMAGES: Return empty string instead of image tag
+      console.log('Removing image token:', { alt, query: q.trim() });
+      return '';
     });
   
   console.log('Processed markdown length:', processed.length);
