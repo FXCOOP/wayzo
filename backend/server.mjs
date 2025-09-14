@@ -404,16 +404,17 @@ async function generatePlanWithAI(payload) {
     from = '',
     dateMode = 'exact',
     flexibleDates = null,
-    uploadedFiles = []
+    uploadedFiles = [],
+    mode = 'full'
   } = payload || {};
   
   const nDays = dateMode === 'flexible' && flexibleDates ? flexibleDates.duration : daysBetween(start, end);
   const totalTravelers = adults + children;
   
-  // Enhanced system prompt for amazing reports
+  // Locked AI prompt for consistent, specific content
   const sys = `You are Wayzo, an expert AI travel planner.
 
-**PRIMARY OBJECTIVE:** Produce a highly accurate, up-to-date, bookable trip plan for ${destination} that strictly follows formatting and image rules. All facts (prices, hours, closures, seasonal notes) must be current.
+**PRIMARY OBJECTIVE:** Generate an 8-day itinerary in Markdown for ${destination} from ${start} to ${end}, 2 adults, ${budget} USD. Include 11 sections (## 🎯 Trip Overview to ## 🚨 Emergency Info) and ## 🌤️ Weather Forecast with 7-day table. Use specific places (e.g., 'Puzata Hata at 1 Mykhaila Hrushevskoho St, Kiev'), addresses, hours, prices with disclaimers, [Map](map:place), [Tickets](tickets:place), [Book](https://tpwdgt.com). No images in Trip Overview, Don't Forget List, Travel Tips, Useful Apps, Emergency Info. No generics (e.g., 'popular museum'—use 'Kyiv Pechersk Lavra'). Enforce hour-by-hour plans, 8-12 attractions, 6-10 restaurants.
 
 **CRITICAL - IMAGE GENERATION RULES (SYSTEM BREAKING):**
 You are FORBIDDEN from adding images to any section except these 6:
@@ -444,7 +445,6 @@ You are FORBIDDEN from adding images to any section except these 6:
 
 **SECTION ORDER (MANDATORY):**
 - 🎯 Trip Overview
-- 🌤️ Weather Forecast (NEW SECTION - 7-day table with mock data)
 - 💰 Budget Breakdown
 - 🗺️ Getting Around
 - 🏨 Accommodation
@@ -467,7 +467,6 @@ Create AMAZING, DETAILED trip plans that are:
 
 **REQUIRED SECTIONS (USE EXACT TITLES):**
 - 🎯 **Trip Overview** - Quick facts and highlights
-- 🌤️ **Weather Forecast** - 7-day forecast table with Date, Min, Max, Rain%, Details columns
 - 💰 **Budget Breakdown** - Detailed cost analysis per person with checkboxes for tracking
 - 🗺️ **Getting Around** - Transportation tips and maps with [Map](map:...)
 - 🏨 **Accommodation** - 3–5 hotel options (Budget/Mid/Luxury) with [Book](book:...), [Reviews](reviews:...)
@@ -478,23 +477,6 @@ Create AMAZING, DETAILED trip plans that are:
 - 🛡️ **Travel Tips** - Local customs, safety, and practical advice
 - 📱 **Useful Apps** - Mobile apps for the destination
 - 🚨 **Emergency Info** - Important contacts and healthcare
-
-**WEATHER FORECAST FORMAT:**
-Create a 7-day weather forecast table like this:
-<table class="budget-table">
-<thead>
-<tr><th>Date</th><th>Min</th><th>Max</th><th>Rain%</th><th>Details</th></tr>
-</thead>
-<tbody>
-<tr><td>Day 1</td><td>18°</td><td>24°</td><td>10%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Forecast</a></td></tr>
-<tr><td>Day 2</td><td>19°</td><td>25°</td><td>5%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Forecast</a></td></tr>
-<tr><td>Day 3</td><td>17°</td><td>23°</td><td>15%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Forecast</a></td></tr>
-<tr><td>Day 4</td><td>20°</td><td>26°</td><td>0%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Forecast</a></td></tr>
-<tr><td>Day 5</td><td>18°</td><td>24°</td><td>20%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Forecast</a></td></tr>
-<tr><td>Day 6</td><td>19°</td><td>25°</td><td>5%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Forecast</a></td></tr>
-<tr><td>Day 7</td><td>21°</td><td>27°</td><td>0%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Forecast</a></td></tr>
-</tbody>
-</table>
 
 **BUDGET BREAKDOWN FORMAT:**
 Create a detailed budget table like this with proper HTML:
@@ -820,23 +802,19 @@ Widgets should be placed in appropriate sections:
 
 **CRITICAL - NO GENERIC CONTENT:**
 - **ABSOLUTELY NO "Open Exploration" days** - this is forbidden
-- **ABSOLUTELY NO generic placeholders** like "Neighborhood warm-up walk", "Local market + museum", or "Top lookout"
+- **ABSOLUTELY NO generic placeholders** like "Neighborhood warm-up walk" or "Local market + museum"
 - **ABSOLUTELY NO duplicate content** - each day must be unique
-- **ABSOLUTELY NO generic activities** - every activity must be specific to ${destination}
+- **ABSOLUTELY NO generic activities** - every activity must be specific to Santorini
 - **ABSOLUTELY NO "warm-up walk" or "get oriented"** - these are generic placeholders
 - **ABSOLUTELY NO "Local market + museum"** - these are generic placeholders
 - **ABSOLUTELY NO "Sunset viewpoint & dinner"** - these are generic placeholders
-- **ABSOLUTELY NO "Top lookout"** - use specific landmark names instead
 
 **MANDATORY - SPECIFIC CONTENT ONLY:**
-- **Every day must have specific ${destination} activities** with exact names and addresses
-- **Every restaurant must be named** with specific restaurant names and locations
-- **Every attraction must be specific** with exact names, not generic descriptions
+- **Every day must have specific Santorini activities** like "Visit Akrotiri Archaeological Site", "Wine tasting at Santo Wines", "Explore Oia Castle"
+- **Every restaurant must be named** like "Taverna Katina", "Pelekanos Restaurant", "Kastro Oia Restaurant"
+- **Every attraction must be specific** like "Red Beach", "Fira Caldera", "Museum of Prehistoric Thera"
 - **Every time must be exact** like "9:00 AM", "2:30 PM", "7:45 PM"
-- **Every location must be specific** with actual neighborhood or area names
-- **Use real place names** like "Sagrada Familia at Carrer de Mallorca, 401" not "famous cathedral"
-- **Include specific addresses** when mentioning attractions or restaurants
-- **Verify current opening hours** and include disclaimers about checking current information
+- **Every location must be specific** like "Amoudi Bay", "Fira", "Oia", "Karterados"
 
 Create a RICH, DETAILED, and PROFESSIONAL report that travelers can actually use to plan their trip. Make it comprehensive, actionable, and visually appealing.
 
@@ -853,7 +831,7 @@ Create the most amazing, detailed, and useful trip plan possible!`;
     const resp = await client.chat.completions.create({
       model: process.env.OPENAI_MODEL || "gpt-4o-mini",
       temperature: 0.7, // Slightly higher for more creative responses
-      max_tokens: 10000, // Increased for full reports as requested
+      max_tokens: mode === 'full' ? 10000 : 500, // 10000 for full reports, 500 for previews
       messages: [{ role: "user", content: `${sys}\n\n${user}` }],
     });
     
@@ -1124,6 +1102,7 @@ app.post('/api/plan', async (req, res) => {
     const payload = req.body || {};
     payload.currency = payload.currency || 'USD';
     payload.budget = normalizeBudget(payload.budget, payload.currency);
+    payload.mode = 'full'; // Set mode for full reports
     const id = uid();
     const markdown = await generatePlanWithAI(payload);
     
@@ -1140,7 +1119,7 @@ app.post('/api/plan', async (req, res) => {
     const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
     let finalHTML;
     try {
-      finalHTML = injectWidgetsIntoSections(html, widgets);
+      finalHTML = injectWidgetsIntoSections(html, widgets, payload.destination);
     } catch (widgetError) {
       console.error('Widget injection failed:', widgetError);
       finalHTML = html; // Fallback to HTML without widgets
@@ -1204,13 +1183,7 @@ app.post('/api/plan.pdf', async (req, res) => {
     const cleanedMarkdown = removeImagesFromForbiddenSections(processedMarkdown, payload.destination);
     const html = marked.parse(cleanedMarkdown);
     const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
-    let finalHTML;
-    try {
-      finalHTML = injectWidgetsIntoSections(html, widgets);
-    } catch (widgetError) {
-      console.error('Widget injection failed in PDF generation:', widgetError);
-      finalHTML = html; // Fallback to HTML without widgets
-    }
+    const finalHTML = injectWidgetsIntoSections(html, widgets, payload.destination);
 
     const fullHtml = `<!doctype html><html><head>
       <meta charset="utf-8">
