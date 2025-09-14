@@ -17,7 +17,7 @@ import { normalizeBudget, computeBudget } from './lib/budget.mjs';
 import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
-import { getWidgetsForDestination, generateWidgetHTML } from './lib/widgets.mjs';
+import { getWidgetsForDestination, generateWidgetHTML, injectWidgetsIntoSections } from './lib/widgets.mjs';
 const VERSION = 'staging-v25';
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
@@ -191,6 +191,35 @@ app.get('/dashboard/billing', (req, res) => {
 
 app.get('/healthz', (_req, res) => res.json({ ok: true, version: VERSION }));
 app.get('/version', (_req, res) => res.json({ version: VERSION }));
+
+// Keep-alive endpoint for Render
+app.get('/keep-alive', (_req, res) => {
+  res.json({ 
+    ok: true, 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    version: VERSION 
+  });
+});
+
+// Debug endpoint with memory tracking
+app.get('/debug/ping', (_req, res) => {
+  const memUsage = process.memoryUsage();
+  const heapUsedMB = Math.round(memUsage.heapUsed / 1024 / 1024);
+  const heapTotalMB = Math.round(memUsage.heapTotal / 1024 / 1024);
+  
+  res.json({
+    ok: true,
+    version: VERSION,
+    uptime: Math.round(process.uptime()),
+    memory: {
+      heapUsed: `${heapUsedMB}MB`,
+      heapTotal: `${heapTotalMB}MB`,
+      healthy: heapUsedMB < 512
+    },
+    timestamp: new Date().toISOString()
+  });
+});
 
 // Public runtime config for frontend (safe values only)
 app.get('/config.js', (_req, res) => {
@@ -415,6 +444,7 @@ You are FORBIDDEN from adding images to any section except these 6:
 
 **SECTION ORDER (MANDATORY):**
 - 🎯 Trip Overview
+- 🌤️ Weather Forecast (NEW SECTION - 7-day table with mock data)
 - 💰 Budget Breakdown
 - 🗺️ Getting Around
 - 🏨 Accommodation
@@ -437,6 +467,7 @@ Create AMAZING, DETAILED trip plans that are:
 
 **REQUIRED SECTIONS (USE EXACT TITLES):**
 - 🎯 **Trip Overview** - Quick facts and highlights
+- 🌤️ **Weather Forecast** - 7-day forecast table with Date, Min, Max, Rain%, Details columns
 - 💰 **Budget Breakdown** - Detailed cost analysis per person with checkboxes for tracking
 - 🗺️ **Getting Around** - Transportation tips and maps with [Map](map:...)
 - 🏨 **Accommodation** - 3–5 hotel options (Budget/Mid/Luxury) with [Book](book:...), [Reviews](reviews:...)
@@ -447,6 +478,23 @@ Create AMAZING, DETAILED trip plans that are:
 - 🛡️ **Travel Tips** - Local customs, safety, and practical advice
 - 📱 **Useful Apps** - Mobile apps for the destination
 - 🚨 **Emergency Info** - Important contacts and healthcare
+
+**WEATHER FORECAST FORMAT:**
+Create a 7-day weather forecast table like this:
+<table class="budget-table">
+<thead>
+<tr><th>Date</th><th>Min</th><th>Max</th><th>Rain%</th><th>Details</th></tr>
+</thead>
+<tbody>
+<tr><td>Day 1</td><td>18°</td><td>24°</td><td>10%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Forecast</a></td></tr>
+<tr><td>Day 2</td><td>19°</td><td>25°</td><td>5%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Forecast</a></td></tr>
+<tr><td>Day 3</td><td>17°</td><td>23°</td><td>15%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Forecast</a></td></tr>
+<tr><td>Day 4</td><td>20°</td><td>26°</td><td>0%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Forecast</a></td></tr>
+<tr><td>Day 5</td><td>18°</td><td>24°</td><td>20%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Forecast</a></td></tr>
+<tr><td>Day 6</td><td>19°</td><td>25°</td><td>5%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Forecast</a></td></tr>
+<tr><td>Day 7</td><td>21°</td><td>27°</td><td>0%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Forecast</a></td></tr>
+</tbody>
+</table>
 
 **BUDGET BREAKDOWN FORMAT:**
 Create a detailed budget table like this with proper HTML:
@@ -772,19 +820,23 @@ Widgets should be placed in appropriate sections:
 
 **CRITICAL - NO GENERIC CONTENT:**
 - **ABSOLUTELY NO "Open Exploration" days** - this is forbidden
-- **ABSOLUTELY NO generic placeholders** like "Neighborhood warm-up walk" or "Local market + museum"
+- **ABSOLUTELY NO generic placeholders** like "Neighborhood warm-up walk", "Local market + museum", or "Top lookout"
 - **ABSOLUTELY NO duplicate content** - each day must be unique
-- **ABSOLUTELY NO generic activities** - every activity must be specific to Santorini
+- **ABSOLUTELY NO generic activities** - every activity must be specific to ${destination}
 - **ABSOLUTELY NO "warm-up walk" or "get oriented"** - these are generic placeholders
 - **ABSOLUTELY NO "Local market + museum"** - these are generic placeholders
 - **ABSOLUTELY NO "Sunset viewpoint & dinner"** - these are generic placeholders
+- **ABSOLUTELY NO "Top lookout"** - use specific landmark names instead
 
 **MANDATORY - SPECIFIC CONTENT ONLY:**
-- **Every day must have specific Santorini activities** like "Visit Akrotiri Archaeological Site", "Wine tasting at Santo Wines", "Explore Oia Castle"
-- **Every restaurant must be named** like "Taverna Katina", "Pelekanos Restaurant", "Kastro Oia Restaurant"
-- **Every attraction must be specific** like "Red Beach", "Fira Caldera", "Museum of Prehistoric Thera"
+- **Every day must have specific ${destination} activities** with exact names and addresses
+- **Every restaurant must be named** with specific restaurant names and locations
+- **Every attraction must be specific** with exact names, not generic descriptions
 - **Every time must be exact** like "9:00 AM", "2:30 PM", "7:45 PM"
-- **Every location must be specific** like "Amoudi Bay", "Fira", "Oia", "Karterados"
+- **Every location must be specific** with actual neighborhood or area names
+- **Use real place names** like "Sagrada Familia at Carrer de Mallorca, 401" not "famous cathedral"
+- **Include specific addresses** when mentioning attractions or restaurants
+- **Verify current opening hours** and include disclaimers about checking current information
 
 Create a RICH, DETAILED, and PROFESSIONAL report that travelers can actually use to plan their trip. Make it comprehensive, actionable, and visually appealing.
 
@@ -1086,7 +1138,13 @@ app.post('/api/plan', async (req, res) => {
     
     // Add affiliate widgets integrated into appropriate sections
     const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
-    const finalHTML = injectWidgetsIntoSections(html, widgets);
+    let finalHTML;
+    try {
+      finalHTML = injectWidgetsIntoSections(html, widgets);
+    } catch (widgetError) {
+      console.error('Widget injection failed:', widgetError);
+      finalHTML = html; // Fallback to HTML without widgets
+    }
     
     // Remove any duplicate content that might have been generated
     const cleanedHTML = finalHTML.replace(
@@ -1107,10 +1165,23 @@ app.post('/api/plan', async (req, res) => {
     );
     
     const aff = affiliatesFor(payload.destination);
-    savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: payload, markdown }));
+    
+    // Save plan to database with error handling
+    try {
+      savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: payload, markdown }));
+      console.log(`Plan saved with ID: ${id}`);
+    } catch (dbError) {
+      console.error('Failed to save plan to database:', dbError);
+      // Continue execution - don't fail the request if DB save fails
+    }
     
     // Track plan generation for analytics
-    trackPlanGeneration(payload);
+    try {
+      trackPlanGeneration(payload);
+    } catch (trackError) {
+      console.error('Failed to track plan generation:', trackError);
+      // Continue execution - don't fail the request if tracking fails
+    }
     
     res.json({ id, markdown, html: cleanedHTML, affiliates: aff, version: VERSION });
   } catch (e) {
@@ -1133,7 +1204,13 @@ app.post('/api/plan.pdf', async (req, res) => {
     const cleanedMarkdown = removeImagesFromForbiddenSections(processedMarkdown, payload.destination);
     const html = marked.parse(cleanedMarkdown);
     const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
-    const finalHTML = injectWidgetsIntoSections(html, widgets);
+    let finalHTML;
+    try {
+      finalHTML = injectWidgetsIntoSections(html, widgets);
+    } catch (widgetError) {
+      console.error('Widget injection failed in PDF generation:', widgetError);
+      finalHTML = html; // Fallback to HTML without widgets
+    }
 
     const fullHtml = `<!doctype html><html><head>
       <meta charset="utf-8">
@@ -1166,185 +1243,7 @@ app.post('/api/plan.pdf', async (req, res) => {
   }
 });
 
-// Inject widgets into appropriate sections
-function injectWidgetsIntoSections(html, widgets) {
-  let modifiedHtml = html;
-  
-  // First, completely remove ANY widget blocks anywhere inside the Don't Forget List section
-  modifiedHtml = modifiedHtml.replace(
-    /(<h2>🧳 Don't Forget List<\/h2>[\s\S]*?<div class="dont-forget-list">)[\s\S]*?(<\/div>\s*\n?\s*<h2>|$)/g,
-    (m, start, tail) => {
-      // Keep only the checklist markup inside dont-forget-list; strip all section-widget blocks and tpwdgt scripts
-      let inner = m.replace(start, '').replace(tail, '');
-      inner = inner
-        .replace(/<div class="section-widget"[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/g, '')
-        .replace(/<script[^>]*src="https?:\/\/tpwdgt\.com[\s\S]*?<\/script>/g, '');
-      return start + inner + tail;
-    }
-  );
-  
-  // Now inject widgets into their proper sections
-  const flightWidget = widgets.find(w => w.category === 'flights');
-  if (flightWidget) {
-    const flightWidgetHTML = `
-      <div class="section-widget" data-category="flights">
-        <div class="widget-header">
-          <h4>${flightWidget.name}</h4>
-          <p>${flightWidget.description}</p>
-        </div>
-        <div class="widget-content">
-          ${flightWidget.script}
-        </div>
-      </div>
-    `;
-    // MOVED: Inject into "Budget Breakdown" section AFTER the content (as requested)
-    modifiedHtml = modifiedHtml.replace(
-      /(💰 Budget Breakdown.*?)(<h2>🗺️|<h2>🏨|<h2>🍽️|<h2>🎭|<h2>🎫|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨)/s,
-      `$1${flightWidgetHTML}$2`
-    );
-  }
-  
-  // Find hotel widget
-  const hotelWidget = widgets.find(w => w.category === 'accommodation');
-  if (hotelWidget) {
-    const hotelWidgetHTML = `
-      <div class="section-widget" data-category="accommodation">
-        <div class="widget-header">
-          <h4>${hotelWidget.name}</h4>
-          <p>${hotelWidget.description}</p>
-        </div>
-        <div class="widget-content">
-          ${hotelWidget.script}
-        </div>
-      </div>
-    `;
-    // MOVED: Inject into "Budget Breakdown" section AFTER the content (as requested)
-    modifiedHtml = modifiedHtml.replace(
-      /(💰 Budget Breakdown.*?)(<h2>🗺️|<h2>🏨|<h2>🍽️|<h2>🎭|<h2>🎫|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨)/s,
-      `$1${hotelWidgetHTML}$2`
-    );
-  }
-  
-  // Find car rental widget
-  const carWidget = widgets.find(w => w.category === 'transport');
-  if (carWidget) {
-    const carWidgetHTML = `
-      <div class="section-widget" data-category="transport">
-        <div class="widget-header">
-          <h4>${carWidget.name}</h4>
-          <p>${carWidget.description}</p>
-        </div>
-        <div class="widget-content">
-          ${carWidget.script}
-        </div>
-      </div>
-    `;
-    // MOVED: Inject into "Budget Breakdown" section AFTER the content (as requested)
-    modifiedHtml = modifiedHtml.replace(
-      /(💰 Budget Breakdown.*?)(<h2>🗺️|<h2>🏨|<h2>🍽️|<h2>🎭|<h2>🎫|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨)/s,
-      `$1${carWidgetHTML}$2`
-    );
-  }
-  
-  // Find eSIM widget
-  const esimWidget = widgets.find(w => w.category === 'connectivity');
-  if (esimWidget) {
-    const esimWidgetHTML = `
-      <div class="section-widget" data-category="connectivity">
-        <div class="widget-header">
-          <h4>${esimWidget.name}</h4>
-          <p>${esimWidget.description}</p>
-        </div>
-        <div class="widget-content">
-          ${esimWidget.script}
-        </div>
-      </div>
-    `;
-    // KEEP: Inject into "Useful Apps" section AFTER the content (as requested)
-    modifiedHtml = modifiedHtml.replace(
-      /(📱 Useful Apps.*?)(<h2>🚨)/s,
-      `$1${esimWidgetHTML}$2`
-    );
-  }
-  
-  // ADD Weather widget after Trip Overview (as requested)
-  const weatherWidgetHTML = `
-    <div class="weather-widget">
-      <h3>🌤️ Weather Forecast</h3>
-      <table class="budget-table">
-        <thead>
-          <tr><th>Date</th><th>Min</th><th>Max</th><th>Rain%</th><th>Details</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>Day 1</td><td>18°</td><td>24°</td><td>10%</td><td><a href="#" target="_blank">Forecast</a></td></tr>
-          <tr><td>Day 2</td><td>19°</td><td>25°</td><td>5%</td><td><a href="#" target="_blank">Forecast</a></td></tr>
-          <tr><td>Day 3</td><td>17°</td><td>23°</td><td>15%</td><td><a href="#" target="_blank">Forecast</a></td></tr>
-          <tr><td>Day 4</td><td>20°</td><td>26°</td><td>0%</td><td><a href="#" target="_blank">Forecast</a></td></tr>
-          <tr><td>Day 5</td><td>18°</td><td>24°</td><td>20%</td><td><a href="#" target="_blank">Forecast</a></td></tr>
-          <tr><td>Day 6</td><td>19°</td><td>25°</td><td>5%</td><td><a href="#" target="_blank">Forecast</a></td></tr>
-          <tr><td>Day 7</td><td>21°</td><td>27°</td><td>0%</td><td><a href="#" target="_blank">Forecast</a></td></tr>
-        </tbody>
-      </table>
-    </div>
-  `;
-  
-  // Inject weather widget after Trip Overview
-  modifiedHtml = modifiedHtml.replace(
-    /(🎯 Trip Overview.*?)(<h2>💰|<h2>🗺️|<h2>🏨|<h2>🍽️|<h2>🎭|<h2>🎫|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨)/s,
-    `$1\n\n${weatherWidgetHTML}\n\n$2`
-  );
-
-  // ADD GetYourGuide widgets to specific sections (as requested)
-  const gygWidget = widgets.find(w => w.category === 'activities');
-  if (gygWidget) {
-    const gygWidgetHTML = `<div data-gyg-widget="auto" data-gyg-partner-id="PUHVJ53"></div>
-<!-- GetYourGuide Analytics -->
-<script async defer src="https://widget.getyourguide.com/dist/pa.umd.production.min.js" data-gyg-partner-id="PUHVJ53"></script>`;
-    
-    // ADD: Inject into Must-See Attractions section (as requested)
-    modifiedHtml = modifiedHtml.replace(
-      /(🎫 Must-See Attractions.*?)(<h2>🍽️|<h2>🎭|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨)/s,
-      `$1\n\n${gygWidgetHTML}\n\n$2`
-    );
-    
-    // ADD: Inject between days in Daily Itineraries (as requested)
-    modifiedHtml = modifiedHtml.replace(
-      /(Day 2:.*?)(\nDay 3:)/gs,
-      `$1\n\n${gygWidgetHTML}\n$2`
-    );
-    modifiedHtml = modifiedHtml.replace(
-      /(Day 4:.*?)(\nDay 5:)/gs,
-      `$1\n\n${gygWidgetHTML}\n$2`
-    );
-  }
-
-  // Add remaining widgets at the end if not placed
-  const placedWidgets = [flightWidget, hotelWidget, carWidget, esimWidget, gygWidget].filter(Boolean);
-  const remainingWidgets = widgets.filter(w => !placedWidgets.includes(w));
-  
-  if (remainingWidgets.length > 0) {
-    const remainingWidgetsHTML = remainingWidgets.map(widget => `
-      <div class="section-widget" data-category="${widget.category}">
-        <div class="widget-header">
-          <h4>${widget.name}</h4>
-          <p>${widget.description}</p>
-        </div>
-        <div class="widget-content">
-          ${widget.script}
-        </div>
-      </div>
-    `).join('');
-    
-    modifiedHtml += `
-      <div class="additional-widgets-section">
-        <h3>🚀 Additional Booking Options</h3>
-        ${remainingWidgetsHTML}
-      </div>
-    `;
-  }
-  
-  return modifiedHtml;
-}
+// Widget injection is now handled in widgets.mjs using jsdom
 app.get('/api/analytics', (req, res) => {
   try {
     // Get basic analytics from database
