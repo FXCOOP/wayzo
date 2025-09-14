@@ -130,14 +130,14 @@ function injectWidgetsIntoSections(html, widgets, destination = '') {
             <tr><th>Date</th><th>Min</th><th>Max</th><th>Rain%</th><th>Details</th></tr>
           </thead>
           <tbody>
-            <tr><td>Sep 24</td><td>12°</td><td>20°</td><td>10%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
-            <tr><td>Sep 25</td><td>11°</td><td>19°</td><td>5%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
-            <tr><td>Sep 26</td><td>13°</td><td>21°</td><td>15%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
-            <tr><td>Sep 27</td><td>12°</td><td>22°</td><td>0%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
-            <tr><td>Sep 28</td><td>14°</td><td>23°</td><td>20%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
-            <tr><td>Sep 29</td><td>13°</td><td>22°</td><td>5%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
-            <tr><td>Sep 30</td><td>15°</td><td>24°</td><td>0%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
-            <tr><td>Oct 1</td><td>12°</td><td>21°</td><td>0%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
+            <tr><td>Sep 19</td><td>24°</td><td>30°</td><td>10%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
+            <tr><td>Sep 20</td><td>23°</td><td>29°</td><td>5%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
+            <tr><td>Sep 21</td><td>25°</td><td>31°</td><td>15%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
+            <tr><td>Sep 22</td><td>24°</td><td>30°</td><td>0%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
+            <tr><td>Sep 23</td><td>26°</td><td>32°</td><td>20%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
+            <tr><td>Sep 24</td><td>25°</td><td>31°</td><td>5%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
+            <tr><td>Sep 25</td><td>27°</td><td>33°</td><td>0%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
+            <tr><td>Sep 26</td><td>24°</td><td>30°</td><td>0%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
           </tbody>
         </table>
       `;
