@@ -819,7 +819,7 @@ Create the most amazing, detailed, and useful trip plan possible!`;
         temperature: 0.7, // Slightly higher for more creative responses
         max_tokens: mode === 'full' ? 30000 : 500, // 30000 for full reports, 500 for previews
         messages: [{ role: "user", content: `${sys}\n\n${user}` }],
-        stream: true // Enable streaming for 30000 tokens
+        stream: false // Disable streaming to fix 500 errors - use high tokens instead
       });
       break; // Success, exit retry loop
     } catch (retryError) {
@@ -833,19 +833,8 @@ Create the most amazing, detailed, and useful trip plan possible!`;
   try {
     let md = "";
     
-    // Handle streaming response
-    if (resp.choices?.[0]?.delta) {
-      // Streaming response - collect chunks
-      for await (const chunk of resp) {
-        const content = chunk.choices?.[0]?.delta?.content;
-        if (content) {
-          md += content;
-        }
-      }
-    } else {
-      // Non-streaming response
-      md = resp.choices?.[0]?.message?.content?.trim() || "";
-    }
+    // Handle non-streaming response (streaming disabled to fix 500 errors)
+    md = resp.choices?.[0]?.message?.content?.trim() || "";
     
     if (!md) {
       console.warn('OpenAI response empty, using fallback');
