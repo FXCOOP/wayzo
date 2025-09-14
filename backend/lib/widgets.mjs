@@ -82,17 +82,25 @@ function generateWidgetHTML(widgets, placement = 'inline') {
     connectivity: widgets.filter(w => w.category === 'connectivity')
   };
   
-  const widgetHTML = widgets.map(widget => `
+  const widgetHTML = widgets.map(widget => {
+    // Handle GetYourGuide widget differently (it's a function)
+    let scriptContent = widget.script;
+    if (typeof widget.script === 'function') {
+      scriptContent = widget.script('destination'); // Call function with destination
+    }
+    
+    return `
     <div class="affiliate-widget" data-category="${widget.category}" data-placement="${widget.placement}">
       <div class="widget-header">
         <h4>${widget.name}</h4>
         <p>${widget.description}</p>
       </div>
       <div class="widget-content">
-        ${widget.script}
+        ${scriptContent}
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
   
   return `
     <div class="affiliate-widgets-section">
