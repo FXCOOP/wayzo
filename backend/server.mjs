@@ -801,7 +801,7 @@ Create the most amazing, detailed, and useful trip plan possible!`;
     const resp = await client.chat.completions.create({
       model: process.env.OPENAI_MODEL || "gpt-4o-mini",
       temperature: 0.7, // Slightly higher for more creative responses
-      max_tokens: 4000, // Allow longer, more detailed responses
+      max_tokens: 10000, // Increased for full reports as requested
       messages: [{ role: "user", content: `${sys}\n\n${user}` }],
     });
     
@@ -1197,9 +1197,9 @@ function injectWidgetsIntoSections(html, widgets) {
         </div>
       </div>
     `;
-    // Inject into "Getting Around" section AFTER the content
+    // MOVED: Inject into "Budget Breakdown" section AFTER the content (as requested)
     modifiedHtml = modifiedHtml.replace(
-      /(🗺️ Getting Around.*?)(<h3>🏨|<h3>🍽️|<h3>🎭|<h3>🎫|<h3>🧳|<h3>🛡️|<h3>📱|<h3>🚨|<h3>🖼️)/s,
+      /(💰 Budget Breakdown.*?)(<h2>🗺️|<h2>🏨|<h2>🍽️|<h2>🎭|<h2>🎫|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨)/s,
       `$1${flightWidgetHTML}$2`
     );
   }
@@ -1218,9 +1218,9 @@ function injectWidgetsIntoSections(html, widgets) {
         </div>
       </div>
     `;
-    // Inject into "Accommodation" section AFTER the content
+    // MOVED: Inject into "Budget Breakdown" section AFTER the content (as requested)
     modifiedHtml = modifiedHtml.replace(
-      /(🏨 Accommodation.*?)(<h3>🍽️|<h3>🎭|<h3>🎫|<h3>🧳|<h3>🛡️|<h3>📱|<h3>🚨|<h3>🖼️)/s,
+      /(💰 Budget Breakdown.*?)(<h2>🗺️|<h2>🏨|<h2>🍽️|<h2>🎭|<h2>🎫|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨)/s,
       `$1${hotelWidgetHTML}$2`
     );
   }
@@ -1239,9 +1239,9 @@ function injectWidgetsIntoSections(html, widgets) {
         </div>
       </div>
     `;
-    // Inject into "Getting Around" section AFTER the content
+    // MOVED: Inject into "Budget Breakdown" section AFTER the content (as requested)
     modifiedHtml = modifiedHtml.replace(
-      /(🗺️ Getting Around.*?)(<h3>🏨|<h3>🍽️|<h3>🎭|<h3>🎫|<h3>🧳|<h3>🛡️|<h3>📱|<h3>🚨|<h3>🖼️)/s,
+      /(💰 Budget Breakdown.*?)(<h2>🗺️|<h2>🏨|<h2>🍽️|<h2>🎭|<h2>🎫|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨)/s,
       `$1${carWidgetHTML}$2`
     );
   }
@@ -1260,15 +1260,66 @@ function injectWidgetsIntoSections(html, widgets) {
         </div>
       </div>
     `;
-    // Inject into "Useful Apps" section AFTER the content
+    // KEEP: Inject into "Useful Apps" section AFTER the content (as requested)
     modifiedHtml = modifiedHtml.replace(
-      /(📱 Useful Apps.*?)(<h3>🚨|<h3>🖼️)/s,
+      /(📱 Useful Apps.*?)(<h2>🚨)/s,
       `$1${esimWidgetHTML}$2`
     );
   }
   
+  // ADD Weather widget after Trip Overview (as requested)
+  const weatherWidgetHTML = `
+    <div class="weather-widget">
+      <h3>🌤️ Weather Forecast</h3>
+      <table class="budget-table">
+        <thead>
+          <tr><th>Date</th><th>Min</th><th>Max</th><th>Rain%</th><th>Details</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Day 1</td><td>18°</td><td>24°</td><td>10%</td><td><a href="#" target="_blank">Forecast</a></td></tr>
+          <tr><td>Day 2</td><td>19°</td><td>25°</td><td>5%</td><td><a href="#" target="_blank">Forecast</a></td></tr>
+          <tr><td>Day 3</td><td>17°</td><td>23°</td><td>15%</td><td><a href="#" target="_blank">Forecast</a></td></tr>
+          <tr><td>Day 4</td><td>20°</td><td>26°</td><td>0%</td><td><a href="#" target="_blank">Forecast</a></td></tr>
+          <tr><td>Day 5</td><td>18°</td><td>24°</td><td>20%</td><td><a href="#" target="_blank">Forecast</a></td></tr>
+          <tr><td>Day 6</td><td>19°</td><td>25°</td><td>5%</td><td><a href="#" target="_blank">Forecast</a></td></tr>
+          <tr><td>Day 7</td><td>21°</td><td>27°</td><td>0%</td><td><a href="#" target="_blank">Forecast</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+  
+  // Inject weather widget after Trip Overview
+  modifiedHtml = modifiedHtml.replace(
+    /(🎯 Trip Overview.*?)(<h2>💰|<h2>🗺️|<h2>🏨|<h2>🍽️|<h2>🎭|<h2>🎫|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨)/s,
+    `$1\n\n${weatherWidgetHTML}\n\n$2`
+  );
+
+  // ADD GetYourGuide widgets to specific sections (as requested)
+  const gygWidget = widgets.find(w => w.category === 'activities');
+  if (gygWidget) {
+    const gygWidgetHTML = `<div data-gyg-widget="auto" data-gyg-partner-id="PUHVJ53"></div>
+<!-- GetYourGuide Analytics -->
+<script async defer src="https://widget.getyourguide.com/dist/pa.umd.production.min.js" data-gyg-partner-id="PUHVJ53"></script>`;
+    
+    // ADD: Inject into Must-See Attractions section (as requested)
+    modifiedHtml = modifiedHtml.replace(
+      /(🎫 Must-See Attractions.*?)(<h2>🍽️|<h2>🎭|<h2>🧳|<h2>🛡️|<h2>📱|<h2>🚨)/s,
+      `$1\n\n${gygWidgetHTML}\n\n$2`
+    );
+    
+    // ADD: Inject between days in Daily Itineraries (as requested)
+    modifiedHtml = modifiedHtml.replace(
+      /(Day 2:.*?)(\nDay 3:)/gs,
+      `$1\n\n${gygWidgetHTML}\n$2`
+    );
+    modifiedHtml = modifiedHtml.replace(
+      /(Day 4:.*?)(\nDay 5:)/gs,
+      `$1\n\n${gygWidgetHTML}\n$2`
+    );
+  }
+
   // Add remaining widgets at the end if not placed
-  const placedWidgets = [flightWidget, hotelWidget, carWidget, esimWidget].filter(Boolean);
+  const placedWidgets = [flightWidget, hotelWidget, carWidget, esimWidget, gygWidget].filter(Boolean);
   const remainingWidgets = widgets.filter(w => !placedWidgets.includes(w));
   
   if (remainingWidgets.length > 0) {
