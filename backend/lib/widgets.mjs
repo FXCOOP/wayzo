@@ -56,7 +56,7 @@ const AFFILIATE_WIDGETS = {
   getyourguide: {
     name: "Activities & Tours", 
     description: "Curated tours and activities",
-    script: (destination) => `<div data-gyg-widget="auto" data-gyg-partner-id="PUHVJ53" data-gyg-href="https://www.getyourguide.com/s/?q=${destination.replace(/,.*/, '').trim()}"></div>
+    script: (destination) => `<div data-gyg-widget="auto" data-gyg-partner-id="PUHVJ53" data-gyg-href="https://www.getyourguide.com/s/?q=${destination.replace(/,.*/, '').trim()}" data-gyg-number-of-items="5"></div>
 <script async defer src="https://widget.getyourguide.com/dist/pa.umd.production.min.js" data-gyg-partner-id="PUHVJ53"></script>`,
     category: "activities",
     placement: "must_see"

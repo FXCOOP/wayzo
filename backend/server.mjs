@@ -1141,10 +1141,13 @@ app.post('/api/plan', async (req, res) => {
     
     const aff = affiliatesFor(payload.destination);
     
+    // Add public transport map at the end of the report
+    const markdownWithMap = markdown + `\n\n---\n\n[Open ${payload.destination} Public Transport Map](map:${payload.destination}+public+transport+map)`;
+    
     // Save plan to database with error handling
     try {
-      const planData = { id, type: 'plan', data: payload, markdown };
-      console.log('Saving plan:', { id, destination: payload.destination, length: markdown.length });
+      const planData = { id, type: 'plan', data: payload, markdown: markdownWithMap };
+      console.log('Saving plan:', { id, destination: payload.destination, length: markdownWithMap.length });
       savePlan.run(id, nowIso(), JSON.stringify(planData));
       console.log(`Plan saved with ID: ${id}`);
     } catch (dbError) {
@@ -1160,7 +1163,7 @@ app.post('/api/plan', async (req, res) => {
       // Continue execution - don't fail the request if tracking fails
     }
     
-    res.json({ id, markdown, html: cleanedHTML, affiliates: aff, version: VERSION });
+    res.json({ id, markdown: markdownWithMap, html: cleanedHTML, affiliates: aff, version: VERSION });
   } catch (e) {
     console.error('Plan generation error:', e);
     res.status(500).json({ error: 'Failed to generate plan. Check server logs.', version: VERSION });
