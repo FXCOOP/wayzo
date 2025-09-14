@@ -427,7 +427,7 @@ You are ABSOLUTELY FORBIDDEN from adding any images to any section. NO IMAGES AN
 **SECTION ORDER (MANDATORY):**
 - 🎯 Trip Overview
 - 🌤️ Weather Forecast (NEW - with Bali temperatures)
-- 💰 Budget Breakdown (total ~€1800)
+- 💰 Budget Breakdown (total ~€1800 with checkboxes)
 - 🗺️ Getting Around
 - 🏨 Accommodation
 - 🎫 Must-See Attractions
@@ -818,7 +818,7 @@ Create the most amazing, detailed, and useful trip plan possible!`;
         temperature: 0.7, // Slightly higher for more creative responses
         max_tokens: mode === 'full' ? 16384 : 500, // 16384 for full reports, 500 for previews
         messages: [{ role: "user", content: `${sys}\n\n${user}` }],
-        stream: mode === 'full' // Enable streaming for full reports only
+        stream: mode === 'full' // Enable streaming for full reports
       });
       break; // Success, exit retry loop
     } catch (retryError) {
@@ -844,7 +844,7 @@ Create the most amazing, detailed, and useful trip plan possible!`;
           }
         }
       } catch (streamError) {
-        console.warn('Streaming failed, using non-streaming response:', streamError.message);
+        console.warn('Streaming failed, using non-streaming fallback:', streamError.message);
         // Fallback to non-streaming response if available
         md = resp.choices?.[0]?.message?.content?.trim() || "";
       }
@@ -1220,8 +1220,13 @@ app.post('/api/plan.pdf', async (req, res) => {
         img { max-width: 100%; height: auto; }
         h1, h2, h3 { page-break-after: avoid; }
         table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #ddd; padding: 6px; }
-        .budget-table th { background: #f5f5f5; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .budget-table { border-collapse: collapse; border: 1px solid black; width: 100%; margin: 10px 0; }
+        .budget-table th { background: #f5f5f5; border: 1px solid black; padding: 8px; font-weight: bold; }
+        .budget-table td { border: 1px solid black; padding: 8px; }
+        .budget-checkbox { margin-right: 8px; }
+        .status-pending { color: #ff6b35; font-weight: bold; }
+        .status-total { color: #2d5a87; font-weight: bold; }
         .page-break { page-break-before: always; }
       </style>
     </head><body>
