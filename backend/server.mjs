@@ -833,9 +833,9 @@ Create the most amazing, detailed, and useful trip plan possible!`;
       resp = await client.chat.completions.create({
         model: process.env.OPENAI_MODEL || "gpt-4o-mini",
         temperature: 0.7, // Slightly higher for more creative responses
-        max_tokens: mode === 'full' ? 16384 : 500, // 16384 for full reports, 500 for previews
+        max_tokens: mode === 'full' ? 30000 : 500, // 30000 for full reports, 500 for previews
         messages: [{ role: "user", content: `${sys}\n\n${user}` }],
-        stream: false // Enable streaming if needed for larger responses
+        stream: mode === 'full' // Enable streaming for full reports
       });
       break; // Success, exit retry loop
     } catch (retryError) {
