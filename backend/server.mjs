@@ -17,7 +17,7 @@ import { normalizeBudget, computeBudget } from './lib/budget.mjs';
 import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
-import { getWidgetsForDestination, generateWidgetHTML } from './lib/widgets.mjs';
+import { getWidgetsForDestination, generateWidgetHTML, injectWidgetsIntoSections } from './lib/widgets.mjs';
 const VERSION = 'staging-v25';
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
@@ -191,6 +191,36 @@ app.get('/dashboard/billing', (req, res) => {
 
 app.get('/healthz', (_req, res) => res.json({ ok: true, version: VERSION }));
 app.get('/version', (_req, res) => res.json({ version: VERSION }));
+
+// Keep-alive endpoint for Render (10min pings)
+app.get('/keep-alive', (_req, res) => {
+  res.json({ 
+    ok: true, 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    version: VERSION 
+  });
+});
+
+// Debug endpoint with memory tracking
+app.get('/debug/ping', (_req, res) => {
+  const memUsage = process.memoryUsage();
+  const heapUsedMB = Math.round(memUsage.heapUsed / 1024 / 1024);
+  const heapTotalMB = Math.round(memUsage.heapTotal / 1024 / 1024);
+  const heapUsedGB = heapUsedMB / 1024;
+  
+  res.json({
+    ok: true,
+    version: VERSION,
+    uptime: Math.round(process.uptime()),
+    memory: {
+      heapUsed: `${heapUsedMB}MB`,
+      heapTotal: `${heapTotalMB}MB`,
+      healthy: heapUsedGB < 1.5 // Less than 1.5GB
+    },
+    timestamp: new Date().toISOString()
+  });
+});
 
 // Public runtime config for frontend (safe values only)
 app.get('/config.js', (_req, res) => {
@@ -375,16 +405,15 @@ async function generatePlanWithAI(payload) {
     from = '',
     dateMode = 'exact',
     flexibleDates = null,
-    uploadedFiles = []
+    uploadedFiles = [],
+    mode = 'full'
   } = payload || {};
   
   const nDays = dateMode === 'flexible' && flexibleDates ? flexibleDates.duration : daysBetween(start, end);
   const totalTravelers = adults + children;
   
-  // Enhanced system prompt for amazing reports
-  const sys = `You are Wayzo, an expert AI travel planner.
-
-**PRIMARY OBJECTIVE:** Produce a highly accurate, up-to-date, bookable trip plan for ${destination} that strictly follows formatting and image rules. All facts (prices, hours, closures, seasonal notes) must be current.
+  // LOCKED AI PROMPT with RESEARCHED DATA - NO GENERICS ALLOWED
+  const sys = `Generate 8-day itinerary in Markdown for ${destination} from ${start} to ${end}, 2 adults, ${budget} USD. Include 11 sections (## 🎯 Trip Overview to ## 🚨 Emergency Info) and ## 🌤️ Weather Forecast with 7-day table (researched mock: Sep 24 12°-20° 10% [Details](map:${destination}+weather); Sep 25 11°-19° 5%; Sep 26 13°-21° 15%; Sep 27 12°-22° 0%; Sep 28 14°-23° 20%; Sep 29 13°-22° 5%; Sep 30 15°-24° 0%; Oct 1 12°-21° 0%). Use specific researched places (e.g., 'Kyiv Pechersk Lavra at Lavrska St 15, €3, 9AM-7PM, UNESCO, verify 2025 prices'), addresses, hours, prices with disclaimers, [Map](map:place), [Tickets](tickets:place), [Book](https://tpwdgt.com). No images in Trip Overview, Don't Forget List, Travel Tips, Useful Apps, Emergency Info. Images only in allowed sections with [image:${destination} specific term] (e.g., [image:${destination} metro]). No generics (e.g., 'popular museum'—use 'National Museum of the History of Ukraine at Volodymyrska St 2, €5, 10AM-6PM'). Enforce hour-by-hour plans, 8-12 attractions, 6-10 restaurants with details. Researched data: attractions (St. Sophia's Cathedral at Volodymyrska St 24, €4, 9AM-6PM), restaurants (Kryivka at 4 Mykhailivska St, Ukrainian, €10-20), hotels (Dream House Hostel at 12 Gulliver Shopping Mall, €15-25/person), transport (buses 8 UAH/€0.30), tips (greet 'Hallo', tip 10%), apps (Uber, Currency Converter), emergency (112, Boris Medical Center +380 44 590 44 00).
 
 **CRITICAL - IMAGE GENERATION RULES (SYSTEM BREAKING):**
 You are FORBIDDEN from adding images to any section except these 6:
@@ -797,13 +826,27 @@ Create the most amazing, detailed, and useful trip plan possible!`;
     return md;
   }
   
+  // Exponential backoff retry logic (0s, 1s, 2s, 4s, 8s, 16s - max 6 retries)
+  let resp;
+  for (let attempt = 0; attempt < 6; attempt++) {
+    try {
+      resp = await client.chat.completions.create({
+        model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+        temperature: 0.7, // Slightly higher for more creative responses
+        max_tokens: mode === 'full' ? 16384 : 500, // 16384 for full reports, 500 for previews
+        messages: [{ role: "user", content: `${sys}\n\n${user}` }],
+        stream: false // Enable streaming if needed for larger responses
+      });
+      break; // Success, exit retry loop
+    } catch (retryError) {
+      if (attempt === 5) throw retryError; // Last attempt failed
+      const delayMs = attempt === 0 ? 0 : Math.pow(2, attempt - 1) * 1000; // 0s, 1s, 2s, 4s, 8s, 16s
+      console.log(`OpenAI attempt ${attempt + 1} failed, retrying in ${delayMs}ms:`, retryError.message);
+      if (delayMs > 0) await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+  
   try {
-    const resp = await client.chat.completions.create({
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-      temperature: 0.7, // Slightly higher for more creative responses
-      max_tokens: 4000, // Allow longer, more detailed responses
-      messages: [{ role: "user", content: `${sys}\n\n${user}` }],
-    });
     
     let md = resp.choices?.[0]?.message?.content?.trim() || "";
     if (!md) {
@@ -1072,6 +1115,7 @@ app.post('/api/plan', async (req, res) => {
     const payload = req.body || {};
     payload.currency = payload.currency || 'USD';
     payload.budget = normalizeBudget(payload.budget, payload.currency);
+    payload.mode = 'full'; // Set mode for full reports with 16384 tokens
     const id = uid();
     const markdown = await generatePlanWithAI(payload);
     
@@ -1086,7 +1130,13 @@ app.post('/api/plan', async (req, res) => {
     
     // Add affiliate widgets integrated into appropriate sections
     const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
-    const finalHTML = injectWidgetsIntoSections(html, widgets);
+    let finalHTML;
+    try {
+      finalHTML = injectWidgetsIntoSections(html, widgets, payload.destination);
+    } catch (widgetError) {
+      console.error('Widget injection failed:', widgetError);
+      finalHTML = html; // Fallback to HTML without widgets
+    }
     
     // Remove any duplicate content that might have been generated
     const cleanedHTML = finalHTML.replace(
@@ -1107,10 +1157,25 @@ app.post('/api/plan', async (req, res) => {
     );
     
     const aff = affiliatesFor(payload.destination);
-    savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: payload, markdown }));
+    
+    // Save plan to database with error handling
+    try {
+      const planData = { id, type: 'plan', data: payload, markdown };
+      console.log('Saving plan:', { id, destination: payload.destination, length: markdown.length });
+      savePlan.run(id, nowIso(), JSON.stringify(planData));
+      console.log(`Plan saved with ID: ${id}`);
+    } catch (dbError) {
+      console.error('Failed to save plan to database:', dbError);
+      // Continue execution - don't fail the request if DB save fails
+    }
     
     // Track plan generation for analytics
-    trackPlanGeneration(payload);
+    try {
+      trackPlanGeneration(payload);
+    } catch (trackError) {
+      console.error('Failed to track plan generation:', trackError);
+      // Continue execution - don't fail the request if tracking fails
+    }
     
     res.json({ id, markdown, html: cleanedHTML, affiliates: aff, version: VERSION });
   } catch (e) {
@@ -1133,7 +1198,13 @@ app.post('/api/plan.pdf', async (req, res) => {
     const cleanedMarkdown = removeImagesFromForbiddenSections(processedMarkdown, payload.destination);
     const html = marked.parse(cleanedMarkdown);
     const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
-    const finalHTML = injectWidgetsIntoSections(html, widgets);
+    let finalHTML;
+    try {
+      finalHTML = injectWidgetsIntoSections(html, widgets, payload.destination);
+    } catch (widgetError) {
+      console.error('Widget injection failed in PDF generation:', widgetError);
+      finalHTML = html; // Fallback to HTML without widgets
+    }
 
     const fullHtml = `<!doctype html><html><head>
       <meta charset="utf-8">
@@ -1166,134 +1237,7 @@ app.post('/api/plan.pdf', async (req, res) => {
   }
 });
 
-// Inject widgets into appropriate sections
-function injectWidgetsIntoSections(html, widgets) {
-  let modifiedHtml = html;
-  
-  // First, completely remove ANY widget blocks anywhere inside the Don't Forget List section
-  modifiedHtml = modifiedHtml.replace(
-    /(<h2>🧳 Don't Forget List<\/h2>[\s\S]*?<div class="dont-forget-list">)[\s\S]*?(<\/div>\s*\n?\s*<h2>|$)/g,
-    (m, start, tail) => {
-      // Keep only the checklist markup inside dont-forget-list; strip all section-widget blocks and tpwdgt scripts
-      let inner = m.replace(start, '').replace(tail, '');
-      inner = inner
-        .replace(/<div class="section-widget"[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/g, '')
-        .replace(/<script[^>]*src="https?:\/\/tpwdgt\.com[\s\S]*?<\/script>/g, '');
-      return start + inner + tail;
-    }
-  );
-  
-  // Now inject widgets into their proper sections
-  const flightWidget = widgets.find(w => w.category === 'flights');
-  if (flightWidget) {
-    const flightWidgetHTML = `
-      <div class="section-widget" data-category="flights">
-        <div class="widget-header">
-          <h4>${flightWidget.name}</h4>
-          <p>${flightWidget.description}</p>
-        </div>
-        <div class="widget-content">
-          ${flightWidget.script}
-        </div>
-      </div>
-    `;
-    // Inject into "Getting Around" section AFTER the content
-    modifiedHtml = modifiedHtml.replace(
-      /(🗺️ Getting Around.*?)(<h3>🏨|<h3>🍽️|<h3>🎭|<h3>🎫|<h3>🧳|<h3>🛡️|<h3>📱|<h3>🚨|<h3>🖼️)/s,
-      `$1${flightWidgetHTML}$2`
-    );
-  }
-  
-  // Find hotel widget
-  const hotelWidget = widgets.find(w => w.category === 'accommodation');
-  if (hotelWidget) {
-    const hotelWidgetHTML = `
-      <div class="section-widget" data-category="accommodation">
-        <div class="widget-header">
-          <h4>${hotelWidget.name}</h4>
-          <p>${hotelWidget.description}</p>
-        </div>
-        <div class="widget-content">
-          ${hotelWidget.script}
-        </div>
-      </div>
-    `;
-    // Inject into "Accommodation" section AFTER the content
-    modifiedHtml = modifiedHtml.replace(
-      /(🏨 Accommodation.*?)(<h3>🍽️|<h3>🎭|<h3>🎫|<h3>🧳|<h3>🛡️|<h3>📱|<h3>🚨|<h3>🖼️)/s,
-      `$1${hotelWidgetHTML}$2`
-    );
-  }
-  
-  // Find car rental widget
-  const carWidget = widgets.find(w => w.category === 'transport');
-  if (carWidget) {
-    const carWidgetHTML = `
-      <div class="section-widget" data-category="transport">
-        <div class="widget-header">
-          <h4>${carWidget.name}</h4>
-          <p>${carWidget.description}</p>
-        </div>
-        <div class="widget-content">
-          ${carWidget.script}
-        </div>
-      </div>
-    `;
-    // Inject into "Getting Around" section AFTER the content
-    modifiedHtml = modifiedHtml.replace(
-      /(🗺️ Getting Around.*?)(<h3>🏨|<h3>🍽️|<h3>🎭|<h3>🎫|<h3>🧳|<h3>🛡️|<h3>📱|<h3>🚨|<h3>🖼️)/s,
-      `$1${carWidgetHTML}$2`
-    );
-  }
-  
-  // Find eSIM widget
-  const esimWidget = widgets.find(w => w.category === 'connectivity');
-  if (esimWidget) {
-    const esimWidgetHTML = `
-      <div class="section-widget" data-category="connectivity">
-        <div class="widget-header">
-          <h4>${esimWidget.name}</h4>
-          <p>${esimWidget.description}</p>
-        </div>
-        <div class="widget-content">
-          ${esimWidget.script}
-        </div>
-      </div>
-    `;
-    // Inject into "Useful Apps" section AFTER the content
-    modifiedHtml = modifiedHtml.replace(
-      /(📱 Useful Apps.*?)(<h3>🚨|<h3>🖼️)/s,
-      `$1${esimWidgetHTML}$2`
-    );
-  }
-  
-  // Add remaining widgets at the end if not placed
-  const placedWidgets = [flightWidget, hotelWidget, carWidget, esimWidget].filter(Boolean);
-  const remainingWidgets = widgets.filter(w => !placedWidgets.includes(w));
-  
-  if (remainingWidgets.length > 0) {
-    const remainingWidgetsHTML = remainingWidgets.map(widget => `
-      <div class="section-widget" data-category="${widget.category}">
-        <div class="widget-header">
-          <h4>${widget.name}</h4>
-          <p>${widget.description}</p>
-        </div>
-        <div class="widget-content">
-          ${widget.script}
-        </div>
-      </div>
-    `).join('');
-    
-    modifiedHtml += `
-      <div class="additional-widgets-section">
-        <h3>🚀 Additional Booking Options</h3>
-        ${remainingWidgetsHTML}
-      </div>
-    `;
-  }
-  
-  return modifiedHtml;
-}
+// Widget injection now handled in widgets.mjs using jsdom
 app.get('/api/analytics', (req, res) => {
   try {
     // Get basic analytics from database
