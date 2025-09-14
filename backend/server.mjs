@@ -412,28 +412,27 @@ async function generatePlanWithAI(payload) {
   const nDays = dateMode === 'flexible' && flexibleDates ? flexibleDates.duration : daysBetween(start, end);
   const totalTravelers = adults + children;
   
-  // LOCKED AI PROMPT with RESEARCHED BALI DATA - NO GENERICS ALLOWED
-  const sys = `Generate 8-day itinerary in Markdown for ${destination} from ${start} to ${end}, 2 adults, ${budget} USD. Include 11 sections (## 🎯 Trip Overview to ## 🚨 Emergency Info) and ## 🌤️ Weather Forecast with 7-day table (mock: Sep 19 24°-30° 10% [Details](map:${destination}+weather); Sep 20 23°-29° 5%; Sep 21 25°-31° 15%; Sep 22 24°-30° 0%; Sep 23 26°-32° 20%; Sep 24 25°-31° 5%; Sep 25 27°-33° 0%; Sep 26 24°-30° 0%). Use specific researched places (e.g., 'Warung Babi Guling Ibu Oka at Jl. Tegal Sari No.2, Ubud, €5-10, 11AM-5PM, verify 2025 prices'), addresses, hours, prices with disclaimers, [Map](map:place), [Tickets](tickets:place), [Book](https://tpwdgt.com). NO IMAGES ANYWHERE. No generics (e.g., 'popular museum'—use 'Sacred Monkey Forest Sanctuary at Jl. Monkey Forest, Ubud, €5, 8:30AM-6PM'). Enforce full hour-by-hour plans for all 8 days with one-sentence explanation for each place (e.g., 'Visit Uluwatu Temple at Pecatu – a clifftop sea temple famous for its sunset views and Kecak dance performances.'), 8-12 attractions, 6-10 restaurants with details. Budget: ~$2000 (~€1800; flights €900, accommodation €140, food €350, transport €70, activities €700, misc €80). Researched data: attractions (Tanah Lot Temple at Beraban, Tabanan, €4, 7AM-7PM), restaurants (Naughty Nuri's Warung at Jl. Raya Sanggingan, Ubud, €10-15, 11AM-11PM), hotels (Pondok Ayu at Jl. Kubu Anyar No.16, Kuta, €15-20), transport (Grab taxi €5-10/ride), tips (dress modestly in temples, tip 10%), apps (Grab, Google Maps), emergency (112, Sanglah General Hospital +62 361 227 911).
+  // LOCKED AI PROMPT with RESEARCHED BALI DATA - FULL 8-DAY ENFORCEMENT
+  const sys = `Generate 8-day itinerary in Markdown for ${destination} from ${start} to ${end}, 2 adults, ${budget} USD. Include 11 sections (## 🎯 Trip Overview to ## 🚨 Emergency Info) and ## 🌤️ Weather Forecast with 7-day table (mock: Sep 19 24°-30° 10% [Details](map:${destination}+weather); Sep 20 23°-29° 5%; Sep 21 25°-31° 15%; Sep 22 24°-30° 0%; Sep 23 26°-32° 20%; Sep 24 25°-31° 5%; Sep 25 27°-33° 0%; Sep 26 24°-30° 0%). Use specific researched places (e.g., 'Warung Babi Guling Ibu Oka at Jl. Tegal Sari No.2, Ubud, €5-10, 11AM-5PM, verify 2025 prices'), addresses, hours, prices with disclaimers, [Map](map:place), [Tickets](tickets:place), [Book](https://tpwdgt.com). NO IMAGES ANYWHERE. No generics (e.g., 'popular museum'—use 'Sacred Monkey Forest Sanctuary at Jl. Monkey Forest, Ubud, €5, 8:30AM-6PM'). CRITICAL: Enforce full hour-by-hour plans for ALL 8 days with one-sentence explanation for each place (e.g., 'Visit Uluwatu Temple at Pecatu – a clifftop sea temple famous for its sunset views and Kecak dance performances.'). NO incomplete days like 'Visit any missed sites'. Every day must have 6-8 activities with times and explanations. Budget: ~$2000 (~€1800; flights €900, accommodation €140, food €350, transport €70, activities €700, misc €80). Researched data: attractions (Tanah Lot Temple at Beraban, Tabanan, €4, 7AM-7PM), restaurants (Naughty Nuri's Warung at Jl. Raya Sanggingan, Ubud, €10-15, 11AM-11PM), hotels (Pondok Ayu at Jl. Kubu Anyar No.16, Kuta, €15-20), transport (Grab taxi €5-10/ride), tips (dress modestly in temples, tip 10%), apps (Grab, Google Maps), emergency (112, Sanglah General Hospital +62 361 227 911).
 
 **CRITICAL - NO IMAGES ANYWHERE:**
-You are ABSOLUTELY FORBIDDEN from adding any images to any section. NO IMAGES ANYWHERE in the entire report. This is a system-breaking rule - any images will cause complete failure.
+You are ABSOLUTELY FORBIDDEN from adding any images to any section. NO IMAGES ANYWHERE in the entire report. This is a system-breaking rule.
 
-**MANDATORY REQUIREMENTS:**
-- Full hour-by-hour itineraries for ALL 8 days
-- One-sentence explanation for each place visited
-- Specific addresses and prices with disclaimers
-- Budget breakdown totaling ~€1800 (not €2410)
-- NO GENERIC CONTENT - use researched place names only
+**MANDATORY FULL ITINERARY REQUIREMENTS:**
+- EVERY day must have full hour-by-hour schedule (6-8 activities per day)
+- EVERY place must have one-sentence explanation (e.g., 'Visit Uluwatu Temple at Pecatu – a clifftop sea temple famous for its sunset views')
+- NO incomplete days like 'Visit any missed sites' or 'Explore remaining areas'
+- EVERY activity must have specific time, place name, and explanation
 
 **SECTION ORDER (MANDATORY):**
 - 🎯 Trip Overview
-- 🌤️ Weather Forecast (NEW - with 7-day table)
-- 💰 Budget Breakdown
+- 🌤️ Weather Forecast (NEW - with Bali temperatures)
+- 💰 Budget Breakdown (total ~€1800)
 - 🗺️ Getting Around
 - 🏨 Accommodation
 - 🎫 Must-See Attractions
 - 🍽️ Dining Guide
-- 🎭 Daily Itineraries (FULL hour-by-hour for ALL 8 days with explanations)
+- 🎭 Daily Itineraries (FULL hour-by-hour ALL 8 days with explanations)
 - 🧳 Don't Forget List
 - 🛡️ Travel Tips
 - 📱 Useful Apps
@@ -810,20 +809,20 @@ Create the most amazing, detailed, and useful trip plan possible!`;
     return md;
   }
   
-  // Exponential backoff retry logic (0s, 1s, 2s, 4s, 8s, 16s, 32s, 64s - max 8 retries)
+  // Exponential backoff retry logic (0s, 1s, 2s, 4s, 8s, 16s - max 6 retries)
   let resp;
-  for (let attempt = 0; attempt < 8; attempt++) {
+  for (let attempt = 0; attempt < 6; attempt++) {
     try {
       resp = await client.chat.completions.create({
         model: process.env.OPENAI_MODEL || "gpt-4o-mini",
         temperature: 0.7, // Slightly higher for more creative responses
         max_tokens: mode === 'full' ? 30000 : 500, // 30000 for full reports, 500 for previews
         messages: [{ role: "user", content: `${sys}\n\n${user}` }],
-        stream: false // Disable streaming to fix 500 errors - use high tokens instead
+        stream: mode === 'full' // Enable streaming for full reports only
       });
       break; // Success, exit retry loop
     } catch (retryError) {
-      if (attempt === 7) throw retryError; // Last attempt failed
+      if (attempt === 5) throw retryError; // Last attempt failed
       const delayMs = attempt === 0 ? 0 : Math.pow(2, attempt - 1) * 1000; // 0s, 1s, 2s, 4s, 8s, 16s
       console.log(`OpenAI attempt ${attempt + 1} failed, retrying in ${delayMs}ms:`, retryError.message);
       if (delayMs > 0) await new Promise(resolve => setTimeout(resolve, delayMs));
@@ -833,8 +832,20 @@ Create the most amazing, detailed, and useful trip plan possible!`;
   try {
     let md = "";
     
-    // Handle non-streaming response (streaming disabled to fix 500 errors)
-    md = resp.choices?.[0]?.message?.content?.trim() || "";
+    // Handle streaming vs non-streaming response
+    if (mode === 'full') {
+      // Streaming response for full reports
+      console.log('Processing streaming response...');
+      for await (const chunk of resp) {
+        const content = chunk.choices?.[0]?.delta?.content;
+        if (content) {
+          md += content;
+        }
+      }
+    } else {
+      // Non-streaming response for previews
+      md = resp.choices?.[0]?.message?.content?.trim() || "";
+    }
     
     if (!md) {
       console.warn('OpenAI response empty, using fallback');
@@ -1203,10 +1214,10 @@ app.post('/api/plan.pdf', async (req, res) => {
         img { max-width: 100%; height: auto; }
         h1, h2, h3 { page-break-after: avoid; }
         table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #ddd; padding: 6px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         .budget-table { border-collapse: collapse; border: 1px solid black; width: 100%; }
-        .budget-table th, .budget-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        .budget-table th { background: #f5f5f5; }
+        .budget-table th { background: #f5f5f5; border: 1px solid black; padding: 8px; }
+        .budget-table td { border: 1px solid black; padding: 8px; }
         .page-break { page-break-before: always; }
       </style>
     </head><body>

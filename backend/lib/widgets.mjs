@@ -54,7 +54,7 @@ const AFFILIATE_WIDGETS = {
 
   // GetYourGuide Activities - DESTINATION-SPECIFIC
   getyourguide: {
-    name: "Activities & Tours",
+    name: "Activities & Tours", 
     description: "Curated tours and activities",
     script: (destination) => `<div data-gyg-widget="auto" data-gyg-partner-id="PUHVJ53" data-gyg-href="https://www.getyourguide.com/s/?q=${destination.replace(/,.*/, '').trim()}"></div>
 <script async defer src="https://widget.getyourguide.com/dist/pa.umd.production.min.js" data-gyg-partner-id="PUHVJ53"></script>`,
