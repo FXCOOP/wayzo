@@ -52,11 +52,11 @@ const AFFILIATE_WIDGETS = {
     placement: "budget_breakdown"
   },
 
-  // GetYourGuide Activities - EXACT SPECIFICATION
+  // GetYourGuide Activities - DESTINATION-SPECIFIC
   getyourguide: {
     name: "Activities & Tours",
     description: "Curated tours and activities",
-    script: `<div data-gyg-widget="auto" data-gyg-partner-id="PUHVJ53"></div>
+    script: (destination) => `<div data-gyg-widget="auto" data-gyg-partner-id="PUHVJ53" data-gyg-href="https://www.getyourguide.com/s/?q=${destination.replace(/,.*/, '').trim()}"></div>
 <script async defer src="https://widget.getyourguide.com/dist/pa.umd.production.min.js" data-gyg-partner-id="PUHVJ53"></script>`,
     category: "activities",
     placement: "must_see"
@@ -125,19 +125,19 @@ function injectWidgetsIntoSections(html, widgets, destination = '') {
       const weatherSection = doc.createElement('div');
       weatherSection.innerHTML = `
         <h2>🌤️ Weather Forecast</h2>
-        <table class="budget-table">
+        <table class="budget-table" style="border-collapse: collapse; border: 1px solid black;">
           <thead>
             <tr><th>Date</th><th>Min</th><th>Max</th><th>Rain%</th><th>Details</th></tr>
           </thead>
           <tbody>
-            <tr><td>Sep 24</td><td>12°</td><td>20°</td><td>10%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
-            <tr><td>Sep 25</td><td>11°</td><td>19°</td><td>5%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
-            <tr><td>Sep 26</td><td>13°</td><td>21°</td><td>15%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
-            <tr><td>Sep 27</td><td>12°</td><td>22°</td><td>0%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
-            <tr><td>Sep 28</td><td>14°</td><td>23°</td><td>20%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
-            <tr><td>Sep 29</td><td>13°</td><td>22°</td><td>5%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
-            <tr><td>Sep 30</td><td>15°</td><td>24°</td><td>0%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
-            <tr><td>Oct 1</td><td>12°</td><td>21°</td><td>0%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
+            <tr><td>Sep 19</td><td>24°</td><td>30°</td><td>10%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
+            <tr><td>Sep 20</td><td>23°</td><td>29°</td><td>5%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
+            <tr><td>Sep 21</td><td>25°</td><td>31°</td><td>15%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
+            <tr><td>Sep 22</td><td>24°</td><td>30°</td><td>0%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
+            <tr><td>Sep 23</td><td>26°</td><td>32°</td><td>20%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
+            <tr><td>Sep 24</td><td>25°</td><td>31°</td><td>5%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
+            <tr><td>Sep 25</td><td>27°</td><td>33°</td><td>0%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
+            <tr><td>Sep 26</td><td>24°</td><td>30°</td><td>0%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
           </tbody>
         </table>
       `;
@@ -221,7 +221,7 @@ function injectWidgetsIntoSections(html, widgets, destination = '') {
       }
     }
 
-    // 5. Add GetYourGuide widget to Must-See Attractions section
+    // 5. Add GetYourGuide widget to Must-See Attractions section with destination-specific href
     const mustSeeH2 = Array.from(doc.querySelectorAll('h2')).find(h => 
       h.textContent.includes("Must-See Attractions") || h.textContent.includes("🎫")
     );
@@ -230,7 +230,8 @@ function injectWidgetsIntoSections(html, widgets, destination = '') {
       if (gygWidget) {
         const widgetDiv = doc.createElement('div');
         widgetDiv.className = 'section-widget gyg-widget';
-        widgetDiv.innerHTML = gygWidget.script;
+        const scriptContent = typeof gygWidget.script === 'function' ? gygWidget.script(destination) : gygWidget.script;
+        widgetDiv.innerHTML = scriptContent;
         
         // Insert after Must-See Attractions section content
         let nextH2 = mustSeeH2.nextElementSibling;
@@ -270,7 +271,8 @@ function injectWidgetsIntoSections(html, widgets, destination = '') {
           if (nextElement) {
             const widgetDiv = doc.createElement('div');
             widgetDiv.className = 'gyg-widget-inline';
-            widgetDiv.innerHTML = gygWidget.script;
+            const scriptContent = typeof gygWidget.script === 'function' ? gygWidget.script(destination) : gygWidget.script;
+            widgetDiv.innerHTML = scriptContent;
             nextElement.parentNode.insertBefore(widgetDiv, nextElement);
             widgetsInjected["Daily Itineraries"]++;
           }
@@ -289,7 +291,8 @@ function injectWidgetsIntoSections(html, widgets, destination = '') {
           if (nextElement) {
             const widgetDiv = doc.createElement('div');
             widgetDiv.className = 'gyg-widget-inline';
-            widgetDiv.innerHTML = gygWidget.script;
+            const scriptContent = typeof gygWidget.script === 'function' ? gygWidget.script(destination) : gygWidget.script;
+            widgetDiv.innerHTML = scriptContent;
             nextElement.parentNode.insertBefore(widgetDiv, nextElement);
             widgetsInjected["Daily Itineraries"]++;
           }
