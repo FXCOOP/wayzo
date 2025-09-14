@@ -216,7 +216,7 @@ app.get('/debug/ping', (_req, res) => {
     memory: {
       heapUsed: `${heapUsedMB}MB`,
       heapTotal: `${heapTotalMB}MB`,
-      healthy: heapUsedGB < 1.5 // Less than 1.5GB
+      healthy: heapUsedGB < 1.8 // Less than 1.8GB
     },
     timestamp: new Date().toISOString()
   });
