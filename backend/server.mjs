@@ -412,44 +412,27 @@ async function generatePlanWithAI(payload) {
   const nDays = dateMode === 'flexible' && flexibleDates ? flexibleDates.duration : daysBetween(start, end);
   const totalTravelers = adults + children;
   
-  // LOCKED AI PROMPT with RESEARCHED DATA - NO GENERICS ALLOWED
-  const sys = `Generate 8-day itinerary in Markdown for ${destination} from ${start} to ${end}, 2 adults, ${budget} USD. Include 11 sections (## 🎯 Trip Overview to ## 🚨 Emergency Info) and ## 🌤️ Weather Forecast with 7-day table (researched mock: Sep 24 12°-20° 10% [Details](map:${destination}+weather); Sep 25 11°-19° 5%; Sep 26 13°-21° 15%; Sep 27 12°-22° 0%; Sep 28 14°-23° 20%; Sep 29 13°-22° 5%; Sep 30 15°-24° 0%; Oct 1 12°-21° 0%). Use specific researched places (e.g., 'Kyiv Pechersk Lavra at Lavrska St 15, €3, 9AM-7PM, UNESCO, verify 2025 prices'), addresses, hours, prices with disclaimers, [Map](map:place), [Tickets](tickets:place), [Book](https://tpwdgt.com). No images in Trip Overview, Don't Forget List, Travel Tips, Useful Apps, Emergency Info. Images only in allowed sections with [image:${destination} specific term] (e.g., [image:${destination} metro]). No generics (e.g., 'popular museum'—use 'National Museum of the History of Ukraine at Volodymyrska St 2, €5, 10AM-6PM'). Enforce hour-by-hour plans, 8-12 attractions, 6-10 restaurants with details. Researched data: attractions (St. Sophia's Cathedral at Volodymyrska St 24, €4, 9AM-6PM), restaurants (Kryivka at 4 Mykhailivska St, Ukrainian, €10-20), hotels (Dream House Hostel at 12 Gulliver Shopping Mall, €15-25/person), transport (buses 8 UAH/€0.30), tips (greet 'Hallo', tip 10%), apps (Uber, Currency Converter), emergency (112, Boris Medical Center +380 44 590 44 00).
+  // LOCKED AI PROMPT with RESEARCHED BALI DATA - FULL 8-DAY ENFORCEMENT
+  const sys = `Generate 8-day itinerary in Markdown for ${destination} from ${start} to ${end}, 2 adults, ${budget} USD. Include 11 sections (## 🎯 Trip Overview to ## 🚨 Emergency Info) and ## 🌤️ Weather Forecast with 7-day table (mock: Sep 19 24°-30° 10% [Details](map:${destination}+weather); Sep 20 23°-29° 5%; Sep 21 25°-31° 15%; Sep 22 24°-30° 0%; Sep 23 26°-32° 20%; Sep 24 25°-31° 5%; Sep 25 27°-33° 0%; Sep 26 24°-30° 0%). Use specific researched places (e.g., 'Warung Babi Guling Ibu Oka at Jl. Tegal Sari No.2, Ubud, €5-10, 11AM-5PM, verify 2025 prices'), addresses, hours, prices with disclaimers, [Map](map:place), [Tickets](tickets:place), [Book](https://tpwdgt.com). NO IMAGES ANYWHERE. No generics (e.g., 'popular museum'—use 'Sacred Monkey Forest Sanctuary at Jl. Monkey Forest, Ubud, €5, 8:30AM-6PM'). CRITICAL: Enforce full hour-by-hour plans for ALL 8 days with one-sentence explanation for each place (e.g., 'Visit Uluwatu Temple at Pecatu – a clifftop sea temple famous for its sunset views and Kecak dance performances.'). NO incomplete days like 'Visit any missed sites'. Every day must have 6-8 activities with times and explanations. Budget: ~$2000 (~€1800; flights €900, accommodation €140, food €350, transport €70, activities €700, misc €80). Researched data: attractions (Tanah Lot Temple at Beraban, Tabanan, €4, 7AM-7PM), restaurants (Naughty Nuri's Warung at Jl. Raya Sanggingan, Ubud, €10-15, 11AM-11PM), hotels (Pondok Ayu at Jl. Kubu Anyar No.16, Kuta, €15-20), transport (Grab taxi €5-10/ride), tips (dress modestly in temples, tip 10%), apps (Grab, Google Maps), emergency (112, Sanglah General Hospital +62 361 227 911).
 
-**CRITICAL - IMAGE GENERATION RULES (SYSTEM BREAKING):**
-You are FORBIDDEN from adding images to any section except these 6:
-1. Getting Around - 1 image at end
-2. Accommodation - 1 image at end  
-3. Must-See Attractions - 1 image at end
-4. Daily Itineraries - 1 image at end (NOT per day)
-5. Restaurants - 1 image at end
-6. Budget Breakdown - 1 image at end
+**CRITICAL - NO IMAGES ANYWHERE:**
+You are ABSOLUTELY FORBIDDEN from adding any images to any section. NO IMAGES ANYWHERE in the entire report. This is a system-breaking rule.
 
-**FORBIDDEN SECTIONS - NO IMAGES ALLOWED:**
-- Trip Overview
-- Don't Forget List
-- Travel Tips
-- Useful Apps
-- Emergency Info
-
-**IMAGE FORMAT - EXACT COPY ONLY (MUST BE DESTINATION-SCOPED):**
-![${destination} — Section](image:${destination} specific landmark|activity|food term)
-
-**ADDITIONAL IMAGE CONSTRAINTS:**
-- Exactly 1 image per allowed section, placed at the END of that section
-- The image query MUST include "${destination}" and be highly specific (avoid generic terms)
-- Do NOT duplicate the same image query in multiple sections; ensure variety and relevance
-- No placeholder text like "Image loading..." anywhere
-
-**VIOLATION = SYSTEM CRASH - FOLLOW EXACTLY**
+**MANDATORY FULL ITINERARY REQUIREMENTS:**
+- EVERY day must have full hour-by-hour schedule (6-8 activities per day)
+- EVERY place must have one-sentence explanation (e.g., 'Visit Uluwatu Temple at Pecatu – a clifftop sea temple famous for its sunset views')
+- NO incomplete days like 'Visit any missed sites' or 'Explore remaining areas'
+- EVERY activity must have specific time, place name, and explanation
 
 **SECTION ORDER (MANDATORY):**
 - 🎯 Trip Overview
-- 💰 Budget Breakdown
+- 🌤️ Weather Forecast (NEW - with Bali temperatures)
+- 💰 Budget Breakdown (total ~€1800)
 - 🗺️ Getting Around
 - 🏨 Accommodation
-- 🎫 Must-See Attractions   ← must come BEFORE Daily Itineraries
+- 🎫 Must-See Attractions
 - 🍽️ Dining Guide
-- 🎭 Daily Itineraries
+- 🎭 Daily Itineraries (FULL hour-by-hour ALL 8 days with explanations)
 - 🧳 Don't Forget List
 - 🛡️ Travel Tips
 - 📱 Useful Apps
@@ -833,9 +816,9 @@ Create the most amazing, detailed, and useful trip plan possible!`;
       resp = await client.chat.completions.create({
         model: process.env.OPENAI_MODEL || "gpt-4o-mini",
         temperature: 0.7, // Slightly higher for more creative responses
-        max_tokens: mode === 'full' ? 16384 : 500, // 16384 for full reports, 500 for previews
+        max_tokens: mode === 'full' ? 30000 : 500, // 30000 for full reports, 500 for previews
         messages: [{ role: "user", content: `${sys}\n\n${user}` }],
-        stream: false // Enable streaming if needed for larger responses
+        stream: mode === 'full' // Enable streaming for full reports only
       });
       break; // Success, exit retry loop
     } catch (retryError) {
@@ -847,12 +830,29 @@ Create the most amazing, detailed, and useful trip plan possible!`;
   }
   
   try {
+    let md = "";
     
-    let md = resp.choices?.[0]?.message?.content?.trim() || "";
+    // Handle streaming vs non-streaming response
+    if (mode === 'full') {
+      // Streaming response for full reports
+      console.log('Processing streaming response...');
+      for await (const chunk of resp) {
+        const content = chunk.choices?.[0]?.delta?.content;
+        if (content) {
+          md += content;
+        }
+      }
+    } else {
+      // Non-streaming response for previews
+      md = resp.choices?.[0]?.message?.content?.trim() || "";
+    }
+    
     if (!md) {
       console.warn('OpenAI response empty, using fallback');
       md = localPlanMarkdown(payload);
     }
+    
+    console.log(`AI plan generated successfully for ${mode} mode! Length: ${md.length}`);
     
     // NUCLEAR POST-PROCESSING: Completely eliminate Image Ideas section and generic content
     let lines = md.split('\n');
@@ -1214,8 +1214,10 @@ app.post('/api/plan.pdf', async (req, res) => {
         img { max-width: 100%; height: auto; }
         h1, h2, h3 { page-break-after: avoid; }
         table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #ddd; padding: 6px; }
-        .budget-table th { background: #f5f5f5; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .budget-table { border-collapse: collapse; border: 1px solid black; width: 100%; }
+        .budget-table th { background: #f5f5f5; border: 1px solid black; padding: 8px; }
+        .budget-table td { border: 1px solid black; padding: 8px; }
         .page-break { page-break-before: always; }
       </style>
     </head><body>
