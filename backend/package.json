@@ -7,7 +7,7 @@
     "node": "20.x"
   },
   "scripts": {
-    "start": "node --max-old-space-size=1024 backend/server.mjs"
+    "start": "node --max-old-space-size=2048 backend/server.mjs"
   },
   "dependencies": {
     "better-sqlite3": "^9.6.0",

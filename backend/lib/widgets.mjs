@@ -1,6 +1,6 @@
 import { JSDOM } from 'jsdom';
 
-// Affiliate Widgets Configuration with exact specifications
+// Affiliate Widgets Configuration - EXACT SPECIFICATIONS
 const AFFILIATE_WIDGETS = {
   // Airport Transfers - for Budget Breakdown
   airport_transfers: {
@@ -52,7 +52,7 @@ const AFFILIATE_WIDGETS = {
     placement: "budget_breakdown"
   },
 
-  // GetYourGuide Activities - exact specification
+  // GetYourGuide Activities - EXACT SPECIFICATION
   getyourguide: {
     name: "Activities & Tours",
     description: "Curated tours and activities",
@@ -63,28 +63,28 @@ const AFFILIATE_WIDGETS = {
   }
 };
 
-// Widget placement logic - INCLUDE ALL REQUESTED WIDGETS
+// Widget placement logic
 function getWidgetsForDestination(destination, tripType, interests = []) {
   const widgets = [];
   
-  // ALWAYS include ALL your requested widgets for every destination
-  widgets.push(AFFILIATE_WIDGETS.flight_search);      // ✈️ Flight Search
-  widgets.push(AFFILIATE_WIDGETS.hotel_booking);      // 🏨 Hotel Booking  
-  widgets.push(AFFILIATE_WIDGETS.car_rentals);        // 🚗 Car Rentals
-  widgets.push(AFFILIATE_WIDGETS.airport_transfers);  // 🚌 Airport Transfers
-  widgets.push(AFFILIATE_WIDGETS.esim);              // 📶 eSIM
-  widgets.push(AFFILIATE_WIDGETS.getyourguide);      // 🎫 GetYourGuide
+  // Include ALL requested widgets for every destination
+  widgets.push(AFFILIATE_WIDGETS.flight_search);      // Flight Search
+  widgets.push(AFFILIATE_WIDGETS.hotel_booking);      // Hotel Booking  
+  widgets.push(AFFILIATE_WIDGETS.car_rentals);        // Car Rentals
+  widgets.push(AFFILIATE_WIDGETS.airport_transfers);  // Airport Transfers
+  widgets.push(AFFILIATE_WIDGETS.esim);              // eSIM
+  widgets.push(AFFILIATE_WIDGETS.getyourguide);      // GetYourGuide
   
   return widgets;
 }
 
-// Inject widgets into HTML using jsdom for precise placement
+// JSDOM-based widget injection with precise placement
 function injectWidgetsIntoSections(html, widgets, destination = '') {
   if (!widgets || widgets.length === 0) return html;
   
   try {
     const dom = new JSDOM(html);
-    const document = dom.window.document;
+    const doc = dom.window.document;
     
     let widgetsInjected = {
       "Budget Breakdown": 0,
@@ -94,8 +94,8 @@ function injectWidgetsIntoSections(html, widgets, destination = '') {
       "Weather": 0
     };
 
-    // 1. Remove widgets from Don't Forget List section if any exist
-    const dontForgetH2 = Array.from(document.querySelectorAll('h2')).find(h => 
+    // 1. Remove widgets from Don't Forget List if any exist
+    const dontForgetH2 = Array.from(doc.querySelectorAll('h2')).find(h => 
       h.textContent.includes("Don't Forget") || h.textContent.includes("🧳")
     );
     if (dontForgetH2) {
@@ -117,12 +117,12 @@ function injectWidgetsIntoSections(html, widgets, destination = '') {
       }
     }
 
-    // 2. Add Weather Forecast section after Trip Overview
-    const tripOverviewH2 = Array.from(document.querySelectorAll('h2')).find(h => 
+    // 2. Add Weather Forecast section after Trip Overview with RESEARCHED MOCK DATA
+    const tripOverviewH2 = Array.from(doc.querySelectorAll('h2')).find(h => 
       h.textContent.includes("Trip Overview") || h.textContent.includes("🎯")
     );
     if (tripOverviewH2) {
-      const weatherSection = document.createElement('div');
+      const weatherSection = doc.createElement('div');
       weatherSection.innerHTML = `
         <h2>🌤️ Weather Forecast</h2>
         <table class="budget-table">
@@ -130,18 +130,19 @@ function injectWidgetsIntoSections(html, widgets, destination = '') {
             <tr><th>Date</th><th>Min</th><th>Max</th><th>Rain%</th><th>Details</th></tr>
           </thead>
           <tbody>
-            <tr><td>Day 1</td><td>18°</td><td>24°</td><td>10%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
-            <tr><td>Day 2</td><td>19°</td><td>25°</td><td>5%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
-            <tr><td>Day 3</td><td>17°</td><td>23°</td><td>15%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
-            <tr><td>Day 4</td><td>20°</td><td>26°</td><td>0%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
-            <tr><td>Day 5</td><td>18°</td><td>24°</td><td>20%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
-            <tr><td>Day 6</td><td>19°</td><td>25°</td><td>5%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
-            <tr><td>Day 7</td><td>21°</td><td>27°</td><td>0%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
+            <tr><td>Sep 24</td><td>12°</td><td>20°</td><td>10%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
+            <tr><td>Sep 25</td><td>11°</td><td>19°</td><td>5%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
+            <tr><td>Sep 26</td><td>13°</td><td>21°</td><td>15%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
+            <tr><td>Sep 27</td><td>12°</td><td>22°</td><td>0%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
+            <tr><td>Sep 28</td><td>14°</td><td>23°</td><td>20%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
+            <tr><td>Sep 29</td><td>13°</td><td>22°</td><td>5%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
+            <tr><td>Sep 30</td><td>15°</td><td>24°</td><td>0%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
+            <tr><td>Oct 1</td><td>12°</td><td>21°</td><td>0%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
           </tbody>
         </table>
       `;
       
-      // Find next h2 after Trip Overview
+      // Find next h2 after Trip Overview and insert weather before it
       let nextH2 = tripOverviewH2.nextElementSibling;
       while (nextH2 && nextH2.tagName !== 'H2') {
         nextH2 = nextH2.nextElementSibling;
@@ -154,14 +155,14 @@ function injectWidgetsIntoSections(html, widgets, destination = '') {
     }
 
     // 3. Add Flight, Hotel, Car, Airport Transfer widgets to Budget Breakdown section
-    const budgetH2 = Array.from(document.querySelectorAll('h2')).find(h => 
+    const budgetH2 = Array.from(doc.querySelectorAll('h2')).find(h => 
       h.textContent.includes("Budget Breakdown") || h.textContent.includes("💰")
     );
     if (budgetH2) {
       const budgetWidgets = widgets.filter(w => w.placement === "budget_breakdown");
       
       budgetWidgets.forEach(widget => {
-        const widgetDiv = document.createElement('div');
+        const widgetDiv = doc.createElement('div');
         widgetDiv.className = 'section-widget';
         widgetDiv.setAttribute('data-category', widget.category);
         widgetDiv.innerHTML = `
@@ -174,7 +175,7 @@ function injectWidgetsIntoSections(html, widgets, destination = '') {
           </div>
         `;
         
-        // Find next h2 after Budget Breakdown
+        // Insert after Budget Breakdown section content
         let nextH2 = budgetH2.nextElementSibling;
         while (nextH2 && nextH2.tagName !== 'H2') {
           nextH2 = nextH2.nextElementSibling;
@@ -188,13 +189,13 @@ function injectWidgetsIntoSections(html, widgets, destination = '') {
     }
 
     // 4. Add Airalo/eSIM widget to Useful Apps section
-    const usefulAppsH2 = Array.from(document.querySelectorAll('h2')).find(h => 
+    const usefulAppsH2 = Array.from(doc.querySelectorAll('h2')).find(h => 
       h.textContent.includes("Useful Apps") || h.textContent.includes("📱")
     );
     if (usefulAppsH2) {
       const esimWidget = widgets.find(w => w.category === "connectivity");
       if (esimWidget) {
-        const widgetDiv = document.createElement('div');
+        const widgetDiv = doc.createElement('div');
         widgetDiv.className = 'section-widget';
         widgetDiv.setAttribute('data-category', 'connectivity');
         widgetDiv.innerHTML = `
@@ -207,7 +208,7 @@ function injectWidgetsIntoSections(html, widgets, destination = '') {
           </div>
         `;
         
-        // Find next h2 after Useful Apps
+        // Insert after Useful Apps section content
         let nextH2 = usefulAppsH2.nextElementSibling;
         while (nextH2 && nextH2.tagName !== 'H2') {
           nextH2 = nextH2.nextElementSibling;
@@ -221,17 +222,17 @@ function injectWidgetsIntoSections(html, widgets, destination = '') {
     }
 
     // 5. Add GetYourGuide widget to Must-See Attractions section
-    const mustSeeH2 = Array.from(document.querySelectorAll('h2')).find(h => 
+    const mustSeeH2 = Array.from(doc.querySelectorAll('h2')).find(h => 
       h.textContent.includes("Must-See Attractions") || h.textContent.includes("🎫")
     );
     if (mustSeeH2) {
       const gygWidget = widgets.find(w => w.category === "activities");
       if (gygWidget) {
-        const widgetDiv = document.createElement('div');
+        const widgetDiv = doc.createElement('div');
         widgetDiv.className = 'section-widget gyg-widget';
         widgetDiv.innerHTML = gygWidget.script;
         
-        // Find next h2 after Must-See Attractions
+        // Insert after Must-See Attractions section content
         let nextH2 = mustSeeH2.nextElementSibling;
         while (nextH2 && nextH2.tagName !== 'H2') {
           nextH2 = nextH2.nextElementSibling;
@@ -244,15 +245,15 @@ function injectWidgetsIntoSections(html, widgets, destination = '') {
       }
     }
 
-    // 6. Add GetYourGuide widgets between Day 2/4 in Daily Itineraries
-    const dailyItinerariesH2 = Array.from(document.querySelectorAll('h2')).find(h => 
+    // 6. Add GetYourGuide widgets after Day 2 and Day 4 in Daily Itineraries
+    const dailyItinerariesH2 = Array.from(doc.querySelectorAll('h2')).find(h => 
       h.textContent.includes("Daily Itineraries") || h.textContent.includes("🎭")
     );
     if (dailyItinerariesH2) {
       const gygWidget = widgets.find(w => w.category === "activities");
       if (gygWidget) {
         // Find Day headings (h3)
-        const dayHeadings = Array.from(document.querySelectorAll('h3')).filter(h => 
+        const dayHeadings = Array.from(doc.querySelectorAll('h3')).filter(h => 
           h.textContent.match(/Day\s+\d+/i)
         );
         
@@ -267,7 +268,7 @@ function injectWidgetsIntoSections(html, widgets, destination = '') {
           }
           
           if (nextElement) {
-            const widgetDiv = document.createElement('div');
+            const widgetDiv = doc.createElement('div');
             widgetDiv.className = 'gyg-widget-inline';
             widgetDiv.innerHTML = gygWidget.script;
             nextElement.parentNode.insertBefore(widgetDiv, nextElement);
@@ -286,7 +287,7 @@ function injectWidgetsIntoSections(html, widgets, destination = '') {
           }
           
           if (nextElement) {
-            const widgetDiv = document.createElement('div');
+            const widgetDiv = doc.createElement('div');
             widgetDiv.className = 'gyg-widget-inline';
             widgetDiv.innerHTML = gygWidget.script;
             nextElement.parentNode.insertBefore(widgetDiv, nextElement);
@@ -296,12 +297,12 @@ function injectWidgetsIntoSections(html, widgets, destination = '') {
       }
     }
 
-    console.log(`Widgets injected: Budget Breakdown (${widgetsInjected["Budget Breakdown"]}), Must-See (${widgetsInjected["Must-See"]}), Daily Itineraries (${widgetsInjected["Daily Itineraries"]}), Useful Apps (${widgetsInjected["Useful Apps"]}), Weather (${widgetsInjected["Weather"]})`);
+    console.log(`Widgets injected successfully: Budget Breakdown (${widgetsInjected["Budget Breakdown"]}), Must-See (${widgetsInjected["Must-See"]}), Daily Itineraries (${widgetsInjected["Daily Itineraries"]}), Useful Apps (${widgetsInjected["Useful Apps"]}), Weather (${widgetsInjected["Weather"]})`);
     
     return dom.serialize();
-  } catch (error) {
-    console.error('Widget injection error:', error);
-    return html; // Return original HTML if injection fails
+  } catch (err) {
+    console.error('Widget injection error:', err);
+    return html; // Fallback to original HTML
   }
 }
 

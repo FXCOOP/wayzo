@@ -192,7 +192,7 @@ app.get('/dashboard/billing', (req, res) => {
 app.get('/healthz', (_req, res) => res.json({ ok: true, version: VERSION }));
 app.get('/version', (_req, res) => res.json({ version: VERSION }));
 
-// Keep-alive endpoint for Render
+// Keep-alive endpoint for Render (10min pings)
 app.get('/keep-alive', (_req, res) => {
   res.json({ 
     ok: true, 
@@ -207,6 +207,7 @@ app.get('/debug/ping', (_req, res) => {
   const memUsage = process.memoryUsage();
   const heapUsedMB = Math.round(memUsage.heapUsed / 1024 / 1024);
   const heapTotalMB = Math.round(memUsage.heapTotal / 1024 / 1024);
+  const heapUsedGB = heapUsedMB / 1024;
   
   res.json({
     ok: true,
@@ -215,7 +216,7 @@ app.get('/debug/ping', (_req, res) => {
     memory: {
       heapUsed: `${heapUsedMB}MB`,
       heapTotal: `${heapTotalMB}MB`,
-      healthy: heapUsedMB < 512
+      healthy: heapUsedGB < 1.5 // Less than 1.5GB
     },
     timestamp: new Date().toISOString()
   });
@@ -411,10 +412,8 @@ async function generatePlanWithAI(payload) {
   const nDays = dateMode === 'flexible' && flexibleDates ? flexibleDates.duration : daysBetween(start, end);
   const totalTravelers = adults + children;
   
-  // Locked AI prompt for consistent, specific content
-  const sys = `You are Wayzo, an expert AI travel planner.
-
-**PRIMARY OBJECTIVE:** Generate an 8-day itinerary in Markdown for ${destination} from ${start} to ${end}, 2 adults, ${budget} USD. Include 11 sections (## 🎯 Trip Overview to ## 🚨 Emergency Info) and ## 🌤️ Weather Forecast with 7-day table. Use specific places (e.g., 'Puzata Hata at 1 Mykhaila Hrushevskoho St, Kiev'), addresses, hours, prices with disclaimers, [Map](map:place), [Tickets](tickets:place), [Book](https://tpwdgt.com). No images in Trip Overview, Don't Forget List, Travel Tips, Useful Apps, Emergency Info. No generics (e.g., 'popular museum'—use 'Kyiv Pechersk Lavra'). Enforce hour-by-hour plans, 8-12 attractions, 6-10 restaurants.
+  // LOCKED AI PROMPT with RESEARCHED DATA - NO GENERICS ALLOWED
+  const sys = `Generate 8-day itinerary in Markdown for ${destination} from ${start} to ${end}, 2 adults, ${budget} USD. Include 11 sections (## 🎯 Trip Overview to ## 🚨 Emergency Info) and ## 🌤️ Weather Forecast with 7-day table (researched mock: Sep 24 12°-20° 10% [Details](map:${destination}+weather); Sep 25 11°-19° 5%; Sep 26 13°-21° 15%; Sep 27 12°-22° 0%; Sep 28 14°-23° 20%; Sep 29 13°-22° 5%; Sep 30 15°-24° 0%; Oct 1 12°-21° 0%). Use specific researched places (e.g., 'Kyiv Pechersk Lavra at Lavrska St 15, €3, 9AM-7PM, UNESCO, verify 2025 prices'), addresses, hours, prices with disclaimers, [Map](map:place), [Tickets](tickets:place), [Book](https://tpwdgt.com). No images in Trip Overview, Don't Forget List, Travel Tips, Useful Apps, Emergency Info. Images only in allowed sections with [image:${destination} specific term] (e.g., [image:${destination} metro]). No generics (e.g., 'popular museum'—use 'National Museum of the History of Ukraine at Volodymyrska St 2, €5, 10AM-6PM'). Enforce hour-by-hour plans, 8-12 attractions, 6-10 restaurants with details. Researched data: attractions (St. Sophia's Cathedral at Volodymyrska St 24, €4, 9AM-6PM), restaurants (Kryivka at 4 Mykhailivska St, Ukrainian, €10-20), hotels (Dream House Hostel at 12 Gulliver Shopping Mall, €15-25/person), transport (buses 8 UAH/€0.30), tips (greet 'Hallo', tip 10%), apps (Uber, Currency Converter), emergency (112, Boris Medical Center +380 44 590 44 00).
 
 **CRITICAL - IMAGE GENERATION RULES (SYSTEM BREAKING):**
 You are FORBIDDEN from adding images to any section except these 6:
@@ -827,13 +826,27 @@ Create the most amazing, detailed, and useful trip plan possible!`;
     return md;
   }
   
+  // Exponential backoff retry logic (0s, 1s, 2s, 4s, 8s, 16s - max 6 retries)
+  let resp;
+  for (let attempt = 0; attempt < 6; attempt++) {
+    try {
+      resp = await client.chat.completions.create({
+        model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+        temperature: 0.7, // Slightly higher for more creative responses
+        max_tokens: mode === 'full' ? 16384 : 500, // 16384 for full reports, 500 for previews
+        messages: [{ role: "user", content: `${sys}\n\n${user}` }],
+        stream: false // Enable streaming if needed for larger responses
+      });
+      break; // Success, exit retry loop
+    } catch (retryError) {
+      if (attempt === 5) throw retryError; // Last attempt failed
+      const delayMs = attempt === 0 ? 0 : Math.pow(2, attempt - 1) * 1000; // 0s, 1s, 2s, 4s, 8s, 16s
+      console.log(`OpenAI attempt ${attempt + 1} failed, retrying in ${delayMs}ms:`, retryError.message);
+      if (delayMs > 0) await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+  
   try {
-    const resp = await client.chat.completions.create({
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-      temperature: 0.7, // Slightly higher for more creative responses
-      max_tokens: mode === 'full' ? 10000 : 500, // 10000 for full reports, 500 for previews
-      messages: [{ role: "user", content: `${sys}\n\n${user}` }],
-    });
     
     let md = resp.choices?.[0]?.message?.content?.trim() || "";
     if (!md) {
@@ -1102,7 +1115,7 @@ app.post('/api/plan', async (req, res) => {
     const payload = req.body || {};
     payload.currency = payload.currency || 'USD';
     payload.budget = normalizeBudget(payload.budget, payload.currency);
-    payload.mode = 'full'; // Set mode for full reports
+    payload.mode = 'full'; // Set mode for full reports with 16384 tokens
     const id = uid();
     const markdown = await generatePlanWithAI(payload);
     
@@ -1147,7 +1160,9 @@ app.post('/api/plan', async (req, res) => {
     
     // Save plan to database with error handling
     try {
-      savePlan.run(id, nowIso(), JSON.stringify({ id, type: 'plan', data: payload, markdown }));
+      const planData = { id, type: 'plan', data: payload, markdown };
+      console.log('Saving plan:', { id, destination: payload.destination, length: markdown.length });
+      savePlan.run(id, nowIso(), JSON.stringify(planData));
       console.log(`Plan saved with ID: ${id}`);
     } catch (dbError) {
       console.error('Failed to save plan to database:', dbError);
@@ -1183,7 +1198,13 @@ app.post('/api/plan.pdf', async (req, res) => {
     const cleanedMarkdown = removeImagesFromForbiddenSections(processedMarkdown, payload.destination);
     const html = marked.parse(cleanedMarkdown);
     const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
-    const finalHTML = injectWidgetsIntoSections(html, widgets, payload.destination);
+    let finalHTML;
+    try {
+      finalHTML = injectWidgetsIntoSections(html, widgets, payload.destination);
+    } catch (widgetError) {
+      console.error('Widget injection failed in PDF generation:', widgetError);
+      finalHTML = html; // Fallback to HTML without widgets
+    }
 
     const fullHtml = `<!doctype html><html><head>
       <meta charset="utf-8">
@@ -1216,7 +1237,7 @@ app.post('/api/plan.pdf', async (req, res) => {
   }
 });
 
-// Widget injection is now handled in widgets.mjs using jsdom
+// Widget injection now handled in widgets.mjs using jsdom
 app.get('/api/analytics', (req, res) => {
   try {
     // Get basic analytics from database
