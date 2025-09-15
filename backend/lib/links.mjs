@@ -31,7 +31,6 @@ export function affiliatesFor(dest = '') {
 export function linkifyTokens(markdown = '', dest = '') {
   const aff = affiliatesFor(dest);
   console.log('Processing markdown for destination:', dest);
-  console.log('Image function:', aff.image);
   console.log('Original markdown length:', markdown.length);
   
   // Find all image tokens before processing
@@ -40,9 +39,13 @@ export function linkifyTokens(markdown = '', dest = '') {
   
   const processed = (markdown || '')
     .replace(/\[(Map)\]\(map:([^)]+)\)/gi,        (_m, _t, q) => `[Map](${aff.maps(q.trim())})`)
-    .replace(/\[(Book)\]\(book:([^)]+)\)/gi,      (_m, _t, q) => `[Book](${aff.hotels(q.trim())})`)
-    .replace(/\[(Tickets)\]\(tickets:([^)]+)\)/gi,(_m, _t, q) => `[Tickets](${aff.activities(q.trim())})`)
-    .replace(/\[(Reviews)\]\(reviews:([^)]+)\)/gi,(_m, _t, q) => `[Reviews](${aff.reviews(q.trim())})`)
+    .replace(/\[(Book)\]\(book:([^)]+)\)/gi,      (_m, _t, q) => `Book`) // Plain text only
+    .replace(/\[(Tickets)\]\(tickets:([^)]+)\)/gi,(_m, _t, q) => `[Tickets](https://www.getyourguide.com/s/?q=${encodeURIComponent(q.trim())}&partner_id=PUHVJ53)`)
+    .replace(/\[(Reviews)\]\(reviews:([^)]+)\)/gi,(_m, _t, q) => `[Reviews](https://www.getyourguide.com/s/?q=${encodeURIComponent(q.trim())}&partner_id=PUHVJ53)`)
+    // Remove external booking and review links
+    .replace(/\[Book\]\(https:\/\/www\.booking\.com[^)]*\)/gi, 'Book')
+    .replace(/\[Reviews\]\(https:\/\/www\.tripadvisor\.com[^)]*\)/gi, 'Reviews')
+    .replace(/\[Book\]\(https:\/\/tpwdgt\.com[^)]*\)/gi, 'Book')
     .replace(/!\[([^\]]*)\]\(image:([^)]+)\)/gi,  (_m, alt, q) => {
       // REMOVE IMAGES: Return empty string instead of image tag
       console.log('Removing image token:', { alt, query: q.trim() });
