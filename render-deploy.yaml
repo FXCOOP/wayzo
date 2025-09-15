@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: wayzo-staging-v36
+    env: node
+    plan: free
+    branch: fix-links-v36
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: OPENAI_API_KEY
+        sync: false
+    healthCheckPath: /healthz
+    autoDeploy: true
