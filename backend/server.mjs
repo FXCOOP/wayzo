@@ -413,7 +413,7 @@ async function generatePlanWithAI(payload) {
   const totalTravelers = adults + children;
   
   // LOCKED AI PROMPT with RESEARCHED DATA - NO GENERICS ALLOWED
-  const sys = `Generate itinerary in Markdown for ${destination} from ${start} to ${end}, 2 adults, ${budget} USD. Calculate days from start to end (e.g., Sept 25-Oct 3). Include 11 sections (## 🎯 Trip Overview to ## 🚨 Emergency Info) and ## 🌤️ Weather Forecast with 7-day table (mock: Sep 25 27°-33° 0% [Details] Sunny, ideal for outdoor activities; Sep 26 24°-30° 0% [Details] Sunny, great for sightseeing; Sep 27 23°-29° 10% [Details] Partly cloudy with a chance of light rain; Sep 28 22°-28° 5% [Details] Mostly sunny with mild temperatures; Sep 29 21°-27° 20% [Details] Cloudy with possible showers; Sep 30 20°-26° 5% [Details] Cool with a slight chance of rain; Oct 1 19°-25° 0% [Details] Clear and pleasant; Oct 2 18°-24° 10% [Details] Mild with a chance of light rain; Oct 3 17°-23° 0% [Details] Clear, perfect for a final walk). Use specific researched places (e.g., 'Brandenburg Gate at Pariser Platz, 10117 Berlin, Free, 24/7, verify 2025 prices'), addresses, hours, prices with disclaimers, [Map](map:place), [Tickets](https://www.getyourguide.com/s/?q=place&partner_id=PUHVJ53), [Reviews](https://www.getyourguide.com/s/?q=place&partner_id=PUHVJ53), Book (plain text, no link). No images anywhere. No generics (e.g., 'popular landmark'—use 'Brandenburg Gate'). Enforce full hour-by-hour plans for all days with 6-8 activities, each with one-sentence explanation (e.g., 'Visit Brandenburg Gate at Pariser Platz – an iconic symbol of Berlin's reunification.'), 8-12 attractions, 6-10 restaurants with details. Budget: ~$2600 (~€1800; flights €900, accommodation €140, food €350, transport €70, activities €700, misc €80). Researched data: attractions (Brandenburg Gate at Pariser Platz, 10117 Berlin, Free, 24/7), restaurants (Curry 36 at Mehringdamm 36, €5-10, 10AM-4AM), hotels (Motel One Berlin-Alexanderplatz at Alexanderplatz, €90-120), transport (U-Bahn €2.90/ride), tips (tip 10%), apps (BVG), emergency (112, Charité - Universitätsmedizin Berlin +49 30 450 50). Remove alternative tour links (e.g., Alternative Tours).
+  const sys = `Generate itinerary in Markdown for ${destination} from ${start} to ${end}, 2 adults, ${budget} USD. Calculate days from start to end (e.g., Sept 25-Oct 3). Include 11 sections (## 🎯 Trip Overview to ## 🚨 Emergency Info) and ## 🌤️ Weather Forecast with 7-day table (mock: Sep 25 27°-33° 0% [Details] Sunny, ideal for outdoor activities; Sep 26 24°-30° 0% [Details] Sunny, great for sightseeing; Sep 27 23°-29° 10% [Details] Partly cloudy with a chance of light rain; Sep 28 22°-28° 5% [Details] Mostly sunny with mild temperatures; Sep 29 21°-27° 20% [Details] Cloudy with possible showers; Sep 30 20°-26° 5% [Details] Cool with a slight chance of rain; Oct 1 19°-25° 0% [Details] Clear and pleasant; Oct 2 18°-24° 10% [Details] Mild with a chance of light rain; Oct 3 17°-23° 0% [Details] Clear, perfect for a final walk). Use specific researched places (e.g., 'Brandenburg Gate at Pariser Platz, 10117 Berlin, Free, 24/7, verify 2025 prices'), addresses, hours, prices with disclaimers, [Map](map:place), [Tickets](https://www.getyourguide.com/s/?q=place&partner_id=PUHVJ53), [Reviews](https://www.getyourguide.com/s/?q=place&partner_id=PUHVJ53), Book (plain text, no link). No images anywhere. No generics (e.g., 'popular landmark'—use 'Brandenburg Gate'). Enforce full hour-by-hour plans for all days with 6-8 activities, each with one-sentence explanation (e.g., 'Visit Brandenburg Gate at Pariser Platz – an iconic symbol of Berlin's reunification.'), 8-12 attractions, 6-10 restaurants with details. Budget: ~$2600 (~€2400; flights €600, accommodation €720, food €400, transport €200, activities €320, misc €160). Researched data: attractions (Brandenburg Gate at Pariser Platz, 10117 Berlin, Free, 24/7), restaurants (Curry 36 at Mehringdamm 36, €5-10, 10AM-4AM), hotels (Motel One Berlin-Alexanderplatz at Alexanderplatz, €90-120), transport (U-Bahn €2.90/ride), tips (tip 10%), apps (BVG), emergency (112, Charité - Universitätsmedizin Berlin +49 30 450 50). Remove alternative tour links (e.g., Alternative Tours).
 
 **CRITICAL - NO IMAGES ANYWHERE:**
 You are ABSOLUTELY FORBIDDEN from adding any images to any section. NO IMAGES ANYWHERE in the entire report.
@@ -479,19 +479,19 @@ Create a detailed budget table like this with proper HTML and enhanced styling:
 <label for="budget1">Flights (From to Destination)</label>
 </div>
 </td>
-<td>450</td>
-<td>900</td>
+<td>300</td>
+<td>600</td>
 <td><span class="status-pending">Pending</span></td>
 </tr>
 <tr>
 <td>
 <div class="budget-checkbox">
 <input type="checkbox" id="budget2" onchange="toggleBudgetItem(this)">
-<label for="budget2">Accommodation (X nights)</label>
+<label for="budget2">Accommodation (8 nights)</label>
 </div>
 </td>
-<td>70</td>
-<td>140</td>
+<td>90</td>
+<td>720</td>
 <td><span class="status-pending">Pending</span></td>
 </tr>
 <tr>
@@ -501,8 +501,8 @@ Create a detailed budget table like this with proper HTML and enhanced styling:
 <label for="budget3">Food (3 meals/day)</label>
 </div>
 </td>
-<td>175</td>
-<td>350</td>
+<td>50</td>
+<td>400</td>
 <td><span class="status-pending">Pending</span></td>
 </tr>
 <tr>
@@ -512,8 +512,8 @@ Create a detailed budget table like this with proper HTML and enhanced styling:
 <label for="budget4">Transportation (local travel)</label>
 </div>
 </td>
-<td>35</td>
-<td>70</td>
+<td>25</td>
+<td>200</td>
 <td><span class="status-pending">Pending</span></td>
 </tr>
 <tr>
@@ -523,8 +523,8 @@ Create a detailed budget table like this with proper HTML and enhanced styling:
 <label for="budget5">Activities & Attractions</label>
 </div>
 </td>
-<td>350</td>
-<td>700</td>
+<td>40</td>
+<td>320</td>
 <td><span class="status-pending">Pending</span></td>
 </tr>
 <tr>
@@ -534,14 +534,14 @@ Create a detailed budget table like this with proper HTML and enhanced styling:
 <label for="budget6">Miscellaneous</label>
 </div>
 </td>
-<td>40</td>
-<td>80</td>
+<td>20</td>
+<td>160</td>
 <td><span class="status-pending">Pending</span></td>
 </tr>
 <tr>
 <td><strong>Total</strong></td>
-<td><strong>€900</strong></td>
-<td><strong>€1800</strong></td>
+<td><strong>€525</strong></td>
+<td><strong>€2400</strong></td>
 <td><span class="status-total">Total</span></td>
 </tr>
 </tbody>
