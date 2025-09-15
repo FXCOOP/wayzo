@@ -64,10 +64,6 @@ const AFFILIATE_WIDGETS = {
            style="display: inline-block; background: #ff6b35; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
           Browse Tours
         </a>
-        <a href="https://www.viator.com/search?q=${destination.replace(/,.*/, '').trim()}" target="_blank" 
-           style="display: inline-block; background: #0066cc; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
-          Alternative Tours
-        </a>
       </div>
     </div>`,
     category: "activities",
