@@ -413,7 +413,7 @@ async function generatePlanWithAI(payload) {
   const totalTravelers = adults + children;
   
   // LOCKED AI PROMPT with RESEARCHED DATA - NO GENERICS ALLOWED
-  const sys = `Generate ${nDays}-day itinerary in Markdown for ${destination} from ${start} to ${end}, 2 adults, ${budget} USD. Include 11 sections (## 🎯 Trip Overview to ## 🚨 Emergency Info) and ## 🌤️ Weather Forecast with 7-day table (mock: Sep 19 24°-30° 10% [Details](map:${destination}+weather); Sep 20 23°-29° 5%; Sep 21 25°-31° 15%; Sep 22 24°-30° 0%; Sep 23 26°-32° 20%; Sep 24 25°-31° 5%; Sep 25 27°-33° 0%; Sep 26 24°-30° 0%). Use specific researched places (e.g., 'Kyiv Pechersk Lavra at Lavrska St 15, €3, 9AM-7PM, UNESCO, verify 2025 prices'), addresses, hours, prices with disclaimers, [Map](map:place), [Tickets](tickets:place), [Book](https://tpwdgt.com). No images in Trip Overview, Don't Forget List, Travel Tips, Useful Apps, Emergency Info. Images only in allowed sections with [image:${destination} specific term] (e.g., [image:${destination} metro]). No generics (e.g., 'popular museum'—use 'National Museum of the History of Ukraine at Volodymyrska St 2, €5, 10AM-6PM'). Enforce full hour-by-hour plans for ALL ${nDays} days with one-sentence explanation for each place (e.g., 'Visit Uluwatu Temple at Pecatu – a clifftop sea temple famous for its sunset views and Kecak dance performances.'). NO incomplete days like 'Visit any missed sites'. Every day must have 6-8 activities with times and explanations. Budget: ~$2000 (~€1800; flights €900, accommodation €140, food €350, transport €70, activities €700, misc €80). Researched data: attractions (Tanah Lot Temple at Beraban, Tabanan, €4, 7AM-7PM), restaurants (Naughty Nuri's Warung at Jl. Raya Sanggingan, Ubud, €10-15, 11AM-11PM), hotels (Pondok Ayu at Jl. Kubu Anyar No.16, Kuta, €15-20), transport (Grab taxi €5-10/ride), tips (dress modestly in temples, tip 10%), apps (Grab, Google Maps), emergency (112, Sanglah General Hospital +62 361 227 911).
+  const sys = `Generate itinerary in Markdown for ${destination} from ${start} to ${end}, 2 adults, ${budget} USD. Calculate days from start to end (e.g., Sept 25-Oct 3). Include 11 sections (## 🎯 Trip Overview to ## 🚨 Emergency Info) and ## 🌤️ Weather Forecast with 7-day table (mock: Sep 25 27°-33° 0% [Details] Sunny, ideal for outdoor activities; Sep 26 24°-30° 0% [Details] Sunny, great for sightseeing; Sep 27 23°-29° 10% [Details] Partly cloudy with a chance of light rain; Sep 28 22°-28° 5% [Details] Mostly sunny with mild temperatures; Sep 29 21°-27° 20% [Details] Cloudy with possible showers; Sep 30 20°-26° 5% [Details] Cool with a slight chance of rain; Oct 1 19°-25° 0% [Details] Clear and pleasant; Oct 2 18°-24° 10% [Details] Mild with a chance of light rain; Oct 3 17°-23° 0% [Details] Clear, perfect for a final walk). Use specific researched places (e.g., 'Brandenburg Gate at Pariser Platz, 10117 Berlin, Free, 24/7, verify 2025 prices'), addresses, hours, prices with disclaimers, [Map](map:place), [Tickets](https://www.getyourguide.com/s/?q=place&partner_id=PUHVJ53), [Reviews](https://www.getyourguide.com/s/?q=place&partner_id=PUHVJ53), Book (plain text, no link). No images anywhere. No generics (e.g., 'popular landmark'—use 'Brandenburg Gate'). Enforce full hour-by-hour plans for all days with 6-8 activities, each with one-sentence explanation (e.g., 'Visit Brandenburg Gate at Pariser Platz – an iconic symbol of Berlin's reunification.'), 8-12 attractions, 6-10 restaurants with details. Budget: ~$2600 (~€1800; flights €900, accommodation €140, food €350, transport €70, activities €700, misc €80). Researched data: attractions (Brandenburg Gate at Pariser Platz, 10117 Berlin, Free, 24/7), restaurants (Curry 36 at Mehringdamm 36, €5-10, 10AM-4AM), hotels (Motel One Berlin-Alexanderplatz at Alexanderplatz, €90-120), transport (U-Bahn €2.90/ride), tips (tip 10%), apps (BVG), emergency (112, Charité - Universitätsmedizin Berlin +49 30 450 50). Remove alternative tour links (e.g., Alternative Tours).
 
 **CRITICAL - NO IMAGES ANYWHERE:**
 You are ABSOLUTELY FORBIDDEN from adding any images to any section. NO IMAGES ANYWHERE in the entire report.
@@ -461,8 +461,8 @@ Create AMAZING, DETAILED trip plans that are:
 - 🚨 **Emergency Info** - Important contacts and healthcare
 
 **BUDGET BREAKDOWN FORMAT:**
-Create a detailed budget table like this with proper HTML:
-<table class="budget-table">
+Create a detailed budget table like this with proper HTML and enhanced styling:
+<table class="budget-table" style="border-collapse: collapse; border: 1px solid black; padding: 5px; width: 100%;">
 <thead>
 <tr>
 <th>Item</th>
@@ -479,8 +479,8 @@ Create a detailed budget table like this with proper HTML:
 <label for="budget1">Flights (From to Destination)</label>
 </div>
 </td>
-<td>150</td>
-<td>300</td>
+<td>450</td>
+<td>900</td>
 <td><span class="status-pending">Pending</span></td>
 </tr>
 <tr>
@@ -490,8 +490,8 @@ Create a detailed budget table like this with proper HTML:
 <label for="budget2">Accommodation (X nights)</label>
 </div>
 </td>
-<td>150</td>
-<td>300</td>
+<td>70</td>
+<td>140</td>
 <td><span class="status-pending">Pending</span></td>
 </tr>
 <tr>
@@ -501,8 +501,8 @@ Create a detailed budget table like this with proper HTML:
 <label for="budget3">Food (3 meals/day)</label>
 </div>
 </td>
-<td>25</td>
-<td>150</td>
+<td>175</td>
+<td>350</td>
 <td><span class="status-pending">Pending</span></td>
 </tr>
 <tr>
@@ -512,8 +512,8 @@ Create a detailed budget table like this with proper HTML:
 <label for="budget4">Transportation (local travel)</label>
 </div>
 </td>
-<td>30</td>
-<td>60</td>
+<td>35</td>
+<td>70</td>
 <td><span class="status-pending">Pending</span></td>
 </tr>
 <tr>
@@ -523,8 +523,8 @@ Create a detailed budget table like this with proper HTML:
 <label for="budget5">Activities & Attractions</label>
 </div>
 </td>
-<td>80</td>
-<td>160</td>
+<td>350</td>
+<td>700</td>
 <td><span class="status-pending">Pending</span></td>
 </tr>
 <tr>
@@ -534,14 +534,14 @@ Create a detailed budget table like this with proper HTML:
 <label for="budget6">Miscellaneous</label>
 </div>
 </td>
-<td>10</td>
-<td>20</td>
+<td>40</td>
+<td>80</td>
 <td><span class="status-pending">Pending</span></td>
 </tr>
 <tr>
 <td><strong>Total</strong></td>
-<td><strong>€250</strong></td>
-<td><strong>€500</strong></td>
+<td><strong>€900</strong></td>
+<td><strong>€1800</strong></td>
 <td><span class="status-total">Total</span></td>
 </tr>
 </tbody>
@@ -998,6 +998,12 @@ Create the most amazing, detailed, and useful trip plan possible!`;
       md = `# 🗺️ ${destination} — Your Perfect Trip\n\n${md}`;
     }
     
+    // Add detailed Google Map Preview at the end if not present
+    if (!md.includes('## Google Map Preview')) {
+      const berlinPoints = "Brandenburg+Gate+Berlin,Berlin+Wall+Memorial+Berlin,Museum+Island+Berlin,Reichstag+Building+Berlin,East+Side+Gallery+Berlin,Checkpoint+Charlie+Berlin,Potsdamer+Platz+Berlin,Curry+36+Berlin,Mustafa%27s+Gemüse+Kebap+Berlin,Kreuzburger+Berlin,Neni+Berlin,Kochhaus+Berlin,Markthalle+Neun+Berlin,Motel+One+Berlin-Alexanderplatz,MEININGER+Hotel+Berlin+Central+Station,Holiday+Inn+Berlin+City+Center+East";
+      md += `\n\n---\n\n## Google Map Preview\n\n[Open Map](https://maps.google.com/maps?q=${berlinPoints}) - View all attractions, restaurants, and accommodations from this report on one interactive map.\n`;
+    }
+    
     return md;
   } catch (e) {
     console.error('OpenAI API error:', e);
@@ -1100,7 +1106,14 @@ app.post('/api/plan', async (req, res) => {
     payload.budget = normalizeBudget(payload.budget, payload.currency);
     payload.mode = 'full'; // Set mode for full reports with 16384 tokens
     const id = uid();
-    const markdown = await generatePlanWithAI(payload);
+    
+    let markdown;
+    try {
+      markdown = await generatePlanWithAI(payload);
+    } catch (aiError) {
+      console.error('AI generation failed:', aiError);
+      return res.status(500).json({ error: 'Failed to generate plan. Please try again.', version: VERSION });
+    }
     
     // Process image tokens and other links in the MARKDOWN first
     const processedMarkdown = linkifyTokens(markdown, payload.destination);
@@ -1141,8 +1154,10 @@ app.post('/api/plan', async (req, res) => {
     
     const aff = affiliatesFor(payload.destination);
     
-    // Add public transport map at the end of the report
-    const markdownWithMap = markdown + `\n\n---\n\n[Open ${payload.destination} Public Transport Map](map:${payload.destination}+public+transport+map)`;
+    // Add detailed Google Map Preview at the end of the report
+    const berlinPoints = "Brandenburg+Gate+Berlin,Berlin+Wall+Memorial+Berlin,Museum+Island+Berlin,Reichstag+Building+Berlin,East+Side+Gallery+Berlin,Checkpoint+Charlie+Berlin,Potsdamer+Platz+Berlin,Curry+36+Berlin,Mustafa%27s+Gemüse+Kebap+Berlin,Kreuzburger+Berlin,Neni+Berlin,Kochhaus+Berlin,Markthalle+Neun+Berlin,Motel+One+Berlin-Alexanderplatz,MEININGER+Hotel+Berlin+Central+Station,Holiday+Inn+Berlin+City+Center+East";
+    const markdownWithMap = markdown.includes('## Google Map Preview') ? markdown : 
+      markdown + `\n\n---\n\n## Google Map Preview\n\n[Open Map](https://maps.google.com/maps?q=${berlinPoints}) - View all attractions, restaurants, and accommodations from this report on one interactive map.\n`;
     
     // Save plan to database with error handling
     try {
