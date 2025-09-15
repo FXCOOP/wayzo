@@ -52,18 +52,20 @@ const AFFILIATE_WIDGETS = {
     placement: "budget_breakdown"
   },
 
-  // Activities Widget - SIMPLE WORKING IMPLEMENTATION (No Connection Issues)
+  // Activities Widget - GetYourGuide with EXACT SPECIFICATIONS for Bali
   getyourguide: {
     name: "Activities & Tours", 
     description: "Curated tours and activities",
-    script: (destination) => `<div class="activities-widget" style="border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 8px; background: #f9f9f9;">
-      <h4 style="margin: 0 0 10px 0; color: #333;">🎫 Book Activities & Tours in ${destination.replace(/,.*/, '').trim()}</h4>
-      <p style="margin: 0 0 15px 0; color: #666;">Discover amazing experiences and local tours</p>
-      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-        <a href="https://www.getyourguide.com/s/?q=${destination.replace(/,.*/, '').trim()}&partner_id=PUHVJ53" target="_blank" 
-           style="display: inline-block; background: #ff6b35; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
-          Browse Tours
-        </a>
+    script: (destination) => `<div data-gyg-widget="auto" data-gyg-partner-id="PUHVJ53" data-gyg-href="https://www.getyourguide.com/s/?q=${destination.replace(/,.*/, '').trim()}&partner_id=PUHVJ53" data-gyg-locale="en-US">
+      <div class="activities-widget" style="border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 8px; background: #f9f9f9;">
+        <h4 style="margin: 0 0 10px 0; color: #333;">🎫 Book Activities & Tours in ${destination.replace(/,.*/, '').trim()}</h4>
+        <p style="margin: 0 0 15px 0; color: #666;">Discover amazing experiences and local tours</p>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <a href="https://www.getyourguide.com/s/?q=${destination.replace(/,.*/, '').trim()}&partner_id=PUHVJ53" target="_blank" 
+             style="display: inline-block; background: #ff6b35; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+            Browse Tours
+          </a>
+        </div>
       </div>
     </div>`,
     category: "activities",
