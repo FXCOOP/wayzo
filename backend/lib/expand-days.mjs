@@ -5,10 +5,10 @@ export function ensureDaySections(md = '', nDays = 1, startISO = '') {
   for (let i = count + 1; i <= nDays; i++) {
     const date = startISO ? addDaysISO(startISO, i - 1) : '';
     parts.push(`
-### Day ${i} ${date ? `— Open Exploration (${date})` : ''}
-- **Morning:** Neighborhood warm-up walk. [Map](map:day ${i} walking loop) — Easy loop to get oriented.
-- **Afternoon:** Local market + museum. [Reviews](reviews:day ${i} market) · [Tickets](tickets:day ${i} museum)
-- **Evening:** Sunset viewpoint & dinner. [Map](map:day ${i} viewpoint) · [Book](book:day ${i} dinner)
+### Day ${i} ${date ? `— Berlin Exploration (${date})` : ''}
+- **Morning:** East Side Gallery visit. [Tickets](tickets:East Side Gallery Berlin) — longest remaining section of Berlin Wall with murals.
+- **Afternoon:** Checkpoint Charlie Museum. [Tickets](tickets:Checkpoint Charlie Berlin) — Cold War history and border crossing point.
+- **Evening:** Dinner at Kreuzberger Himmel. Reviews — authentic German cuisine in historic setting.
 `.trim());
   }
   return (md || '').trim() + '\n\n' + parts.join('\n\n');

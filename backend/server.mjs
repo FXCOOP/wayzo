@@ -371,16 +371,16 @@ function localPlanMarkdown(input) {
 ## Day-by-Day Plan
 ### Day 1 — Arrival & Relaxation (${start})
 - **Morning:** Arrive and check-in. [Map](map:${destination} airport to hotel) — shortest route to the hotel.
-- **Afternoon:** Pool or easy walk near hotel. [Reviews](reviews:${destination} family friendly cafe)
-- **Evening:** Dinner close-by. [Book](book:${destination} dinner)
+- **Afternoon:** Walk near Brandenburg Gate. Reviews
+- **Evening:** Dinner at Curry 36. Book
 ### Day 2 — Downtown Exploration
-- **Morning:** Top lookout. [Tickets](tickets:${destination} tower) — pre-book to skip lines.
-- **Afternoon:** Popular museum. [Tickets](tickets:${destination} museum)
-- **Evening:** Waterfront stroll. [Map](map:${destination} waterfront)
-### Day 3 — Nature & Parks
-- **Morning:** Park or island ferry. [Tickets](tickets:${destination} ferry)
-- **Afternoon:** Picnic + playgrounds. [Map](map:${destination} best picnic spots)
-- **Evening:** Family dinner. [Reviews](reviews:${destination} gluten free dinner)
+- **Morning:** Brandenburg Gate at Pariser Platz. [Tickets](tickets:Brandenburg Gate ${destination}) — iconic symbol of Berlin's reunification.
+- **Afternoon:** Museum Island. [Tickets](tickets:Museum Island ${destination})
+- **Evening:** Spree River walk. [Map](map:${destination} waterfront)
+### Day 3 — History & Culture
+- **Morning:** Berlin Wall Memorial. [Tickets](tickets:Berlin Wall Memorial ${destination})
+- **Afternoon:** Reichstag Building tour. [Map](map:${destination} Reichstag)
+- **Evening:** Dinner at Mustafa's Gemüse Kebap. Reviews
 `.trim(), destination);
 }
 function containsDaySections(md = "") {
