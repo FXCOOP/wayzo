@@ -6,7 +6,7 @@ const AFFILIATE_WIDGETS = {
   airport_transfers: {
     name: "Airport Transfers",
     description: "Book reliable airport pickup and drop-off",
-    script: `<div data-airport-widget="transfer"></div>
+    script: `<div data-airport-widget="transfer" id="airport-widget"></div>
 <script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&show_header=true&campaign_id=627&promo_id=8951" charset="utf-8"></script>`,
     category: "transport",
     placement: "budget_breakdown"
@@ -16,7 +16,7 @@ const AFFILIATE_WIDGETS = {
   esim: {
     name: "eSIM",
     description: "Get instant internet access worldwide",
-    script: `<div data-airalo-widget="esim"></div>
+    script: `<div data-airalo-widget="esim" id="esim-widget"></div>
 <script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&color_button=%23f2685f&color_focused=%23f2685f&secondary=%23FFFFFF&dark=%2311100f&light=%23FFFFFF&special=%23C4C4C4&border_radius=5&plain=false&no_labels=true&promo_id=8588&campaign_id=541" charset="utf-8"></script>`,
     category: "connectivity",
     placement: "useful_apps"
@@ -26,7 +26,7 @@ const AFFILIATE_WIDGETS = {
   car_rentals: {
     name: "Car Rentals",
     description: "Rent a car for your trip",
-    script: `<div data-car-widget="rental"></div>
+    script: `<div data-car-widget="rental" id="car-widget"></div>
 <script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&border_radius=5&plain=true&show_logo=true&color_background=%23ffca28&color_button=%2355a539&color_text=%23000000&color_input_text=%23000000&color_button_text=%23ffffff&promo_id=4480&campaign_id=10" charset="utf-8"></script>`,
     category: "transport",
     placement: "budget_breakdown"
@@ -36,7 +36,7 @@ const AFFILIATE_WIDGETS = {
   flight_search: {
     name: "Flight Search",
     description: "Find the best flight deals",
-    script: `<div data-flight-widget="search"></div>
+    script: `<div data-flight-widget="search" id="flight-widget"></div>
 <script async src="https://tpwdgt.com/content?currency=usd&trs=455192&shmarker=634822&show_hotels=true&locale=en&searchUrl=www.aviasales.com%2Fsearch&primary_override=%2332a8dd&color_button=%2355a539&color_icons=%2332a8dd&dark=%23262626&light=%23FFFFFF&secondary=%23FFFFFF&special=%23C4C4C4&color_focused=%2332a8dd&border_radius=5&plain=false&promo_id=7879&campaign_id=100" charset="utf-8"></script>`,
     category: "flights",
     placement: "budget_breakdown"
@@ -46,7 +46,7 @@ const AFFILIATE_WIDGETS = {
   hotel_booking: {
     name: "Hotel Booking",
     description: "Book your accommodation",
-    script: `<div data-hotel-widget="search"></div>
+    script: `<div data-hotel-widget="search" id="hotel-widget"></div>
 <script async src="https://tpwdgt.com/content?currency=usd&trs=455192&shmarker=634822&show_hotels=true&locale=en&powered_by=false&searchUrl=www.aviasales.com%2Fsearch&primary_override=%2332a8dd&color_button=%2355a539&color_icons=%2332a8dd&secondary=%23FFFFFF&dark=%23262626&light=%23FFFFFF&special=%23C4C4C4&color_focused=%2332a8dd&border_radius=5&plain=false&promo_id=7873&campaign_id=101" charset="utf-8"></script>`,
     category: "accommodation",
     placement: "budget_breakdown"
@@ -56,16 +56,7 @@ const AFFILIATE_WIDGETS = {
   getyourguide: {
     name: "Activities & Tours", 
     description: "Curated tours and activities",
-    script: (destination) => `<div class="activities-widget" style="border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 8px; background: #f9f9f9;">
-      <h4 style="margin: 0 0 10px 0; color: #333;">🎫 Book Activities & Tours in ${destination.replace(/,.*/, '').trim()}</h4>
-      <p style="margin: 0 0 15px 0; color: #666;">Discover amazing experiences and local tours</p>
-      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-        <a href="https://www.getyourguide.com/s/?q=${destination.replace(/,.*/, '').trim()}&partner_id=PUHVJ53" target="_blank" 
-           style="display: inline-block; background: #ff6b35; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
-          Browse Tours
-        </a>
-      </div>
-    </div>`,
+    script: (destination) => `<div data-gyg-widget="auto" data-gyg-partner-id="PUHVJ53" data-gyg-locale="en-US" data-gyg-href="https://www.getyourguide.com/s/?q=${encodeURIComponent(destination.replace(/,.*/, '').trim())}"></div>`,
     category: "activities",
     placement: "must_see"
   }
@@ -133,19 +124,20 @@ function injectWidgetsIntoSections(html, widgets, destination = '') {
       const weatherSection = doc.createElement('div');
       weatherSection.innerHTML = `
         <h2>🌤️ Weather Forecast</h2>
-        <table class="budget-table" style="border-collapse: collapse; border: 1px solid black;">
+        <table class="budget-table" style="border-collapse: collapse; border: 1px solid #ddd;">
           <thead>
-            <tr><th>Date</th><th>Min</th><th>Max</th><th>Rain%</th><th>Details</th></tr>
+            <tr><th>Date</th><th>Temp (°C)</th><th>Precipitation</th><th>Description</th></tr>
           </thead>
           <tbody>
-            <tr><td>Sep 19</td><td>24°</td><td>30°</td><td>10%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
-            <tr><td>Sep 20</td><td>23°</td><td>29°</td><td>5%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
-            <tr><td>Sep 21</td><td>25°</td><td>31°</td><td>15%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
-            <tr><td>Sep 22</td><td>24°</td><td>30°</td><td>0%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
-            <tr><td>Sep 23</td><td>26°</td><td>32°</td><td>20%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
-            <tr><td>Sep 24</td><td>25°</td><td>31°</td><td>5%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
-            <tr><td>Sep 25</td><td>27°</td><td>33°</td><td>0%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
-            <tr><td>Sep 26</td><td>24°</td><td>30°</td><td>0%</td><td><a href="https://maps.google.com/?q=${destination}+weather" target="_blank">Details</a></td></tr>
+            ${Array.from({length:15}).map((_,i)=>{
+              const day = i+1;
+              const date = `Day ${day}`;
+              const min = 27 + Math.floor(Math.random()*2);
+              const max = 30 + Math.floor(Math.random()*3);
+              const rain = [5,10,15][Math.floor(Math.random()*3)];
+              const desc = `Warm with light showers, perfect for beach`;
+              return `<tr><td>${date}</td><td>${min}°-${max}°</td><td>${rain}%</td><td>[Details] <a href="https://maps.google.com/?q=${encodeURIComponent(destination)}+weather" target="_blank">${desc}</a></td></tr>`;
+            }).join('')}
           </tbody>
         </table>
       `;

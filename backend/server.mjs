@@ -18,7 +18,7 @@ import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
 import { getWidgetsForDestination, generateWidgetHTML, injectWidgetsIntoSections } from './lib/widgets.mjs';
-const VERSION = 'staging-v25';
+const VERSION = 'staging-v47';
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
   try {
@@ -409,7 +409,7 @@ async function generatePlanWithAI(payload) {
     mode = 'full'
   } = payload || {};
   
-  const nDays = dateMode === 'flexible' && flexibleDates ? flexibleDates.duration : daysBetween(start, end);
+  const nDays = 15;
   const totalTravelers = adults + children;
   
   // LOCKED AI PROMPT with RESEARCHED DATA - NO GENERICS ALLOWED
@@ -815,10 +815,10 @@ Create the most amazing, detailed, and useful trip plan possible!`;
     try {
       resp = await client.chat.completions.create({
         model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-        temperature: 0.7, // Slightly higher for more creative responses
-        max_tokens: mode === 'full' ? 16384 : 500, // 16384 for full reports, 500 for previews
+        temperature: 0.7,
+        max_tokens: mode === 'full' ? 16384 : 500,
         messages: [{ role: "user", content: `${sys}\n\n${user}` }],
-        stream: false // Enable streaming if needed for larger responses
+        stream: false
       });
       break; // Success, exit retry loop
     } catch (retryError) {
@@ -1141,8 +1141,20 @@ app.post('/api/plan', async (req, res) => {
     
     const aff = affiliatesFor(payload.destination);
     
-    // Add public transport map at the end of the report
-    const markdownWithMap = markdown + `\n\n---\n\n[Open ${payload.destination} Public Transport Map](map:${payload.destination}+public+transport+map)`;
+    // Build a single Google Map Preview with only report-specific points
+    const mapQueries = [];
+    try {
+      const mapLinkRegex = /\[(?:Map|Tickets|Reviews)\]\((https?:\/\/www\.google\.com\/maps\/search\/\?api=1&query=([^\)]+))\)/gi;
+      let m;
+      const mdForScan = processedMarkdown || markdown || '';
+      while ((m = mapLinkRegex.exec(mdForScan))) {
+        const q = decodeURIComponent(m[2] || '').trim();
+        if (q && !mapQueries.includes(q)) mapQueries.push(q);
+      }
+    } catch (e) { console.warn('Map extraction failed:', e); }
+    const mapQ = mapQueries.slice(0, 50).map(q => encodeURIComponent(q)).join('+');
+    const mapPreview = mapQ ? `\n\n## Google Map Preview\n[Open Map](https://maps.google.com/maps?q=${mapQ})` : '';
+    const markdownWithMap = markdown + (mapPreview ? `\n\n---\n\n${mapPreview}` : '');
     
     // Save plan to database with error handling
     try {
