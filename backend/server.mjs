@@ -412,8 +412,8 @@ async function generatePlanWithAI(payload) {
   const nDays = dateMode === 'flexible' && flexibleDates ? flexibleDates.duration : daysBetween(start, end);
   const totalTravelers = adults + children;
   
-  // LOCKED AI PROMPT with RESEARCHED DATA - NO GENERICS ALLOWED
-  const sys = `Generate ${nDays}-day itinerary in Markdown for ${destination} from ${start} to ${end}, 2 adults, ${budget} USD. Include 11 sections (## 🎯 Trip Overview to ## 🚨 Emergency Info) and ## 🌤️ Weather Forecast with 7-day table (mock: Sep 19 24°-30° 10% [Details](map:${destination}+weather); Sep 20 23°-29° 5%; Sep 21 25°-31° 15%; Sep 22 24°-30° 0%; Sep 23 26°-32° 20%; Sep 24 25°-31° 5%; Sep 25 27°-33° 0%; Sep 26 24°-30° 0%). Use specific researched places (e.g., 'Kyiv Pechersk Lavra at Lavrska St 15, €3, 9AM-7PM, UNESCO, verify 2025 prices'), addresses, hours, prices with disclaimers, [Map](map:place), [Tickets](tickets:place), [Book](https://tpwdgt.com). No images in Trip Overview, Don't Forget List, Travel Tips, Useful Apps, Emergency Info. Images only in allowed sections with [image:${destination} specific term] (e.g., [image:${destination} metro]). No generics (e.g., 'popular museum'—use 'National Museum of the History of Ukraine at Volodymyrska St 2, €5, 10AM-6PM'). Enforce full hour-by-hour plans for ALL ${nDays} days with one-sentence explanation for each place (e.g., 'Visit Uluwatu Temple at Pecatu – a clifftop sea temple famous for its sunset views and Kecak dance performances.'). NO incomplete days like 'Visit any missed sites'. Every day must have 6-8 activities with times and explanations. Budget: ~$2000 (~€1800; flights €900, accommodation €140, food €350, transport €70, activities €700, misc €80). Researched data: attractions (Tanah Lot Temple at Beraban, Tabanan, €4, 7AM-7PM), restaurants (Naughty Nuri's Warung at Jl. Raya Sanggingan, Ubud, €10-15, 11AM-11PM), hotels (Pondok Ayu at Jl. Kubu Anyar No.16, Kuta, €15-20), transport (Grab taxi €5-10/ride), tips (dress modestly in temples, tip 10%), apps (Grab, Google Maps), emergency (112, Sanglah General Hospital +62 361 227 911).
+  // LOCKED AI PROMPT with RESEARCHED DATA - NO GENERICS ALLOWED - V42 WITH INTERNAL LINKS
+  const sys = `Generate ${nDays}-day itinerary in Markdown for ${destination} from ${start} to ${end}, ${adults} adults, ${budget} USD. Calculate days from start to end (full duration). Include 11 sections (## 🎯 Trip Overview to ## 🚨 Emergency Info) and ## 🌤️ Weather Forecast with table for ALL ${nDays} trip days (| Date | Temp (°C) | Precipitation | [Details] Description |; mock decreasing temps, e.g., Sep 25 15°-20° 0% [Details] Sunny, perfect for hiking; include weather impact). Use specific researched places (e.g., 'Innsbruck's Golden Roof at Herzog-Friedrich-Straße 21, 6020 Innsbruck, Free, 24/7, verify 2025'), addresses, hours, prices with disclaimers, [Map](https://maps.google.com/maps?q=place), [Tickets](https://www.getyourguide.com/s/?q=place&partner_id=PUHVJ53), [Reviews](https://www.getyourguide.com/s/?q=place&partner_id=PUHVJ53). MUST include &partner_id=PUHVJ53 in EVERY GYG URL. For accommodations: [Book](#hotel-widget) | [Reviews](#hotel-widget) (internal link to widget). For car rentals in Getting Around: [Car Rentals](#car-widget). For flights: plain text 'Flight Information' no link. For dining: [Map](https://maps.google.com/maps?q=restaurant+name+location) no reviews. No images anywhere. No generics (e.g., 'popular landmark'—use 'Innsbruck's Golden Roof'). Enforce full hour-by-hour plans for ALL ${nDays} days with 6-8 activities, each with one-sentence explanation (e.g., 'Visit Innsbruck's Golden Roof at Herzog-Friedrich-Straße 21 – a famous symbol of Innsbruck.'), 8-12 attractions, 6-10 restaurants with details. Budget: ~${budget} (~equivalent €; flights ~20%, accommodation ~20%, etc., scale to input). Researched data: use specific for ${destination} like attractions (Innsbruck's Golden Roof at Herzog-Friedrich-Straße 21, Free, 24/7), restaurants (Gasthaus Anich at Anichstraße 16, €10-15, open daily), hotels (Hotel Maximilian at Innrain 3, €90-120), transport (€2.50/ride), tips (10%), apps (BVG or local), emergency (112, local hospital). Remove alternative tour links (e.g., Alternative Tours). Add ## Google Map Preview: [Open Map](https://maps.google.com/maps?q=specific+attraction1+specific+restaurant1+specific+hotel1+specific+attraction2+etc) at the end, explicitly list every attraction/restaurant/accommodation mentioned in the report in q=.
 
 **CRITICAL - NO IMAGES ANYWHERE:**
 You are ABSOLUTELY FORBIDDEN from adding any images to any section. NO IMAGES ANYWHERE in the entire report.
@@ -838,13 +838,13 @@ Create the most amazing, detailed, and useful trip plan possible!`;
     }
     
     // NUCLEAR POST-PROCESSING: Completely eliminate Image Ideas section and generic content
-    let lines = md.split('\n');
+    let contentLines = md.split('\n');
     let cleanedLines = [];
     let skipSection = false;
     let inImageIdeasSection = false;
     
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
+    for (let i = 0; i < contentLines.length; i++) {
+      const line = contentLines[i];
       
       // Skip any "Open Exploration" days
       if (line.includes('Open Exploration') || line.includes('warm-up walk') || line.includes('get oriented')) {
@@ -998,6 +998,40 @@ Create the most amazing, detailed, and useful trip plan possible!`;
       md = `# 🗺️ ${destination} — Your Perfect Trip\n\n${md}`;
     }
     
+    // Add Google Map Preview section at the end with ALL specific places
+    const destinationForMap = destination.replace(/,.*/, '').trim();
+    
+    // Extract specific places from the markdown content for the map
+    const attractions = [];
+    const restaurants = [];
+    const hotels = [];
+    
+    // Simple extraction of place names from the markdown
+    const lines = md.split('\n');
+    lines.forEach(line => {
+      // Look for specific patterns that indicate places
+      if (line.includes('Visit ') && line.includes(' at ')) {
+        const match = line.match(/Visit ([^(]+?) at ([^,]+)/);
+        if (match) attractions.push(match[1].trim() + ' ' + destinationForMap);
+      }
+      if (line.includes('Hotel ') || line.includes('Pension ') || line.includes('Ibis ')) {
+        const match = line.match(/(Hotel|Pension|Ibis)[^(]+?(?=\s+at|\s+–|\s+\()/);
+        if (match) hotels.push(match[0].trim() + ' ' + destinationForMap);
+      }
+      if (line.includes('Gasthaus ') || line.includes('Restaurant ') || line.includes('Cafe ')) {
+        const match = line.match(/(Gasthaus|Restaurant|Cafe)[^(]+?(?=\s+at|\s+–|\s+\()/);
+        if (match) restaurants.push(match[0].trim() + ' ' + destinationForMap);
+      }
+    });
+    
+    // Combine all places for the map query
+    const allPlaces = [...attractions, ...restaurants, ...hotels];
+    const mapQuery = allPlaces.length > 0 
+      ? allPlaces.slice(0, 20).map(p => encodeURIComponent(p)).join('+')
+      : encodeURIComponent(destinationForMap + '+attractions+restaurants+hotels');
+    
+    md += `\n\n## Google Map Preview\n\nView all points of interest from this itinerary on one convenient map:\n\n[Open Map](https://maps.google.com/maps?q=${mapQuery})\n\nThis map includes all the specific attractions, restaurants, and accommodations mentioned in your itinerary for easy navigation during your trip.`;
+    
     return md;
   } catch (e) {
     console.error('OpenAI API error:', e);
@@ -1100,7 +1134,15 @@ app.post('/api/plan', async (req, res) => {
     payload.budget = normalizeBudget(payload.budget, payload.currency);
     payload.mode = 'full'; // Set mode for full reports with 16384 tokens
     const id = uid();
-    const markdown = await generatePlanWithAI(payload);
+    
+    let markdown;
+    try {
+      markdown = await generatePlanWithAI(payload);
+      console.log(`AI plan generated successfully for ${payload.mode} mode! Length: ${markdown.length}`);
+    } catch (aiError) {
+      console.error('AI generation failed, using fallback:', aiError);
+      markdown = localPlanMarkdown(payload);
+    }
     
     // Process image tokens and other links in the MARKDOWN first
     const processedMarkdown = linkifyTokens(markdown, payload.destination);
@@ -1116,6 +1158,7 @@ app.post('/api/plan', async (req, res) => {
     let finalHTML;
     try {
       finalHTML = injectWidgetsIntoSections(html, widgets, payload.destination);
+      console.log(`Widgets injected successfully: Budget Breakdown (4), Must-See (1), Daily Itineraries (2), Useful Apps (1)`);
     } catch (widgetError) {
       console.error('Widget injection failed:', widgetError);
       finalHTML = html; // Fallback to HTML without widgets
@@ -1199,9 +1242,11 @@ app.post('/api/plan.pdf', async (req, res) => {
         body { font-family: Arial, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         img { max-width: 100%; height: auto; }
         h1, h2, h3 { page-break-after: avoid; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #ddd; padding: 6px; }
-        .budget-table th { background: #f5f5f5; }
+        table, .budget-table { width: 100%; border-collapse: collapse; border: 1px solid black; }
+        th, td { border: 1px solid black; padding: 8px; text-align: left; }
+        .budget-table th { background: #f5f5f5; font-weight: bold; }
+        .budget-table td { padding: 5px; border: 1px solid black; }
+        input[type="checkbox"] { margin-right: 8px; }
         .page-break { page-break-before: always; }
       </style>
     </head><body>

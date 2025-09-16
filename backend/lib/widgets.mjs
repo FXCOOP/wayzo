@@ -6,7 +6,7 @@ const AFFILIATE_WIDGETS = {
   airport_transfers: {
     name: "Airport Transfers",
     description: "Book reliable airport pickup and drop-off",
-    script: `<div data-airport-widget="transfer"></div>
+    script: `<div data-airport-widget="transfer" id="airport-widget"></div>
 <script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&show_header=true&campaign_id=627&promo_id=8951" charset="utf-8"></script>`,
     category: "transport",
     placement: "budget_breakdown"
@@ -26,7 +26,7 @@ const AFFILIATE_WIDGETS = {
   car_rentals: {
     name: "Car Rentals",
     description: "Rent a car for your trip",
-    script: `<div data-car-widget="rental"></div>
+    script: `<div data-car-widget="rental" id="car-widget"></div>
 <script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&border_radius=5&plain=true&show_logo=true&color_background=%23ffca28&color_button=%2355a539&color_text=%23000000&color_input_text=%23000000&color_button_text=%23ffffff&promo_id=4480&campaign_id=10" charset="utf-8"></script>`,
     category: "transport",
     placement: "budget_breakdown"
@@ -36,7 +36,7 @@ const AFFILIATE_WIDGETS = {
   flight_search: {
     name: "Flight Search",
     description: "Find the best flight deals",
-    script: `<div data-flight-widget="search"></div>
+    script: `<div data-flight-widget="search" id="flight-widget"></div>
 <script async src="https://tpwdgt.com/content?currency=usd&trs=455192&shmarker=634822&show_hotels=true&locale=en&searchUrl=www.aviasales.com%2Fsearch&primary_override=%2332a8dd&color_button=%2355a539&color_icons=%2332a8dd&dark=%23262626&light=%23FFFFFF&secondary=%23FFFFFF&special=%23C4C4C4&color_focused=%2332a8dd&border_radius=5&plain=false&promo_id=7879&campaign_id=100" charset="utf-8"></script>`,
     category: "flights",
     placement: "budget_breakdown"
@@ -46,26 +46,17 @@ const AFFILIATE_WIDGETS = {
   hotel_booking: {
     name: "Hotel Booking",
     description: "Book your accommodation",
-    script: `<div data-hotel-widget="search"></div>
+    script: `<div data-hotel-widget="search" id="hotel-widget"></div>
 <script async src="https://tpwdgt.com/content?currency=usd&trs=455192&shmarker=634822&show_hotels=true&locale=en&powered_by=false&searchUrl=www.aviasales.com%2Fsearch&primary_override=%2332a8dd&color_button=%2355a539&color_icons=%2332a8dd&secondary=%23FFFFFF&dark=%23262626&light=%23FFFFFF&special=%23C4C4C4&color_focused=%2332a8dd&border_radius=5&plain=false&promo_id=7873&campaign_id=101" charset="utf-8"></script>`,
     category: "accommodation",
     placement: "budget_breakdown"
   },
 
-  // Activities Widget - SIMPLE WORKING IMPLEMENTATION (No Connection Issues)
+  // GetYourGuide Widget with EXACT specifications and en-US locale
   getyourguide: {
     name: "Activities & Tours", 
     description: "Curated tours and activities",
-    script: (destination) => `<div class="activities-widget" style="border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 8px; background: #f9f9f9;">
-      <h4 style="margin: 0 0 10px 0; color: #333;">🎫 Book Activities & Tours in ${destination.replace(/,.*/, '').trim()}</h4>
-      <p style="margin: 0 0 15px 0; color: #666;">Discover amazing experiences and local tours</p>
-      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-        <a href="https://www.getyourguide.com/s/?q=${destination.replace(/,.*/, '').trim()}&partner_id=PUHVJ53" target="_blank" 
-           style="display: inline-block; background: #ff6b35; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
-          Browse Tours
-        </a>
-      </div>
-    </div>`,
+    script: (destination) => `<div data-gyg-widget="auto" data-gyg-partner-id="PUHVJ53" data-gyg-href="https://www.getyourguide.com/s/?q=${destination.replace(/,.*/, '').trim()}" data-gyg-locale="en-US"></div>`,
     category: "activities",
     placement: "must_see"
   }
@@ -86,6 +77,48 @@ function getWidgetsForDestination(destination, tripType, interests = []) {
   return widgets;
 }
 
+// Function to replace external links with internal widget links
+function replaceExternalLinksWithInternal(doc) {
+  // Replace external booking/review links in accommodation section
+  const accommodationLinks = doc.querySelectorAll('a[href*="booking.com"], a[href*="tripadvisor.com"], a[href*="hotels.com"]');
+  accommodationLinks.forEach(link => {
+    if (link.textContent.toLowerCase().includes('book')) {
+      link.href = '#hotel-widget';
+      link.textContent = 'Book';
+    } else if (link.textContent.toLowerCase().includes('review')) {
+      link.href = '#hotel-widget';
+      link.textContent = 'Reviews';
+    }
+  });
+
+  // Replace car rental external links with internal links
+  const carRentalLinks = doc.querySelectorAll('a[href*="rentalcars.com"], a[href*="hertz.com"], a[href*="avis.com"]');
+  carRentalLinks.forEach(link => {
+    link.href = '#car-widget';
+    link.textContent = 'Car Rentals';
+  });
+
+  // Replace flight booking links with plain text
+  const flightLinks = doc.querySelectorAll('a[href*="expedia.com"], a[href*="kayak.com"], a[href*="skyscanner.com"]');
+  flightLinks.forEach(link => {
+    const span = doc.createElement('span');
+    span.textContent = 'Flight Information';
+    link.parentNode.replaceChild(span, link);
+  });
+
+  // Ensure all [Tickets] and [Reviews] links use GYG with partner_id=PUHVJ53
+  const ticketLinks = doc.querySelectorAll('a[href*="getyourguide.com"]');
+  ticketLinks.forEach(link => {
+    if (!link.href.includes('partner_id=PUHVJ53')) {
+      if (link.href.includes('?')) {
+        link.href += '&partner_id=PUHVJ53';
+      } else {
+        link.href += '?partner_id=PUHVJ53';
+      }
+    }
+  });
+}
+
 // JSDOM-based widget injection with precise placement
 function injectWidgetsIntoSections(html, widgets, destination = '') {
   if (!widgets || widgets.length === 0) return html;
@@ -93,6 +126,9 @@ function injectWidgetsIntoSections(html, widgets, destination = '') {
   try {
     const dom = new JSDOM(html);
     const doc = dom.window.document;
+
+    // Replace external links with internal widget links
+    replaceExternalLinksWithInternal(doc);
     
     let widgetsInjected = {
       "Budget Breakdown": 0,
