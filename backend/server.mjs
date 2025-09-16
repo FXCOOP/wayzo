@@ -409,7 +409,7 @@ async function generatePlanWithAI(payload) {
     mode = 'full'
   } = payload || {};
   
-  const nDays = 15;
+  const nDays = dateMode === 'flexible' && flexibleDates ? Number(flexibleDates.duration || 7) : daysBetween(start, end);
   const totalTravelers = adults + children;
   
   // LOCKED AI PROMPT with RESEARCHED DATA - NO GENERICS ALLOWED
