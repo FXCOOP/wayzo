@@ -43,7 +43,7 @@ export function linkifyTokens(markdown = '', dest = '') {
     .replace(/\[(Book)\]\(book:([^)]+)\)/gi,      (_m, _t, _q) => `[Book](#hotel-widget)`)
     .replace(/\[(Car Rentals)\]\(car:([^)]+)\)/gi,(_m, _t, _q) => `[Car Rentals](#car-widget)`)
     .replace(/\[(Airport Transfers)\]\(airport:([^)]+)\)/gi,(_m, _t, _q) => `[Airport Transfers](#airport-widget)`)
-    .replace(/\[(Flights?)\]\((?:flight|flights):([^)]+)\)/gi, (_m, _t, _q) => `[Flight Information](#flight-widget)`)
+    .replace(/\[(Flights?)\]\((?:flight|flights):([^)]+)\)/gi, (_m, _t, _q) => `Flight Information`)
     .replace(/\[(Tickets)\]\(tickets:([^)]+)\)/gi,(_m, _t, q) => `[Tickets](https://www.getyourguide.com/s/?q=${encodeURIComponent(q.trim())}&partner_id=PUHVJ53)`)
     .replace(/\[(Reviews)\]\(reviews:([^)]+)\)/gi,(_m, _t, q) => `[Reviews](https://www.getyourguide.com/s/?q=${encodeURIComponent(q.trim())}&partner_id=PUHVJ53)`)
     .replace(/!\[([^\]]*)\]\(image:([^)]+)\)/gi,  (_m, alt, q) => {

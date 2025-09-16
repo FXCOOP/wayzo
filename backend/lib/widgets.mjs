@@ -122,21 +122,26 @@ function injectWidgetsIntoSections(html, widgets, destination = '', durationDays
     );
     if (tripOverviewH2) {
       const weatherSection = doc.createElement('div');
+      const pick = (arr) => arr[Math.floor(Math.random()*arr.length)];
+      const highs = [15,16,17,18,19,20,21,22];
+      const lows = [8,9,10,11,12,13,14];
+      const precip = [0,5,10,15,20,30,40];
+      const conditions = ['Sunny, ideal for city exploration','Partly cloudy with light breeze','Light showers; carry an umbrella','Clear and cool evening'];
       weatherSection.innerHTML = `
         <h2>🌤️ Weather Forecast</h2>
         <table class="budget-table" style="border-collapse: collapse; border: 1px solid #ddd;">
           <thead>
-            <tr><th>Date</th><th>Temp (°C)</th><th>Precipitation</th><th>Description</th></tr>
+            <tr><th>Date</th><th>Condition</th><th>High (°C)</th><th>Low (°C)</th><th>Precipitation</th><th>Description</th></tr>
           </thead>
           <tbody>
             ${Array.from({length:Math.max(1, Number(durationDays) || 7)}).map((_,i)=>{
               const day = i+1;
               const date = `Day ${day}`;
-              const min = 27 + Math.floor(Math.random()*2);
-              const max = 30 + Math.floor(Math.random()*3);
-              const rain = [5,10,15][Math.floor(Math.random()*3)];
-              const desc = `Warm with light showers, perfect for beach`;
-              return `<tr><td>${date}</td><td>${min}°-${max}°</td><td>${rain}%</td><td>[Details] <a href="https://maps.google.com/?q=${encodeURIComponent(destination)}+weather" target="_blank">${desc}</a></td></tr>`;
+              const hi = pick(highs);
+              const lo = Math.min(hi-2, pick(lows));
+              const pr = pick(precip);
+              const cond = pick(conditions);
+              return `<tr><td>${date}</td><td>${cond.split(',')[0]}</td><td>${hi}°</td><td>${lo}°</td><td>${pr}%</td><td>[Details] <a href="https://maps.google.com/?q=${encodeURIComponent(destination)}+weather" target="_blank">${cond}</a></td></tr>`;
             }).join('')}
           </tbody>
         </table>
