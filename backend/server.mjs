@@ -286,15 +286,13 @@ function removeImagesFromForbiddenSections(markdown, destination) {
     console.log(`Removed images from section: ${section}`);
   });
   
-  // Remove any remaining images that don't follow the correct format
-  processed = processed.replace(/!\[([^\]]*)\]\(image:([^)]+)\)/gi, (match, alt, query) => {
-    // Only allow images with destination prefix
-    if (!query.includes(destination)) {
-      console.log(`Removing invalid image: ${match}`);
-      return '';
-    }
-    return match;
-  });
+  // Remove all remaining images globally (Markdown and HTML)
+  // 1) Any Markdown images ![alt](url)
+  processed = processed.replace(/!\[[^\]]*\]\([^\)]*\)/g, '');
+  // 2) Any HTML <img ...>
+  processed = processed.replace(/<img\b[^>]*>/gi, '');
+  // 3) Any stray image placeholders like "🖼️ Image loading..."
+  processed = processed.replace(/🖼️\s*Image loading\.\.\./g, '');
   
   console.log('Post-processing complete');
   return processed;
