@@ -412,8 +412,24 @@ async function generatePlanWithAI(payload) {
   const nDays = dateMode === 'flexible' && flexibleDates ? flexibleDates.duration : daysBetween(start, end);
   const totalTravelers = adults + children;
   
-  // LOCKED AI PROMPT with RESEARCHED DATA - NO GENERICS ALLOWED - V42 WITH INTERNAL LINKS
-  const sys = `Generate ${nDays}-day itinerary in Markdown for ${destination} from ${start} to ${end}, ${adults} adults, ${budget} USD. Calculate days from start to end (full duration). Include 11 sections (## 🎯 Trip Overview to ## 🚨 Emergency Info) and ## 🌤️ Weather Forecast with table for ALL ${nDays} trip days (| Date | Temp (°C) | Precipitation | [Details] Description |; mock decreasing temps, e.g., Sep 25 15°-20° 0% [Details] Sunny, perfect for hiking; include weather impact). Use specific researched places (e.g., 'Innsbruck's Golden Roof at Herzog-Friedrich-Straße 21, 6020 Innsbruck, Free, 24/7, verify 2025'), addresses, hours, prices with disclaimers, [Map](https://maps.google.com/maps?q=place), [Tickets](https://www.getyourguide.com/s/?q=place&partner_id=PUHVJ53), [Reviews](https://www.getyourguide.com/s/?q=place&partner_id=PUHVJ53). MUST include &partner_id=PUHVJ53 in EVERY GYG URL. For accommodations: [Book](#hotel-widget) | [Reviews](#hotel-widget) (internal link to widget). For car rentals in Getting Around: [Car Rentals](#car-widget). For flights: plain text 'Flight Information' no link. For dining: [Map](https://maps.google.com/maps?q=restaurant+name+location) no reviews. No images anywhere. No generics (e.g., 'popular landmark'—use 'Innsbruck's Golden Roof'). Enforce full hour-by-hour plans for ALL ${nDays} days with 6-8 activities, each with one-sentence explanation (e.g., 'Visit Innsbruck's Golden Roof at Herzog-Friedrich-Straße 21 – a famous symbol of Innsbruck.'), 8-12 attractions, 6-10 restaurants with details. Budget: ~${budget} (~equivalent €; flights ~20%, accommodation ~20%, etc., scale to input). Researched data: use specific for ${destination} like attractions (Innsbruck's Golden Roof at Herzog-Friedrich-Straße 21, Free, 24/7), restaurants (Gasthaus Anich at Anichstraße 16, €10-15, open daily), hotels (Hotel Maximilian at Innrain 3, €90-120), transport (€2.50/ride), tips (10%), apps (BVG or local), emergency (112, local hospital). Remove alternative tour links (e.g., Alternative Tours). Add ## Google Map Preview: [Open Map](https://maps.google.com/maps?q=specific+attraction1+specific+restaurant1+specific+hotel1+specific+attraction2+etc) at the end, explicitly list every attraction/restaurant/accommodation mentioned in the report in q=.
+  // OPTIMIZED AI PROMPT V43 - NO GOOGLE MAP (POST-PROCESSED)
+  const euroEquivalent = Math.round(budget * 0.91);
+  const sys = `Generate detailed Markdown itinerary for ${destination} from ${start} to ${end}, ${adults} adults, ${budget} USD (~€${euroEquivalent}). Include exactly 11 sections + Weather:
+
+## 🎯 Trip Overview (quick facts, highlights)
+## 🌤️ Weather Forecast (table ALL ${nDays} days: | Date | Temp (°C) | Precipitation | Description |; e.g., 2025-09-25 15°-20° 0% Sunny perfect for hiking)
+## 💰 Budget Breakdown (table with checkboxes, scale to €${euroEquivalent} total: flights €${Math.round(euroEquivalent * 0.22)}, accommodation €${Math.round(euroEquivalent * 0.20)}, food €${Math.round(euroEquivalent * 0.15)}, transport €${Math.round(euroEquivalent * 0.08)}, activities €${Math.round(euroEquivalent * 0.20)}, misc €${Math.round(euroEquivalent * 0.15)})
+## 🗺️ Getting Around ([Car Rentals](#car-widget) for cars; 'Flight Information' plain text no link)
+## 🏨 Accommodation (3-5 hotels with [Book](#hotel-widget) | [Reviews](#hotel-widget))
+## 🎫 Must-See Attractions (8-12 with [Tickets](https://www.getyourguide.com/s/?q=place&partner_id=PUHVJ53) | [Map](map:place))
+## 🍽️ Dining Guide (6-10 restaurants with [Map](https://maps.google.com/maps?q=restaurant+location) only)
+## 🎭 Daily Itineraries (full hour-by-hour ALL ${nDays} days, 6-8 activities/day, each with 1-sentence explanation, [Tickets](https://www.getyourguide.com/s/?q=place&partner_id=PUHVJ53))
+## 🧳 Don't Forget List (ul with <input type="checkbox"> per item)
+## 🛡️ Travel Tips (local customs, safety)
+## 📱 Useful Apps (local apps, NO GetYourGuide link)
+## 🚨 Emergency Info (112, hospital, pharmacy)
+
+CRITICAL: NO images, NO Google Map section (handled separately), NO generics. Use specific places: 'Innsbruck's Golden Roof at Herzog-Friedrich-Straße 21, 6020 Innsbruck, Free, 24/7'. ABSOLUTELY REQUIRED: Every [Tickets] or [Reviews] MUST be https://www.getyourguide.com/s/?q=place&partner_id=PUHVJ53. Budget table with checkboxes for each item. 6-8 activities every day with explanations.
 
 **CRITICAL - NO IMAGES ANYWHERE:**
 You are ABSOLUTELY FORBIDDEN from adding any images to any section. NO IMAGES ANYWHERE in the entire report.
@@ -816,7 +832,7 @@ Create the most amazing, detailed, and useful trip plan possible!`;
       resp = await client.chat.completions.create({
         model: process.env.OPENAI_MODEL || "gpt-4o-mini",
         temperature: 0.7, // Slightly higher for more creative responses
-        max_tokens: mode === 'full' ? 16384 : 500, // 16384 for full reports, 500 for previews
+        max_tokens: mode === 'full' ? 20000 : 500, // 20000 for full reports, 500 for previews
         messages: [{ role: "user", content: `${sys}\n\n${user}` }],
         stream: false // Enable streaming if needed for larger responses
       });
@@ -998,40 +1014,6 @@ Create the most amazing, detailed, and useful trip plan possible!`;
       md = `# 🗺️ ${destination} — Your Perfect Trip\n\n${md}`;
     }
     
-    // Add Google Map Preview section at the end with ALL specific places
-    const destinationForMap = destination.replace(/,.*/, '').trim();
-    
-    // Extract specific places from the markdown content for the map
-    const attractions = [];
-    const restaurants = [];
-    const hotels = [];
-    
-    // Simple extraction of place names from the markdown
-    const lines = md.split('\n');
-    lines.forEach(line => {
-      // Look for specific patterns that indicate places
-      if (line.includes('Visit ') && line.includes(' at ')) {
-        const match = line.match(/Visit ([^(]+?) at ([^,]+)/);
-        if (match) attractions.push(match[1].trim() + ' ' + destinationForMap);
-      }
-      if (line.includes('Hotel ') || line.includes('Pension ') || line.includes('Ibis ')) {
-        const match = line.match(/(Hotel|Pension|Ibis)[^(]+?(?=\s+at|\s+–|\s+\()/);
-        if (match) hotels.push(match[0].trim() + ' ' + destinationForMap);
-      }
-      if (line.includes('Gasthaus ') || line.includes('Restaurant ') || line.includes('Cafe ')) {
-        const match = line.match(/(Gasthaus|Restaurant|Cafe)[^(]+?(?=\s+at|\s+–|\s+\()/);
-        if (match) restaurants.push(match[0].trim() + ' ' + destinationForMap);
-      }
-    });
-    
-    // Combine all places for the map query
-    const allPlaces = [...attractions, ...restaurants, ...hotels];
-    const mapQuery = allPlaces.length > 0 
-      ? allPlaces.slice(0, 20).map(p => encodeURIComponent(p)).join('+')
-      : encodeURIComponent(destinationForMap + '+attractions+restaurants+hotels');
-    
-    md += `\n\n## Google Map Preview\n\nView all points of interest from this itinerary on one convenient map:\n\n[Open Map](https://maps.google.com/maps?q=${mapQuery})\n\nThis map includes all the specific attractions, restaurants, and accommodations mentioned in your itinerary for easy navigation during your trip.`;
-    
     return md;
   } catch (e) {
     console.error('OpenAI API error:', e);
@@ -1185,12 +1167,85 @@ app.post('/api/plan', async (req, res) => {
     const aff = affiliatesFor(payload.destination);
     
     // Add public transport map at the end of the report
-    const markdownWithMap = markdown + `\n\n---\n\n[Open ${payload.destination} Public Transport Map](map:${payload.destination}+public+transport+map)`;
+    // COMPREHENSIVE POST-PROCESSING
+    let finalMarkdown = markdown;
+    
+    try {
+      // 1. Extract places for Google Map
+      const destinationForMap = payload.destination.replace(/,.*/, '').trim();
+      const attractions = [];
+      const restaurants = [];
+      const hotels = [];
+      
+      // Enhanced extraction from different sections
+      const sections = finalMarkdown.split('\n## ');
+      
+      sections.forEach(section => {
+        const lines = section.split('\n');
+        const sectionTitle = lines[0];
+        
+        // Extract from Must-See Attractions
+        if (sectionTitle.includes('🎫') || sectionTitle.includes('Must-See')) {
+          lines.forEach(line => {
+            // Match patterns like "Visit Innsbruck's Golden Roof at Herzog-Friedrich-Straße"
+            const match = line.match(/(?:Visit |-)?\s*([^(]+?)\s+at\s+([^,]+)/);
+            if (match) {
+              attractions.push(`${match[1].trim()}+${match[2].trim()}+${destinationForMap}`);
+            }
+          });
+        }
+        
+        // Extract from Dining Guide
+        if (sectionTitle.includes('🍽️') || sectionTitle.includes('Dining')) {
+          lines.forEach(line => {
+            const match = line.match(/(?:^-|\*)\s*([^(]+?)\s+at\s+([^,]+)/);
+            if (match) {
+              restaurants.push(`${match[1].trim()}+${match[2].trim()}+${destinationForMap}`);
+            }
+          });
+        }
+        
+        // Extract from Accommodation
+        if (sectionTitle.includes('🏨') || sectionTitle.includes('Accommodation')) {
+          lines.forEach(line => {
+            const match = line.match(/(?:^-|\*)\s*([^(]+?)\s+at\s+([^,]+)/);
+            if (match) {
+              hotels.push(`${match[1].trim()}+${match[2].trim()}+${destinationForMap}`);
+            }
+          });
+        }
+        
+        // Extract from Daily Itineraries
+        if (sectionTitle.includes('🎭') || sectionTitle.includes('Daily')) {
+          lines.forEach(line => {
+            const match = line.match(/Visit\s+([^(]+?)\s+at\s+([^–]+)/);
+            if (match) {
+              attractions.push(`${match[1].trim()}+${match[2].trim()}+${destinationForMap}`);
+            }
+          });
+        }
+      });
+      
+      // Combine and deduplicate places
+      const allPlaces = [...new Set([...attractions, ...restaurants, ...hotels])];
+      const mapQuery = allPlaces.length > 0 
+        ? allPlaces.slice(0, 30).join('+').replace(/\s+/g, '+')
+        : `${destinationForMap.replace(/\s+/g, '+')}+attractions+restaurants+hotels`;
+      
+      // Add Google Map Preview section
+      finalMarkdown += `\n\n## Google Map Preview\n\nView all points of interest from this itinerary on one convenient map:\n\n[Open Map](https://maps.google.com/maps?q=${mapQuery})\n\nThis map includes all the specific attractions, restaurants, and accommodations mentioned in your itinerary for easy navigation during your trip.`;
+      
+      console.log(`Post-process: Google Map added with ${allPlaces.length} places`);
+      
+    } catch (mapError) {
+      console.error('Failed to add Google Map:', mapError);
+      // Continue without map
+    }
     
     // Save plan to database with error handling
     try {
-      const planData = { id, type: 'plan', data: payload, markdown: markdownWithMap };
-      console.log('Saving plan:', { id, destination: payload.destination, length: markdownWithMap.length });
+      const planData = { id, type: 'plan', data: payload, markdown: finalMarkdown };
+      console.log('Saving plan:', { id, destination: payload.destination, length: finalMarkdown.length });
       savePlan.run(id, nowIso(), JSON.stringify(planData));
       console.log(`Plan saved with ID: ${id}`);
     } catch (dbError) {
@@ -1206,7 +1261,7 @@ app.post('/api/plan', async (req, res) => {
       // Continue execution - don't fail the request if tracking fails
     }
     
-    res.json({ id, markdown: markdownWithMap, html: cleanedHTML, affiliates: aff, version: VERSION });
+    res.json({ id, markdown: finalMarkdown, html: cleanedHTML, affiliates: aff, version: VERSION });
   } catch (e) {
     console.error('Plan generation error:', e);
     res.status(500).json({ error: 'Failed to generate plan. Check server logs.', version: VERSION });

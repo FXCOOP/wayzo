@@ -203,33 +203,43 @@ function injectWidgetsIntoSections(html, widgets, destination = '') {
       h.textContent.includes("Budget Breakdown") || h.textContent.includes("💰")
     );
     if (budgetH2) {
+      console.log('Found Budget Breakdown section, injecting widgets...');
       const budgetWidgets = widgets.filter(w => w.placement === "budget_breakdown");
       
       budgetWidgets.forEach(widget => {
-        const widgetDiv = doc.createElement('div');
-        widgetDiv.className = 'section-widget';
-        widgetDiv.setAttribute('data-category', widget.category);
-        widgetDiv.innerHTML = `
-          <div class="widget-header">
-            <h4>${widget.name}</h4>
-            <p>${widget.description}</p>
-          </div>
-          <div class="widget-content">
-            ${widget.script}
-          </div>
-        `;
-        
-        // Insert after Budget Breakdown section content
-        let nextH2 = budgetH2.nextElementSibling;
-        while (nextH2 && nextH2.tagName !== 'H2') {
-          nextH2 = nextH2.nextElementSibling;
-        }
-        
-        if (nextH2) {
-          nextH2.parentNode.insertBefore(widgetDiv, nextH2);
-          widgetsInjected["Budget Breakdown"]++;
+        try {
+          const widgetDiv = doc.createElement('div');
+          widgetDiv.className = 'section-widget';
+          widgetDiv.setAttribute('data-category', widget.category);
+          widgetDiv.innerHTML = `
+            <div class="widget-header">
+              <h4>${widget.name}</h4>
+              <p>${widget.description}</p>
+            </div>
+            <div class="widget-content">
+              ${widget.script}
+            </div>
+          `;
+          
+          // Insert after Budget Breakdown section content
+          let nextH2 = budgetH2.nextElementSibling;
+          while (nextH2 && nextH2.tagName !== 'H2') {
+            nextH2 = nextH2.nextElementSibling;
+          }
+          
+          if (nextH2) {
+            nextH2.parentNode.insertBefore(widgetDiv, nextH2);
+            widgetsInjected["Budget Breakdown"]++;
+            console.log(`Injected widget for section: ${widget.name}`);
+          } else {
+            console.log(`No insertion point found for widget: ${widget.name}`);
+          }
+        } catch (widgetError) {
+          console.error(`Failed to inject widget ${widget.name}:`, widgetError);
         }
       });
+    } else {
+      console.log('Budget Breakdown section not found');
     }
 
     // 4. Add Airalo/eSIM widget to Useful Apps section
