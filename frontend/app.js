@@ -17,9 +17,10 @@
   if (!form || !previewEl) return; // nothing to wire up
 
   // Check if we're on staging environment - but don't auto-login, let user sign up
-  const isStaging = window.location.hostname.includes('staging') || window.location.hostname.includes('onrender.com');
+  // Include wayzo.online as free access for production
+  const isStaging = window.location.hostname.includes('staging') || window.location.hostname.includes('onrender.com') || window.location.hostname.includes('wayzo.online');
   if (isStaging) {
-    console.log('🚀 Staging environment detected - user needs to sign up manually');
+    console.log('🚀 Free access environment detected - no signup required');
   }
 
   const show = (el) => el && el.classList.remove('hidden');
@@ -422,7 +423,7 @@
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    // Check if user is authenticated for preview (test users on staging bypass this)
+    // Check if user is authenticated for preview (free access on wayzo.online)
     if (!isAuthenticated && !isStaging) {
       showNotification('Please sign in to generate trip previews.', 'warning');
       showAuthModal();
@@ -507,7 +508,7 @@
 
   // Full plan generation
   fullPlanBtn.addEventListener('click', async () => {
-    // Check if user is authenticated for full plan (bypass on staging)
+    // Check if user is authenticated for full plan (free access on wayzo.online)
     if (!isAuthenticated && !isStaging) {
       showNotification('Please sign in to access the full trip plan.', 'warning');
       showAuthModal();
@@ -567,13 +568,11 @@
       console.log('User object details:', JSON.stringify(currentUser, null, 2));
       
       if (currentUser && currentUser.isTestUser || isStaging) {
-        console.log('🧪 Test user or staging detected - bypassing payment!');
-        // Test user or staging - show full plan immediately without payment
+        console.log('🚀 Free access or test user detected - bypassing payment!');
+        // Test user or free access - show full plan immediately without payment
+        const isProduction = window.location.hostname.includes('wayzo.online');
         previewEl.innerHTML = `
-          <div class="test-user-notice">
-            <h3>🧪 TEST USER MODE - Full Plan Unlocked!</h3>
-            <p>You're on staging. All features are unlocked for testing purposes.</p>
-          </div>
+          ${isProduction ? '' : '<div class="test-user-notice"><h3>🧪 TEST USER MODE - Full Plan Unlocked!</h3><p>You\'re on staging. All features are unlocked for testing purposes.</p></div>'}
           ${result.html}
         `;
         setAffiliates(data.destination);
@@ -596,7 +595,8 @@
         // Save full plan for "Get Back" functionality
         saveFullPlan(result.html, data.destination);
         
-        showNotification('🧪 Test user: Full plan unlocked! All features available for testing.', 'info');
+        const isProduction = window.location.hostname.includes('wayzo.online');
+        showNotification(isProduction ? '🎉 Full plan unlocked! All features available for free.' : '🧪 Test user: Full plan unlocked! All features available for testing.', 'info');
       } else {
         // Regular user - show paywall
         previewEl.innerHTML = `
