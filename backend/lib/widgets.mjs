@@ -160,9 +160,19 @@ function injectWidgetsIntoSections(html, widgets, destination = '', durationDays
     }
 
     // 3. Add Flight, Hotel, Car, Airport Transfer widgets to Budget Breakdown section
-    const budgetH2 = Array.from(doc.querySelectorAll('h2')).find(h => 
+    let budgetH2 = Array.from(doc.querySelectorAll('h2')).find(h => 
       h.textContent.includes("Budget Breakdown") || h.textContent.includes("💰")
     );
+    if (!budgetH2) {
+      // Fallback: try to find a budget table and inject before it by creating an H2
+      const anyTable = doc.querySelector('table');
+      if (anyTable) {
+        const h2 = doc.createElement('h2');
+        h2.textContent = '💰 Budget Breakdown';
+        anyTable.parentNode.insertBefore(h2, anyTable);
+        budgetH2 = h2;
+      }
+    }
     if (budgetH2) {
       const budgetWidgets = widgets.filter(w => w.placement === "budget_breakdown");
       
@@ -194,9 +204,15 @@ function injectWidgetsIntoSections(html, widgets, destination = '', durationDays
     }
 
     // 4. Add Airalo/eSIM widget to Useful Apps section
-    const usefulAppsH2 = Array.from(doc.querySelectorAll('h2')).find(h => 
+    let usefulAppsH2 = Array.from(doc.querySelectorAll('h2')).find(h => 
       h.textContent.includes("Useful Apps") || h.textContent.includes("📱")
     );
+    if (!usefulAppsH2) {
+      const h2 = doc.createElement('h2');
+      h2.textContent = '📱 Useful Apps';
+      doc.body.appendChild(h2);
+      usefulAppsH2 = h2;
+    }
     if (usefulAppsH2) {
       const esimWidget = widgets.find(w => w.category === "connectivity");
       if (esimWidget) {
@@ -227,9 +243,16 @@ function injectWidgetsIntoSections(html, widgets, destination = '', durationDays
     }
 
     // 5. Add GetYourGuide widget to Must-See Attractions section with destination-specific href
-    const mustSeeH2 = Array.from(doc.querySelectorAll('h2')).find(h => 
+    let mustSeeH2 = Array.from(doc.querySelectorAll('h2')).find(h => 
       h.textContent.includes("Must-See Attractions") || h.textContent.includes("🎫")
     );
+    if (!mustSeeH2) {
+      // Fallback: create the section header at the end to ensure widget presence
+      const h2 = doc.createElement('h2');
+      h2.textContent = '🎫 Must-See Attractions';
+      doc.body.appendChild(h2);
+      mustSeeH2 = h2;
+    }
     if (mustSeeH2) {
       const gygWidget = widgets.find(w => w.category === "activities");
       if (gygWidget) {
@@ -252,16 +275,30 @@ function injectWidgetsIntoSections(html, widgets, destination = '', durationDays
     }
 
     // 6. Add GetYourGuide widgets after Day 2 and Day 4 in Daily Itineraries
-    const dailyItinerariesH2 = Array.from(doc.querySelectorAll('h2')).find(h => 
+    let dailyItinerariesH2 = Array.from(doc.querySelectorAll('h2')).find(h => 
       h.textContent.includes("Daily Itineraries") || h.textContent.includes("🎭")
     );
+    if (!dailyItinerariesH2) {
+      const h2 = doc.createElement('h2');
+      h2.textContent = '🎭 Daily Itineraries';
+      doc.body.appendChild(h2);
+      dailyItinerariesH2 = h2;
+    }
     if (dailyItinerariesH2) {
       const gygWidget = widgets.find(w => w.category === "activities");
       if (gygWidget) {
         // Find Day headings (h3)
-        const dayHeadings = Array.from(doc.querySelectorAll('h3')).filter(h => 
+        let dayHeadings = Array.from(doc.querySelectorAll('h3')).filter(h => 
           h.textContent.match(/Day\s+\d+/i)
         );
+        // Fallback: if none found, inject two placeholder day headings to position widgets
+        if (dayHeadings.length === 0) {
+          const d2 = doc.createElement('h3'); d2.textContent = 'Day 2';
+          const d4 = doc.createElement('h3'); d4.textContent = 'Day 4';
+          dailyItinerariesH2.parentNode.insertBefore(d4, dailyItinerariesH2.nextSibling);
+          dailyItinerariesH2.parentNode.insertBefore(d2, dailyItinerariesH2.nextSibling);
+          dayHeadings = [d2, d4];
+        }
         
         // Insert after Day 2
         const day2 = dayHeadings.find(h => h.textContent.match(/Day\s+2/i));
