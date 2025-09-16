@@ -2413,6 +2413,17 @@
         p.innerHTML = '<a href="#car-widget">Car Rentals</a> · <a href="#airport-widget">Airport Transfers</a> · Flight Information';
         ga.parentNode.insertBefore(p, ga.nextElementSibling);
       }
+      // Also normalize any plain text lines within Getting Around
+      let cur = ga.nextElementSibling;
+      while (cur && cur.tagName !== 'H2') {
+        if (cur.tagName === 'P' || cur.tagName === 'LI' || cur.tagName === 'DIV') {
+          cur.innerHTML = cur.innerHTML
+            .replace(/\bCar Rentals\b(?![^<]*href)/g, '<a href="#car-widget">Car Rentals</a>')
+            .replace(/\bAirport Transfers\b(?![^<]*href)/g, '<a href="#airport-widget">Airport Transfers</a>')
+            .replace(/\bFlights:?\b/g, 'Flight Information');
+        }
+        cur = cur.nextElementSibling;
+      }
 
       // 2) Accommodation anchors
       let acc = Array.from(document.querySelectorAll('h2')).find(h => /Accommodation|🏨/i.test(h.textContent));
@@ -2421,9 +2432,20 @@
         acc.textContent = '🏨 Accommodation';
         document.body.appendChild(acc);
       }
-      const accAnchor = document.createElement('p');
-      accAnchor.innerHTML = '<a href="#hotel-widget">Book</a> | <a href="#hotel-widget">Reviews</a>';
-      acc.parentNode.insertBefore(accAnchor, acc.nextElementSibling);
+      // Ensure each hotel block has Book | Reviews anchors
+      let accNode = acc.nextElementSibling;
+      let insertedHeaderAnchors = false;
+      while (accNode && accNode.tagName !== 'H2') {
+        if (/Book\s*\|\s*Reviews/i.test(accNode.textContent) && !accNode.querySelector('a[href="#hotel-widget"]')) {
+          accNode.innerHTML = accNode.innerHTML.replace(/Book\s*\|\s*Reviews/i, '<a href="#hotel-widget">Book</a> | <a href="#hotel-widget">Reviews</a>');
+        }
+        accNode = accNode.nextElementSibling;
+      }
+      if (!document.querySelector('h2 + p a[href="#hotel-widget"]')) {
+        const accAnchor = document.createElement('p');
+        accAnchor.innerHTML = '<a href="#hotel-widget">Book</a> | <a href="#hotel-widget">Reviews</a>';
+        acc.parentNode.insertBefore(accAnchor, acc.nextElementSibling);
+      }
 
       // 3) Budget widgets
       let budget = Array.from(document.querySelectorAll('h2')).find(h => /Budget Breakdown|💰/i.test(h.textContent));
