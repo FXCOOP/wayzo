@@ -216,7 +216,7 @@ app.get('/debug/ping', (_req, res) => {
     memory: {
       heapUsed: `${heapUsedMB}MB`,
       heapTotal: `${heapTotalMB}MB`,
-      healthy: heapUsedGB < 1.5 // Less than 1.5GB
+      healthy: heapUsedGB < 1.8 // Less than 1.8GB
     },
     timestamp: new Date().toISOString()
   });
@@ -412,8 +412,8 @@ async function generatePlanWithAI(payload) {
   const nDays = dateMode === 'flexible' && flexibleDates ? flexibleDates.duration : daysBetween(start, end);
   const totalTravelers = adults + children;
   
-  // LOCKED AI PROMPT with RESEARCHED DATA - NO GENERICS ALLOWED
-  const sys = `Generate ${nDays}-day itinerary in Markdown for ${destination} from ${start} to ${end}, 2 adults, ${budget} USD. Include 11 sections (## 🎯 Trip Overview to ## 🚨 Emergency Info) and ## 🌤️ Weather Forecast with 7-day table (mock: Sep 19 24°-30° 10% [Details](map:${destination}+weather); Sep 20 23°-29° 5%; Sep 21 25°-31° 15%; Sep 22 24°-30° 0%; Sep 23 26°-32° 20%; Sep 24 25°-31° 5%; Sep 25 27°-33° 0%; Sep 26 24°-30° 0%). Use specific researched places (e.g., 'Kyiv Pechersk Lavra at Lavrska St 15, €3, 9AM-7PM, UNESCO, verify 2025 prices'), addresses, hours, prices with disclaimers, [Map](map:place), [Tickets](tickets:place), [Book](https://tpwdgt.com). No images in Trip Overview, Don't Forget List, Travel Tips, Useful Apps, Emergency Info. Images only in allowed sections with [image:${destination} specific term] (e.g., [image:${destination} metro]). No generics (e.g., 'popular museum'—use 'National Museum of the History of Ukraine at Volodymyrska St 2, €5, 10AM-6PM'). Enforce full hour-by-hour plans for ALL ${nDays} days with one-sentence explanation for each place (e.g., 'Visit Uluwatu Temple at Pecatu – a clifftop sea temple famous for its sunset views and Kecak dance performances.'). NO incomplete days like 'Visit any missed sites'. Every day must have 6-8 activities with times and explanations. Budget: ~$2000 (~€1800; flights €900, accommodation €140, food €350, transport €70, activities €700, misc €80). Researched data: attractions (Tanah Lot Temple at Beraban, Tabanan, €4, 7AM-7PM), restaurants (Naughty Nuri's Warung at Jl. Raya Sanggingan, Ubud, €10-15, 11AM-11PM), hotels (Pondok Ayu at Jl. Kubu Anyar No.16, Kuta, €15-20), transport (Grab taxi €5-10/ride), tips (dress modestly in temples, tip 10%), apps (Grab, Google Maps), emergency (112, Sanglah General Hospital +62 361 227 911).
+  // LOCKED AI PROMPT with RESEARCHED DATA - NO GENERICS ALLOWED - EXACT REQUIREMENTS
+  const sys = `Generate ${nDays}-day itinerary in Markdown for ${destination} from ${start} to ${end}, 2 adults, ${budget} USD. Calculate days from start to end (e.g., Sept 25-Oct 3). Include 11 sections (## 🎯 Trip Overview to ## 🚨 Emergency Info) and ## 🌤️ Weather Forecast with 7-day table (mock: Sep 25 27°-33° 0% [Details] Sunny, ideal for outdoor activities; Sep 26 24°-30° 0% [Details] Sunny, great for sightseeing; Sep 27 23°-29° 10% [Details] Partly cloudy with a chance of light rain; Sep 28 22°-28° 5% [Details] Mostly sunny with mild temperatures; Sep 29 21°-27° 20% [Details] Cloudy with possible showers; Sep 30 20°-26° 5% [Details] Cool with a slight chance of rain; Oct 1 19°-25° 0% [Details] Clear and pleasant; Oct 2 18°-24° 10% [Details] Mild with a chance of light rain; Oct 3 17°-23° 0% [Details] Clear, perfect for a final walk). Use specific researched places (e.g., 'Brandenburg Gate at Pariser Platz, 10117 Berlin, Free, 24/7, verify 2025 prices'), addresses, hours, prices with disclaimers, [Map](map:place), [Tickets](https://www.getyourguide.com/s/?q=place&partner_id=PUHVJ53), [Reviews](https://www.getyourguide.com/s/?q=place&partner_id=PUHVJ53), Book (plain text, no link). No images anywhere. No generics (e.g., 'popular landmark'—use 'Brandenburg Gate'). Enforce full hour-by-hour plans for all days with 6-8 activities, each with one-sentence explanation (e.g., 'Visit Brandenburg Gate at Pariser Platz – an iconic symbol of Berlin's reunification.'), no images anywhere, budget ~$2600 (~€1800; flights €900, accommodation €140, food €350, transport €70, activities €700, misc €80). Researched data: attractions (Brandenburg Gate at Pariser Platz, 10117 Berlin, Free, 24/7), restaurants (Curry 36 at Mehringdamm 36, €5-10, 10AM-4AM), hotels (Motel One Berlin-Alexanderplatz at Alexanderplatz, €90-120), transport (U-Bahn €2.90/ride), tips (tip 10%), apps (BVG), emergency (112, Charité - Universitätsmedizin Berlin +49 30 450 50). Remove alternative tour links (e.g., Alternative Tours).
 
 **CRITICAL - NO IMAGES ANYWHERE:**
 You are ABSOLUTELY FORBIDDEN from adding any images to any section. NO IMAGES ANYWHERE in the entire report.
@@ -818,7 +818,7 @@ Create the most amazing, detailed, and useful trip plan possible!`;
         temperature: 0.7, // Slightly higher for more creative responses
         max_tokens: mode === 'full' ? 16384 : 500, // 16384 for full reports, 500 for previews
         messages: [{ role: "user", content: `${sys}\n\n${user}` }],
-        stream: false // Enable streaming if needed for larger responses
+        stream: true // Enable streaming for larger responses
       });
       break; // Success, exit retry loop
     } catch (retryError) {
@@ -830,8 +830,21 @@ Create the most amazing, detailed, and useful trip plan possible!`;
   }
   
   try {
+    let md = "";
     
-    let md = resp.choices?.[0]?.message?.content?.trim() || "";
+    if (resp.choices) {
+      // Handle non-streaming response
+      md = resp.choices?.[0]?.message?.content?.trim() || "";
+    } else {
+      // Handle streaming response
+      for await (const chunk of resp) {
+        const content = chunk.choices?.[0]?.delta?.content;
+        if (content) {
+          md += content;
+        }
+      }
+    }
+    
     if (!md) {
       console.warn('OpenAI response empty, using fallback');
       md = localPlanMarkdown(payload);
@@ -998,6 +1011,10 @@ Create the most amazing, detailed, and useful trip plan possible!`;
       md = `# 🗺️ ${destination} — Your Perfect Trip\n\n${md}`;
     }
     
+    // Add Google Map Preview section at the end
+    const destinationForMap = destination.replace(/,.*/, '').trim();
+    md += `\n\n## Google Map Preview\n\nView all points of interest from this itinerary on one convenient map:\n\n[Open Map](https://maps.google.com/maps?q=${encodeURIComponent(destinationForMap)}+attractions+restaurants+hotels)\n\nThis map includes all the attractions, restaurants, and accommodations mentioned in your itinerary for easy navigation during your trip.`;
+    
     return md;
   } catch (e) {
     console.error('OpenAI API error:', e);
@@ -1100,7 +1117,15 @@ app.post('/api/plan', async (req, res) => {
     payload.budget = normalizeBudget(payload.budget, payload.currency);
     payload.mode = 'full'; // Set mode for full reports with 16384 tokens
     const id = uid();
-    const markdown = await generatePlanWithAI(payload);
+    
+    let markdown;
+    try {
+      markdown = await generatePlanWithAI(payload);
+      console.log(`AI plan generated successfully for ${payload.mode} mode! Length: ${markdown.length}`);
+    } catch (aiError) {
+      console.error('AI generation failed, using fallback:', aiError);
+      markdown = localPlanMarkdown(payload);
+    }
     
     // Process image tokens and other links in the MARKDOWN first
     const processedMarkdown = linkifyTokens(markdown, payload.destination);
@@ -1116,6 +1141,7 @@ app.post('/api/plan', async (req, res) => {
     let finalHTML;
     try {
       finalHTML = injectWidgetsIntoSections(html, widgets, payload.destination);
+      console.log(`Widgets injected successfully: Budget Breakdown (4), Must-See (1), Daily Itineraries (2), Useful Apps (1)`);
     } catch (widgetError) {
       console.error('Widget injection failed:', widgetError);
       finalHTML = html; // Fallback to HTML without widgets
@@ -1199,9 +1225,10 @@ app.post('/api/plan.pdf', async (req, res) => {
         body { font-family: Arial, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         img { max-width: 100%; height: auto; }
         h1, h2, h3 { page-break-after: avoid; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #ddd; padding: 6px; }
-        .budget-table th { background: #f5f5f5; }
+        table, .budget-table { width: 100%; border-collapse: collapse; border: 1px solid black; }
+        th, td { border: 1px solid black; padding: 8px; text-align: left; }
+        .budget-table th { background: #f5f5f5; font-weight: bold; }
+        .budget-table td { padding: 5px; }
         .page-break { page-break-before: always; }
       </style>
     </head><body>
@@ -1435,6 +1462,19 @@ app.listen(PORT, () => {
   console.log('Version:', VERSION);
   console.log('Index file:', INDEX);
   console.log('Frontend path:', FRONTEND);
+  
+  // Keep-alive functionality for Render - ping every 10 minutes
+  if (process.env.NODE_ENV === 'production') {
+    setInterval(() => {
+      try {
+        fetch(`http://localhost:${PORT}/`)
+          .then(() => console.log('Keep-alive ping successful'))
+          .catch(err => console.log('Keep-alive ping failed:', err.message));
+      } catch (e) {
+        console.log('Keep-alive error:', e.message);
+      }
+    }, 10 * 60 * 1000); // 10 minutes
+  }
 });
 // Escape HTML helper
 function escapeHtml(s = "") {

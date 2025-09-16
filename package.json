@@ -28,5 +28,8 @@
   "repository": {
     "type": "git",
     "url": "."
+  },
+  "dependencies": {
+    "jsdom": "^27.0.0"
   }
 }
