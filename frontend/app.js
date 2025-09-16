@@ -2447,7 +2447,7 @@
         acc.parentNode.insertBefore(accAnchor, acc.nextElementSibling);
       }
 
-      // 3) Budget widgets
+      // 3) Budget widgets (inject individually if missing)
       let budget = Array.from(document.querySelectorAll('h2')).find(h => /Budget Breakdown|💰/i.test(h.textContent));
       if (!budget) {
         // inject before first table
@@ -2456,18 +2456,11 @@
         budget.textContent = '💰 Budget Breakdown';
         (anyTable?.parentNode || document.body).insertBefore(budget, anyTable || null);
       }
-      const haveWidgets = document.querySelector('[data-flight-widget]') || document.querySelector('[data-hotel-widget]') || document.querySelector('[data-car-widget]') || document.querySelector('[data-airport-widget]');
-      if (!haveWidgets) {
-        const wrapper = document.createElement('div');
-        wrapper.innerHTML = `
-          <div class="section-widget" data-category="flights"><div class="widget-content"><div data-flight-widget="search" id="flight-widget"></div><script async src="https://tpwdgt.com/content?currency=usd&trs=455192&shmarker=634822&show_hotels=true&locale=en&searchUrl=www.aviasales.com%2Fsearch&primary_override=%2332a8dd&color_button=%2355a539&color_icons=%2332a8dd&dark=%23262626&light=%23FFFFFF&secondary=%23FFFFFF&special=%23C4C4C4&color_focused=%2332a8dd&border_radius=5&plain=false&promo_id=7879&campaign_id=100" charset="utf-8"></script></div></div>
-          <div class="section-widget" data-category="accommodation"><div class="widget-content"><div data-hotel-widget="search" id="hotel-widget"></div><script async src="https://tpwdgt.com/content?currency=usd&trs=455192&shmarker=634822&show_hotels=true&locale=en&powered_by=false&searchUrl=www.aviasales.com%2Fsearch&primary_override=%2332a8dd&color_button=%2355a539&color_icons=%2332a8dd&secondary=%23FFFFFF&dark=%23262626&light=%23FFFFFF&special=%23C4C4C4&color_focused=%2332a8dd&border_radius=5&plain=false&promo_id=7873&campaign_id=101" charset="utf-8"></script></div></div>
-          <div class="section-widget" data-category="transport"><div class="widget-content"><div data-car-widget="rental" id="car-widget"></div><script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&border_radius=5&plain=true&show_logo=true&color_background=%23ffca28&color_button=%2355a539&color_text=%23000000&color_input_text=%23000000&color_button_text=%23ffffff&promo_id=4480&campaign_id=10" charset="utf-8"></script></div></div>
-          <div class="section-widget" data-category="transport"><div class="widget-content"><div data-airport-widget="transfer" id="airport-widget"></div><script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&show_header=true&campaign_id=627&promo_id=8951" charset="utf-8"></script></div></div>
-        `;
-        // insert after budget header
-        budget.parentNode.insertBefore(wrapper, budget.nextElementSibling);
-      }
+      const insertAfter = (refNode, html) => { const div = document.createElement('div'); div.innerHTML = html; refNode.parentNode.insertBefore(div, refNode.nextElementSibling); };
+      if (!document.querySelector('[data-flight-widget]')) insertAfter(budget, `<div class="section-widget" data-category="flights"><div class="widget-content"><div data-flight-widget="search" id="flight-widget"></div><script async src="https://tpwdgt.com/content?currency=usd&trs=455192&shmarker=634822&show_hotels=true&locale=en&searchUrl=www.aviasales.com%2Fsearch&primary_override=%2332a8dd&color_button=%2355a539&color_icons=%2332a8dd&dark=%23262626&light=%23FFFFFF&secondary=%23FFFFFF&special=%23C4C4C4&color_focused=%2332a8dd&border_radius=5&plain=false&promo_id=7879&campaign_id=100" charset="utf-8"></script></div></div>`);
+      if (!document.querySelector('[data-hotel-widget]')) insertAfter(budget, `<div class="section-widget" data-category="accommodation"><div class="widget-content"><div data-hotel-widget="search" id="hotel-widget"></div><script async src="https://tpwdgt.com/content?currency=usd&trs=455192&shmarker=634822&show_hotels=true&locale=en&powered_by=false&searchUrl=www.aviasales.com%2Fsearch&primary_override=%2332a8dd&color_button=%2355a539&color_icons=%2332a8dd&secondary=%23FFFFFF&dark=%23262626&light=%23FFFFFF&special=%23C4C4C4&color_focused=%2332a8dd&border_radius=5&plain=false&promo_id=7873&campaign_id=101" charset="utf-8"></script></div></div>`);
+      if (!document.querySelector('[data-car-widget]')) insertAfter(budget, `<div class="section-widget" data-category="transport"><div class="widget-content"><div data-car-widget="rental" id="car-widget"></div><script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&border_radius=5&plain=true&show_logo=true&color_background=%23ffca28&color_button=%2355a539&color_text=%23000000&color_input_text=%23000000&color_button_text=%23ffffff&promo_id=4480&campaign_id=10" charset="utf-8"></script></div></div>`);
+      if (!document.querySelector('[data-airport-widget]')) insertAfter(budget, `<div class="section-widget" data-category="transport"><div class="widget-content"><div data-airport-widget="transfer" id="airport-widget"></div><script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&show_header=true&campaign_id=627&promo_id=8951" charset="utf-8"></script></div></div>`);
 
       // 4) Useful Apps eSIM
       let apps = Array.from(document.querySelectorAll('h2')).find(h => /Useful Apps|📱/i.test(h.textContent));
@@ -2484,12 +2477,22 @@
 
       // 5) Must-See + two GYG in Daily Itineraries
       let ms = Array.from(document.querySelectorAll('h2')).find(h => /Must-See Attractions|🎫/i.test(h.textContent));
+      if (!ms) {
+        ms = document.createElement('h2');
+        ms.textContent = '🎫 Must-See Attractions';
+        document.body.appendChild(ms);
+      }
       if (ms && !document.querySelector('[data-gyg-widget]')) {
         const gyg = document.createElement('div');
         gyg.innerHTML = `<div data-gyg-widget="auto" data-gyg-partner-id="PUHVJ53" data-gyg-locale="en-US" data-gyg-href="https://www.getyourguide.com/s/?q=${encodeURIComponent(d)}"></div>`;
         ms.parentNode.insertBefore(gyg, ms.nextElementSibling);
       }
       let di = Array.from(document.querySelectorAll('h2')).find(h => /Daily Itineraries|🎭/i.test(h.textContent));
+      if (!di) {
+        di = document.createElement('h2');
+        di.textContent = '🎭 Daily Itineraries';
+        document.body.appendChild(di);
+      }
       if (di && !document.querySelector('.gyg-widget-inline')) {
         const makeGYG = () => {
           const div = document.createElement('div');
