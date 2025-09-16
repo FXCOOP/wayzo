@@ -17,7 +17,7 @@ import { normalizeBudget, computeBudget } from './lib/budget.mjs';
 import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
-import { getWidgetsForDestination, generateWidgetHTML, injectWidgetsIntoSections } from './lib/widgets.mjs';
+import { getWidgetsForDestination, injectWidgetsIntoSections, extractMaldivesPlacesAndBuildMap } from './lib/widgets.mjs';
 const VERSION = 'staging-v25';
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
@@ -216,7 +216,7 @@ app.get('/debug/ping', (_req, res) => {
     memory: {
       heapUsed: `${heapUsedMB}MB`,
       heapTotal: `${heapTotalMB}MB`,
-      healthy: heapUsedGB < 1.5 // Less than 1.5GB
+      healthy: heapUsedGB < 3.8 // Less than 3.8GB
     },
     timestamp: new Date().toISOString()
   });
@@ -412,8 +412,35 @@ async function generatePlanWithAI(payload) {
   const nDays = dateMode === 'flexible' && flexibleDates ? flexibleDates.duration : daysBetween(start, end);
   const totalTravelers = adults + children;
   
-  // LOCKED AI PROMPT with RESEARCHED DATA - NO GENERICS ALLOWED
-  const sys = `Generate ${nDays}-day itinerary in Markdown for ${destination} from ${start} to ${end}, 2 adults, ${budget} USD. Include 11 sections (## 🎯 Trip Overview to ## 🚨 Emergency Info) and ## 🌤️ Weather Forecast with 7-day table (mock: Sep 19 24°-30° 10% [Details](map:${destination}+weather); Sep 20 23°-29° 5%; Sep 21 25°-31° 15%; Sep 22 24°-30° 0%; Sep 23 26°-32° 20%; Sep 24 25°-31° 5%; Sep 25 27°-33° 0%; Sep 26 24°-30° 0%). Use specific researched places (e.g., 'Kyiv Pechersk Lavra at Lavrska St 15, €3, 9AM-7PM, UNESCO, verify 2025 prices'), addresses, hours, prices with disclaimers, [Map](map:place), [Tickets](tickets:place), [Book](https://tpwdgt.com). No images in Trip Overview, Don't Forget List, Travel Tips, Useful Apps, Emergency Info. Images only in allowed sections with [image:${destination} specific term] (e.g., [image:${destination} metro]). No generics (e.g., 'popular museum'—use 'National Museum of the History of Ukraine at Volodymyrska St 2, €5, 10AM-6PM'). Enforce full hour-by-hour plans for ALL ${nDays} days with one-sentence explanation for each place (e.g., 'Visit Uluwatu Temple at Pecatu – a clifftop sea temple famous for its sunset views and Kecak dance performances.'). NO incomplete days like 'Visit any missed sites'. Every day must have 6-8 activities with times and explanations. Budget: ~$2000 (~€1800; flights €900, accommodation €140, food €350, transport €70, activities €700, misc €80). Researched data: attractions (Tanah Lot Temple at Beraban, Tabanan, €4, 7AM-7PM), restaurants (Naughty Nuri's Warung at Jl. Raya Sanggingan, Ubud, €10-15, 11AM-11PM), hotels (Pondok Ayu at Jl. Kubu Anyar No.16, Kuta, €15-20), transport (Grab taxi €5-10/ride), tips (dress modestly in temples, tip 10%), apps (Grab, Google Maps), emergency (112, Sanglah General Hospital +62 361 227 911).
+  // LOCKED AI PROMPT V46 - MALDIVES SPECIFIC REQUIREMENTS
+  const euroEquivalent = Math.round(budget * 0.92); // $5000 -> ~€4600
+  const sys = `Generate itinerary in Markdown for ${destination} from ${start} to ${end}, ${adults} adults, ${budget} USD, budget style. Calculate full duration (${nDays} days). Include exactly 11 sections:
+
+## 🎯 Trip Overview (quick facts, highlights)
+## 🗺️ Getting Around ([Car Rentals](#car-widget) for cars; 'Flight Information' plain text no link)
+## 🏨 Accommodation (3-5 hotels with [Book](#hotel-widget) | [Reviews](#hotel-widget))
+## 🎫 Must-See Attractions (8-12 with [Tickets](https://www.getyourguide.com/s/?q=place&partner_id=PUHVJ53) | [Map](https://maps.google.com/maps?q=place))
+## 🍽️ Dining Guide (6-10 restaurants with [Map](https://maps.google.com/maps?q=restaurant+location) only)
+## 🎭 Daily Itineraries (full hour-by-hour ALL ${nDays} days, 6-8 activities/day, each with 1-sentence explanation, [Tickets](https://www.getyourguide.com/s/?q=place&partner_id=PUHVJ53))
+## 🧳 Don't Forget List (ul with <input type="checkbox"> per item)
+## 🛡️ Travel Tips (local customs, safety)
+## 📱 Useful Apps (local apps, NO GetYourGuide link)
+## 🚨 Emergency Info (112, hospital, pharmacy)
+## 💰 Budget Breakdown (table with checkboxes, scale to €${euroEquivalent} total: flights €${Math.round(euroEquivalent * 0.20)}, accommodation €${Math.round(euroEquivalent * 0.20)}, food €${Math.round(euroEquivalent * 0.25)}, transport €${Math.round(euroEquivalent * 0.15)}, activities €${Math.round(euroEquivalent * 0.20)}, misc €${Math.round(euroEquivalent * 0.10)})
+
+CRITICAL REQUIREMENTS:
+- NO images anywhere
+- NO Google Map section (handled separately)
+- NO generics (use specific places: 'Hulhumale Beach at Hulhumale, Free, 24/7')
+- ABSOLUTELY REQUIRED: Every [Tickets] or [Reviews] MUST be https://www.getyourguide.com/s/?q=place&partner_id=PUHVJ53
+- Budget table with checkboxes for each item
+- 6-8 activities every day with explanations
+- For accommodations: [Book](#hotel-widget) | [Reviews](#hotel-widget)
+- For car rentals: [Car Rentals](#car-widget)
+- For flights: 'Flight Information' (plain text)
+- For dining: [Map](https://maps.google.com/maps?q=restaurant+location) only
+
+Researched data for Maldives: attractions (Hulhumale Beach at Hulhumale, Free, 24/7; Male Fish Market at Male, Free, 6AM-6PM; National Museum at Male, €5, 9AM-5PM; Grand Friday Mosque at Male, Free, 9AM-5PM; Sultan Park at Male, Free, 6AM-6PM; Artificial Beach at Male, Free, 24/7; Tsunami Monument at Male, Free, 24/7; Bikini Beach at Hulhumale, Free, 24/7), restaurants (The Sea House at Hulhumale, €10-20, 8AM-10PM; Shell Beans at Male, €5-15, 7AM-11PM; Symphony Restaurant at Male, €15-25, 12PM-11PM; Seagull Cafe at Male, €8-18, 8AM-10PM), hotels (Adaaran Club Rannalhi at South Male Atoll, €100-150; Samann Grand at Male, €80-120; Hotel Jen Male at Male, €120-180; Hulhule Island Hotel at Airport Island, €90-140), transport (€5-10/ferry, €20-50/speedboat, €10-20/taxi), tips (5-10%), apps (Maldives Transport, Google Maps), emergency (112, ADK Hospital at Male). Remove alternative tour links.
 
 **CRITICAL - NO IMAGES ANYWHERE:**
 You are ABSOLUTELY FORBIDDEN from adding any images to any section. NO IMAGES ANYWHERE in the entire report.
@@ -816,7 +843,7 @@ Create the most amazing, detailed, and useful trip plan possible!`;
       resp = await client.chat.completions.create({
         model: process.env.OPENAI_MODEL || "gpt-4o-mini",
         temperature: 0.7, // Slightly higher for more creative responses
-        max_tokens: mode === 'full' ? 16384 : 500, // 16384 for full reports, 500 for previews
+        max_tokens: mode === 'full' ? 16384 : 500, // 16384 for full reports (OpenAI limit), 500 for previews
         messages: [{ role: "user", content: `${sys}\n\n${user}` }],
         stream: false // Enable streaming if needed for larger responses
       });
@@ -1100,7 +1127,15 @@ app.post('/api/plan', async (req, res) => {
     payload.budget = normalizeBudget(payload.budget, payload.currency);
     payload.mode = 'full'; // Set mode for full reports with 16384 tokens
     const id = uid();
-    const markdown = await generatePlanWithAI(payload);
+    
+    let markdown;
+    try {
+      markdown = await generatePlanWithAI(payload);
+      console.log(`AI plan generated successfully for ${payload.mode} mode! Length: ${markdown.length}`);
+    } catch (aiError) {
+      console.error('AI generation failed, using fallback:', aiError);
+      markdown = localPlanMarkdown(payload);
+    }
     
     // Process image tokens and other links in the MARKDOWN first
     const processedMarkdown = linkifyTokens(markdown, payload.destination);
@@ -1116,9 +1151,18 @@ app.post('/api/plan', async (req, res) => {
     let finalHTML;
     try {
       finalHTML = injectWidgetsIntoSections(html, widgets, payload.destination);
+      console.log(`Widgets injected successfully`);
     } catch (widgetError) {
       console.error('Widget injection failed:', widgetError);
       finalHTML = html; // Fallback to HTML without widgets
+    }
+    
+    // Extract Maldives places and add Google Map
+    try {
+      finalHTML = extractMaldivesPlacesAndBuildMap(finalHTML, payload.destination);
+    } catch (mapError) {
+      console.error('Maldives Google Map extraction failed:', mapError);
+      // Continue without map
     }
     
     // Remove any duplicate content that might have been generated
