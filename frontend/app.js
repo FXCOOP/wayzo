@@ -581,6 +581,10 @@
         // Initialize image handling
         initializeImageHandling();
         
+        // Client-side fallback: enforce anchors and widgets if server injection missed
+        if (typeof enforceAnchorsAndWidgets === 'function') {
+          enforceAnchorsAndWidgets(data.destination || '');
+        }
         // Initialize widget rendering
         initializeWidgets();
         
@@ -2385,6 +2389,100 @@
       
       console.log('Widget rendering initialized');
     }, 500); // Increased delay to ensure DOM is fully ready
+  };
+
+  // Client-side fallback: enforce anchors and inject widgets if missing
+  window.enforceAnchorsAndWidgets = (destination = '') => {
+    try {
+      const d = (destination || '').split(',')[0].trim();
+      // 1) Getting Around anchors
+      let ga = Array.from(document.querySelectorAll('h2')).find(h => /Getting Around|🗺️/i.test(h.textContent));
+      if (!ga) {
+        ga = document.createElement('h2');
+        ga.textContent = '🗺️ Getting Around';
+        document.body.appendChild(ga);
+      }
+      let next = ga.nextElementSibling;
+      let hasGAAnchors = false;
+      while (next && next.tagName !== 'H2') {
+        if (next.querySelector && (next.querySelector('a[href="#car-widget"]') || next.querySelector('a[href="#airport-widget"]'))) { hasGAAnchors = true; break; }
+        next = next.nextElementSibling;
+      }
+      if (!hasGAAnchors) {
+        const p = document.createElement('p');
+        p.innerHTML = '<a href="#car-widget">Car Rentals</a> · <a href="#airport-widget">Airport Transfers</a> · Flight Information';
+        ga.parentNode.insertBefore(p, ga.nextElementSibling);
+      }
+
+      // 2) Accommodation anchors
+      let acc = Array.from(document.querySelectorAll('h2')).find(h => /Accommodation|🏨/i.test(h.textContent));
+      if (!acc) {
+        acc = document.createElement('h2');
+        acc.textContent = '🏨 Accommodation';
+        document.body.appendChild(acc);
+      }
+      const accAnchor = document.createElement('p');
+      accAnchor.innerHTML = '<a href="#hotel-widget">Book</a> | <a href="#hotel-widget">Reviews</a>';
+      acc.parentNode.insertBefore(accAnchor, acc.nextElementSibling);
+
+      // 3) Budget widgets
+      let budget = Array.from(document.querySelectorAll('h2')).find(h => /Budget Breakdown|💰/i.test(h.textContent));
+      if (!budget) {
+        // inject before first table
+        const anyTable = document.querySelector('table');
+        budget = document.createElement('h2');
+        budget.textContent = '💰 Budget Breakdown';
+        (anyTable?.parentNode || document.body).insertBefore(budget, anyTable || null);
+      }
+      const haveWidgets = document.querySelector('[data-flight-widget]') || document.querySelector('[data-hotel-widget]') || document.querySelector('[data-car-widget]') || document.querySelector('[data-airport-widget]');
+      if (!haveWidgets) {
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = `
+          <div class="section-widget" data-category="flights"><div class="widget-content"><div data-flight-widget="search" id="flight-widget"></div><script async src="https://tpwdgt.com/content?currency=usd&trs=455192&shmarker=634822&show_hotels=true&locale=en&searchUrl=www.aviasales.com%2Fsearch&primary_override=%2332a8dd&color_button=%2355a539&color_icons=%2332a8dd&dark=%23262626&light=%23FFFFFF&secondary=%23FFFFFF&special=%23C4C4C4&color_focused=%2332a8dd&border_radius=5&plain=false&promo_id=7879&campaign_id=100" charset="utf-8"></script></div></div>
+          <div class="section-widget" data-category="accommodation"><div class="widget-content"><div data-hotel-widget="search" id="hotel-widget"></div><script async src="https://tpwdgt.com/content?currency=usd&trs=455192&shmarker=634822&show_hotels=true&locale=en&powered_by=false&searchUrl=www.aviasales.com%2Fsearch&primary_override=%2332a8dd&color_button=%2355a539&color_icons=%2332a8dd&secondary=%23FFFFFF&dark=%23262626&light=%23FFFFFF&special=%23C4C4C4&color_focused=%2332a8dd&border_radius=5&plain=false&promo_id=7873&campaign_id=101" charset="utf-8"></script></div></div>
+          <div class="section-widget" data-category="transport"><div class="widget-content"><div data-car-widget="rental" id="car-widget"></div><script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&border_radius=5&plain=true&show_logo=true&color_background=%23ffca28&color_button=%2355a539&color_text=%23000000&color_input_text=%23000000&color_button_text=%23ffffff&promo_id=4480&campaign_id=10" charset="utf-8"></script></div></div>
+          <div class="section-widget" data-category="transport"><div class="widget-content"><div data-airport-widget="transfer" id="airport-widget"></div><script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&show_header=true&campaign_id=627&promo_id=8951" charset="utf-8"></script></div></div>
+        `;
+        // insert after budget header
+        budget.parentNode.insertBefore(wrapper, budget.nextElementSibling);
+      }
+
+      // 4) Useful Apps eSIM
+      let apps = Array.from(document.querySelectorAll('h2')).find(h => /Useful Apps|📱/i.test(h.textContent));
+      if (!apps) {
+        apps = document.createElement('h2');
+        apps.textContent = '📱 Useful Apps';
+        document.body.appendChild(apps);
+      }
+      if (!document.querySelector('[data-airalo-widget]')) {
+        const esim = document.createElement('div');
+        esim.innerHTML = `<div data-airalo-widget="esim" id="esim-widget"></div><script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&color_button=%23f2685f&color_focused=%23f2685f&secondary=%23FFFFFF&dark=%2311100f&light=%23FFFFFF&special=%23C4C4C4&border_radius=5&plain=false&no_labels=true&promo_id=8588&campaign_id=541" charset="utf-8"></script>`;
+        apps.parentNode.insertBefore(esim, apps.nextElementSibling);
+      }
+
+      // 5) Must-See + two GYG in Daily Itineraries
+      let ms = Array.from(document.querySelectorAll('h2')).find(h => /Must-See Attractions|🎫/i.test(h.textContent));
+      if (ms && !document.querySelector('[data-gyg-widget]')) {
+        const gyg = document.createElement('div');
+        gyg.innerHTML = `<div data-gyg-widget="auto" data-gyg-partner-id="PUHVJ53" data-gyg-locale="en-US" data-gyg-href="https://www.getyourguide.com/s/?q=${encodeURIComponent(d)}"></div>`;
+        ms.parentNode.insertBefore(gyg, ms.nextElementSibling);
+      }
+      let di = Array.from(document.querySelectorAll('h2')).find(h => /Daily Itineraries|🎭/i.test(h.textContent));
+      if (di && !document.querySelector('.gyg-widget-inline')) {
+        const makeGYG = () => {
+          const div = document.createElement('div');
+          div.className = 'gyg-widget-inline';
+          div.innerHTML = `<div data-gyg-widget="auto" data-gyg-partner-id="PUHVJ53" data-gyg-locale="en-US" data-gyg-href="https://www.getyourguide.com/s/?q=${encodeURIComponent(d)}"></div>`;
+          return div;
+        };
+        di.parentNode.insertBefore(makeGYG(), di.nextElementSibling);
+        di.parentNode.insertBefore(makeGYG(), di.nextElementSibling);
+      }
+
+      console.log('Client-side anchors/widgets enforced');
+    } catch (e) {
+      console.warn('Client-side anchors/widgets fallback failed:', e);
+    }
   };
 
   // Helper function to process widget containers
