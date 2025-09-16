@@ -813,11 +813,12 @@ Create the most amazing, detailed, and useful trip plan possible!`;
   let resp;
   for (let attempt = 0; attempt < 6; attempt++) {
     try {
+      const generalPrompt = `NO IMAGES. Generate a professional, accurate Markdown itinerary that handles all inputs: tripType, destination, start/end or flexible ${nDays} days, from, adults/children, level, budget and ${currency}, prefs, dietary, brief. Correct destination spelling. Include exactly these sections plus Weather and final Google Map: ## 🎯 Trip Overview, ## 🌤️ Weather Forecast, ## 💰 Budget Breakdown, ## 🗺️ Getting Around, ## 🏨 Accommodation, ## 🎫 Must-See Attractions, ## 🍽️ Dining Guide, ## 🎭 Daily Itineraries, ## 🧳 Don’t Forget List, ## 🛡️ Travel Tips, ## 📱 Useful Apps, ## 🚨 Emergency Info. Weather: table for ALL ${nDays} days with realistic temps and precipitation and an impact sentence. Daily Itineraries: every day must have 6–8 timed activities with one-sentence explanations; no generics or free days. Links: Hotels [Book](#hotel-widget) | [Reviews](#hotel-widget); Cars [Car Rentals](#car-widget); Airport [Airport Transfers](#airport-widget); Flights plain text 'Flight Information'; Attractions [Tickets]/[Reviews] via GetYourGuide with partner_id=PUHVJ53; Dining [Map](https://maps.google.com/maps?q=restaurant+name+location) only. Budget: scale to input with approximate € equivalent and breakdown flights ~20%, accommodation ~20%, food ~25%, transport ~15%, activities ~20%, misc ~10% with HTML checkboxes and a total row. End with single ## Google Map Preview with [Open Map](https://maps.google.com/maps?q=ALL+SPECIFIC+PLACES+FROM+REPORT). Personalize using prefs, dietary, brief; make family-friendly if children.`;
       resp = await client.chat.completions.create({
         model: process.env.OPENAI_MODEL || "gpt-4o-mini",
         temperature: 0.7,
         max_tokens: mode === 'full' ? 16384 : 500,
-        messages: [{ role: "user", content: `${sys}\n\n${user}` }],
+        messages: [{ role: "user", content: `${generalPrompt}\n\n${user}` }],
         stream: false
       });
       break; // Success, exit retry loop
