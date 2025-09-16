@@ -78,7 +78,7 @@ function getWidgetsForDestination(destination, tripType, interests = []) {
 }
 
 // JSDOM-based widget injection with precise placement
-function injectWidgetsIntoSections(html, widgets, destination = '') {
+function injectWidgetsIntoSections(html, widgets, destination = '', durationDays = 7) {
   if (!widgets || widgets.length === 0) return html;
   
   try {
@@ -129,7 +129,7 @@ function injectWidgetsIntoSections(html, widgets, destination = '') {
             <tr><th>Date</th><th>Temp (°C)</th><th>Precipitation</th><th>Description</th></tr>
           </thead>
           <tbody>
-            ${Array.from({length:15}).map((_,i)=>{
+            ${Array.from({length:Math.max(1, Number(durationDays) || 7)}).map((_,i)=>{
               const day = i+1;
               const date = `Day ${day}`;
               const min = 27 + Math.floor(Math.random()*2);

@@ -1115,7 +1115,7 @@ app.post('/api/plan', async (req, res) => {
     const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
     let finalHTML;
     try {
-      finalHTML = injectWidgetsIntoSections(html, widgets, payload.destination);
+      finalHTML = injectWidgetsIntoSections(html, widgets, payload.destination, nDays);
     } catch (widgetError) {
       console.error('Widget injection failed:', widgetError);
       finalHTML = html; // Fallback to HTML without widgets
@@ -1198,7 +1198,7 @@ app.post('/api/plan.pdf', async (req, res) => {
     const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
     let finalHTML;
     try {
-      finalHTML = injectWidgetsIntoSections(html, widgets, payload.destination);
+      finalHTML = injectWidgetsIntoSections(html, widgets, payload.destination, nDays);
     } catch (widgetError) {
       console.error('Widget injection failed in PDF generation:', widgetError);
       finalHTML = html; // Fallback to HTML without widgets
