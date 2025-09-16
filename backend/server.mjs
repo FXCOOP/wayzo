@@ -17,7 +17,7 @@ import { normalizeBudget, computeBudget } from './lib/budget.mjs';
 import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
-import { getWidgetsForDestination, injectWidgetsIntoSections, extractMaldivesPlacesAndBuildMap } from './lib/widgets.mjs';
+import { getWidgetsForDestination, injectWidgetsIntoSections, extractPlacesAndBuildMap } from './lib/widgets.mjs';
 const VERSION = 'staging-v25';
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
@@ -412,9 +412,9 @@ async function generatePlanWithAI(payload) {
   const nDays = dateMode === 'flexible' && flexibleDates ? flexibleDates.duration : daysBetween(start, end);
   const totalTravelers = adults + children;
   
-  // LOCKED AI PROMPT V46 - MALDIVES SPECIFIC REQUIREMENTS
-  const euroEquivalent = Math.round(budget * 0.92); // $5000 -> ~€4600
-  const sys = `Generate itinerary in Markdown for ${destination} from ${start} to ${end}, ${adults} adults, ${budget} USD, budget style. Calculate full duration (${nDays} days). Include exactly 11 sections:
+  // UNIVERSAL AI PROMPT V46 - WORKS FOR ANY DESTINATION
+  const euroEquivalent = Math.round(budget * 0.92);
+  const sys = `Generate ${nDays}-day itinerary in Markdown for ${destination} from ${start} to ${end}, ${adults} adults, ${budget} USD. Calculate full duration (${nDays} days). Include exactly 11 sections:
 
 ## 🎯 Trip Overview (quick facts, highlights)
 ## 🗺️ Getting Around ([Car Rentals](#car-widget) for cars; 'Flight Information' plain text no link)
@@ -425,13 +425,13 @@ async function generatePlanWithAI(payload) {
 ## 🧳 Don't Forget List (ul with <input type="checkbox"> per item)
 ## 🛡️ Travel Tips (local customs, safety)
 ## 📱 Useful Apps (local apps, NO GetYourGuide link)
-## 🚨 Emergency Info (112, hospital, pharmacy)
+## 🚨 Emergency Info (local emergency number, main hospital)
 ## 💰 Budget Breakdown (table with checkboxes, scale to €${euroEquivalent} total: flights €${Math.round(euroEquivalent * 0.20)}, accommodation €${Math.round(euroEquivalent * 0.20)}, food €${Math.round(euroEquivalent * 0.25)}, transport €${Math.round(euroEquivalent * 0.15)}, activities €${Math.round(euroEquivalent * 0.20)}, misc €${Math.round(euroEquivalent * 0.10)})
 
 CRITICAL REQUIREMENTS:
 - NO images anywhere
 - NO Google Map section (handled separately)
-- NO generics (use specific places: 'Hulhumale Beach at Hulhumale, Free, 24/7')
+- Research and use SPECIFIC places for ${destination} (e.g., actual landmark names, specific restaurants, real hotels with addresses)
 - ABSOLUTELY REQUIRED: Every [Tickets] or [Reviews] MUST be https://www.getyourguide.com/s/?q=place&partner_id=PUHVJ53
 - Budget table with checkboxes for each item
 - 6-8 activities every day with explanations
@@ -439,8 +439,9 @@ CRITICAL REQUIREMENTS:
 - For car rentals: [Car Rentals](#car-widget)
 - For flights: 'Flight Information' (plain text)
 - For dining: [Map](https://maps.google.com/maps?q=restaurant+location) only
-
-Researched data for Maldives: attractions (Hulhumale Beach at Hulhumale, Free, 24/7; Male Fish Market at Male, Free, 6AM-6PM; National Museum at Male, €5, 9AM-5PM; Grand Friday Mosque at Male, Free, 9AM-5PM; Sultan Park at Male, Free, 6AM-6PM; Artificial Beach at Male, Free, 24/7; Tsunami Monument at Male, Free, 24/7; Bikini Beach at Hulhumale, Free, 24/7), restaurants (The Sea House at Hulhumale, €10-20, 8AM-10PM; Shell Beans at Male, €5-15, 7AM-11PM; Symphony Restaurant at Male, €15-25, 12PM-11PM; Seagull Cafe at Male, €8-18, 8AM-10PM), hotels (Adaaran Club Rannalhi at South Male Atoll, €100-150; Samann Grand at Male, €80-120; Hotel Jen Male at Male, €120-180; Hulhule Island Hotel at Airport Island, €90-140), transport (€5-10/ferry, €20-50/speedboat, €10-20/taxi), tips (5-10%), apps (Maldives Transport, Google Maps), emergency (112, ADK Hospital at Male). Remove alternative tour links.
+- Use real research for ${destination}: find actual attractions, restaurants, hotels with real addresses, opening hours, and prices
+- Include local transport costs, tipping customs, useful apps, and emergency contacts specific to ${destination}
+- Remove any alternative tour links
 
 **CRITICAL - NO IMAGES ANYWHERE:**
 You are ABSOLUTELY FORBIDDEN from adding any images to any section. NO IMAGES ANYWHERE in the entire report.
@@ -1157,11 +1158,11 @@ app.post('/api/plan', async (req, res) => {
       finalHTML = html; // Fallback to HTML without widgets
     }
     
-    // Extract Maldives places and add Google Map
+    // Extract places and add Google Map for any destination
     try {
-      finalHTML = extractMaldivesPlacesAndBuildMap(finalHTML, payload.destination);
+      finalHTML = extractPlacesAndBuildMap(finalHTML, payload.destination);
     } catch (mapError) {
-      console.error('Maldives Google Map extraction failed:', mapError);
+      console.error('Google Map extraction failed:', mapError);
       // Continue without map
     }
     

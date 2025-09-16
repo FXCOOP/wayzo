@@ -125,8 +125,8 @@ function replaceExternalLinksWithInternal(doc) {
   }
 }
 
-// Extract Maldives-specific places and build comprehensive Google Map
-function extractMaldivesPlacesAndBuildMap(html, destination) {
+// Extract places from ANY destination and build comprehensive Google Map
+function extractPlacesAndBuildMap(html, destination) {
   try {
     const dom = new JSDOM(html);
     const doc = dom.window.document;
@@ -134,65 +134,56 @@ function extractMaldivesPlacesAndBuildMap(html, destination) {
     const places = new Set();
     const destinationName = destination.replace(/,.*/, '').trim();
     
-    // Enhanced extraction patterns for Maldives specific content
+    // Enhanced extraction patterns for ANY destination
     const allText = doc.body ? doc.body.textContent : html;
     
-    // Extract resort names and locations
-    const resortMatches = allText.match(/(?:Resort|Club|Hotel)\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*(?:\s+at\s+[^,]+)?/g);
-    if (resortMatches) {
-      resortMatches.forEach(resort => {
-        places.add(resort.replace(/\s+/g, '+') + '+' + destinationName);
+    // Extract general accommodation patterns (Hotel, Resort, Villa, Pension, etc.)
+    const accommodationMatches = allText.match(/(?:Hotel|Resort|Villa|Pension|Hostel|Club|Lodge|Inn)\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*(?:\s+at\s+[^,]+)?/g);
+    if (accommodationMatches) {
+      accommodationMatches.forEach(accommodation => {
+        places.add(accommodation.replace(/\s+/g, '+') + '+' + destinationName);
       });
     }
     
-    // Extract island names
-    const islandMatches = allText.match(/(?:Island|Atoll)\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*(?:\s+at\s+[^,]+)?/g);
-    if (islandMatches) {
-      islandMatches.forEach(island => {
-        places.add(island.replace(/\s+/g, '+') + '+' + destinationName);
+    // Extract attraction patterns (Museum, Cathedral, Palace, Temple, Beach, etc.)
+    const attractionMatches = allText.match(/(?:Museum|Cathedral|Palace|Temple|Beach|Park|Castle|Tower|Bridge|Square|Market|Gallery)\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*(?:\s+at\s+[^,]+)?/g);
+    if (attractionMatches) {
+      attractionMatches.forEach(attraction => {
+        places.add(attraction.replace(/\s+/g, '+') + '+' + destinationName);
       });
     }
     
-    // Extract beach names
-    const beachMatches = allText.match(/[A-Z][a-z]+\s+Beach(?:\s+at\s+[^,]+)?/g);
-    if (beachMatches) {
-      beachMatches.forEach(beach => {
-        places.add(beach.replace(/\s+/g, '+') + '+' + destinationName);
+    // Extract restaurant patterns (Restaurant, Cafe, Bistro, Trattoria, etc.)
+    const restaurantMatches = allText.match(/(?:Restaurant|Cafe|Bistro|Trattoria|Osteria|Taverna|Ristorante|Gasthaus)\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*(?:\s+at\s+[^,]+)?/g);
+    if (restaurantMatches) {
+      restaurantMatches.forEach(restaurant => {
+        places.add(restaurant.replace(/\s+/g, '+') + '+' + destinationName);
       });
     }
     
-    // Add specific Maldives attractions
-    const maldivesAttractions = [
-      'Hulhumale+Beach+Hulhumale',
-      'Male+Fish+Market+Male',
-      'National+Museum+Male',
-      'Bikini+Beach+Hulhumale',
-      'Sultan+Park+Male',
-      'Grand+Friday+Mosque+Male',
-      'Artificial+Beach+Male',
-      'Tsunami+Monument+Male',
-      'Republic+Square+Male',
-      'Maafushi+Island+South+Male+Atoll',
-      'Banana+Reef+North+Male+Atoll',
-      'HP+Reef+North+Male+Atoll',
-      'Manta+Point+North+Male+Atoll',
-      'The+Sea+House+Hulhumale',
-      'Shell+Beans+Male',
-      'Symphony+Restaurant+Male',
-      'Seagull+Cafe+Male',
-      'Adaaran+Club+Rannalhi+South+Male+Atoll',
-      'Samann+Grand+Male',
-      'Hotel+Jen+Male',
-      'Hulhule+Island+Hotel+Airport'
-    ].map(attr => attr + '+' + destinationName);
+    // Extract "Visit [Place] at [Location]" patterns from itineraries
+    const visitMatches = allText.match(/Visit\s+([A-Z][^(]+?)\s+at\s+([^,–]+)/g);
+    if (visitMatches) {
+      visitMatches.forEach(visit => {
+        const cleanVisit = visit.replace('Visit ', '').replace(/\s+/g, '+');
+        places.add(cleanVisit + '+' + destinationName);
+      });
+    }
     
-    maldivesAttractions.forEach(attr => places.add(attr));
+    // Extract any "[Name] at [Location]" patterns
+    const atLocationMatches = allText.match(/([A-Z][^(]+?)\s+at\s+([^,–]+)/g);
+    if (atLocationMatches) {
+      atLocationMatches.forEach(location => {
+        const cleanLocation = location.replace(/\s+/g, '+');
+        places.add(cleanLocation + '+' + destinationName);
+      });
+    }
     
-    // Build Google Map URL with all Maldives places
+    // Build Google Map URL with all extracted places
     const placesList = Array.from(places).slice(0, 30); // Limit to 30 places for URL length
     const mapQuery = placesList.length > 0 
       ? placesList.join('+')
-      : destinationName.replace(/\s+/g, '+') + '+Hulhumale+Beach+Male+Fish+Market+National+Museum+Bikini+Beach';
+      : destinationName.replace(/\s+/g, '+') + '+attractions+restaurants+hotels';
     
     // Add Google Map section to HTML
     const mapSection = `
@@ -204,11 +195,11 @@ function extractMaldivesPlacesAndBuildMap(html, destination) {
     
     // Insert map section at the end before closing body tag
     const updatedHtml = html.replace('</body>', mapSection + '</body>');
-    console.log(`Google Map added with ${placesList.length} Maldives places: ${mapQuery.substring(0, 100)}...`);
+    console.log(`Google Map added with ${placesList.length} places for ${destinationName}: ${mapQuery.substring(0, 100)}...`);
     return updatedHtml;
     
   } catch (mapError) {
-    console.error('Maldives Google Map extraction error:', mapError);
+    console.error('Google Map extraction error:', mapError);
     return html;
   }
 }
@@ -506,4 +497,4 @@ function injectWidgetsIntoSections(html, widgets, destination = '') {
   }
 }
 
-export { AFFILIATE_WIDGETS, getWidgetsForDestination, injectWidgetsIntoSections, extractMaldivesPlacesAndBuildMap };
+export { AFFILIATE_WIDGETS, getWidgetsForDestination, injectWidgetsIntoSections, extractPlacesAndBuildMap };
