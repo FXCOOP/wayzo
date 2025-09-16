@@ -203,6 +203,32 @@ function injectWidgetsIntoSections(html, widgets, destination = '', durationDays
       });
     }
 
+    // Ensure Getting Around section contains internal anchors for rentals/airport/flights
+    let gettingAroundH2 = Array.from(doc.querySelectorAll('h2')).find(h =>
+      h.textContent.includes("Getting Around") || h.textContent.includes("🗺️")
+    );
+    if (!gettingAroundH2) {
+      const h2 = doc.createElement('h2');
+      h2.textContent = '🗺️ Getting Around';
+      doc.body.appendChild(h2);
+      gettingAroundH2 = h2;
+    }
+    if (gettingAroundH2) {
+      let cursor = gettingAroundH2.nextElementSibling;
+      let hasAnchors = false;
+      while (cursor && cursor.tagName !== 'H2') {
+        if (cursor.querySelector && (cursor.querySelector('a[href="#car-widget"]') || cursor.querySelector('a[href="#airport-widget"]'))) {
+          hasAnchors = true; break;
+        }
+        cursor = cursor.nextElementSibling;
+      }
+      if (!hasAnchors) {
+        const anchorsBlock = doc.createElement('p');
+        anchorsBlock.innerHTML = `<a href="#car-widget">Car Rentals</a> · <a href="#airport-widget">Airport Transfers</a> · Flight Information`;
+        gettingAroundH2.parentNode.insertBefore(anchorsBlock, gettingAroundH2.nextElementSibling);
+      }
+    }
+
     // 4. Add Airalo/eSIM widget to Useful Apps section
     let usefulAppsH2 = Array.from(doc.querySelectorAll('h2')).find(h => 
       h.textContent.includes("Useful Apps") || h.textContent.includes("📱")
@@ -239,6 +265,36 @@ function injectWidgetsIntoSections(html, widgets, destination = '', durationDays
           nextH2.parentNode.insertBefore(widgetDiv, nextH2);
           widgetsInjected["Useful Apps"]++;
         }
+      }
+    }
+
+    // Ensure Accommodation section includes Book | Reviews anchors to hotel widget
+    let accomH2 = Array.from(doc.querySelectorAll('h2')).find(h =>
+      h.textContent.includes('Accommodation') || h.textContent.includes('🏨')
+    );
+    if (!accomH2) {
+      const h2 = doc.createElement('h2');
+      h2.textContent = '🏨 Accommodation';
+      doc.body.appendChild(h2);
+      accomH2 = h2;
+    }
+    if (accomH2) {
+      let cursor = accomH2.nextElementSibling;
+      let inserted = false;
+      while (cursor && cursor.tagName !== 'H2') {
+        if (cursor.tagName === 'P' || cursor.tagName === 'DIV' || cursor.tagName === 'UL' || cursor.tagName === 'OL') {
+          const anchors = doc.createElement('p');
+          anchors.innerHTML = `<a href="#hotel-widget">Book</a> | <a href="#hotel-widget">Reviews</a>`;
+          accomH2.parentNode.insertBefore(anchors, cursor);
+          inserted = true;
+          break;
+        }
+        cursor = cursor.nextElementSibling;
+      }
+      if (!inserted) {
+        const anchors = doc.createElement('p');
+        anchors.innerHTML = `<a href="#hotel-widget">Book</a> | <a href="#hotel-widget">Reviews</a>`;
+        accomH2.parentNode.insertBefore(anchors, accomH2.nextElementSibling);
       }
     }
 
@@ -341,6 +397,51 @@ function injectWidgetsIntoSections(html, widgets, destination = '', durationDays
         }
       }
     }
+
+    // 7. Build single Google Map Preview from report points (attractions/restaurants/hotels)
+    try {
+      const points = new Set();
+      // Collect explicit map links
+      doc.querySelectorAll('a[href^="https://maps.google.com"]').forEach(a => {
+        try {
+          const u = new URL(a.href);
+          const q = u.searchParams.get('q');
+          if (q) points.add(q);
+        } catch {}
+      });
+      // Collect short named lines from key sections
+      const collectFromSection = (match) => {
+        const h2 = Array.from(doc.querySelectorAll('h2')).find(h => match(h.textContent));
+        if (!h2) return;
+        let el = h2.nextElementSibling;
+        while (el && el.tagName !== 'H2') {
+          const text = (el.textContent || '').trim();
+          if (text && text.length <= 120 && /[A-Za-z]/.test(text)) {
+            points.add(text.split('\n')[0]);
+          }
+          el = el.nextElementSibling;
+        }
+      };
+      collectFromSection(t => /Must-See|🎫/i.test(t));
+      collectFromSection(t => /Dining|🍽️/i.test(t));
+      collectFromSection(t => /Accommodation|🏨/i.test(t));
+
+      const q = Array.from(points).slice(0, 80).map(encodeURIComponent).join('+');
+      const mapH2 = Array.from(doc.querySelectorAll('h2')).find(h => /Google Map Preview/i.test(h.textContent));
+      const mapContainer = doc.createElement('div');
+      mapContainer.innerHTML = `<h2>Google Map Preview</h2><p><a href="https://maps.google.com/maps?q=${q || encodeURIComponent(destination)}" target="_blank" rel="noopener">Open Map</a></p>`;
+      if (mapH2) {
+        // Replace the existing preview block
+        let node = mapH2;
+        while (node && node.nextElementSibling && node.nextElementSibling.tagName !== 'H2') {
+          node.nextElementSibling.remove();
+        }
+        mapH2.replaceWith(mapContainer.firstChild);
+        mapH2?.parentNode?.appendChild(mapContainer.lastChild);
+      } else {
+        doc.body.appendChild(mapContainer);
+      }
+    } catch (e) { console.warn('Map rebuild failed:', e); }
 
     console.log(`Widgets injected successfully: Budget Breakdown (${widgetsInjected["Budget Breakdown"]}), Must-See (${widgetsInjected["Must-See"]}), Daily Itineraries (${widgetsInjected["Daily Itineraries"]}), Useful Apps (${widgetsInjected["Useful Apps"]}), Weather (${widgetsInjected["Weather"]}) for destination: ${destination}`);
     
