@@ -235,34 +235,26 @@ app.get('/config.js', (_req, res) => {
 app.get('/paypal-config.js', (_req, res) => {
   const paypalClientId = process.env.PAYPAL_CLIENT_ID || '';
   res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-  // If no client ID, explicitly hide PayPal UI and do not load SDK
-  if (!paypalClientId) {
-    res.send(`
-      (function(){
-        try {
-          // Hide purchase actions or show fallback text when PayPal is unavailable
-          var purchase = document.getElementById('purchaseActions');
-          if (purchase) {
-            purchase.style.display = 'none';
-          }
-          var fallback = document.getElementById('paypal-fallback');
-          if (fallback) { fallback.style.display = 'block'; }
-        } catch(e) { console.warn('PayPal suppression error', e); }
-      })();
-    `);
-    return;
-  }
   res.send(`
     (function(){
-      var id = ${JSON.stringify(paypalClientId)};
-      if (!id) return;
-      var script = document.createElement('script');
-      script.src = 'https://www.paypal.com/sdk/js?client-id=' + id + '&currency=USD';
-      script.async = true;
-      script.onload = function(){
-        if (window.initializePayPalButtons) window.initializePayPalButtons();
-      };
-      document.head.appendChild(script);
+      try {
+        var isStaging = /staging|onrender\.com/i.test(window.location.hostname);
+        var hasClient = ${JSON.stringify(Boolean(process.env.PAYPAL_CLIENT_ID))};
+        if (isStaging || !hasClient) {
+          var purchase = document.getElementById('purchaseActions');
+          if (purchase) purchase.style.display = 'none';
+          var fallback = document.getElementById('paypal-fallback');
+          if (fallback) fallback.style.display = 'block';
+          return; // Do not load SDK on staging or without client id
+        }
+        var id = ${JSON.stringify(paypalClientId)};
+        if (!id) return;
+        var script = document.createElement('script');
+        script.src = 'https://www.paypal.com/sdk/js?client-id=' + id + '&currency=USD';
+        script.async = true;
+        script.onload = function(){ if (window.initializePayPalButtons) window.initializePayPalButtons(); };
+        document.head.appendChild(script);
+      } catch(e) { console.warn('PayPal setup error', e); }
     })();
   `);
 });

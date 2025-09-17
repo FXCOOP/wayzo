@@ -893,9 +893,10 @@
   // Initialize Google Auth from config
   const initGoogleFromConfig = () => {
     try {
+      const isStaging = window.location.hostname.includes('staging') || window.location.hostname.includes('onrender.com');
       const clientId = (window.WAYZO_PUBLIC_CONFIG && window.WAYZO_PUBLIC_CONFIG.GOOGLE_CLIENT_ID) || window.GOOGLE_CLIENT_ID;
-      if (!clientId) {
-        console.warn('GOOGLE_CLIENT_ID missing. Google Sign-In disabled.');
+      if (!clientId || isStaging) {
+        console.warn('Google Sign-In disabled on staging or missing client id.');
         return;
       }
       if (window.google && window.google.accounts && window.google.accounts.id) {
