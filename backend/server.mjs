@@ -819,11 +819,11 @@ Create the most amazing, detailed, and useful trip plan possible!`;
   for (let attempt = 0; attempt < 6; attempt++) {
     try {
       resp = await client.chat.completions.create({
-        model: process.env.OPENAI_MODEL || "gpt-5-nano-2025-08-07",
-        temperature: 0.7, // Slightly higher for more creative responses
-        max_tokens: mode === 'full' ? 128000 : 500, // 128000 for full reports, 500 for previews
+        model: process.env.OPENAI_MODEL || process.env.WAYZO_MODEL || "gpt-5-nano-2025-08-07",
+        temperature: 0.7,
+        max_tokens: mode === 'full' ? 16384 : 500,
         messages: [{ role: "user", content: `${sys}\n\n${user}` }],
-        stream: false // Enable streaming if needed for larger responses
+        stream: false
       });
       break; // Success, exit retry loop
     } catch (retryError) {
