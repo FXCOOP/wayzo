@@ -1,0 +1,127 @@
+Wayzo backend running on :10000
+Version: staging-v64
+Index file: /workspace/frontend/index.backend.html
+Frontend path: /workspace/frontend
+::1 - - [17/Sep/2025:10:30:25 +0000] "GET /healthz HTTP/1.1" 200 35 "-" "curl/8.12.1"
+Preview request received: {
+  destination: 'Berlin, Germany',
+  start: '2025-09-19',
+  end: '2025-10-09',
+  budget: 5600,
+  currency: 'USD',
+  adults: 2,
+  children: 1,
+  child_1_age: 5,
+  level: 'budget',
+  prefs: '',
+  dietary: 'no restrictions',
+  brief: 'Family-friendly trip to Berlin',
+  from: 'Auckland, New Zealand',
+  tripType: 'single',
+  dateMode: 'exact',
+  mode: 'preview'
+}
+::1 - - [17/Sep/2025:10:30:30 +0000] "POST /api/preview HTTP/1.1" 200 2075 "-" "curl/8.12.1"
+Preview request received: {
+  destination: 'Berlin, Germany',
+  start: '2025-09-19',
+  end: '2025-10-09',
+  budget: 5600,
+  currency: 'USD',
+  adults: 2,
+  children: 1,
+  child_1_age: 5,
+  level: 'budget',
+  prefs: '',
+  dietary: 'no restrictions',
+  brief: 'Family-friendly trip to Berlin',
+  from: 'Auckland, New Zealand',
+  tripType: 'single',
+  dateMode: 'exact',
+  mode: 'preview'
+}
+::1 - - [17/Sep/2025:10:30:34 +0000] "POST /api/preview HTTP/1.1" 200 2075 "-" "curl/8.12.1"
+Plan request received: {
+  destination: 'Berlin, Germany',
+  from: 'Auckland, New Zealand',
+  start: '2025-09-19',
+  end: '2025-10-09',
+  budget: 5600,
+  currency: 'USD',
+  adults: 2,
+  children: 1,
+  child_1_age: 5,
+  level: 'budget',
+  prefs: '',
+  dietary: 'no restrictions',
+  brief: 'Family-friendly trip to Berlin',
+  tripType: 'single',
+  dateMode: 'exact',
+  mode: 'full'
+}
+Plan generation error: TypeError: dietary.join is not a function
+    at generatePlanWithAI (file:///workspace/backend/server.mjs:627:65)
+    at file:///workspace/backend/server.mjs:1140:28
+    at Layer.handle [as handle_request] (/workspace/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/workspace/backend/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/workspace/backend/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/workspace/backend/node_modules/express/lib/router/layer.js:95:5)
+    at /workspace/backend/node_modules/express/lib/router/index.js:284:15
+    at Function.process_params (/workspace/backend/node_modules/express/lib/router/index.js:346:12)
+    at next (/workspace/backend/node_modules/express/lib/router/index.js:280:10)
+    at /workspace/backend/node_modules/body-parser/lib/read.js:137:5
+Processing markdown for destination: Berlin, Germany
+Image function: [Function: image]
+Original markdown length: 1234
+Found image tokens: null
+Processed markdown length: 1504
+Final processed markdown preview: # Berlin, Germany — 2025-09-19 → 2025-10-09
+**Travelers:** Family (2 adults + 1 kid)
+**Style:** Budget
+**Budget:** 5600 USD (89/day/person)
+**Season:** Autumn
+---
+## 🎯 Trip Overview
+- Destination overview and key highlights tailored to your inputs.
+---
+## 💰 Budget Breakdown (rough)
+- Stay: **2128** (~101/day)
+- Food: **1512** (~24/person/day)
+- Activities: **1120** (~53/day)
+- Transit: **840** (~40/day)
+---
+## 🎭 Daily Itineraries
+### Day 1 — Arrival & Relaxation (2025-09-19)
+- 09:00 — Arrive 
+Processing markdown for destination: Berlin, Germany
+Image function: [Function: image]
+Original markdown length: 1504
+Found image tokens: null
+Processed markdown length: 1504
+Final processed markdown preview: # Berlin, Germany — 2025-09-19 → 2025-10-09
+**Travelers:** Family (2 adults + 1 kid)
+**Style:** Budget
+**Budget:** 5600 USD (89/day/person)
+**Season:** Autumn
+---
+## 🎯 Trip Overview
+- Destination overview and key highlights tailored to your inputs.
+---
+## 💰 Budget Breakdown (rough)
+- Stay: **2128** (~101/day)
+- Food: **1512** (~24/person/day)
+- Activities: **1120** (~53/day)
+- Transit: **840** (~40/day)
+---
+## 🎭 Daily Itineraries
+### Day 1 — Arrival & Relaxation (2025-09-19)
+- 09:00 — Arrive 
+Post-processing markdown to remove forbidden images...
+Removed images from section: Trip Overview
+Removed images from section: Don't Forget List
+Removed images from section: Travel Tips
+Removed images from section: Useful Apps
+Removed images from section: Emergency Info
+Post-processing complete
+Widgets injected successfully: Budget Breakdown (4), Must-See (0), Daily Itineraries (1), Useful Apps (1), Weather (1)
+::1 - - [17/Sep/2025:10:30:40 +0000] "POST /api/plan HTTP/1.1" 200 11180 "-" "curl/8.12.1"

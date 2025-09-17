@@ -2549,6 +2549,16 @@ fieldset.field .chip {
   font-size: 1rem;
   margin: 0;
 }
+/* Wayzo Report Theming Overrides per spec */
+h2 { color: #007BFF; font-family: Roboto, "Open Sans", system-ui, -apple-system, Segoe UI, Arial, sans-serif; }
+a { color: #28A745; text-decoration: none; }
+a:hover { text-decoration: underline; color: #FFC107; }
+.section { padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+.budget-table { border-collapse: collapse; width: 100%; }
+.budget-table td, .budget-table th { border: 1px solid #ddd; padding: 10px; }
+.budget-checkbox { display: flex; align-items: center; }
+.budget-checkbox input:hover { transform: scale(1.1); }
+.dont-forget-item { margin: 8px 0; }
 
 /* Trip Report Image Styling - Enhanced */
 .trip-report img,

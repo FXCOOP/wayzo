@@ -6,7 +6,7 @@ const AFFILIATE_WIDGETS = {
   airport_transfers: {
     name: "Airport Transfers",
     description: "Book reliable airport pickup and drop-off",
-    script: `<div data-airport-widget="transfer"></div>
+    script: `<div data-airport-widget="transfer" id="airport-widget"></div>
 <script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&show_header=true&campaign_id=627&promo_id=8951" charset="utf-8"></script>`,
     category: "transport",
     placement: "budget_breakdown"
@@ -16,7 +16,7 @@ const AFFILIATE_WIDGETS = {
   esim: {
     name: "eSIM",
     description: "Get instant internet access worldwide",
-    script: `<div data-airalo-widget="esim"></div>
+    script: `<div data-airalo-widget="esim" id="esim-widget"></div>
 <script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&color_button=%23f2685f&color_focused=%23f2685f&secondary=%23FFFFFF&dark=%2311100f&light=%23FFFFFF&special=%23C4C4C4&border_radius=5&plain=false&no_labels=true&promo_id=8588&campaign_id=541" charset="utf-8"></script>`,
     category: "connectivity",
     placement: "useful_apps"
@@ -26,7 +26,7 @@ const AFFILIATE_WIDGETS = {
   car_rentals: {
     name: "Car Rentals",
     description: "Rent a car for your trip",
-    script: `<div data-car-widget="rental"></div>
+    script: `<div data-car-widget="rental" id="car-widget"></div>
 <script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&border_radius=5&plain=true&show_logo=true&color_background=%23ffca28&color_button=%2355a539&color_text=%23000000&color_input_text=%23000000&color_button_text=%23ffffff&promo_id=4480&campaign_id=10" charset="utf-8"></script>`,
     category: "transport",
     placement: "budget_breakdown"
@@ -36,7 +36,7 @@ const AFFILIATE_WIDGETS = {
   flight_search: {
     name: "Flight Search",
     description: "Find the best flight deals",
-    script: `<div data-flight-widget="search"></div>
+    script: `<div data-flight-widget="search" id="flight-widget"></div>
 <script async src="https://tpwdgt.com/content?currency=usd&trs=455192&shmarker=634822&show_hotels=true&locale=en&searchUrl=www.aviasales.com%2Fsearch&primary_override=%2332a8dd&color_button=%2355a539&color_icons=%2332a8dd&dark=%23262626&light=%23FFFFFF&secondary=%23FFFFFF&special=%23C4C4C4&color_focused=%2332a8dd&border_radius=5&plain=false&promo_id=7879&campaign_id=100" charset="utf-8"></script>`,
     category: "flights",
     placement: "budget_breakdown"
@@ -46,7 +46,7 @@ const AFFILIATE_WIDGETS = {
   hotel_booking: {
     name: "Hotel Booking",
     description: "Book your accommodation",
-    script: `<div data-hotel-widget="search"></div>
+    script: `<div data-hotel-widget="search" id="hotel-widget"></div>
 <script async src="https://tpwdgt.com/content?currency=usd&trs=455192&shmarker=634822&show_hotels=true&locale=en&powered_by=false&searchUrl=www.aviasales.com%2Fsearch&primary_override=%2332a8dd&color_button=%2355a539&color_icons=%2332a8dd&secondary=%23FFFFFF&dark=%23262626&light=%23FFFFFF&special=%23C4C4C4&color_focused=%2332a8dd&border_radius=5&plain=false&promo_id=7873&campaign_id=101" charset="utf-8"></script>`,
     category: "accommodation",
     placement: "budget_breakdown"
@@ -56,16 +56,11 @@ const AFFILIATE_WIDGETS = {
   getyourguide: {
     name: "Activities & Tours", 
     description: "Curated tours and activities",
-    script: (destination) => `<div class="activities-widget" style="border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 8px; background: #f9f9f9;">
-      <h4 style="margin: 0 0 10px 0; color: #333;">🎫 Book Activities & Tours in ${destination.replace(/,.*/, '').trim()}</h4>
-      <p style="margin: 0 0 15px 0; color: #666;">Discover amazing experiences and local tours</p>
-      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-        <a href="https://www.getyourguide.com/s/?q=${destination.replace(/,.*/, '').trim()}&partner_id=PUHVJ53" target="_blank" 
-           style="display: inline-block; background: #ff6b35; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
-          Browse Tours
-        </a>
-      </div>
-    </div>`,
+    script: (destination) => {
+      const dest = destination.replace(/,.*/, '').trim();
+      const href = `https://www.getyourguide.com/s/?q=${encodeURIComponent(dest)}&partner_id=PUHVJ53`;
+      return `<div data-gyg-widget="auto" data-gyg-partner-id="PUHVJ53" data-gyg-href="${href}" data-gyg-locale="en-US"></div>`;
+    },
     category: "activities",
     placement: "must_see"
   }
@@ -124,6 +119,20 @@ function injectWidgetsIntoSections(html, widgets, destination = '') {
         }
       }
     }
+
+    // Ensure required sections exist for fallbacks
+    const ensureSection = (titleText) => {
+      const has = Array.from(doc.querySelectorAll('h2')).some(h => h.textContent.includes(titleText));
+      if (!has) {
+        const h2 = doc.createElement('h2');
+        h2.textContent = titleText;
+        doc.body.appendChild(h2);
+      }
+    };
+    ensureSection('💰 Budget Breakdown');
+    ensureSection('📱 Useful Apps');
+    ensureSection('🎫 Must-See Attractions');
+    ensureSection('🎭 Daily Itineraries');
 
     // 2. Add Weather Forecast section after Trip Overview with RESEARCHED MOCK DATA
     const tripOverviewH2 = Array.from(doc.querySelectorAll('h2')).find(h => 
@@ -194,6 +203,31 @@ function injectWidgetsIntoSections(html, widgets, destination = '') {
           widgetsInjected["Budget Breakdown"]++;
         }
       });
+    }
+    // If budget section lacks a table with 6 checkboxes, inject a default checklist table
+    if (budgetH2) {
+      let hasTable = false;
+      let node = budgetH2.nextElementSibling;
+      while (node && node.tagName !== 'H2') {
+        if (node.tagName === 'TABLE' && node.classList.contains('budget-table')) { hasTable = true; break; }
+        node = node.nextElementSibling;
+      }
+      if (!hasTable) {
+        const tbl = doc.createElement('div');
+        tbl.innerHTML = `
+        <table class="budget-table" style="border-collapse: collapse; border: 1px solid black; padding: 10px; width: 100%;">
+          <thead><tr><th>Item</th><th>Cost (€)</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td><div class="budget-checkbox"><input type="checkbox" id="budget1"><label for="budget1">Flights</label></div></td><td>€0</td><td>Pending</td></tr>
+            <tr><td><div class="budget-checkbox"><input type="checkbox" id="budget2"><label for="budget2">Accommodation</label></div></td><td>€0</td><td>Pending</td></tr>
+            <tr><td><div class="budget-checkbox"><input type="checkbox" id="budget3"><label for="budget3">Food</label></div></td><td>€0</td><td>Pending</td></tr>
+            <tr><td><div class="budget-checkbox"><input type="checkbox" id="budget4"><label for="budget4">Transportation</label></div></td><td>€0</td><td>Pending</td></tr>
+            <tr><td><div class="budget-checkbox"><input type="checkbox" id="budget5"><label for="budget5">Activities</label></div></td><td>€0</td><td>Pending</td></tr>
+            <tr><td><div class="budget-checkbox"><input type="checkbox" id="budget6"><label for="budget6">Miscellaneous</label></div></td><td>€0</td><td>Pending</td></tr>
+          </tbody>
+        </table>`;
+        budgetH2.parentNode.insertBefore(tbl, budgetH2.nextElementSibling);
+      }
     }
 
     // 4. Add Airalo/eSIM widget to Useful Apps section
@@ -308,12 +342,85 @@ function injectWidgetsIntoSections(html, widgets, destination = '') {
       }
     }
 
+    // 7. Post-process links: enforce anchors and targets; add Google Map Preview at end
+    // Maps: ensure target _blank
+    doc.querySelectorAll('a[href^="https://www.google.com/maps"], a[href^="https://maps.google.com"]').forEach(a => {
+      a.setAttribute('target', '_blank');
+    });
+    // Hotels to internal anchor
+    doc.querySelectorAll('a[href*="booking.com"], a[href*="#hotel"]').forEach(a => {
+      a.setAttribute('href', '#hotel-widget');
+    });
+    // Cars
+    doc.querySelectorAll('a[href*="rentalcars.com"], a[href*="#car"]').forEach(a => {
+      a.setAttribute('href', '#car-widget');
+    });
+    // Airport transfers
+    doc.querySelectorAll('a[href*="airport"], a[href*="#airport"]').forEach(a => {
+      a.setAttribute('href', '#airport-widget');
+    });
+    // GetYourGuide partner and target
+    doc.querySelectorAll('a[href*="getyourguide.com"]').forEach(a => {
+      const url = new URL(a.getAttribute('href'), 'https://www.getyourguide.com');
+      url.searchParams.set('partner_id', 'PUHVJ53');
+      a.setAttribute('href', url.toString());
+      a.setAttribute('target', '_blank');
+    });
+
+    // Build Google Map Preview with points extracted from map links
+    const points = new Set();
+    doc.querySelectorAll('a[href*="maps.google"]').forEach(a => {
+      const href = a.getAttribute('href') || '';
+      try {
+        const u = new URL(href, 'https://maps.google.com');
+        const q = u.searchParams.get('q');
+        if (q) points.add(q);
+      } catch {}
+    });
+    const arr = Array.from(points);
+    if (arr.length > 0) {
+      const mapH2 = doc.createElement('h2');
+      mapH2.textContent = 'Google Map Preview';
+      const p = doc.createElement('p');
+      const link = doc.createElement('a');
+      link.textContent = 'Open Map';
+      link.setAttribute('target', '_blank');
+      const query = encodeURIComponent(arr.join(' | '));
+      link.setAttribute('href', `https://maps.google.com/maps?q=${query}`);
+      p.appendChild(link);
+      doc.body.appendChild(mapH2);
+      doc.body.appendChild(p);
+    }
+
     console.log(`Widgets injected successfully: Budget Breakdown (${widgetsInjected["Budget Breakdown"]}), Must-See (${widgetsInjected["Must-See"]}), Daily Itineraries (${widgetsInjected["Daily Itineraries"]}), Useful Apps (${widgetsInjected["Useful Apps"]}), Weather (${widgetsInjected["Weather"]})`);
-    
+
     return dom.serialize();
   } catch (err) {
     console.error('Widget injection error:', err);
     return html; // Fallback to original HTML
+  }
+}
+
+// Link post-processing for raw HTML if needed externally
+function processLinks(html, destination = '') {
+  try {
+    const dom = new JSDOM(html);
+    const doc = dom.window.document;
+    // Apply same rules as above
+    doc.querySelectorAll('a[href^="https://www.google.com/maps"], a[href^="https://maps.google.com"]').forEach(a => a.setAttribute('target', '_blank'));
+    doc.querySelectorAll('a[href*="booking.com"]').forEach(a => a.setAttribute('href', '#hotel-widget'));
+    doc.querySelectorAll('a[href*="rentalcars.com"]').forEach(a => a.setAttribute('href', '#car-widget'));
+    doc.querySelectorAll('a[href*="airport"]').forEach(a => a.setAttribute('href', '#airport-widget'));
+    doc.querySelectorAll('a[href*="getyourguide.com"]').forEach(a => {
+      const url = new URL(a.getAttribute('href'), 'https://www.getyourguide.com');
+      url.searchParams.set('partner_id', 'PUHVJ53');
+      a.setAttribute('href', url.toString());
+      a.setAttribute('target', '_blank');
+    });
+    return dom.serialize();
+  } catch (e) {
+    console.error('processLinks failed:', e);
+    return html;
   }
 }
 
@@ -384,4 +491,4 @@ function generateSectionWidgets(section, widgets) {
   `;
 }
 
-export { AFFILIATE_WIDGETS, getWidgetsForDestination, generateWidgetHTML, generateSectionWidgets, injectWidgetsIntoSections };
+export { AFFILIATE_WIDGETS, getWidgetsForDestination, generateWidgetHTML, generateSectionWidgets, injectWidgetsIntoSections, processLinks };

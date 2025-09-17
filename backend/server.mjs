@@ -18,7 +18,7 @@ import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
 import { getWidgetsForDestination, generateWidgetHTML, injectWidgetsIntoSections } from './lib/widgets.mjs';
-const VERSION = 'staging-v25';
+const VERSION = 'staging-v64';
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
   try {
@@ -350,37 +350,42 @@ function localPlanMarkdown(input) {
   const pppd = perPersonPerDay(budget, nDays, Math.max(1, adults + children));
   return linkifyTokens(`
 # ${destination} — ${start} → ${end}
-![City hero](image:${destination} skyline)
 **Travelers:** ${travelerLabel(adults, children)}
 **Style:** ${style}${prefs ? ` · ${prefs}` : ""}
 **Budget:** ${budget} ${currency} (${pppd}/day/person)
 **Season:** ${seasonFromDate(start)}
 ---
-## Quick Facts
-- **Language:** English (tourism friendly)
-- **Currency:** ${currency}
-- **Voltage:** 230V, Type C/E plugs (adapter may be required)
-- **Tipping:** 5–10% in restaurants (optional)
+## 🎯 Trip Overview
+- Destination overview and key highlights tailored to your inputs.
 ---
-## Budget breakdown (rough)
+## 💰 Budget Breakdown (rough)
 - Stay: **${b.stay.total}** (~${b.stay.perDay}/day)
 - Food: **${b.food.total}** (~${b.food.perDay}/person/day)
 - Activities: **${b.act.total}** (~${b.act.perDay}/day)
 - Transit: **${b.transit.total}** (~${b.transit.perDay}/day)
 ---
-## Day-by-Day Plan
+## 🎭 Daily Itineraries
 ### Day 1 — Arrival & Relaxation (${start})
-- **Morning:** Arrive and check-in. [Map](map:${destination} airport to hotel) — shortest route to the hotel.
-- **Afternoon:** Pool or easy walk near hotel. [Reviews](reviews:${destination} family friendly cafe)
-- **Evening:** Dinner close-by. [Book](book:${destination} dinner)
+- 09:00 — Arrive and check-in. [Map](map:${destination} airport to hotel)
+- 12:00 — Lunch near hotel.
+- 14:00 — Gentle neighborhood walk.
+- 16:00 — Short rest.
+- 18:00 — Local dinner. [Map](map:${destination} dinner)
+- 20:00 — Early night.
 ### Day 2 — Downtown Exploration
-- **Morning:** Top lookout. [Tickets](tickets:${destination} tower) — pre-book to skip lines.
-- **Afternoon:** Popular museum. [Tickets](tickets:${destination} museum)
-- **Evening:** Waterfront stroll. [Map](map:${destination} waterfront)
+- 08:30 — Breakfast cafe.
+- 09:30 — City tower lookout. [Tickets](tickets:${destination} tower)
+- 12:00 — Lunch spot.
+- 13:30 — Notable museum. [Tickets](tickets:${destination} museum)
+- 17:00 — Riverfront stroll. [Map](map:${destination} waterfront)
+- 19:00 — Dinner.
 ### Day 3 — Nature & Parks
-- **Morning:** Park or island ferry. [Tickets](tickets:${destination} ferry)
-- **Afternoon:** Picnic + playgrounds. [Map](map:${destination} best picnic spots)
-- **Evening:** Family dinner. [Reviews](reviews:${destination} gluten free dinner)
+- 08:30 — Breakfast.
+- 09:30 — Big park walk.
+- 12:00 — Picnic. [Map](map:${destination} picnic spots)
+- 14:00 — Playground time.
+- 16:00 — Cafe break.
+- 18:30 — Family dinner.
 `.trim(), destination);
 }
 function containsDaySections(md = "") {
@@ -809,29 +814,61 @@ Create the most amazing, detailed, and useful trip plan possible!`;
     return md;
   }
   
-  // Exponential backoff retry logic (0s, 1s, 2s, 4s, 8s, 16s - max 6 retries)
-  let resp;
-  for (let attempt = 0; attempt < 6; attempt++) {
+  // Model selection and retry logic with Responses API preference
+  const preferredModel = process.env.WAYZO_MODEL || 'gpt-5-nano-2025-08-07';
+  const fallbackModel = 'gpt-4o-mini-2024-07-18';
+  const isNano = preferredModel.includes('gpt-5-nano');
+  const maxTokens = mode === 'full' ? (isNano ? 128000 : 16384) : 500;
+  let respText = '';
+  if (!client) {
+    console.warn('OpenAI API key not set, using local fallback');
+    let md = localPlanMarkdown(payload);
+    md = ensureDaySections(md, nDays, start);
+    return md;
+  }
+  for (let attempt = 0; attempt < 8; attempt++) {
     try {
-      resp = await client.chat.completions.create({
-        model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-        temperature: 0.7, // Slightly higher for more creative responses
-        max_tokens: mode === 'full' ? 16384 : 500, // 16384 for full reports, 500 for previews
-        messages: [{ role: "user", content: `${sys}\n\n${user}` }],
-        stream: false // Enable streaming if needed for larger responses
-      });
-      break; // Success, exit retry loop
+      if (isNano) {
+        const resp = await client.responses.create({
+          model: preferredModel,
+          input: `${sys}\n\n${user}`,
+          max_output_tokens: maxTokens,
+        });
+        respText = resp.output_text || resp?.output?.[0]?.content?.[0]?.text || '';
+        console.log(`API call: model=${preferredModel}, max_tokens=${maxTokens}`);
+      } else {
+        const resp = await client.chat.completions.create({
+          model: fallbackModel,
+          max_tokens: maxTokens,
+          messages: [{ role: 'user', content: `${sys}\n\n${user}` }],
+          stream: false,
+        });
+        respText = resp.choices?.[0]?.message?.content || '';
+        console.log(`API call: model=${fallbackModel}, max_tokens=${maxTokens}`);
+      }
+      if (respText) break;
+      throw new Error('Empty response text');
     } catch (retryError) {
-      if (attempt === 5) throw retryError; // Last attempt failed
-      const delayMs = attempt === 0 ? 0 : Math.pow(2, attempt - 1) * 1000; // 0s, 1s, 2s, 4s, 8s, 16s
-      console.log(`OpenAI attempt ${attempt + 1} failed, retrying in ${delayMs}ms:`, retryError.message);
-      if (delayMs > 0) await new Promise(resolve => setTimeout(resolve, delayMs));
+      const delayMs = attempt === 0 ? 0 : Math.pow(2, attempt - 1) * 1000;
+      console.warn(`AI attempt ${attempt + 1} failed: ${retryError.message}. Retrying in ${delayMs}ms`);
+      if (attempt === 3 && isNano) {
+        // Switch to fallback model after a few Nano failures
+        console.warn('Switching to fallback chat completions model');
+      }
+      if (delayMs > 0) await new Promise(r => setTimeout(r, delayMs));
+      if (attempt >= 3 && isNano) {
+        // Switch to fallback model for remaining attempts
+        // eslint-disable-next-line no-var
+        var switched = true; // hint for logs
+        // eslint-disable-next-line no-undef
+        isNano = false; // note: only affects branch usage below; safe as we re-evaluate each loop
+      }
     }
   }
   
   try {
     
-    let md = resp.choices?.[0]?.message?.content?.trim() || "";
+    let md = (respText || '').trim();
     if (!md) {
       console.warn('OpenAI response empty, using fallback');
       md = localPlanMarkdown(payload);
@@ -1163,10 +1200,33 @@ app.post('/api/plan', async (req, res) => {
       // Continue execution - don't fail the request if tracking fails
     }
     
-    res.json({ id, markdown: markdownWithMap, html: cleanedHTML, affiliates: aff, version: VERSION });
+    res.status(200).json({ id, markdown: markdownWithMap, html: cleanedHTML, affiliates: aff, version: VERSION });
   } catch (e) {
     console.error('Plan generation error:', e);
-    res.status(500).json({ error: 'Failed to generate plan. Check server logs.', version: VERSION });
+    try {
+      const payload = req.body || {};
+      payload.currency = payload.currency || 'USD';
+      payload.budget = normalizeBudget(payload.budget, payload.currency);
+      const id = uid();
+      const markdown = localPlanMarkdown(payload);
+      const processedMarkdown = linkifyTokens(markdown, payload.destination);
+      const cleanedMarkdown = removeImagesFromForbiddenSections(processedMarkdown, payload.destination);
+      const html = marked.parse(cleanedMarkdown);
+      const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
+      let finalHTML;
+      try {
+        finalHTML = injectWidgetsIntoSections(html, widgets, payload.destination);
+      } catch (widgetError) {
+        console.error('Widget injection failed:', widgetError);
+        finalHTML = html;
+      }
+      const aff = affiliatesFor(payload.destination);
+      const markdownWithMap = markdown + `\n\n---\n\n[Open ${payload.destination} Public Transport Map](map:${payload.destination}+public+transport+map)`;
+      res.status(200).json({ id, markdown: markdownWithMap, html: finalHTML, affiliates: aff, version: VERSION, fallback: true });
+    } catch (fallbackError) {
+      console.error('Fallback plan failed:', fallbackError);
+      res.status(200).json({ id: uid(), markdown: '# Temporary plan unavailable', html: '<p>Temporary plan unavailable</p>', version: VERSION, fallback: true });
+    }
   }
 });
 

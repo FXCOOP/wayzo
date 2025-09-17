@@ -7,7 +7,8 @@
     "node": "20.x"
   },
   "scripts": {
-    "start": "node --max-old-space-size=2048 backend/server.mjs"
+    "start": "node --max-old-space-size=4096 backend/server.mjs",
+    "test:e2e": "playwright test backend/tests/e2e"
   },
   "dependencies": {
     "better-sqlite3": "^9.6.0",
@@ -23,5 +24,8 @@
     "multer": "1.4.5-lts.1",
     "openai": "^4.58.1",
     "puppeteer": "^22.15.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0"
   }
 }
