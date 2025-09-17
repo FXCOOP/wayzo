@@ -421,13 +421,7 @@
   // Form submission handler
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
-    // Check if user is authenticated for preview (test users on staging bypass this)
-    if (!isAuthenticated && !isStaging) {
-      showNotification('Please sign in to generate trip previews.', 'warning');
-      showAuthModal();
-      return;
-    }
+    // Free access: no sign-in required for preview
     
     // Test users get enhanced preview with all features
     const isTestUser = currentUser && currentUser.isTestUser;
@@ -507,12 +501,7 @@
 
   // Full plan generation
   fullPlanBtn.addEventListener('click', async () => {
-    // Check if user is authenticated for full plan (bypass on staging)
-    if (!isAuthenticated && !isStaging) {
-      showNotification('Please sign in to access the full trip plan.', 'warning');
-      showAuthModal();
-      return;
-    }
+    // Free access: no sign-in required for full plan
     
     const data = readForm();
     console.log('Generating full plan for:', data);
@@ -566,13 +555,13 @@
       console.log('Is test user?', currentUser && currentUser.isTestUser);
       console.log('User object details:', JSON.stringify(currentUser, null, 2));
       
-      if (currentUser && currentUser.isTestUser || isStaging) {
-        console.log('🧪 Test user or staging detected - bypassing payment!');
+      if (true) {
+        console.log('🎉 Free access enabled - bypassing payment!');
         // Test user or staging - show full plan immediately without payment
         previewEl.innerHTML = `
           <div class="test-user-notice">
-            <h3>🧪 TEST USER MODE - Full Plan Unlocked!</h3>
-            <p>You're on staging. All features are unlocked for testing purposes.</p>
+            <h3>🎉 FREE ACCESS - Full Plan Available!</h3>
+            <p>Enjoy your complete travel itinerary with all features unlocked.</p>
           </div>
           ${result.html}
         `;
