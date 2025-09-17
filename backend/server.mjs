@@ -832,8 +832,9 @@ Create the most amazing, detailed, and useful trip plan possible!`;
         });
       } else {
         // Fallback to Chat Completions for non-Nano
+        const chatModel = isNano ? "gpt-5-nano-2025-08-07" : selectedModel;
         resp = await client.chat.completions.create({
-          model: selectedModel,
+          model: chatModel,
           temperature: 0.7,
           max_tokens: mode === 'full' ? fullMaxTokens : 500,
           messages: [{ role: "user", content: `${sys}\n\n${user}` }],
