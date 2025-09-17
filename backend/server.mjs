@@ -1177,7 +1177,38 @@ app.post('/api/plan', async (req, res) => {
     res.json({ id, markdown: markdownWithMap, html: cleanedHTML, affiliates: aff, version: VERSION });
   } catch (e) {
     console.error('Plan generation error:', e);
-    res.status(500).json({ error: 'Failed to generate plan. Check server logs.', version: VERSION });
+    try {
+      // Graceful fallback: never 500 — build a local plan and continue
+      const payload = req.body || {};
+      const id = uid();
+      const nDays = payload?.dateMode === 'flexible' && payload?.flexibleDates && Number(payload.flexibleDates.duration)
+        ? Number(payload.flexibleDates.duration)
+        : daysBetween(payload.start, payload.end);
+      let markdown = localPlanMarkdown(payload);
+      markdown = ensureDaySections(markdown, nDays, payload.start);
+      const processedMarkdown = linkifyTokens(markdown, payload.destination);
+      const cleanedMarkdown = removeImagesFromForbiddenSections(processedMarkdown, payload.destination);
+      const html = marked.parse(cleanedMarkdown);
+      const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
+      let finalHTML = html;
+      try {
+        finalHTML = injectWidgetsIntoSections(html, widgets, payload.destination, nDays);
+      } catch (widgetError) {
+        console.error('Widget injection failed (fallback path):', widgetError);
+      }
+      const aff = affiliatesFor(payload.destination);
+      const markdownWithMap = markdown + `\n\n---\n\n[Open ${payload.destination} Public Transport Map](map:${payload.destination}+public+transport+map)`;
+      try {
+        const planData = { id, type: 'plan', data: payload, markdown: markdownWithMap };
+        savePlan.run(id, nowIso(), JSON.stringify(planData));
+      } catch (dbError) {
+        console.error('Failed to save fallback plan to database:', dbError);
+      }
+      return res.json({ id, markdown: markdownWithMap, html: finalHTML, affiliates: aff, version: VERSION, fallback: true });
+    } catch (fallbackErr) {
+      console.error('Fallback plan generation also failed:', fallbackErr);
+      return res.status(500).json({ error: 'Failed to generate plan.', version: VERSION });
+    }
   }
 });
 
