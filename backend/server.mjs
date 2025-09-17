@@ -818,10 +818,12 @@ Create the most amazing, detailed, and useful trip plan possible!`;
   let resp;
   for (let attempt = 0; attempt < 6; attempt++) {
     try {
+      const selectedModel = process.env.WAYZO_MODEL || process.env.OPENAI_MODEL || "gpt-5-nano-2025-08-07";
+      const fullMaxTokens = /gpt-5-nano/i.test(selectedModel) ? 128000 : 16384;
       resp = await client.chat.completions.create({
-        model: process.env.OPENAI_MODEL || process.env.WAYZO_MODEL || "gpt-5-nano-2025-08-07",
+        model: selectedModel,
         temperature: 0.7,
-        max_tokens: mode === 'full' ? 16384 : 500,
+        max_tokens: mode === 'full' ? fullMaxTokens : 500,
         messages: [{ role: "user", content: `${sys}\n\n${user}` }],
         stream: false
       });
