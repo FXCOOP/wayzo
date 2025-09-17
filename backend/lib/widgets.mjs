@@ -216,8 +216,36 @@ function injectWidgetsIntoSections(html, widgets, destination = '', nDays = 15) 
     // 3. Add Flight, Hotel, Car, Airport Transfer widgets to Budget Breakdown section
     const budgetH2 = createSectionIfMissing("Budget Breakdown", "💰");
     if (budgetH2) {
+      // Ensure a checkbox budget table exists; if not, insert a minimal one
+      let hasBudgetTable = false;
+      let probe = budgetH2.nextElementSibling;
+      while (probe && probe.tagName !== 'H2') {
+        if (probe.tagName === 'TABLE' || (probe.querySelector && probe.querySelector('table.budget-table'))) {
+          hasBudgetTable = true;
+          break;
+        }
+        probe = probe.nextElementSibling;
+      }
+      if (!hasBudgetTable) {
+        const table = doc.createElement('div');
+        table.innerHTML = `
+          <table class="budget-table" style="border-collapse: collapse; width: 100%;">
+            <thead>
+              <tr style="background:#f5f5f5"><th>Item</th><th>Cost (%)</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><div class="budget-checkbox"><input type="checkbox" id="b1"><label for="b1">Flights</label></div></td><td>20%</td><td>Pending</td></tr>
+              <tr><td><div class="budget-checkbox"><input type="checkbox" id="b2"><label for="b2">Accommodation</label></div></td><td>20%</td><td>Pending</td></tr>
+              <tr><td><div class="budget-checkbox"><input type="checkbox" id="b3"><label for="b3">Food</label></div></td><td>25%</td><td>Pending</td></tr>
+              <tr><td><div class="budget-checkbox"><input type="checkbox" id="b4"><label for="b4">Transport</label></div></td><td>15%</td><td>Pending</td></tr>
+              <tr><td><div class="budget-checkbox"><input type="checkbox" id="b5"><label for="b5">Activities</label></div></td><td>20%</td><td>Pending</td></tr>
+              <tr><td><div class="budget-checkbox"><input type="checkbox" id="b6"><label for="b6">Misc</label></div></td><td>10%</td><td>Pending</td></tr>
+            </tbody>
+          </table>
+        `;
+        budgetH2.parentNode.insertBefore(table, budgetH2.nextSibling);
+      }
       const budgetWidgets = widgets.filter(w => w.placement === "budget_breakdown");
-      
       budgetWidgets.forEach(widget => {
         if (injectWidgetAfterSection(budgetH2, widget, widget.category)) {
           widgetsInjected["Budget Breakdown"]++;
@@ -324,8 +352,10 @@ function injectWidgetsIntoSections(html, widgets, destination = '', nDays = 15) 
     placePatterns.forEach(pattern => {
       let match;
       while ((match = pattern.exec(allText)) !== null) {
-        const place = match[1] + (match[2] ? ' ' + match[2] : '');
-        if (place.length > 3 && place.length < 50 && !mapPoints.includes(place)) {
+        const placeRaw = match[1] + (match[2] ? ' ' + match[2] : '');
+        const place = placeRaw.trim();
+        const blacklist = ['Couple','Family','Morning','Afternoon','Evening','Day','Map','Reviews','Tickets'];
+        if (place.length > 3 && place.length < 60 && !mapPoints.includes(place) && !blacklist.includes(place)) {
           mapPoints.push(place);
         }
       }
@@ -336,7 +366,7 @@ function injectWidgetsIntoSections(html, widgets, destination = '', nDays = 15) 
       const mapSection = doc.createElement('div');
       mapSection.innerHTML = `
         <h2>Google Map Preview</h2>
-        <p><a href="https://maps.google.com/maps?q=${encodeURIComponent(mapPoints.slice(0, 20).join('+'))}" target="_blank">Open Map</a></p>
+        <p><a href="https://maps.google.com/maps?q=${encodeURIComponent(mapPoints.slice(0, 30).join('+'))}" target="_blank">Open Map</a></p>
       `;
       doc.body.appendChild(mapSection);
     }

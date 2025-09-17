@@ -1215,6 +1215,14 @@ app.post('/api/plan', async (req, res) => {
       } catch (widgetError) {
         console.error('Widget injection failed (fallback path):', widgetError);
       }
+      // Remove generic "Open Exploration" blocks in fallback HTML too
+      finalHTML = finalHTML.replace(
+        /(Day \d+ — Open Exploration.*?Evening: Sunset viewpoint & dinner\.[\s\S]*?)(?=<h3>|<h2>|$)/g,
+        ''
+      ).replace(
+        /(Open Exploration.*?Map · Book[\s\S]*?)(?=<h3>|<h2>|$)/g,
+        ''
+      );
       const aff = affiliatesFor(payload.destination);
       const markdownWithMap = markdown + `\n\n---\n\n[Open ${payload.destination} Public Transport Map](map:${payload.destination}+public+transport+map)`;
       try {
