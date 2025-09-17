@@ -28,5 +28,8 @@
   "repository": {
     "type": "git",
     "url": "."
+  },
+  "dependencies": {
+    "@playwright/test": "^1.55.0"
   }
 }

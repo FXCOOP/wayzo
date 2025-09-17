@@ -7,9 +7,11 @@
     "node": "20.x"
   },
   "scripts": {
-    "start": "node --max-old-space-size=2048 backend/server.mjs"
+    "start": "node --max-old-space-size=4096 backend/server.mjs",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@playwright/test": "^1.0.0",
     "better-sqlite3": "^9.6.0",
     "compression": "^1.7.4",
     "cors": "^2.8.5",

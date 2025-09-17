@@ -18,7 +18,7 @@ import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
 import { getWidgetsForDestination, generateWidgetHTML, injectWidgetsIntoSections } from './lib/widgets.mjs';
-const VERSION = 'staging-v25';
+const VERSION = 'staging-v62';
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
   try {
@@ -413,33 +413,34 @@ async function generatePlanWithAI(payload) {
   const totalTravelers = adults + children;
   
   // LOCKED AI PROMPT with RESEARCHED DATA - NO GENERICS ALLOWED
-  const sys = `Generate ${nDays}-day itinerary in Markdown for ${destination} from ${start} to ${end}, 2 adults, ${budget} USD. Include 11 sections (## 🎯 Trip Overview to ## 🚨 Emergency Info) and ## 🌤️ Weather Forecast with 7-day table (mock: Sep 19 24°-30° 10% [Details](map:${destination}+weather); Sep 20 23°-29° 5%; Sep 21 25°-31° 15%; Sep 22 24°-30° 0%; Sep 23 26°-32° 20%; Sep 24 25°-31° 5%; Sep 25 27°-33° 0%; Sep 26 24°-30° 0%). Use specific researched places (e.g., 'Kyiv Pechersk Lavra at Lavrska St 15, €3, 9AM-7PM, UNESCO, verify 2025 prices'), addresses, hours, prices with disclaimers, [Map](map:place), [Tickets](tickets:place), [Book](https://tpwdgt.com). No images in Trip Overview, Don't Forget List, Travel Tips, Useful Apps, Emergency Info. Images only in allowed sections with [image:${destination} specific term] (e.g., [image:${destination} metro]). No generics (e.g., 'popular museum'—use 'National Museum of the History of Ukraine at Volodymyrska St 2, €5, 10AM-6PM'). Enforce full hour-by-hour plans for ALL ${nDays} days with one-sentence explanation for each place (e.g., 'Visit Uluwatu Temple at Pecatu – a clifftop sea temple famous for its sunset views and Kecak dance performances.'). NO incomplete days like 'Visit any missed sites'. Every day must have 6-8 activities with times and explanations. Budget: ~$2000 (~€1800; flights €900, accommodation €140, food €350, transport €70, activities €700, misc €80). Researched data: attractions (Tanah Lot Temple at Beraban, Tabanan, €4, 7AM-7PM), restaurants (Naughty Nuri's Warung at Jl. Raya Sanggingan, Ubud, €10-15, 11AM-11PM), hotels (Pondok Ayu at Jl. Kubu Anyar No.16, Kuta, €15-20), transport (Grab taxi €5-10/ride), tips (dress modestly in temples, tip 10%), apps (Grab, Google Maps), emergency (112, Sanglah General Hospital +62 361 227 911).
+  const sys = `Generate ${nDays}-day itinerary in Markdown for ${destination} from ${start} to ${end}, traveling from ${from}, ${adults} adults, ${children} children, ${level} style, budget ${budget} ${currency}, preferences ${prefs}, dietary ${dietary}, brief ${professional_brief}. Calculate full duration (${nDays} days). Correct destination spelling. Include 11 sections (## 🎯 Trip Overview, ## 🗺️ Getting Around, ## 🏨 Accommodation, ## 🎫 Must-See Attractions, ## 🍽️ Dining Guide, ## 🎭 Daily Itineraries, ## 🧳 Don't Forget List, ## 🛡️ Travel Tips, ## 📱 Useful Apps, ## 🚨 Emergency Info, ## 💰 Budget Breakdown) and ## 🌤️ Weather Forecast with table for ALL days (| Date | Condition | High (°C) | Low (°C) | Precipitation | [Details] Description |; realistic for destination). Use specific places (e.g., 'Western Wall at Western Wall Plaza, Free, 24/7'), addresses, hours, prices with disclaimers ('Verify 2025 prices'), [Map](https://maps.google.com/maps?q=place), [Tickets](https://www.getyourguide.com/s/?q=place&partner_id=PUHVJ53), [Reviews](https://www.getyourguide.com/s/?q=place&partner_id=PUHVJ53). Accommodations: [Book](#hotel-widget) | [Reviews](#hotel-widget). Car rentals: [Car Rentals](#car-widget). Airport transfers: [Airport Transfers](#airport-widget). Flights: 'Flight Information' plain text. Dining: [Map](https://maps.google.com/maps?q=restaurant+name+location) only. NO IMAGES ANYWHERE. No generics (e.g., 'continue similar patterns', 'free day', 'open exploration'). Full hour-by-hour for ALL ${nDays} days with 6-8 unique activities, one-sentence explanations (e.g., 'Visit Western Wall – a sacred Jewish site for prayer and reflection.'). No incomplete days. 8-12 attractions, 6-10 restaurants. Budget: ~${budget} (~equivalent € if USD; flights ~20%, accommodation ~20%, food ~25%, transport ~15%, activities ~20%, misc ~10%). If multi-destination, distribute days across locations. Personalize with ${prefs}, ${dietary}, ${professional_brief}. Family-friendly if ${children}. Style: ${level} (budget: €50-100/night, mid: €100-200, luxury: €200+). Researched data for destination: use accurate specifics. Remove alternative tours. Add single ## Google Map Preview: [Open Map](https://maps.google.com/maps?q=ALL+SPECIFIC+PLACES+FROM+REPORT) at end.
 
-**CRITICAL - NO IMAGES ANYWHERE:**
-You are ABSOLUTELY FORBIDDEN from adding any images to any section. NO IMAGES ANYWHERE in the entire report.
+**CRITICAL - NO GENERIC CONTENT:**
+- **ABSOLUTELY NO "continue similar patterns"** - this is forbidden
+- **ABSOLUTELY NO "free day" or "open exploration"** - these are generic placeholders
+- **ABSOLUTELY NO duplicate content** - each day must be unique
+- **ABSOLUTELY NO generic activities** - every activity must be specific to ${destination}
+- **ABSOLUTELY NO incomplete days** - every day must have 6-8 specific activities
 
-**MANDATORY SECTIONS (MATCH PDF STRUCTURE):**
-- 🎯 Trip Overview
-- 🌤️ Weather Forecast (NEW - with Bali temperatures)
-- 💰 Budget Breakdown (checkboxes table, total ~€1800)
-- 🗺️ Getting Around
-- 🏨 Accommodation (with Book/Reviews links)
-- 🎫 Must-See Attractions (with Tickets/Map links)
-- 🍽️ Dining Guide (with Reviews/Map links)
-- 🎭 Daily Itineraries (day headers, bullet points, FULL ${nDays} days)
-- 🧳 Don't Forget List (checkboxes)
-- 🛡️ Travel Tips
-- 📱 Useful Apps
-- 🚨 Emergency Info
+**MANDATORY - SPECIFIC CONTENT ONLY:**
+- **Every day must have specific ${destination} activities** with exact times, places, and explanations
+- **Every restaurant must be named** with specific locations
+- **Every attraction must be specific** with addresses, hours, prices
+- **Every time must be exact** like "9:00 AM", "2:30 PM", "7:45 PM"
+- **Every location must be specific** with street addresses or landmarks
 
-**MANDATORY FULL ITINERARY REQUIREMENTS:**
-- EVERY day must have full hour-by-hour schedule (6-8 activities per day)
-- EVERY place must have one-sentence explanation
-- NO incomplete days like 'Visit any missed sites'
-- EVERY activity must have specific time, place name, and explanation
+**DAILY ITINERARIES REQUIREMENT:**
+- Create detailed, specific daily itineraries for each of the ${nDays} days
+- DO NOT use generic "Open Exploration" or placeholder text
+- Each day should have specific activities, times, and locations
+- Include specific restaurant names and attraction names
+- Make it feel like a real, actionable itinerary
+- **CRITICAL**: Each day must be unique and specific to ${destination}
+- **CRITICAL**: Include exact times, restaurant names, and attraction names
+- **CRITICAL**: Make it family-friendly if children are included
+- **CRITICAL**: Consider the starting location (${from}) for flight/transport recommendations
 
 Create AMAZING, DETAILED trip plans that are:
-
 1. **Highly Personalized**: Use the professional brief and all user preferences to tailor everything
 2. **Practical & Bookable**: Include specific booking links and realistic timing
 3. **Beautifully Formatted**: Use clear sections, emojis, and engaging language
@@ -451,9 +452,9 @@ Create AMAZING, DETAILED trip plans that are:
 - 🎯 **Trip Overview** - Quick facts and highlights
 - 💰 **Budget Breakdown** - Detailed cost analysis per person with checkboxes for tracking
 - 🗺️ **Getting Around** - Transportation tips and maps with [Map](map:...)
-- 🏨 **Accommodation** - 3–5 hotel options (Budget/Mid/Luxury) with [Book](book:...), [Reviews](reviews:...)
+- 🏨 **Accommodation** - 3–5 hotel options (Budget/Mid/Luxury) with [Book](#hotel-widget), [Reviews](#hotel-widget)
 - 🎫 **Must-See Attractions** - 8–12 sights with [Tickets](tickets:...)
-- 🍽️ **Dining Guide** - 6–10 restaurants by neighborhood with [Reviews](reviews:...)
+- 🍽️ **Dining Guide** - 6–10 restaurants by neighborhood with [Map](map:...)
 - 🎭 **Daily Itineraries** - Hour-by-hour plans per day with [Tickets](tickets:...), [Map](map:...)
 - 🧳 **Don't Forget List** - 8–12 packing/reminders with checkboxes for tracking
 - 🛡️ **Travel Tips** - Local customs, safety, and practical advice
@@ -476,7 +477,7 @@ Create a detailed budget table like this with proper HTML:
 <td>
 <div class="budget-checkbox">
 <input type="checkbox" id="budget1" onchange="toggleBudgetItem(this)">
-<label for="budget1">Flights (From to Destination)</label>
+<label for="budget1">Flights (From ${from} to ${destination})</label>
 </div>
 </td>
 <td>150</td>
@@ -487,7 +488,7 @@ Create a detailed budget table like this with proper HTML:
 <td>
 <div class="budget-checkbox">
 <input type="checkbox" id="budget2" onchange="toggleBudgetItem(this)">
-<label for="budget2">Accommodation (X nights)</label>
+<label for="budget2">Accommodation (${nDays} nights)</label>
 </div>
 </td>
 <td>150</td>
@@ -604,8 +605,8 @@ Create a checklist like this with proper HTML checkboxes that automatically mark
 **FORMATTING:**
 - Use emojis and clear headings
 - Include [Map](map:query) for location links
-- Add [Book](book:query) for booking links
-- Use [Reviews](reviews:query) for recommendations
+- Add [Book](#hotel-widget) for booking links
+- Use [Reviews](#hotel-widget) for recommendations
 - Include [Tickets](tickets:query) for attractions
 
 **STYLE:** Make it exciting, informative, and ready to use!`;
@@ -814,9 +815,9 @@ Create the most amazing, detailed, and useful trip plan possible!`;
   for (let attempt = 0; attempt < 6; attempt++) {
     try {
       resp = await client.chat.completions.create({
-        model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+        model: process.env.OPENAI_MODEL || "gpt-5-nano-2025-08-07",
         temperature: 0.7, // Slightly higher for more creative responses
-        max_tokens: mode === 'full' ? 16384 : 500, // 16384 for full reports, 500 for previews
+        max_tokens: mode === 'full' ? 128000 : 500, // 128000 for full reports, 500 for previews
         messages: [{ role: "user", content: `${sys}\n\n${user}` }],
         stream: false // Enable streaming if needed for larger responses
       });
@@ -1115,7 +1116,7 @@ app.post('/api/plan', async (req, res) => {
     const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
     let finalHTML;
     try {
-      finalHTML = injectWidgetsIntoSections(html, widgets, payload.destination);
+      finalHTML = injectWidgetsIntoSections(html, widgets, payload.destination, nDays);
     } catch (widgetError) {
       console.error('Widget injection failed:', widgetError);
       finalHTML = html; // Fallback to HTML without widgets

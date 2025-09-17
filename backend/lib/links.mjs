@@ -12,7 +12,7 @@ export function affiliatesFor(dest = '') {
     maps:      (term) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(term || dest)}`,
     flights:   ()      => `https://www.kayak.com/flights?search=${q}${kayakAidParam}`,
     hotels:    (term) => `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(term || dest)}${bookingAidParam}`,
-    activities:(term) => `https://www.getyourguide.com/s/?q=${encodeURIComponent(term || dest)}${gygPidParam}`,
+    activities:(term) => `https://www.getyourguide.com/s/?q=${encodeURIComponent(term || dest)}&partner_id=PUHVJ53`,
     cars:      ()      => `https://www.rentalcars.com/SearchResults.do?destination=${q}`,
     insurance: ()      => `https://www.worldnomads.com/`,
     reviews:   (term) => `https://www.tripadvisor.com/Search?q=${encodeURIComponent(term || dest)}`,
@@ -40,9 +40,12 @@ export function linkifyTokens(markdown = '', dest = '') {
   
   const processed = (markdown || '')
     .replace(/\[(Map)\]\(map:([^)]+)\)/gi,        (_m, _t, q) => `[Map](${aff.maps(q.trim())})`)
-    .replace(/\[(Book)\]\(book:([^)]+)\)/gi,      (_m, _t, q) => `[Book](${aff.hotels(q.trim())})`)
+    .replace(/\[(Book)\]\(book:([^)]+)\)/gi,      (_m, _t, q) => `[Book](#hotel-widget)`)
     .replace(/\[(Tickets)\]\(tickets:([^)]+)\)/gi,(_m, _t, q) => `[Tickets](${aff.activities(q.trim())})`)
-    .replace(/\[(Reviews)\]\(reviews:([^)]+)\)/gi,(_m, _t, q) => `[Reviews](${aff.reviews(q.trim())})`)
+    .replace(/\[(Reviews)\]\(reviews:([^)]+)\)/gi,(_m, _t, q) => `[Reviews](${aff.activities(q.trim())})`)
+    .replace(/\[(Car Rentals)\]\(car:([^)]+)\)/gi, (_m, _t, q) => `[Car Rentals](#car-widget)`)
+    .replace(/\[(Airport Transfers)\]\(airport:([^)]+)\)/gi, (_m, _t, q) => `[Airport Transfers](#airport-widget)`)
+    .replace(/\[(Flight Information)\]\(flight:([^)]+)\)/gi, (_m, _t, q) => `Flight Information`)
     .replace(/!\[([^\]]*)\]\(image:([^)]+)\)/gi,  (_m, alt, q) => {
       // REMOVE IMAGES: Return empty string instead of image tag
       console.log('Removing image token:', { alt, query: q.trim() });
