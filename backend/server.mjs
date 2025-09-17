@@ -816,29 +816,47 @@ Create the most amazing, detailed, and useful trip plan possible!`;
   
   // Exponential backoff retry logic (0s, 1s, 2s, 4s, 8s, 16s - max 6 retries)
   let resp;
+  const selectedModel = process.env.WAYZO_MODEL || process.env.OPENAI_MODEL || "gpt-5-nano-2025-08-07";
+  const isNano = /gpt-5-nano/i.test(selectedModel);
+  const fullMaxTokens = isNano ? 128000 : 16384;
+  console.log('[AI] Model:', selectedModel, 'max_tokens:', mode === 'full' ? fullMaxTokens : 500, 'nDays:', nDays);
   for (let attempt = 0; attempt < 6; attempt++) {
     try {
-      const selectedModel = process.env.WAYZO_MODEL || process.env.OPENAI_MODEL || "gpt-5-nano-2025-08-07";
-      const fullMaxTokens = /gpt-5-nano/i.test(selectedModel) ? 128000 : 16384;
-      resp = await client.chat.completions.create({
-        model: selectedModel,
-        temperature: 0.7,
-        max_tokens: mode === 'full' ? fullMaxTokens : 500,
-        messages: [{ role: "user", content: `${sys}\n\n${user}` }],
-        stream: false
-      });
+      if (isNano && client.responses?.create) {
+        // Prefer Responses API for Nano models
+        resp = await client.responses.create({
+          model: selectedModel,
+          input: `${sys}\n\n${user}`,
+          max_output_tokens: mode === 'full' ? fullMaxTokens : 500,
+          temperature: 0.7
+        });
+      } else {
+        // Fallback to Chat Completions for non-Nano
+        resp = await client.chat.completions.create({
+          model: selectedModel,
+          temperature: 0.7,
+          max_tokens: mode === 'full' ? fullMaxTokens : 500,
+          messages: [{ role: "user", content: `${sys}\n\n${user}` }],
+          stream: false
+        });
+      }
       break; // Success, exit retry loop
     } catch (retryError) {
       if (attempt === 5) throw retryError; // Last attempt failed
       const delayMs = attempt === 0 ? 0 : Math.pow(2, attempt - 1) * 1000; // 0s, 1s, 2s, 4s, 8s, 16s
-      console.log(`OpenAI attempt ${attempt + 1} failed, retrying in ${delayMs}ms:`, retryError.message);
+      console.warn(`OpenAI attempt ${attempt + 1} failed, retrying in ${delayMs}ms:`, retryError?.message || String(retryError));
       if (delayMs > 0) await new Promise(resolve => setTimeout(resolve, delayMs));
     }
   }
   
   try {
     
-    let md = resp.choices?.[0]?.message?.content?.trim() || "";
+    let md = "";
+    if (isNano && resp?.output?.[0]?.content?.[0]?.text) {
+      md = String(resp.output[0].content[0].text).trim();
+    } else if (resp?.choices?.[0]?.message?.content) {
+      md = resp.choices[0].message.content.trim();
+    }
     if (!md) {
       console.warn('OpenAI response empty, using fallback');
       md = localPlanMarkdown(payload);
