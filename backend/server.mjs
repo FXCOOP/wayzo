@@ -234,24 +234,36 @@ app.get('/config.js', (_req, res) => {
 // PayPal config endpoint
 app.get('/paypal-config.js', (_req, res) => {
   const paypalClientId = process.env.PAYPAL_CLIENT_ID || '';
-  const paypalMode = process.env.PAYPAL_MODE || 'sandbox';
   res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  // If no client ID, explicitly hide PayPal UI and do not load SDK
+  if (!paypalClientId) {
+    res.send(`
+      (function(){
+        try {
+          // Hide purchase actions or show fallback text when PayPal is unavailable
+          var purchase = document.getElementById('purchaseActions');
+          if (purchase) {
+            purchase.style.display = 'none';
+          }
+          var fallback = document.getElementById('paypal-fallback');
+          if (fallback) { fallback.style.display = 'block'; }
+        } catch(e) { console.warn('PayPal suppression error', e); }
+      })();
+    `);
+    return;
+  }
   res.send(`
-    if (window.WAYZO_PUBLIC_CONFIG && window.WAYZO_PUBLIC_CONFIG.PAYPAL_CLIENT_ID) {
-      // Load PayPal SDK with real client ID
-      const script = document.createElement('script');
-      script.src = 'https://www.paypal.com/sdk/js?client-id=' + window.WAYZO_PUBLIC_CONFIG.PAYPAL_CLIENT_ID + '&currency=USD';
+    (function(){
+      var id = ${JSON.stringify(paypalClientId)};
+      if (!id) return;
+      var script = document.createElement('script');
+      script.src = 'https://www.paypal.com/sdk/js?client-id=' + id + '&currency=USD';
       script.async = true;
-      script.onload = function() {
-        console.log('PayPal SDK loaded with real client ID');
-        if (window.initializePayPalButtons) {
-          window.initializePayPalButtons();
-        }
+      script.onload = function(){
+        if (window.initializePayPalButtons) window.initializePayPalButtons();
       };
       document.head.appendChild(script);
-    } else {
-      console.error('PayPal client ID not configured');
-    }
+    })();
   `);
 });
 
@@ -1101,6 +1113,10 @@ app.post('/api/plan', async (req, res) => {
     payload.budget = normalizeBudget(payload.budget, payload.currency);
     payload.mode = 'full'; // Set mode for full reports with 16384 tokens
     const id = uid();
+    // Determine trip duration for downstream processing (e.g., weather rows)
+    const nDays = payload?.dateMode === 'flexible' && payload?.flexibleDates && Number(payload.flexibleDates.duration)
+      ? Number(payload.flexibleDates.duration)
+      : daysBetween(payload.start, payload.end);
     const markdown = await generatePlanWithAI(payload);
     
     // Process image tokens and other links in the MARKDOWN first
@@ -1178,6 +1194,10 @@ app.post('/api/plan.pdf', async (req, res) => {
     const payload = req.body || {};
     payload.currency = payload.currency || 'USD';
     payload.budget = normalizeBudget(payload.budget, payload.currency);
+    // Determine trip duration for downstream processing (e.g., weather rows)
+    const nDays = payload?.dateMode === 'flexible' && payload?.flexibleDates && Number(payload.flexibleDates.duration)
+      ? Number(payload.flexibleDates.duration)
+      : daysBetween(payload.start, payload.end);
     const markdown = await generatePlanWithAI(payload);
 
     // Process image tokens and other links first
@@ -1187,7 +1207,7 @@ app.post('/api/plan.pdf', async (req, res) => {
     const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
     let finalHTML;
     try {
-      finalHTML = injectWidgetsIntoSections(html, widgets, payload.destination);
+      finalHTML = injectWidgetsIntoSections(html, widgets, payload.destination, nDays);
     } catch (widgetError) {
       console.error('Widget injection failed in PDF generation:', widgetError);
       finalHTML = html; // Fallback to HTML without widgets
