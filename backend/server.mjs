@@ -462,67 +462,6 @@ Generate the complete travel itinerary now using all the sections listed above.`
 
   // Trip context appended to system prompt (single prompt approach)
   const user = `Create an AMAZING trip plan for:
-<div class="dont-forget-item">
-<input type="checkbox" id="item1" onchange="toggleItem(this)" class="budget-checkbox">
-<label for="item1">Passport and travel documents</label>
-</div>
-<div class="dont-forget-item">
-<input type="checkbox" id="item2" onchange="toggleItem(this)" class="budget-checkbox">
-<label for="item2">Travel insurance</label>
-</div>
-<div class="dont-forget-item">
-<input type="checkbox" id="item3" onchange="toggleItem(this)" class="budget-checkbox">
-<label for="item3">Local currency (Euros)</label>
-</div>
-<div class="dont-forget-item">
-<input type="checkbox" id="item4" onchange="toggleItem(this)" class="budget-checkbox">
-<label for="item4">Power adapter</label>
-</div>
-<div class="dont-forget-item">
-<input type="checkbox" id="item5" onchange="toggleItem(this)" class="budget-checkbox">
-<label for="item5">Comfortable walking shoes</label>
-</div>
-<div class="dont-forget-item">
-<input type="checkbox" id="item6" onchange="toggleItem(this)" class="budget-checkbox">
-<label for="item6">Camera/phone charger</label>
-</div>
-<div class="dont-forget-item">
-<input type="checkbox" id="item7" onchange="toggleItem(this)" class="budget-checkbox">
-<label for="item7">Medications and first aid</label>
-</div>
-<div class="dont-forget-item">
-<input type="checkbox" id="item8" onchange="toggleItem(this)" class="budget-checkbox">
-<label for="item8">Weather-appropriate clothing</label>
-</div>
-<div class="dont-forget-item">
-<input type="checkbox" id="item9" onchange="toggleItem(this)" class="budget-checkbox">
-<label for="item9">eSIM or local SIM card</label>
-</div>
-<div class="dont-forget-item">
-<input type="checkbox" id="item10" onchange="toggleItem(this)" class="budget-checkbox">
-<label for="item10">Local guide contact info</label>
-</div>
-<div class="dont-forget-item">
-<input type="checkbox" id="item11" onchange="toggleItem(this)" class="budget-checkbox">
-<label for="item11">Restaurant reservations</label>
-</div>
-<div class="dont-forget-item">
-<input type="checkbox" id="item12" onchange="toggleItem(this)" class="budget-checkbox">
-<label for="item12">Swimwear for beaches</label>
-</div>
-</div>
-
-**FORMATTING:**
-- Use emojis and clear headings
-- Include [Map](map:query) for location links
-- Add [Book](book:query) for booking links
-- Use [Reviews](reviews:query) for recommendations
-- Include [Tickets](tickets:query) for attractions
-
-**STYLE:** Make it exciting, informative, and ready to use!`;
-
-  // Trip context appended to system prompt (single prompt approach)
-  const user = `Create an AMAZING trip plan for:
 
 **Destination:** ${destination}
 ${from ? `**Traveling From:** ${from}` : ''}
