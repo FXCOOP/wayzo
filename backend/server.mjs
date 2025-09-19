@@ -417,144 +417,51 @@ async function generatePlanWithAI(payload) {
   const nDays = dateMode === 'flexible' && flexibleDates ? flexibleDates.duration : daysBetween(start, end);
   const totalTravelers = adults + children;
   
-  // LOCKED AI PROMPT with RESEARCHED DATA - NO GENERICS ALLOWED
-  const sys = `Generate ${nDays}-day itinerary in Markdown for ${destination} from ${start} to ${end}, 2 adults, ${budget} USD. Include 10 sections (## 🎯 Trip Overview to ## 🚨 Emergency Info). Weather forecast will be added automatically, so do not include it in your response. Use specific researched places (e.g., 'Kyiv Pechersk Lavra at Lavrska St 15, €3, 9AM-7PM, UNESCO, verify 2025 prices'), addresses, hours, prices with disclaimers, [Map](map:place), [Tickets](tickets:place), [Book](https://tpwdgt.com). No images in Trip Overview, Don't Forget List, Travel Tips, Useful Apps, Emergency Info. Images only in allowed sections with [image:${destination} specific term] (e.g., [image:${destination} metro]). No generics (e.g., 'popular museum'—use 'National Museum of the History of Ukraine at Volodymyrska St 2, €5, 10AM-6PM'). Enforce full hour-by-hour plans for ALL ${nDays} days with one-sentence explanation for each place (e.g., 'Visit Uluwatu Temple at Pecatu – a clifftop sea temple famous for its sunset views and Kecak dance performances.'). NO incomplete days like 'Visit any missed sites'. Every day must have 6-8 activities with times and explanations. Budget: ~$2000 (~€1800; flights €900, accommodation €140, food €350, transport €70, activities €700, misc €80). Researched data: attractions (Tanah Lot Temple at Beraban, Tabanan, €4, 7AM-7PM), restaurants (Naughty Nuri's Warung at Jl. Raya Sanggingan, Ubud, €10-15, 11AM-11PM), hotels (Pondok Ayu at Jl. Kubu Anyar No.16, Kuta, €15-20), transport (Grab taxi €5-10/ride), tips (dress modestly in temples, tip 10%), apps (Grab, Google Maps), emergency (112, Sanglah General Hospital +62 361 227 911).
+  const sys = `Create a complete ${nDays}-day itinerary for ${destination} from ${start} to ${end}, 2 adults, ${budget} USD budget.
 
-**CRITICAL - NO IMAGES ANYWHERE:**
-You are ABSOLUTELY FORBIDDEN from adding any images to any section. NO IMAGES ANYWHERE in the entire report.
+Start immediately with the content in this format:
 
-**MANDATORY SECTIONS (MATCH PDF STRUCTURE):**
-- 🎯 Trip Overview
-- 💰 Budget Breakdown (checkboxes table, total ~€1800)
-- 🗺️ Getting Around
-- 🏨 Accommodation (with Book/Reviews links)
-- 🎫 Must-See Attractions (with Tickets/Map links)
-- 🍽️ Dining Guide (with Reviews/Map links)
-- 🎭 Daily Itineraries (day headers, bullet points, FULL ${nDays} days)
-- 🧳 Don't Forget List (checkboxes)
-- 🛡️ Travel Tips
-- 📱 Useful Apps
-- 🚨 Emergency Info
+# ${destination} — ${start} → ${end}
 
-**MANDATORY FULL ITINERARY REQUIREMENTS:**
-- EVERY day must have full hour-by-hour schedule (6-8 activities per day)
-- EVERY place must have one-sentence explanation
-- NO incomplete days like 'Visit any missed sites'
-- EVERY activity must have specific time, place name, and explanation
+## 🎯 Trip Overview
+[destination highlights, travelers, dates, budget, style summary]
 
-Create AMAZING, DETAILED trip plans that are:
+## 💰 Budget Breakdown
+[detailed cost breakdown with realistic prices]
 
-1. **Highly Personalized**: Use the professional brief and all user preferences to tailor everything
-2. **Practical & Bookable**: Include specific booking links and realistic timing
-3. **Beautifully Formatted**: Use clear sections, emojis, and engaging language
-4. **Budget-Aware**: Provide realistic cost breakdowns and money-saving tips
-5. **Accessibility-Focused**: Consider mobility, dietary needs, and family-friendly options
-6. **Family-Oriented**: If children are included, prioritize family-friendly activities and accommodations
+## 🗺️ Getting Around
+[transportation options, tips, getting from/to airport]
 
-**REQUIRED SECTIONS (USE EXACT TITLES):**
-- 🎯 **Trip Overview** - Quick facts and highlights
-- 💰 **Budget Breakdown** - Detailed cost analysis per person with checkboxes for tracking
-- 🗺️ **Getting Around** - Transportation tips and maps with [Map](map:...)
-- 🏨 **Accommodation** - 3–5 hotel options (Budget/Mid/Luxury) with [Book](book:...), [Reviews](reviews:...)
-- 🎫 **Must-See Attractions** - 8–12 sights with [Tickets](tickets:...)
-- 🍽️ **Dining Guide** - 6–10 restaurants by neighborhood with [Reviews](reviews:...)
-- 🎭 **Daily Itineraries** - Hour-by-hour plans per day with [Tickets](tickets:...), [Map](map:...)
-- 🧳 **Don't Forget List** - 8–12 packing/reminders with checkboxes for tracking
-- 🛡️ **Travel Tips** - Local customs, safety, and practical advice
-- 📱 **Useful Apps** - Mobile apps for the destination
-- 🚨 **Emergency Info** - Important contacts and healthcare
+## 🏨 Accommodation
+[3-5 hotel recommendations with price ranges and booking info]
 
-**BUDGET BREAKDOWN FORMAT:**
-Create a detailed budget table like this with proper HTML:
-<table class="budget-table">
-<thead>
-<tr>
-<th>Item</th>
-<th>Cost per Person (€)</th>
-<th>Total (€)</th>
-<th>Status</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>
-<div class="budget-checkbox">
-<input type="checkbox" id="budget1" onchange="toggleBudgetItem(this)">
-<label for="budget1">Flights (From to Destination)</label>
-</div>
-</td>
-<td>150</td>
-<td>300</td>
-<td><span class="status-pending">Pending</span></td>
-</tr>
-<tr>
-<td>
-<div class="budget-checkbox">
-<input type="checkbox" id="budget2" onchange="toggleBudgetItem(this)">
-<label for="budget2">Accommodation (X nights)</label>
-</div>
-</td>
-<td>150</td>
-<td>300</td>
-<td><span class="status-pending">Pending</span></td>
-</tr>
-<tr>
-<td>
-<div class="budget-checkbox">
-<input type="checkbox" id="budget3" onchange="toggleBudgetItem(this)">
-<label for="budget3">Food (3 meals/day)</label>
-</div>
-</td>
-<td>25</td>
-<td>150</td>
-<td><span class="status-pending">Pending</span></td>
-</tr>
-<tr>
-<td>
-<div class="budget-checkbox">
-<input type="checkbox" id="budget4" onchange="toggleBudgetItem(this)">
-<label for="budget4">Transportation (local travel)</label>
-</div>
-</td>
-<td>30</td>
-<td>60</td>
-<td><span class="status-pending">Pending</span></td>
-</tr>
-<tr>
-<td>
-<div class="budget-checkbox">
-<input type="checkbox" id="budget5" onchange="toggleBudgetItem(this)">
-<label for="budget5">Activities & Attractions</label>
-</div>
-</td>
-<td>80</td>
-<td>160</td>
-<td><span class="status-pending">Pending</span></td>
-</tr>
-<tr>
-<td>
-<div class="budget-checkbox">
-<input type="checkbox" id="budget6" onchange="toggleBudgetItem(this)">
-<label for="budget6">Miscellaneous</label>
-</div>
-</td>
-<td>10</td>
-<td>20</td>
-<td><span class="status-pending">Pending</span></td>
-</tr>
-<tr>
-<td><strong>Total</strong></td>
-<td><strong>€250</strong></td>
-<td><strong>€500</strong></td>
-<td><span class="status-total">Total</span></td>
-</tr>
-</tbody>
-</table>
+## 🎫 Must-See Attractions
+[8-12 main attractions with entry fees, hours, booking links]
 
-**DON'T FORGET LIST FORMAT:**
-Create a checklist like this with proper HTML checkboxes that automatically mark as completed when clicked:
-<div class="dont-forget-list">
-<h3>🧳 Don't Forget List</h3>
+## 🍽️ Dining Guide
+[6-10 restaurants by area with price ranges and specialties]
+
+## 🎭 Daily Itineraries
+[Full hour-by-hour schedule for ALL ${nDays} days. Each day must have 6-8 activities with specific times, place names, and brief descriptions. NO generic activities.]
+
+## 🧳 Don't Forget List
+[packing checklist with checkboxes]
+
+## 🛡️ Travel Tips
+[local customs, money, safety, practical advice]
+
+## 📱 Useful Apps
+[helpful apps for the destination]
+
+## 🚨 Emergency Info
+[contacts, healthcare, embassy info]
+
+Use specific places, real addresses, current prices. Weather will be added automatically. NO images.
+
+Generate the complete travel itinerary now using all the sections listed above.`;
+
+  // Trip context appended to system prompt (single prompt approach)
+  const user = `Create an AMAZING trip plan for:
 <div class="dont-forget-item">
 <input type="checkbox" id="item1" onchange="toggleItem(this)" class="budget-checkbox">
 <label for="item1">Passport and travel documents</label>
