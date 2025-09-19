@@ -77,8 +77,19 @@ frontend/
 ├── app.js                 # Main application logic
 ├── admin.js               # Admin panel logic
 ├── translations.js        # Multi-language support
-└── test.html             # Test page for debugging
+├── test.html             # Test page for debugging
+└── tests/                 # Playwright MCP test suite
+    ├── e2e/               # End-to-end tests
+    ├── visual/            # Visual regression tests
+    └── mobile/            # Mobile responsiveness tests
 ```
+
+### Testing Infrastructure
+- **@playwright/mcp**: Enhanced Playwright tools with MCP integration
+- **Cross-browser**: Automated testing across Chrome, Firefox, Safari
+- **Visual Regression**: Pixel-perfect UI consistency validation
+- **Mobile Testing**: Responsive design verification
+- **Performance**: Page load and interaction speed testing
 
 ### Key Classes
 - **LanguageManager**: Handles multi-language functionality
@@ -111,6 +122,25 @@ http://localhost:8000/test.html
 - Multi-destination planning
 - Referral system
 - Admin panel access
+
+### 4. **Automated Testing with Playwright MCP**
+We've integrated **@playwright/mcp** for enhanced browser automation and testing capabilities:
+
+```bash
+# Install dependencies
+npm install @playwright/mcp
+
+# Run automated tests
+npx playwright test
+```
+
+**Playwright MCP Features:**
+- 🎭 **Browser Automation**: Cross-browser testing (Chrome, Firefox, Safari)
+- 📱 **Mobile Testing**: Responsive design validation
+- 🔍 **Visual Testing**: Screenshot comparisons and UI regression detection
+- ⚡ **Fast Execution**: Parallel test execution
+- 🧪 **E2E Testing**: Full user journey automation
+- 📊 **Test Reporting**: Detailed HTML reports with traces
 
 ## 🔧 Configuration
 

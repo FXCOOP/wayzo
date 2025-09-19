@@ -418,14 +418,13 @@ async function generatePlanWithAI(payload) {
   const totalTravelers = adults + children;
   
   // LOCKED AI PROMPT with RESEARCHED DATA - NO GENERICS ALLOWED
-  const sys = `Generate ${nDays}-day itinerary in Markdown for ${destination} from ${start} to ${end}, 2 adults, ${budget} USD. Include 11 sections (## 🎯 Trip Overview to ## 🚨 Emergency Info) and ## 🌤️ Weather Forecast with 7-day table (mock: Sep 19 24°-30° 10% [Details](map:${destination}+weather); Sep 20 23°-29° 5%; Sep 21 25°-31° 15%; Sep 22 24°-30° 0%; Sep 23 26°-32° 20%; Sep 24 25°-31° 5%; Sep 25 27°-33° 0%; Sep 26 24°-30° 0%). Use specific researched places (e.g., 'Kyiv Pechersk Lavra at Lavrska St 15, €3, 9AM-7PM, UNESCO, verify 2025 prices'), addresses, hours, prices with disclaimers, [Map](map:place), [Tickets](tickets:place), [Book](https://tpwdgt.com). No images in Trip Overview, Don't Forget List, Travel Tips, Useful Apps, Emergency Info. Images only in allowed sections with [image:${destination} specific term] (e.g., [image:${destination} metro]). No generics (e.g., 'popular museum'—use 'National Museum of the History of Ukraine at Volodymyrska St 2, €5, 10AM-6PM'). Enforce full hour-by-hour plans for ALL ${nDays} days with one-sentence explanation for each place (e.g., 'Visit Uluwatu Temple at Pecatu – a clifftop sea temple famous for its sunset views and Kecak dance performances.'). NO incomplete days like 'Visit any missed sites'. Every day must have 6-8 activities with times and explanations. Budget: ~$2000 (~€1800; flights €900, accommodation €140, food €350, transport €70, activities €700, misc €80). Researched data: attractions (Tanah Lot Temple at Beraban, Tabanan, €4, 7AM-7PM), restaurants (Naughty Nuri's Warung at Jl. Raya Sanggingan, Ubud, €10-15, 11AM-11PM), hotels (Pondok Ayu at Jl. Kubu Anyar No.16, Kuta, €15-20), transport (Grab taxi €5-10/ride), tips (dress modestly in temples, tip 10%), apps (Grab, Google Maps), emergency (112, Sanglah General Hospital +62 361 227 911).
+  const sys = `Generate ${nDays}-day itinerary in Markdown for ${destination} from ${start} to ${end}, 2 adults, ${budget} USD. Include 10 sections (## 🎯 Trip Overview to ## 🚨 Emergency Info). Weather forecast will be added automatically, so do not include it in your response. Use specific researched places (e.g., 'Kyiv Pechersk Lavra at Lavrska St 15, €3, 9AM-7PM, UNESCO, verify 2025 prices'), addresses, hours, prices with disclaimers, [Map](map:place), [Tickets](tickets:place), [Book](https://tpwdgt.com). No images in Trip Overview, Don't Forget List, Travel Tips, Useful Apps, Emergency Info. Images only in allowed sections with [image:${destination} specific term] (e.g., [image:${destination} metro]). No generics (e.g., 'popular museum'—use 'National Museum of the History of Ukraine at Volodymyrska St 2, €5, 10AM-6PM'). Enforce full hour-by-hour plans for ALL ${nDays} days with one-sentence explanation for each place (e.g., 'Visit Uluwatu Temple at Pecatu – a clifftop sea temple famous for its sunset views and Kecak dance performances.'). NO incomplete days like 'Visit any missed sites'. Every day must have 6-8 activities with times and explanations. Budget: ~$2000 (~€1800; flights €900, accommodation €140, food €350, transport €70, activities €700, misc €80). Researched data: attractions (Tanah Lot Temple at Beraban, Tabanan, €4, 7AM-7PM), restaurants (Naughty Nuri's Warung at Jl. Raya Sanggingan, Ubud, €10-15, 11AM-11PM), hotels (Pondok Ayu at Jl. Kubu Anyar No.16, Kuta, €15-20), transport (Grab taxi €5-10/ride), tips (dress modestly in temples, tip 10%), apps (Grab, Google Maps), emergency (112, Sanglah General Hospital +62 361 227 911).
 
 **CRITICAL - NO IMAGES ANYWHERE:**
 You are ABSOLUTELY FORBIDDEN from adding any images to any section. NO IMAGES ANYWHERE in the entire report.
 
 **MANDATORY SECTIONS (MATCH PDF STRUCTURE):**
 - 🎯 Trip Overview
-- 🌤️ Weather Forecast (NEW - with Bali temperatures)
 - 💰 Budget Breakdown (checkboxes table, total ~€1800)
 - 🗺️ Getting Around
 - 🏨 Accommodation (with Book/Reviews links)
@@ -1152,7 +1151,7 @@ app.post('/api/plan', async (req, res) => {
     const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
     let finalHTML;
     try {
-      finalHTML = injectWidgetsIntoSections(html, widgets, payload.destination);
+      finalHTML = await injectWidgetsIntoSections(html, widgets, payload.destination, payload.start, payload.end);
     } catch (widgetError) {
       console.error('Widget injection failed:', widgetError);
       finalHTML = html; // Fallback to HTML without widgets
@@ -1215,7 +1214,7 @@ app.post('/api/plan', async (req, res) => {
       const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
       let finalHTML;
       try {
-        finalHTML = injectWidgetsIntoSections(html, widgets, payload.destination);
+        finalHTML = await injectWidgetsIntoSections(html, widgets, payload.destination, payload.start, payload.end);
       } catch (widgetError) {
         console.error('Widget injection failed:', widgetError);
         finalHTML = html;
@@ -1246,7 +1245,7 @@ app.post('/api/plan.pdf', async (req, res) => {
     const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
     let finalHTML;
     try {
-      finalHTML = injectWidgetsIntoSections(html, widgets, payload.destination);
+      finalHTML = await injectWidgetsIntoSections(html, widgets, payload.destination, payload.start, payload.end);
     } catch (widgetError) {
       console.error('Widget injection failed in PDF generation:', widgetError);
       finalHTML = html; // Fallback to HTML without widgets
