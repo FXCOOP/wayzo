@@ -1,6 +1,6 @@
 import { JSDOM } from 'jsdom';
 
-// Historical weather data (5-year averages) for major destinations
+// Historical weather data (10-year averages) for major destinations
 const HISTORICAL_WEATHER = {
   'Jerusalem': {
     9: { minTemp: 18, maxTemp: 26, rainChance: 5 },
@@ -25,6 +25,18 @@ const HISTORICAL_WEATHER = {
   'New York': {
     9: { minTemp: 17, maxTemp: 24, rainChance: 35 },
     10: { minTemp: 12, maxTemp: 19, rainChance: 40 }
+  },
+  'Tyrol': {
+    9: { minTemp: 8, maxTemp: 18, rainChance: 40 },
+    10: { minTemp: 4, maxTemp: 13, rainChance: 45 }
+  },
+  'Austria': {
+    9: { minTemp: 8, maxTemp: 18, rainChance: 40 },
+    10: { minTemp: 4, maxTemp: 13, rainChance: 45 }
+  },
+  'Innsbruck': {
+    9: { minTemp: 8, maxTemp: 18, rainChance: 40 },
+    10: { minTemp: 4, maxTemp: 13, rainChance: 45 }
   }
 };
 

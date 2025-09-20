@@ -445,7 +445,7 @@ Start immediately with the content in this format:
 [Full hour-by-hour schedule for ALL ${nDays} days. Each day must have 6-8 activities with specific times, place names, and brief descriptions. NO generic activities.]
 
 ## 🧳 Don't Forget List
-[packing checklist with checkboxes]
+[packing checklist with HTML checkboxes that can be clicked - use <input type="checkbox"> format]
 
 ## 🛡️ Travel Tips
 [local customs, money, safety, practical advice]
@@ -455,6 +455,9 @@ Start immediately with the content in this format:
 
 ## 🚨 Emergency Info
 [contacts, healthcare, embassy info]
+
+## ⚠️ Disclaimer
+[brief terms and conditions - prices may vary, confirm hours before visiting, etc.]
 
 Use specific places, real addresses, current prices. Weather will be added automatically. NO images.
 
@@ -567,13 +570,13 @@ You MUST research current information for ${destination} to ensure accuracy:
    - **Duration estimates** (e.g., "Allow 2-3 hours for Akrotiri")
    - **Insider tips** (e.g., "Visit Red Beach early morning for best photos")
 
-5. **Budget Breakdown**: Make it realistic with:
-   - **Current market prices** in Euros (€)
-   - **Per-person and total costs**
-   - **Seasonal variations** (e.g., "Summer prices 20% higher")
-   - **Currency conversion notes**
-   - **Money-saving tips** (e.g., "Book flights 3 months in advance for best rates")
-   - **Optional expenses** (e.g., "Wine tours €25-50 per person")
+5. **Budget Breakdown**: Create detailed table with accurate amounts:
+   - **Show specific prices in ${currency}**
+   - **Calculate per-person costs for ${totalTravelers} travelers (${adults} adults${children > 0 ? `, ${children} children` : ''})**
+   - **Break down total ${budget} ${currency} budget** realistically over ${nDays} days
+   - **Include daily average**: ${Math.round(budget / nDays / totalTravelers)} per person per day
+   - **Show realistic flight costs, accommodation, meals, activities**
+   - **Add clickable checkboxes for tracking expenses**
 
 6. **Travel Tips**: Include:
    - **Local customs and etiquette** (e.g., "Greet with 'Kalimera' in morning, 'Kalispera' in evening")
@@ -583,46 +586,14 @@ You MUST research current information for ${destination} to ensure accuracy:
    - **Cultural insights** (e.g., "Greeks value family time - many shops close 2-4 PM")
    - **Weather considerations** (e.g., "September is perfect - warm but not crowded")
 
-**IMAGE REQUIREMENTS - CONTEXTUAL PLACEMENT:**
 
-**CRITICAL**: Place images contextually within the content, NOT at the end. Each image should appear right after its relevant content section:
-
-1. **After Trip Overview**: ![Santorini sunset Oia Greece](https://source.unsplash.com/400x300/?Santorini,sunset,Oia,Greece)
-2. **After Dining Guide**: ![Greek food Santorini taverna](https://source.unsplash.com/400x300/?Greek,food,Santorini,taverna)
-3. **After Getting Around**: ![Santorini white buildings caldera](https://source.unsplash.com/400x300/?Santorini,white,buildings,caldera)
-4. **After Day 1 itinerary**: ![Santorini architecture blue domes](https://source.unsplash.com/400x300/?Santorini,architecture,blue,domes)
-5. **After Day 2 itinerary**: ![Santorini beaches volcanic](https://source.unsplash.com/400x300/?Santorini,beaches,volcanic)
-6. **After Day 3 itinerary**: ![Santorini culture local people](https://source.unsplash.com/400x300/?Santorini,culture,local,people)
-7. **After Must-See Attractions**: ![Santorini activities wine tasting](https://source.unsplash.com/400x300/?Santorini,activities,wine,tasting)
-8. **After Travel Tips**: ![Santorini experience travel](https://source.unsplash.com/400x300/?Santorini,experience,travel)
-
-**PLACEMENT RULES:**
-- Place each image IMMEDIATELY after its relevant content section
-- DO NOT put all images at the end
-- DO NOT create a separate "Image Ideas" section
-- DO NOT create any section called "Image Ideas" or "🖼️ Image Ideas"
-- Each image should enhance the content it follows
-- Use proper HTML img tags with alt text
-- Images should be 400x300 pixels
-- Make images feel natural and integrated into the content flow
-- **CRITICAL**: If you see "Image Ideas" or "🖼️ Image Ideas" in your response, REMOVE IT COMPLETELY
-- **ABSOLUTELY FORBIDDEN**: Do not create any section called "Image Ideas", "🖼️ Image Ideas", or "Enhance your travel experience with these beautiful images"
-- **ABSOLUTELY FORBIDDEN**: Do not create any numbered list of images at the end of the report
-- **ABSOLUTELY FORBIDDEN**: Do not include any text that says "Enhance your travel experience with these beautiful images"
-- **MANDATORY**: Place images contextually within the content, NOT at the end
-- **MANDATORY**: Each image must appear immediately after its relevant content section
-- **CRITICAL**: NEVER create a section called "Image Ideas" or "🖼️ Image Ideas"
-- **CRITICAL**: NEVER create any numbered list of images
-- **CRITICAL**: NEVER include any text about "Image Ideas" or "Enhance your travel experience"
-- **CRITICAL**: NEVER create any section that lists images at the end
-- **CRITICAL**: NEVER create any section that contains the words "Image Ideas"
-- **CRITICAL**: NEVER create any section that contains the emoji "🖼️"
-- **CRITICAL**: NEVER create any section that contains the text "Enhance your travel experience"
-- **CRITICAL**: NEVER create any section that contains the text "Here are some beautiful images"
-- **CRITICAL**: NEVER create any section that contains the text "Here are some images to inspire"
-- **CRITICAL**: NEVER create any section that contains the text "Here are some images"
-- **CRITICAL**: NEVER create any section that contains the text "Image Ideas"
-- **CRITICAL**: NEVER create any section that contains the text "🖼️ Image Ideas"
+**CRITICAL BOOKING LINKS - USE ONLY THESE:**
+- **Hotels**: Use [Hotel Widget](#hotel-widget) or #hotel-widget - NEVER use booking.com or external sites
+- **Flights**: Use [Flight Widget](#flight-widget) or #flight-widget - NEVER use external flight sites
+- **Activities**: Use GetYourGuide links with partner ID PUHVJ53: https://www.getyourguide.com/s/?q=${destination}&partner_id=PUHVJ53
+- **Reviews**: Leave empty for now - NO TripAdvisor links until provided
+- **Maps**: Use [Map](map:location) format for interactive maps - add maps for each major location
+- **Checkboxes**: Use <input type="checkbox" id="unique-id"> for all checklists to make them clickable
 
 **WIDGET INTEGRATION REQUIREMENTS:**
 DO NOT place widgets in the "Don't Forget List" section
@@ -631,6 +602,7 @@ Widgets should be placed in appropriate sections:
 - Hotel widget → "Accommodation" section
 - Car rental widget → "Getting Around" section
 - eSIM widget → "Useful Apps" section
+- GetYourGuide widget → "Must-See Attractions" section
 
 **CRITICAL - NO GENERIC CONTENT:**
 - **ABSOLUTELY NO "Open Exploration" days** - this is forbidden
