@@ -5,24 +5,23 @@ const AFF = {
 };
 export function affiliatesFor(dest = '') {
   const q = encodeURIComponent(dest || '');
-  const bookingAidParam = AFF.bookingAid ? `&aid=${AFF.bookingAid}` : '';
-  const gygPidParam     = AFF.gygPid     ? `&partner_id=${AFF.gygPid}` : '';
-  const kayakAidParam   = AFF.kayakAid   ? `&aid=${AFF.kayakAid}` : '';
+  // Widget-based system - links point to widget anchors instead of external sites
   return {
     maps:      (term) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(term || dest)}`,
-    flights:   ()      => `https://www.kayak.com/flights?search=${q}${kayakAidParam}`,
-    hotels:    (term) => `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(term || dest)}${bookingAidParam}`,
-    activities:(term) => `https://www.getyourguide.com/s/?q=${encodeURIComponent(term || dest)}${gygPidParam}`,
-    cars:      ()      => `https://www.rentalcars.com/SearchResults.do?destination=${q}`,
-    insurance: ()      => `https://www.worldnomads.com/`,
-    reviews:   (term) => `https://www.tripadvisor.com/Search?q=${encodeURIComponent(term || dest)}`,
+    flights:   ()      => `#flight-widget`, // Points to flight search widget
+    hotels:    (term) => `#hotel-widget`,   // Points to hotel booking widget
+    activities:(term) => `#gyg-widget`,     // Points to GetYourGuide activities widget
+    cars:      ()      => `#car-widget`,    // Points to car rental widget
+    transfers: ()      => `#airport-widget`, // Points to airport transfer widget
+    insurance: ()      => `https://www.worldnomads.com/`, // Keep external for insurance
+    reviews:   (term) => `https://www.tripadvisor.com/Search?q=${encodeURIComponent(term || dest)}`, // Keep external for reviews
     image:     (term) => {
       // Enhanced image processing with better query formatting
       const query = encodeURIComponent(term || dest);
-      
+
       // Use Unsplash with better query formatting
       const unsplashUrl = `https://source.unsplash.com/400x300/?${query}`;
-      
+
       console.log('Image query:', term, '→', unsplashUrl);
       return unsplashUrl;
     },
@@ -39,10 +38,35 @@ export function linkifyTokens(markdown = '', dest = '') {
   console.log('Found image tokens:', imageMatches);
   
   const processed = (markdown || '')
+    // Maps - keep external link for Google Maps
     .replace(/\[(Map)\]\(map:([^)]+)\)/gi,        (_m, _t, q) => `[Map](${aff.maps(q.trim())})`)
-    .replace(/\[(Book)\]\(book:([^)]+)\)/gi,      (_m, _t, q) => `[Book](${aff.hotels(q.trim())})`)
-    .replace(/\[(Tickets)\]\(tickets:([^)]+)\)/gi,(_m, _t, q) => `[Tickets](${aff.activities(q.trim())})`)
+
+    // Hotel/Accommodation links → Hotel Widget
+    .replace(/\[(Book|Book Now|Book Hotel|Hotel)\]\(book:([^)]+)\)/gi,      (_m, _t, q) => `[Book Hotel](#hotel-widget)`)
+    .replace(/\[(Book|Book Now|Book Hotel|Hotel)\]\(hotel:([^)]+)\)/gi,     (_m, _t, q) => `[Book Hotel](#hotel-widget)`)
+    .replace(/\[(Book|Book Now|Book Hotel|Hotel)\]\(hotels:([^)]+)\)/gi,    (_m, _t, q) => `[Book Hotel](#hotel-widget)`)
+
+    // Flight links → Flight Widget
+    .replace(/\[(Book|Book Now|Flights|Flight)\]\(flight:([^)]+)\)/gi,      (_m, _t, q) => `[Book Flights](#flight-widget)`)
+    .replace(/\[(Book|Book Now|Flights|Flight)\]\(flights:([^)]+)\)/gi,     (_m, _t, q) => `[Book Flights](#flight-widget)`)
+
+    // Activity/Ticket links → GetYourGuide Widget
+    .replace(/\[(Tickets|Book|Book Now|Activities)\]\(tickets:([^)]+)\)/gi, (_m, _t, q) => `[Book Activities](#gyg-widget)`)
+    .replace(/\[(Tickets|Book|Book Now|Activities)\]\(activity:([^)]+)\)/gi,(_m, _t, q) => `[Book Activities](#gyg-widget)`)
+    .replace(/\[(Tickets|Book|Book Now|Activities)\]\(activities:([^)]+)\)/gi,(_m, _t, q) => `[Book Activities](#gyg-widget)`)
+
+    // Car rental links → Car Widget
+    .replace(/\[(Car|Rent|Car Rental)\]\(car:([^)]+)\)/gi,                  (_m, _t, q) => `[Rent Car](#car-widget)`)
+    .replace(/\[(Car|Rent|Car Rental)\]\(cars:([^)]+)\)/gi,                 (_m, _t, q) => `[Rent Car](#car-widget)`)
+
+    // Airport transfer links → Airport Widget
+    .replace(/\[(Transfer|Airport)\]\(transfer:([^)]+)\)/gi,                (_m, _t, q) => `[Airport Transfer](#airport-widget)`)
+    .replace(/\[(Transfer|Airport)\]\(airport:([^)]+)\)/gi,                 (_m, _t, q) => `[Airport Transfer](#airport-widget)`)
+
+    // Reviews - keep external
     .replace(/\[(Reviews)\]\(reviews:([^)]+)\)/gi,(_m, _t, q) => `[Reviews](${aff.reviews(q.trim())})`)
+
+    // Images - remove completely
     .replace(/!\[([^\]]*)\]\(image:([^)]+)\)/gi,  (_m, alt, q) => {
       // REMOVE IMAGES: Return empty string instead of image tag
       console.log('Removing image token:', { alt, query: q.trim() });

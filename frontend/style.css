@@ -252,23 +252,164 @@ a:hover{ text-decoration: underline; }
 .btn{
   appearance:none; border:0; cursor:pointer; text-decoration:none;
   display:inline-flex; align-items:center; justify-content:center;
-  gap:.5rem; padding:.75rem 1rem; border-radius:12px; font-weight:600;
-  transition:transform .04s ease, box-shadow .2s ease, background .2s ease, color .2s ease, opacity .2s ease;
+  gap:.5rem; padding:.875rem 1.25rem; border-radius:12px; font-weight:600;
+  font-size:15px; line-height:1.4; min-height:48px;
+  transition:all .2s cubic-bezier(0.4, 0, 0.2, 1);
+  position:relative; overflow:hidden;
 }
-.btn:active{ transform: translateY(1px); }
+
+.btn:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+}
+
+.btn:active{
+  transform: translateY(0);
+  transition:all .1s ease;
+}
+
 .btn-cta{
-  color:#fff; background: linear-gradient(135deg, var(--brand), var(--brand-2));
+  color:#fff;
+  background: linear-gradient(135deg, var(--brand), var(--brand-2));
   box-shadow: 0 8px 24px rgba(37,99,235,.25);
 }
+
+.btn-cta:hover{
+  box-shadow: 0 12px 32px rgba(37,99,235,.35);
+  background: linear-gradient(135deg, var(--brand-2), var(--brand));
+}
+
 .btn-primary{
-  color:#fff; background: var(--brand);
+  color:#fff;
+  background: var(--brand);
   box-shadow: 0 6px 18px rgba(37,99,235,.25);
 }
-.btn-ghost{
-  color:var(--ink); background:#eef2ff;
+
+.btn-primary:hover{
+  background: var(--brand-2);
+  box-shadow: 0 8px 24px rgba(37,99,235,.35);
 }
-.btn-ghost:hover{ background:#e2e8ff; }
-.btn:focus-visible{ outline:2px solid var(--ring); outline-offset: 2px; }
+
+.btn-ghost{
+  color:var(--ink);
+  background:#eef2ff;
+  border:1px solid #e2e8ff;
+}
+
+.btn-ghost:hover{
+  background:#e2e8ff;
+  border-color:#d1d9ff;
+  color:var(--brand);
+}
+
+.btn:focus-visible{
+  outline:2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.btn:disabled{
+  opacity:0.5;
+  cursor:not-allowed;
+  transform:none !important;
+}
+
+/* Enhanced button variants */
+.btn-outline {
+  background: white;
+  color: var(--brand);
+  border: 2px solid var(--brand);
+}
+
+.btn-outline:hover {
+  background: var(--brand);
+  color: white;
+  border-color: var(--brand);
+}
+
+.btn-success {
+  background: #16a34a;
+  color: white;
+  box-shadow: 0 4px 16px rgba(34, 197, 94, 0.3);
+}
+
+.btn-success:hover {
+  background: #15803d;
+  box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+}
+
+.btn-warning {
+  background: #f59e0b;
+  color: white;
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
+}
+
+.btn-warning:hover {
+  background: #d97706;
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+}
+
+.btn-danger {
+  background: #dc2626;
+  color: white;
+  box-shadow: 0 4px 16px rgba(220, 38, 38, 0.3);
+}
+
+.btn-danger:hover {
+  background: #b91c1c;
+  box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
+}
+
+/* Button sizes */
+.btn-sm {
+  padding: 0.5rem 0.875rem;
+  font-size: 14px;
+  min-height: 36px;
+}
+
+.btn-lg {
+  padding: 1rem 1.5rem;
+  font-size: 16px;
+  min-height: 56px;
+}
+
+.btn-xl {
+  padding: 1.25rem 2rem;
+  font-size: 18px;
+  min-height: 64px;
+}
+
+/* Button with icons */
+.btn-icon {
+  min-width: 48px;
+  padding: 0.875rem;
+}
+
+.btn-icon-sm {
+  min-width: 36px;
+  padding: 0.5rem;
+}
+
+/* Loading state */
+.btn-loading {
+  color: transparent;
+}
+
+.btn-loading::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: btn-spin 1s linear infinite;
+}
+
+@keyframes btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 /* ====== HERO ====== */
 .hero{
@@ -364,7 +505,7 @@ a:hover{ text-decoration: underline; }
 .field span, .field label{
   font-weight:600; color:var(--ink);
 }
-.field input, .field textarea{
+.field input, .field textarea, .field select{
   appearance:none;
   padding:12px 16px;
   border:2px solid #e2e8f0;
@@ -373,10 +514,29 @@ a:hover{ text-decoration: underline; }
   background:#fff;
   transition:border-color .2s ease, box-shadow .2s ease;
 }
-.field input:focus, .field textarea:focus{
+.field input:focus, .field textarea:focus, .field select:focus{
   outline:none;
   border-color:var(--brand);
   box-shadow:0 0 0 3px var(--ring);
+}
+
+.field select{
+  cursor:pointer;
+  background:white url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") no-repeat right 8px center;
+  background-size:16px;
+  padding-right:40px;
+}
+
+.field select[multiple]{
+  background-image:none;
+  padding:8px 12px;
+  min-height:80px;
+  overflow-y:auto;
+}
+
+.field select option{
+  padding:8px 12px;
+  font-size:14px;
 }
 .field textarea{
   resize:vertical; min-height:100px;

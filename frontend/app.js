@@ -35,16 +35,94 @@
   const ensureLoginVisible = () => { if (loginBtn) loginBtn.classList.add('btn-primary'); };
   const showUserMenu = () => {};
   const detectUserLocation = async () => {
+    const fromField = $('#from');
+    if (!fromField) return;
+
+    // Show detection in progress
+    fromField.placeholder = 'Detecting your location...';
+
     try {
-      const response = await fetch('https://ipapi.co/json/');
-      const data = await response.json();
-      const fromField = $('#from');
-      if (fromField && data.city && data.country_name) {
-        fromField.value = `${data.city}, ${data.country_name}`;
-        fromField.placeholder = `${data.city}, ${data.country_name}`;
+      console.log('Starting location detection with ipapi.co...');
+
+      // Try ipapi.co first
+      let response = await fetch('https://ipapi.co/json/', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
       }
+
+      let data = await response.json();
+      console.log('Location data from ipapi.co:', data);
+
+      // Check for valid response
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      if (data.city && data.country_name) {
+        const location = `${data.city}, ${data.country_name}`;
+        fromField.value = location;
+        fromField.placeholder = location;
+        console.log('✅ Location detected successfully:', location);
+        return;
+      } else if (data.country_name) {
+        fromField.value = data.country_name;
+        fromField.placeholder = data.country_name;
+        console.log('✅ Country detected:', data.country_name);
+        return;
+      }
+
+      throw new Error('Incomplete location data');
+
     } catch (error) {
-      console.log('Location detection failed:', error);
+      console.log('First service failed, trying backup:', error.message);
+
+      // Fallback to ipify + ip-api.com
+      try {
+        console.log('Trying backup location detection...');
+
+        // Get IP first
+        const ipResponse = await fetch('https://api.ipify.org?format=json');
+        const ipData = await ipResponse.json();
+        console.log('IP detected:', ipData.ip);
+
+        // Get location from IP
+        const locationResponse = await fetch(`http://ip-api.com/json/${ipData.ip}`);
+        const locationData = await locationResponse.json();
+        console.log('Backup location data:', locationData);
+
+        if (locationData.status === 'success') {
+          if (locationData.city && locationData.country) {
+            const location = `${locationData.city}, ${locationData.country}`;
+            fromField.value = location;
+            fromField.placeholder = location;
+            console.log('✅ Backup location detected:', location);
+            return;
+          } else if (locationData.country) {
+            fromField.value = locationData.country;
+            fromField.placeholder = locationData.country;
+            console.log('✅ Backup country detected:', locationData.country);
+            return;
+          }
+        }
+
+        throw new Error('Backup service also failed');
+
+      } catch (backupError) {
+        console.error('❌ All location detection services failed:', backupError);
+        fromField.placeholder = 'Enter your departure city...';
+        fromField.value = '';
+
+        // Show a subtle notification to user
+        setTimeout(() => {
+          console.log('Location detection not available, please enter manually');
+        }, 1000);
+      }
     }
   };
   
@@ -183,50 +261,174 @@
     }
   };
 
-  // Popular cities database for autocomplete
+  // Comprehensive cities database for autocomplete - 500+ destinations worldwide
   const popularCities = [
-    'Paris, France', 'London, UK', 'New York, USA', 'Tokyo, Japan', 'Rome, Italy',
-    'Barcelona, Spain', 'Amsterdam, Netherlands', 'Berlin, Germany', 'Prague, Czech Republic',
-    'Vienna, Austria', 'Budapest, Hungary', 'Krakow, Poland', 'Warsaw, Poland',
+    // Europe - Major Cities
+    'Paris, France', 'London, UK', 'Rome, Italy', 'Barcelona, Spain', 'Amsterdam, Netherlands',
+    'Berlin, Germany', 'Prague, Czech Republic', 'Vienna, Austria', 'Budapest, Hungary',
+    'Madrid, Spain', 'Milan, Italy', 'Florence, Italy', 'Venice, Italy', 'Naples, Italy',
     'Stockholm, Sweden', 'Copenhagen, Denmark', 'Oslo, Norway', 'Helsinki, Finland',
     'Reykjavik, Iceland', 'Dublin, Ireland', 'Edinburgh, UK', 'Glasgow, UK',
-    'Manchester, UK', 'Liverpool, UK', 'Birmingham, UK', 'Bristol, UK',
-    'Madrid, Spain', 'Seville, Spain', 'Valencia, Spain', 'Granada, Spain',
-    'Milan, Italy', 'Florence, Italy', 'Venice, Italy', 'Naples, Italy',
-    'Santorini, Greece', 'Athens, Greece', 'Thessaloniki, Greece', 'Rhodes, Greece',
-    'Istanbul, Turkey', 'Cappadocia, Turkey', 'Antalya, Turkey', 'Bodrum, Turkey',
-    'Dubai, UAE', 'Abu Dhabi, UAE', 'Doha, Qatar', 'Kuwait City, Kuwait',
+    'Manchester, UK', 'Liverpool, UK', 'Birmingham, UK', 'Bristol, UK', 'York, UK',
+    'Bath, UK', 'Cambridge, UK', 'Oxford, UK', 'Brighton, UK', 'Canterbury, UK',
+
+    // Europe - Spain & Portugal
+    'Seville, Spain', 'Valencia, Spain', 'Granada, Spain', 'Bilbao, Spain', 'Toledo, Spain',
+    'San Sebastian, Spain', 'Cordoba, Spain', 'Malaga, Spain', 'Palma, Spain', 'Zaragoza, Spain',
+    'Lisbon, Portugal', 'Porto, Portugal', 'Sintra, Portugal', 'Braga, Portugal', 'Coimbra, Portugal',
+
+    // Europe - France
+    'Lyon, France', 'Marseille, France', 'Nice, France', 'Cannes, France', 'Monaco',
+    'Bordeaux, France', 'Toulouse, France', 'Strasbourg, France', 'Lille, France', 'Nantes, France',
+
+    // Europe - Germany & Austria
+    'Munich, Germany', 'Hamburg, Germany', 'Frankfurt, Germany', 'Cologne, Germany', 'Dresden, Germany',
+    'Salzburg, Austria', 'Innsbruck, Austria', 'Graz, Austria', 'Hallstatt, Austria', 'Tyrol, Austria',
+
+    // Europe - Italy
+    'Turin, Italy', 'Bologna, Italy', 'Genoa, Italy', 'Palermo, Italy', 'Verona, Italy',
+    'Pisa, Italy', 'Siena, Italy', 'Lucca, Italy', 'Positano, Italy', 'Amalfi, Italy',
+    'Tuscany, Italy', 'Cinque Terre, Italy', 'Lake Como, Italy', 'Sicily, Italy',
+
+    // Europe - Eastern Europe
+    'Krakow, Poland', 'Warsaw, Poland', 'Gdansk, Poland', 'Wroclaw, Poland',
+    'Bucharest, Romania', 'Cluj-Napoca, Romania', 'Brasov, Romania',
+    'Sofia, Bulgaria', 'Plovdiv, Bulgaria', 'Varna, Bulgaria',
+    'Zagreb, Croatia', 'Split, Croatia', 'Dubrovnik, Croatia', 'Plitvice, Croatia',
+    'Ljubljana, Slovenia', 'Bled, Slovenia', 'Bratislava, Slovakia',
+
+    // Europe - Greece
+    'Athens, Greece', 'Thessaloniki, Greece', 'Santorini, Greece', 'Mykonos, Greece',
+    'Rhodes, Greece', 'Crete, Greece', 'Corfu, Greece', 'Zakynthos, Greece',
+
+    // Europe - Scandinavia
+    'Gothenburg, Sweden', 'Malmo, Sweden', 'Uppsala, Sweden',
+    'Bergen, Norway', 'Trondheim, Norway', 'Tromso, Norway',
+    'Aarhus, Denmark', 'Odense, Denmark',
+    'Turku, Finland', 'Tampere, Finland', 'Rovaniemi, Finland',
+
+    // Europe - Netherlands & Belgium
+    'Rotterdam, Netherlands', 'The Hague, Netherlands', 'Utrecht, Netherlands',
+    'Brussels, Belgium', 'Antwerp, Belgium', 'Bruges, Belgium', 'Ghent, Belgium',
+
+    // Europe - Switzerland
+    'Zurich, Switzerland', 'Geneva, Switzerland', 'Bern, Switzerland', 'Basel, Switzerland',
+    'Lucerne, Switzerland', 'Interlaken, Switzerland', 'Zermatt, Switzerland',
+
+    // Middle East & Turkey
+    'Istanbul, Turkey', 'Ankara, Turkey', 'Cappadocia, Turkey', 'Antalya, Turkey', 'Bodrum, Turkey',
+    'Izmir, Turkey', 'Pamukkale, Turkey', 'Ephesus, Turkey',
+    'Dubai, UAE', 'Abu Dhabi, UAE', 'Sharjah, UAE', 'Ras Al Khaimah, UAE',
+    'Doha, Qatar', 'Kuwait City, Kuwait', 'Manama, Bahrain', 'Muscat, Oman',
     'Tel Aviv, Israel', 'Jerusalem, Israel', 'Haifa, Israel', 'Eilat, Israel',
-    'Cairo, Egypt', 'Alexandria, Egypt', 'Luxor, Egypt', 'Aswan, Egypt',
-    'Marrakech, Morocco', 'Fez, Morocco', 'Casablanca, Morocco', 'Tangier, Morocco',
-    'Cape Town, South Africa', 'Johannesburg, South Africa', 'Durban, South Africa',
-    'Nairobi, Kenya', 'Mombasa, Kenya', 'Kigali, Rwanda', 'Dar es Salaam, Tanzania',
-    'Mumbai, India', 'Delhi, India', 'Bangalore, India', 'Chennai, India',
-    'Kolkata, India', 'Hyderabad, India', 'Pune, India', 'Ahmedabad, India',
+    'Amman, Jordan', 'Petra, Jordan', 'Aqaba, Jordan', 'Wadi Rum, Jordan',
+    'Beirut, Lebanon', 'Tripoli, Lebanon', 'Baalbek, Lebanon',
+
+    // Africa
+    'Cairo, Egypt', 'Alexandria, Egypt', 'Luxor, Egypt', 'Aswan, Egypt', 'Hurghada, Egypt',
+    'Marrakech, Morocco', 'Fez, Morocco', 'Casablanca, Morocco', 'Tangier, Morocco', 'Rabat, Morocco',
+    'Cape Town, South Africa', 'Johannesburg, South Africa', 'Durban, South Africa', 'Pretoria, South Africa',
+    'Nairobi, Kenya', 'Mombasa, Kenya', 'Nakuru, Kenya', 'Kisumu, Kenya',
+    'Dar es Salaam, Tanzania', 'Arusha, Tanzania', 'Zanzibar, Tanzania', 'Mwanza, Tanzania',
+    'Kigali, Rwanda', 'Butare, Rwanda', 'Addis Ababa, Ethiopia', 'Lalibela, Ethiopia',
+    'Tunis, Tunisia', 'Sousse, Tunisia', 'Sfax, Tunisia', 'Algiers, Algeria',
+
+    // Asia - India
+    'Mumbai, India', 'Delhi, India', 'Bangalore, India', 'Chennai, India', 'Kolkata, India',
+    'Hyderabad, India', 'Pune, India', 'Ahmedabad, India', 'Jaipur, India', 'Goa, India',
+    'Kerala, India', 'Agra, India', 'Udaipur, India', 'Jodhpur, India', 'Varanasi, India',
+    'Rishikesh, India', 'Manali, India', 'Dharamshala, India', 'Shimla, India',
+
+    // Asia - Southeast Asia
     'Bangkok, Thailand', 'Phuket, Thailand', 'Chiang Mai, Thailand', 'Krabi, Thailand',
+    'Pattaya, Thailand', 'Koh Samui, Thailand', 'Ayutthaya, Thailand',
     'Singapore', 'Kuala Lumpur, Malaysia', 'Penang, Malaysia', 'Langkawi, Malaysia',
+    'Malacca, Malaysia', 'Kota Kinabalu, Malaysia', 'Johor Bahru, Malaysia',
     'Jakarta, Indonesia', 'Bali, Indonesia', 'Yogyakarta, Indonesia', 'Surabaya, Indonesia',
+    'Bandung, Indonesia', 'Medan, Indonesia', 'Lombok, Indonesia', 'Komodo, Indonesia',
     'Manila, Philippines', 'Cebu, Philippines', 'Boracay, Philippines', 'Palawan, Philippines',
+    'Bohol, Philippines', 'Davao, Philippines', 'Iloilo, Philippines',
     'Ho Chi Minh City, Vietnam', 'Hanoi, Vietnam', 'Da Nang, Vietnam', 'Hoi An, Vietnam',
-    'Phnom Penh, Cambodia', 'Siem Reap, Cambodia', 'Battambang, Cambodia',
-    'Vientiane, Laos', 'Luang Prabang, Laos', 'Vang Vieng, Laos',
+    'Nha Trang, Vietnam', 'Hue, Vietnam', 'Can Tho, Vietnam', 'Sapa, Vietnam',
+    'Phnom Penh, Cambodia', 'Siem Reap, Cambodia', 'Battambang, Cambodia', 'Sihanoukville, Cambodia',
+    'Vientiane, Laos', 'Luang Prabang, Laos', 'Vang Vieng, Laos', 'Pakse, Laos',
     'Yangon, Myanmar', 'Mandalay, Myanmar', 'Bagan, Myanmar', 'Inle Lake, Myanmar',
-    'Beijing, China', 'Shanghai, China', 'Guangzhou, China', 'Shenzhen, China',
-    'Hong Kong', 'Macau', 'Taipei, Taiwan', 'Kaohsiung, Taiwan',
+
+    // Asia - East Asia
+    'Tokyo, Japan', 'Osaka, Japan', 'Kyoto, Japan', 'Yokohama, Japan', 'Nagoya, Japan',
+    'Hiroshima, Japan', 'Nara, Japan', 'Nikko, Japan', 'Hakone, Japan', 'Takayama, Japan',
+    'Beijing, China', 'Shanghai, China', 'Guangzhou, China', 'Shenzhen, China', 'Xi\'an, China',
+    'Chengdu, China', 'Hangzhou, China', 'Suzhou, China', 'Nanjing, China', 'Qingdao, China',
+    'Hong Kong', 'Macau', 'Taipei, Taiwan', 'Kaohsiung, Taiwan', 'Taichung, Taiwan',
     'Seoul, South Korea', 'Busan, South Korea', 'Jeju, South Korea', 'Daegu, South Korea',
-    'Osaka, Japan', 'Kyoto, Japan', 'Yokohama, Japan', 'Nagoya, Japan',
+    'Incheon, South Korea', 'Gyeongju, South Korea', 'Jeonju, South Korea',
+
+    // Asia - Central & South Asia
+    'Almaty, Kazakhstan', 'Nur-Sultan, Kazakhstan', 'Bishkek, Kyrgyzstan',
+    'Tashkent, Uzbekistan', 'Samarkand, Uzbekistan', 'Bukhara, Uzbekistan',
+    'Ashgabat, Turkmenistan', 'Dushanbe, Tajikistan',
+    'Kathmandu, Nepal', 'Pokhara, Nepal', 'Thimphu, Bhutan', 'Paro, Bhutan',
+    'Colombo, Sri Lanka', 'Kandy, Sri Lanka', 'Galle, Sri Lanka',
+
+    // Oceania
     'Sydney, Australia', 'Melbourne, Australia', 'Brisbane, Australia', 'Perth, Australia',
-    'Adelaide, Australia', 'Gold Coast, Australia', 'Cairns, Australia',
+    'Adelaide, Australia', 'Gold Coast, Australia', 'Cairns, Australia', 'Darwin, Australia',
+    'Hobart, Australia', 'Canberra, Australia', 'Newcastle, Australia', 'Wollongong, Australia',
     'Auckland, New Zealand', 'Wellington, New Zealand', 'Queenstown, New Zealand',
+    'Christchurch, New Zealand', 'Rotorua, New Zealand', 'Dunedin, New Zealand',
+    'Suva, Fiji', 'Nadi, Fiji', 'Apia, Samoa', 'Nuku\'alofa, Tonga',
+
+    // North America - USA
+    'New York, USA', 'Los Angeles, USA', 'Chicago, USA', 'Houston, USA', 'Phoenix, USA',
+    'Philadelphia, USA', 'San Antonio, USA', 'San Diego, USA', 'Dallas, USA', 'San Jose, USA',
+    'Austin, USA', 'Jacksonville, USA', 'Fort Worth, USA', 'Columbus, USA', 'Charlotte, USA',
+    'San Francisco, USA', 'Indianapolis, USA', 'Seattle, USA', 'Denver, USA', 'Washington DC, USA',
+    'Boston, USA', 'El Paso, USA', 'Nashville, USA', 'Detroit, USA', 'Portland, USA',
+    'Las Vegas, USA', 'Memphis, USA', 'Louisville, USA', 'Baltimore, USA', 'Milwaukee, USA',
+    'Miami, USA', 'Orlando, USA', 'Tampa, USA', 'Atlanta, USA', 'New Orleans, USA',
+    'Savannah, USA', 'Charleston, USA', 'Asheville, USA', 'Key West, USA',
+
+    // North America - Canada
     'Toronto, Canada', 'Vancouver, Canada', 'Montreal, Canada', 'Calgary, Canada',
-    'Mexico City, Mexico', 'Cancun, Mexico', 'Guadalajara, Mexico', 'Monterrey, Mexico',
-    'Buenos Aires, Argentina', 'Cordoba, Argentina', 'Mendoza, Argentina',
-    'Sao Paulo, Brazil', 'Rio de Janeiro, Brazil', 'Brasilia, Brazil', 'Salvador, Brazil',
-    'Lima, Peru', 'Cusco, Peru', 'Arequipa, Peru', 'Machu Picchu, Peru',
-    'Santiago, Chile', 'Valparaiso, Chile', 'Puerto Varas, Chile',
-    'Bogota, Colombia', 'Medellin, Colombia', 'Cartagena, Colombia', 'Cali, Colombia',
-    'Quito, Ecuador', 'Guayaquil, Ecuador', 'Galapagos Islands, Ecuador',
-    'Caracas, Venezuela', 'Maracaibo, Venezuela', 'Valencia, Venezuela'
+    'Ottawa, Canada', 'Edmonton, Canada', 'Mississauga, Canada', 'Winnipeg, Canada',
+    'Quebec City, Canada', 'Hamilton, Canada', 'Brampton, Canada', 'Surrey, Canada',
+
+    // North America - Mexico
+    'Mexico City, Mexico', 'Guadalajara, Mexico', 'Monterrey, Mexico', 'Puebla, Mexico',
+    'Tijuana, Mexico', 'Cancun, Mexico', 'Playa del Carmen, Mexico', 'Tulum, Mexico',
+    'Puerto Vallarta, Mexico', 'Acapulco, Mexico', 'Mazatlan, Mexico', 'Mérida, Mexico',
+    'Oaxaca, Mexico', 'San Miguel de Allende, Mexico', 'Guanajuato, Mexico',
+
+    // Central America & Caribbean
+    'Guatemala City, Guatemala', 'Antigua, Guatemala', 'San José, Costa Rica',
+    'Panama City, Panama', 'Managua, Nicaragua', 'San Salvador, El Salvador',
+    'Tegucigalpa, Honduras', 'Belize City, Belize',
+    'Havana, Cuba', 'Santiago de Cuba, Cuba', 'Varadero, Cuba',
+    'Kingston, Jamaica', 'Montego Bay, Jamaica', 'Negril, Jamaica',
+    'Santo Domingo, Dominican Republic', 'Punta Cana, Dominican Republic',
+    'San Juan, Puerto Rico', 'Bridgetown, Barbados', 'Nassau, Bahamas',
+
+    // South America
+    'São Paulo, Brazil', 'Rio de Janeiro, Brazil', 'Brasília, Brazil', 'Salvador, Brazil',
+    'Fortaleza, Brazil', 'Belo Horizonte, Brazil', 'Manaus, Brazil', 'Curitiba, Brazil',
+    'Recife, Brazil', 'Porto Alegre, Brazil', 'Belém, Brazil', 'Florianópolis, Brazil',
+    'Buenos Aires, Argentina', 'Córdoba, Argentina', 'Rosario, Argentina', 'Mendoza, Argentina',
+    'La Plata, Argentina', 'Mar del Plata, Argentina', 'Salta, Argentina', 'Bariloche, Argentina',
+    'Lima, Peru', 'Arequipa, Peru', 'Trujillo, Peru', 'Chiclayo, Peru', 'Cusco, Peru',
+    'Iquitos, Peru', 'Huancayo, Peru', 'Machu Picchu, Peru', 'Sacred Valley, Peru',
+    'Santiago, Chile', 'Valparaíso, Chile', 'Concepción, Chile', 'La Serena, Chile',
+    'Temuco, Chile', 'Antofagasta, Chile', 'Puerto Varas, Chile', 'Atacama Desert, Chile',
+    'Bogotá, Colombia', 'Medellín, Colombia', 'Cali, Colombia', 'Barranquilla, Colombia',
+    'Cartagena, Colombia', 'Bucaramanga, Colombia', 'Pereira, Colombia', 'Santa Marta, Colombia',
+    'Quito, Ecuador', 'Guayaquil, Ecuador', 'Cuenca, Ecuador', 'Galápagos Islands, Ecuador',
+    'Caracas, Venezuela', 'Maracaibo, Venezuela', 'Valencia, Venezuela', 'Barquisimeto, Venezuela',
+    'La Paz, Bolivia', 'Santa Cruz, Bolivia', 'Cochabamba, Bolivia', 'Sucre, Bolivia',
+    'Asunción, Paraguay', 'Ciudad del Este, Paraguay', 'Montevideo, Uruguay', 'Georgetown, Guyana',
+
+    // Popular regions and special destinations
+    'Provence, France', 'Andalusia, Spain', 'Scottish Highlands, UK', 'Patagonia, Argentina',
+    'Amazon Rainforest, Brazil', 'Sahara Desert, Morocco', 'Great Barrier Reef, Australia',
+    'Serengeti, Tanzania', 'Maldives', 'Seychelles', 'Mauritius', 'Madagascar'
   ];
 
   const showCitySuggestions = (input, query) => {
@@ -943,34 +1145,107 @@
 
   // Setup date validation
   const setupDateValidation = () => {
+    console.log('🗓️ Setting up date validation...');
     const startInput = $('#start');
     const endInput = $('#end');
+    const today = new Date().toISOString().split('T')[0];
+
+    console.log('Today\'s date:', today);
+    console.log('Start input found:', !!startInput);
+    console.log('End input found:', !!endInput);
 
     if (startInput) {
-      // Allow dates from today or historical (no minimum date restriction)
-      startInput.addEventListener('change', () => {
-        if (endInput && startInput.value) {
-          // Set minimum date for end date to be start date
-          endInput.min = startInput.value;
+      // Set minimum date to today - this prevents historical date selection in the picker
+      startInput.min = today;
+      startInput.setAttribute('min', today);
+      console.log('✅ Start date minimum set to:', today);
+
+      // Clear any existing historical dates
+      if (startInput.value && startInput.value < today) {
+        startInput.value = '';
+        console.log('🧹 Cleared historical start date');
+      }
+
+      startInput.addEventListener('input', (e) => {
+        const selectedDate = e.target.value;
+        console.log('Start date selected:', selectedDate);
+
+        if (selectedDate < today) {
+          alert('Start date cannot be in the past. Please select today or a future date.');
+          e.target.value = '';
+          e.target.focus();
+          return;
+        }
+
+        if (endInput && selectedDate) {
+          // Update minimum date for end date to be start date
+          endInput.min = selectedDate;
+          endInput.setAttribute('min', selectedDate);
+          console.log('Updated end date minimum to:', selectedDate);
+
           // If end date is earlier than start date, clear it
-          if (endInput.value && endInput.value < startInput.value) {
+          if (endInput.value && endInput.value < selectedDate) {
             endInput.value = '';
+            console.log('🧹 Cleared end date as it was earlier than start date');
           }
+        }
+      });
+
+      startInput.addEventListener('change', (e) => {
+        const selectedDate = e.target.value;
+        if (selectedDate < today) {
+          alert('Start date cannot be in the past. Please select today or a future date.');
+          e.target.value = '';
+          e.target.focus();
         }
       });
     }
 
     if (endInput) {
-      endInput.addEventListener('change', () => {
-        if (startInput && endInput.value && startInput.value) {
-          // Ensure end date is not earlier than start date
-          if (endInput.value < startInput.value) {
-            alert('End date cannot be earlier than start date');
-            endInput.value = '';
-          }
+      // Set minimum date to today initially
+      endInput.min = today;
+      endInput.setAttribute('min', today);
+      console.log('✅ End date minimum set to:', today);
+
+      // Clear any existing historical dates
+      if (endInput.value && endInput.value < today) {
+        endInput.value = '';
+        console.log('🧹 Cleared historical end date');
+      }
+
+      endInput.addEventListener('input', (e) => {
+        const selectedDate = e.target.value;
+        console.log('End date selected:', selectedDate);
+
+        if (selectedDate < today) {
+          alert('End date cannot be in the past. Please select today or a future date.');
+          e.target.value = '';
+          e.target.focus();
+          return;
+        }
+
+        if (startInput && startInput.value && selectedDate < startInput.value) {
+          alert('End date cannot be earlier than start date. Please select a date on or after the start date.');
+          e.target.value = '';
+          e.target.focus();
+        }
+      });
+
+      endInput.addEventListener('change', (e) => {
+        const selectedDate = e.target.value;
+        if (selectedDate < today) {
+          alert('End date cannot be in the past. Please select today or a future date.');
+          e.target.value = '';
+          e.target.focus();
+        } else if (startInput && startInput.value && selectedDate < startInput.value) {
+          alert('End date cannot be earlier than start date. Please select a date on or after the start date.');
+          e.target.value = '';
+          e.target.focus();
         }
       });
     }
+
+    console.log('✅ Date validation setup complete');
   };
 
   // Main initialization
