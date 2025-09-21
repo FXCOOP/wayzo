@@ -641,6 +641,35 @@ async function injectWidgetsIntoSections(html, widgets, destination = '', startD
       doc.body.appendChild(p);
     }
 
+    // Wrap day sections with better styling
+    doc.querySelectorAll('h3').forEach(h3 => {
+      if (h3.textContent.includes('Day ') || h3.textContent.includes('Day:')) {
+        h3.classList.add('day-header');
+        // Wrap the day content in a styled container
+        let nextElement = h3.nextElementSibling;
+        const dayContent = doc.createElement('div');
+        dayContent.className = 'day-section';
+
+        // Move content until next day or end
+        while (nextElement && !nextElement.textContent.includes('Day ') && nextElement.tagName !== 'H3') {
+          const current = nextElement;
+          nextElement = nextElement.nextElementSibling;
+          dayContent.appendChild(current);
+        }
+
+        if (dayContent.children.length > 0) {
+          h3.parentNode.insertBefore(dayContent, nextElement);
+        }
+      }
+    });
+
+    // Add highlight class to important paragraphs
+    doc.querySelectorAll('p').forEach(p => {
+      if (p.textContent.includes('Important:') || p.textContent.includes('Note:') || p.textContent.includes('Tip:')) {
+        p.classList.add('tip');
+      }
+    });
+
     console.log(`Widgets injected successfully: Budget Breakdown (${widgetsInjected["Budget Breakdown"]}), Must-See (${widgetsInjected["Must-See"]}), Daily Itineraries (${widgetsInjected["Daily Itineraries"]}), Useful Apps (${widgetsInjected["Useful Apps"]}), Weather (${widgetsInjected["Weather"]})`);
 
     return dom.serialize();

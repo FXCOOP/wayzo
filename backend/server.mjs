@@ -1082,16 +1082,261 @@ app.post('/api/plan.pdf', async (req, res) => {
       <meta charset="utf-8">
       <title>Wayzo Trip Plan - ${escapeHtml(payload.destination || '')}</title>
       <style>
-        body { font-family: Arial, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        img { max-width: 100%; height: auto; }
-        h1, h2, h3 { page-break-after: avoid; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #ddd; padding: 6px; }
-        .budget-table th { background: #f5f5f5; }
-        .page-break { page-break-before: always; }
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+          line-height: 1.6;
+          color: #333;
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 20px;
+        }
+
+        h1 {
+          color: #2c5aa0;
+          font-size: 28px;
+          margin-bottom: 20px;
+          text-align: center;
+          border-bottom: 3px solid #2c5aa0;
+          padding-bottom: 15px;
+        }
+
+        h2 {
+          color: #34495e;
+          font-size: 20px;
+          margin-top: 30px;
+          margin-bottom: 15px;
+          padding-left: 10px;
+          border-left: 4px solid #3498db;
+          page-break-after: avoid;
+        }
+
+        h3 {
+          color: #2c3e50;
+          font-size: 16px;
+          margin-top: 20px;
+          margin-bottom: 10px;
+          page-break-after: avoid;
+        }
+
+        .trip-overview {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          padding: 25px;
+          border-radius: 12px;
+          margin: 20px 0;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .trip-overview h1 {
+          color: white;
+          border-bottom: 2px solid rgba(255,255,255,0.3);
+          margin-bottom: 20px;
+        }
+
+        .overview-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 15px;
+          margin-top: 20px;
+        }
+
+        .overview-item {
+          background: rgba(255,255,255,0.1);
+          padding: 15px;
+          border-radius: 8px;
+          border-left: 4px solid #f39c12;
+        }
+
+        .overview-item strong {
+          display: block;
+          margin-bottom: 5px;
+          color: #f39c12;
+        }
+
+        p {
+          margin-bottom: 12px;
+          text-align: justify;
+        }
+
+        ul, ol {
+          margin-bottom: 15px;
+          padding-left: 25px;
+        }
+
+        li {
+          margin-bottom: 8px;
+        }
+
+        img {
+          max-width: 100%;
+          height: auto;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 20px 0;
+          background: white;
+          border-radius: 8px;
+          overflow: hidden;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+          border: 1px solid #e0e0e0;
+          padding: 12px 15px;
+          text-align: left;
+        }
+
+        th {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          font-weight: 600;
+          text-transform: uppercase;
+          font-size: 12px;
+          letter-spacing: 0.5px;
+        }
+
+        tr:nth-child(even) {
+          background-color: #f8f9fa;
+        }
+
+        tr:hover {
+          background-color: #e3f2fd;
+        }
+
+        .budget-table th {
+          background: linear-gradient(135deg, #2c5aa0 0%, #1e3a8a 100%);
+        }
+
+        .budget-table td:nth-child(2) {
+          text-align: right;
+          font-weight: 600;
+          color: #27ae60;
+        }
+
+        .budget-table td:nth-child(3) {
+          text-align: center;
+          color: #f39c12;
+          font-weight: 500;
+        }
+
+        .section-widget {
+          background: #f8f9fa;
+          border: 1px solid #e9ecef;
+          border-radius: 8px;
+          padding: 20px;
+          margin: 20px 0;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .widget-header h4 {
+          color: #2c5aa0;
+          margin-top: 0;
+          font-size: 18px;
+        }
+
+        .page-break {
+          page-break-before: always;
+        }
+
+        .highlight {
+          background: linear-gradient(120deg, #a8edea 0%, #fed6e3 100%);
+          padding: 15px;
+          border-radius: 8px;
+          margin: 15px 0;
+          border-left: 4px solid #3498db;
+        }
+
+        .tip {
+          background: #fff3cd;
+          border: 1px solid #ffeaa7;
+          border-radius: 8px;
+          padding: 15px;
+          margin: 15px 0;
+          border-left: 4px solid #f39c12;
+        }
+
+        .tip:before {
+          content: "💡 ";
+          font-weight: bold;
+        }
+
+        blockquote {
+          border-left: 4px solid #3498db;
+          margin: 20px 0;
+          padding: 15px 20px;
+          background: #f8f9fa;
+          font-style: italic;
+          border-radius: 0 8px 8px 0;
+        }
+
+        a {
+          color: #3498db;
+          text-decoration: none;
+          font-weight: 500;
+        }
+
+        a:hover {
+          text-decoration: underline;
+        }
+
+        .day-section {
+          background: white;
+          border-radius: 8px;
+          padding: 20px;
+          margin: 20px 0;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+          border-left: 4px solid #3498db;
+        }
+
+        .weather-info {
+          background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+          color: white;
+          padding: 15px;
+          border-radius: 8px;
+          margin: 15px 0;
+          text-align: center;
+        }
+
+        @media print {
+          body { font-size: 12px; }
+          h1 { font-size: 24px; }
+          h2 { font-size: 18px; }
+          h3 { font-size: 14px; }
+          .trip-overview { background: #2c5aa0 !important; }
+          .no-print { display: none; }
+        }
       </style>
     </head><body>
-      ${finalHTML}
+      <div class="trip-overview">
+        <h1>🚀 ${escapeHtml(payload.destination || '')} Trip Plan</h1>
+        <div class="overview-grid">
+          <div class="overview-item">
+            <strong>📅 Travel Dates</strong>
+            ${escapeHtml(payload.start || '')} → ${escapeHtml(payload.end || '')}
+          </div>
+          <div class="overview-item">
+            <strong>💰 Budget</strong>
+            ${payload.budget || 0} ${escapeHtml(payload.currency || 'EUR')}
+          </div>
+          <div class="overview-item">
+            <strong>👥 Travelers</strong>
+            ${escapeHtml(payload.adults || 1)} adults${payload.children ? `, ${payload.children} children` : ''}
+          </div>
+          <div class="overview-item">
+            <strong>🎯 Travel Style</strong>
+            ${escapeHtml(payload.level || 'Mid-range')}
+          </div>
+        </div>
+      </div>
+      <main class="content">
+        ${finalHTML}
+      </main>
     </body></html>`;
 
     const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
