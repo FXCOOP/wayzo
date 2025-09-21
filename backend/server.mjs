@@ -433,10 +433,10 @@ Start immediately with the content in this format:
 [transportation options, tips, getting from/to airport]
 
 ## 🏨 Accommodation
-[3-5 hotel recommendations with price ranges and booking info]
+[3-5 hotel recommendations with price ranges and [Book Now](#hotel-widget) links for each hotel]
 
 ## 🎫 Must-See Attractions
-[8-12 main attractions with entry fees, hours, booking links]
+[8-12 main attractions with detailed descriptions, entry fees, hours, and GetYourGuide booking links for tickets]
 
 ## 🍽️ Dining Guide
 [6-10 restaurants by area with price ranges and specialties]
@@ -445,7 +445,7 @@ Start immediately with the content in this format:
 [Full hour-by-hour schedule for ALL ${nDays} days. Each day must have 6-8 activities with specific times, place names, and brief descriptions. NO generic activities.]
 
 ## 🧳 Don't Forget List
-[packing checklist with HTML checkboxes that can be clicked - use <input type="checkbox"> format]
+[packing checklist with HTML checkboxes and links to relevant widgets like eSIM, travel insurance]
 
 ## 🛡️ Travel Tips
 [local customs, money, safety, practical advice]
@@ -457,9 +457,17 @@ Start immediately with the content in this format:
 [contacts, healthcare, embassy info]
 
 ## ⚠️ Disclaimer
-[brief terms and conditions - prices may vary, confirm hours before visiting, etc.]
+*Prices and schedules subject to change. Verify details before booking. For assistance contact support.*
 
 Use specific places, real addresses, current prices. Weather will be added automatically. NO images.
+
+**CRITICAL - FINAL REPORT REQUIREMENTS:**
+- This is a FINAL, COMPLETE travel report - NOT a draft
+- DO NOT ask for user input or suggest further customization
+- DO NOT include phrases like "If you'd like, I can tailor this further" or "confirm preferred gateways"
+- DO NOT offer to recalculate or fix anything
+- Present everything as definitive information
+- End the report with the disclaimer section - NO additional offers or suggestions
 
 Generate the complete travel itinerary now using all the sections listed above.`;
 
@@ -570,13 +578,13 @@ You MUST research current information for ${destination} to ensure accuracy:
    - **Duration estimates** (e.g., "Allow 2-3 hours for Akrotiri")
    - **Insider tips** (e.g., "Visit Red Beach early morning for best photos")
 
-5. **Budget Breakdown**: Create detailed table with accurate amounts:
-   - **Show specific prices in ${currency}**
-   - **Calculate per-person costs for ${totalTravelers} travelers (${adults} adults${children > 0 ? `, ${children} children` : ''})**
-   - **Break down total ${budget} ${currency} budget** realistically over ${nDays} days
-   - **Include daily average**: ${Math.round(budget / nDays / totalTravelers)} per person per day
-   - **Show realistic flight costs, accommodation, meals, activities**
-   - **Add clickable checkboxes for tracking expenses**
+5. **Budget Breakdown**: Create detailed table with actual costs adding up to ${budget} ${currency}:
+   - **Flights**: Show realistic flight costs (${Math.round(budget * 0.3)} ${currency})
+   - **Accommodation**: Calculate for ${nDays} nights for ${totalTravelers} travelers
+   - **Food**: Daily meal budget breakdown (${Math.round(budget / nDays / totalTravelers)} per person per day)
+   - **Activities**: Entry fees and tours cost breakdown
+   - **Transportation**: Local transport costs
+   - **Create clickable HTML table with checkboxes linking to booking widgets**
 
 6. **Travel Tips**: Include:
    - **Local customs and etiquette** (e.g., "Greet with 'Kalimera' in morning, 'Kalispera' in evening")
@@ -588,12 +596,13 @@ You MUST research current information for ${destination} to ensure accuracy:
 
 
 **CRITICAL BOOKING LINKS - USE ONLY THESE:**
-- **Hotels**: Use [Hotel Widget](#hotel-widget) or #hotel-widget - NEVER use booking.com or external sites
-- **Flights**: Use [Flight Widget](#flight-widget) or #flight-widget - NEVER use external flight sites
+- **Hotels**: Use [Book Now](#hotel-widget) or [Reserve](#hotel-widget) - NEVER use booking.com or external sites
+- **Flights**: Use [Find Flights](#flight-widget) or [Book Flights](#flight-widget) - NEVER use external flight sites
 - **Activities**: Use GetYourGuide links with partner ID PUHVJ53: https://www.getyourguide.com/s/?q=${destination}&partner_id=PUHVJ53
 - **Reviews**: Leave empty for now - NO TripAdvisor links until provided
 - **Maps**: Use [Map](map:location) format for interactive maps - add maps for each major location
 - **Checkboxes**: Use <input type="checkbox" id="unique-id"> for all checklists to make them clickable
+- **Professional Language**: Never use the word "widget" in the final report - use "Book Now", "Reserve", "Find" instead
 
 **WIDGET INTEGRATION REQUIREMENTS:**
 DO NOT place widgets in the "Don't Forget List" section
