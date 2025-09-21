@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wayzo — PRD דו‑לשוני (HE+EN) — Product Requirements Document</title>
+  <style>
+    :root{--bg:#0f172a;--fg:#e5e7eb;--muted:#a6adbb;--card:#0b1220;--line:#1f2937;--accent:#60a5fa;--accent2:#a78bfa;--ok:#22c55e;--warn:#f59e0b;--bad:#ef4444}
+    *{box-sizing:border-box}
+    html,body{margin:0;background:linear-gradient(180deg,#0b1020 0%,#0f172a 100%);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    a{color:var(--accent)}
+    header{position:sticky;top:0;background:rgba(11,16,32,.8);backdrop-filter:saturate(1.2) blur(8px);border-bottom:1px solid var(--line);z-index:50}
+    .wrap{max-width:1180px;margin:auto;padding:22px}
+    .row{display:flex;gap:14px;align-items:center;justify-content:space-between}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:40px;height:40px;border-radius:12px;background:conic-gradient(from 210deg,var(--accent),var(--accent2));box-shadow:0 10px 30px rgba(96,165,250,.35)}
+    h1{margin:0;font-size:20px}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .tab{padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:#0b1220;color:var(--fg);cursor:pointer}
+    .tab.active{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#0b1220;font-weight:700}
+    main{padding:22px}
+    .section{background:linear-gradient(180deg,#0b1220 0%,#0d1424 100%);border:1px solid #111827;border-radius:16px;padding:22px;margin:16px 0;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+    .card{background:#0a1020;border:1px solid #111827;border-radius:14px;padding:16px}
+    h2{margin:0 0 8px 0;font-size:22px}
+    h3{margin:0 0 8px 0;font-size:18px}
+    ul{margin:8px 0 0 0;padding-inline-start:18px}
+    li{margin:4px 0}
+    .muted{color:var(--muted)}
+    .pill{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:#0b1220;color:var(--muted);font-size:12px;margin-inline-start:6px}
+    .tbl{width:100%;border-collapse:separate;border-spacing:0 8px}
+    .tbl th,.tbl td{padding:10px 12px;text-align:right}
+    .tbl thead th{font-size:12px;color:var(--muted);border-bottom:1px solid var(--line)}
+    .r{background:#0b1220;border:1px solid #111827}
+    .small{font-size:13px}
+    .two{columns:2;gap:22px}
+    @media (max-width:920px){.two{columns:1}}
+    .hr{height:1px;background:var(--line);margin:14px 0}
+    .badge{display:inline-block;padding:2px 8px;border-radius:8px;background:#0b1220;border:1px solid var(--line);font-size:12px;margin:0 4px}
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;margin:2rem 0}
+    .stat-card{background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 100%);color:white;padding:2rem;border-radius:15px;text-align:center;position:relative;overflow:hidden}
+    .stat-number{font-size:2.5rem;font-weight:700;margin-bottom:0.5rem}
+    .stat-label{font-size:1rem;opacity:0.9}
+    .timeline{position:relative;padding-left:2rem}
+    .timeline::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 100%);border-radius:2px}
+    .timeline-item{position:relative;margin-bottom:3rem;background:var(--card);border-radius:15px;padding:2rem;box-shadow:0 5px 15px rgba(0,0,0,.08);margin-left:1rem;border:1px solid var(--line)}
+    .timeline-item::before{content:'';position:absolute;left:-2rem;top:2rem;width:15px;height:15px;background:var(--accent);border-radius:50%;border:3px solid var(--card);box-shadow:0 0 0 3px var(--accent)}
+    .timeline-title{font-size:1.3rem;color:var(--accent);margin-bottom:0.5rem;font-weight:600}
+    .timeline-meta{color:var(--muted);font-size:0.9rem;margin-bottom:1rem}
+    .progress-bar{width:100%;height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin:1rem 0}
+    .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:4px;transition:width 0.6s ease}
+    .risk-high{background:linear-gradient(135deg,var(--bad) 0%,#c82333 100%);color:white;padding:0.3rem 0.8rem;border-radius:20px;font-size:0.8rem;font-weight:500}
+    .risk-medium{background:linear-gradient(135deg,var(--warn) 0%,#e0a800 100%);color:#212529;padding:0.3rem 0.8rem;border-radius:20px;font-size:0.8rem;font-weight:500}
+    .risk-low{background:linear-gradient(135deg,var(--ok) 0%,#1e7e34 100%);color:white;padding:0.3rem 0.8rem;border-radius:20px;font-size:0.8rem;font-weight:500}
+    .back-to-top{position:fixed;bottom:2rem;right:2rem;background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 100%);color:white;width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 5px 15px rgba(0,0,0,0.2);transition:all 0.3s ease;opacity:0;pointer-events:none}
+    .back-to-top.visible{opacity:1;pointer-events:all}
+    .back-to-top:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(0,0,0,0.3)}
+    .feature-card{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:2rem;box-shadow:0 5px 15px rgba(0,0,0,0.08);transition:all 0.3s ease;position:relative;overflow:hidden}
+    .feature-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));transform:scaleX(0);transition:transform 0.3s ease}
+    .feature-card:hover{transform:translateY(-5px);box-shadow:0 10px 25px rgba(0,0,0,0.15)}
+    .feature-card:hover::before{transform:scaleX(1)}
+    .feature-card h4{color:var(--accent);margin-bottom:1rem;font-size:1.3rem}
+    .feature-card ul{list-style:none;padding-left:0}
+    .feature-card li{padding:0.3rem 0;position:relative;padding-left:1.5rem}
+    .feature-card li::before{content:'✓';position:absolute;left:0;color:var(--ok);font-weight:bold}
+    .highlight-box{background:linear-gradient(135deg,var(--card) 0%,#0d1424 100%);border:1px solid var(--line);border-radius:15px;padding:2rem;margin:2rem 0;position:relative;overflow:hidden}
+    .highlight-box::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+    .table-responsive{overflow-x:auto;margin:2rem 0}
+    table{width:100%;border-collapse:collapse;background:var(--card);border-radius:15px;overflow:hidden;box-shadow:0 5px 15px rgba(0,0,0,0.08)}
+    th,td{padding:1rem;text-align:left;border-bottom:1px solid var(--line)}
+    th{background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 100%);color:white;font-weight:600}
+    tr:hover{background:rgba(96,165,250,0.05)}
+    @media (max-width:768px){
+      h1{font-size:16px}
+      .tabs{flex-direction:column;align-items:center}
+      .grid{grid-template-columns:1fr}
+      .stats-grid{grid-template-columns:repeat(2,1fr)}
+      .two{columns:1}
+    }
+
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="row">
+        <div class="brand"><div class="logo"></div><h1>Wayzo — PRD דו‑לשוני (HE+EN) — Product Requirements Document</h1></div>
+        <div class="tabs">
+          <button class="tab active" onclick="switchLang('he')">HE</button>
+          <button class="tab" onclick="switchLang('en')">EN</button>
+          <button class="tab" onclick="switchLang('it')">IT</button>
+          <button class="tab" onclick="switchLang('fr')">FR</button>
+          <button class="tab" onclick="switchLang('de')">DE</button>
+          <button class="tab" onclick="switchLang('es')">ES</button>
+          <button class="tab" onclick="switchLang('ru')">RU</button>
+          <button class="tab" onclick="switchLang('ja')">JP</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- ================================= HE — Hebrew ================================= -->
+    <section id="he" class="lang section">
+      <h2>📘 PRD — עברית (ממוקד אופטימיזציה + SEO)</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>תקציר מנהלים</h3>
+          <p class="muted">Wayzo הוא עוזר אישי חכם לטיולים: יצירת תוכניות <b>ברות‑ביצוע</b> (כבר עובד: טופס → AI → PDF/ICS → ווידג'טים להזמנה), ובהמשך ליווי בזמן אמת (התראות, שינוי מסלול לפי מזג אוויר/עומסים). מודל הכנסה: תשלום פר‑תוכנית + Upsell שנתי, עם אפיליאייט כעמוד מרכזי.</p>
+        </div>
+        <div class="card">
+          <h3>יעדים & היקף</h3>
+          <ul>
+            <li>תוכניות איכותיות וברורות: תקציר, מסלול יומי, לינה, מסעדות, תחבורה, <b>תקציב מדויק</b>.</li>
+            <li>טיפוסים כלליים תחילה: <span class="badge">משפחות</span><span class="badge">אנשי עסקים</span><span class="badge">יחידים ספונטניים (טיולים יומיים)</span>.</li>
+            <li>ליווי בזמן אמת בהטמעה הדרגתית: התראות, "עדכן מסלול" דינמי.</li>
+            <li>SEO כתעלת צמיחה מרכזית (i18n, JSON‑LD, CWV).</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>טכנולוגיה — "Newer Tech" + SEO מושלם</h3>
+          <ul>
+            <li><b>Frontend:</b> Next.js 15 (App Router) + React Server Components + TypeScript + Tailwind; RTL/LTR.</li>
+            <li><b>Rendering/SEO:</b> SSR/SSG/ISR; i18n routing + <code>hreflang</code>; canonical; OpenGraph/Twitter; XML sitemap; robots.txt; preload/preconnect; Core Web Vitals ≥95.</li>
+            <li><b>Schema.org:</b> JSON‑LD ל־Itinerary/TouristTrip/Hotel/Restaurant/Event לתצוגות עשירות.</li>
+            <li><b>Backend:</b> Node/Express TS; קצוות Edge ל‑preview/plan; ולידציות קשיחות; rate‑limit.</li>
+            <li><b>Data:</b> Postgres + Prisma; Redis כ‑cache ל‑AI/מזג אוויר/מפות עם TTL אדפטיבי.</li>
+            <li><b>AI Orchestration:</b> תבניות prompt + guardrails (regex/JSON validators), cost caps, link sourcing ל‑widgets, auto‑validation + scoring.</li>
+            <li><b>Observability:</b> pino logs, OpenTelemetry tracing, metrics + התראות.</li>
+            <li><b>Security/Perf:</b> Helmet/CSP/CORS; HTTP/3; CDN; AVIF/SVG; SLOs.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>🌍 i18n & SEO בינלאומי (שפות: EN, IT, FR, DE, ES, RU, HE, JA)</h3>
+        <ul>
+          <li><b>מבנה URL:</b> <code>/{lang}/...</code> (לדוגמה: <code>/en/</code>, <code>/it/</code>). <b>x-default</b> לנתיב הראשי.</li>
+          <li><b>hreflang:</b> הזרקה אוטומטית לכל עמוד; ניהול <code>canonical</code> למניעת כפילויות.</li>
+          <li><b>Schema.org JSON‑LD:</b> כולל <code>@language</code> היכן שרלוונטי (Itinerary, TouristTrip, Hotel, Restaurant, Event).</li>
+          <li><b>תרגום/לוקליזציה:</b> <u>next‑intl</u> + TMS (Phrase/Lokalise). מילונים לפי תחביר ICU; בדיקת LQA בסיסית.</li>
+          <li><b>תוכן SEO:</b> Hubs לפי יעד × סוג טיול × עונה; ISR לתסריטי Long‑Tail; מחקר מילות מפתח per‑locale.</li>
+          <li><b>פורמט/מטבע:</b> פורמט תאריך/שעה מקומי; המרת מטבע; PDF/ICS לוקאלי; RTL רק לעברית.</li>
+          <li><b>פונטים:</b> Inter (Latin), Noto Sans Hebrew, Noto Sans JP; fallbacks מלאים ל‑Cyrillic/CJK.</li>
+          <li><b>מיפוי שפות → hreflang:</b></li>
+        </ul>
+        <table class="tbl">
+          <thead><tr><th>Language</th><th>hreflang</th></tr></thead>
+          <tbody>
+            <tr class="r"><td>English</td><td><code>en</code></td></tr>
+            <tr class="r"><td>Italiano</td><td><code>it</code></td></tr>
+            <tr class="r"><td>Français</td><td><code>fr</code></td></tr>
+            <tr class="r"><td>Deutsch</td><td><code>de</code></td></tr>
+            <tr class="r"><td>Español</td><td><code>es</code></td></tr>
+            <tr class="r"><td>Русский</td><td><code>ru</code></td></tr>
+            <tr class="r"><td>עברית</td><td><code>he</code></td></tr>
+            <tr class="r"><td>日本語</td><td><code>ja</code></td></tr>
+            <tr class="r"><td>Default</td><td><code>x-default</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section">
+        <h3>Roadmap — זרם רציף (ללא חלוקה לשלושה שלבים)</h3>
+        <table class="tbl">
+          <thead><tr><th>Priority</th><th>Item</th><th>Outcome</th><th>Effort</th></tr></thead>
+          <tbody>
+            <tr class="r"><td>🔥 P0</td><td>דיוק דו"ח: שעות/מרחקים/קצבי יום; <b>מפה אחת</b> לכל מקטע; טבלת תקציב מדויקת</td><td>אמון + המרות</td><td>1–2 שבועות</td></tr>
+            <tr class="r"><td>🔥 P0</td><td>SEO מלא: SSR/ISR, JSON‑LD, i18n, sitemap, OG/Twitter</td><td>צמיחה אורגנית</td><td>~2 שבועות</td></tr>
+            <tr class="r"><td>P1</td><td>Widgets אפיליאייט + tracking + postbacks</td><td>הכנסה יציבה</td><td>~1 שבוע</td></tr>
+            <tr class="r"><td>P1</td><td>Realtime hooks בסיסיים: התראות מזג אוויר/עומסים + "עדכן מסלול"</td><td>ערך בזמן נסיעה</td><td>2–3 שבועות</td></tr>
+            <tr class="r"><td>P2</td><td>PWA Offline (מסלול + מפה), אח"כ Voice/הוצאות/B2B</td><td>שמישות בשטח</td><td>3–4 שבועות</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section">
+        <h3>KPIs — שנה ראשונה (ריאלי)</h3>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-number">1–2K</div>
+            <div class="stat-label">MAU</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">10–12%</div>
+            <div class="stat-label">Preview→Paid</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">$5–10K</div>
+            <div class="stat-label">MRR</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">2–3</div>
+            <div class="stat-label">Affiliate Partners</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Feedback Loop & מדדי איכות</h3>
+        <ul>
+          <li>Scoring אוטומטי לדו"ח: Accuracy / Executability / Pacing / Persona Fit / Clarity (0–5; <4 → retry משופר).</li>
+          <li>טופס "האם השעות/מחירים/מרחקים היו מדויקים?" בתוך הדו"ח; תיוג ל‑training.</li>
+          <li>אנליטיקות: קליקים על widgets, הורדת PDF/ICS, סימון צ׳קבוקסים → GA4/Plausible + BI.</li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <h3>חוות דעת מקצועית (Dev + AI + Innovation + Investor)</h3>
+        <ul>
+          <li><b>חוזקות:</b> MVP עובד end‑to‑end; מודל עסקי ברור; חזון מעבר ל‑planner (בידול).</li>
+          <li><b>פערים מרכזיים:</b> אמינות מידע (שעות/מרחקים), SEO מובנה, עומק אפיליאייט/מדידה, עלויות וזמני מודל, Flywheel דאטה.</li>
+          <li><b>השקעה:</b> אעדיף הוכחת SEO (עמודים מדורגים + המרות), יחידות כלכלה חיוביות עם affiliates, Roadmap מהיר‑בטוח.</li>
+          <li><b>Top‑10 לשבועות הקרובים:</b> לנעול SEO stack; guardrails; Budget v2; affiliate tracking; caching; scoring; feedback; UX ספונטני; תוכן SEO; analytics.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ================================= EN — English ================================= -->
+    <section id="en" class="lang section" style="display:none" dir="ltr" lang="en">
+      <h2>📘 PRD — English (Optimization + SEO‑First)</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Executive Summary</h3>
+          <p class="muted">Wayzo is an AI travel companion: generate <b>bookable</b> plans (already live: form → AI → PDF/ICS → booking widgets) and evolve to real‑time assistance (alerts, weather/traffic‑aware rerouting). Monetization: pay‑per‑plan + attractive annual upsell; affiliates as a core revenue stream.</p>
+        </div>
+        <div class="card">
+          <h3>Goals & Scope</h3>
+          <ul>
+            <li>High‑quality, <b>bookable</b> itineraries: overview, day‑by‑day, hotels, dining, transport, precise budget.</li>
+            <li>General trip types first: <span class="badge">families</span><span class="badge">business</span><span class="badge">solo/spontaneous day trips</span>.</li>
+            <li>Real‑time companion via incremental rollout: alerts, "Update route".</li>
+            <li>SEO as a primary growth engine (i18n, JSON‑LD, CWV).</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Tech — Newer Stack & SEO‑Perfect</h3>
+          <ul>
+            <li><b>Frontend:</b> Next.js 15 (App Router), React Server Components, TypeScript, Tailwind; RTL/LTR.</li>
+            <li><b>Rendering/SEO:</b> SSR/SSG/ISR; i18n routing + <code>hreflang</code>; canonical; OpenGraph/Twitter; XML sitemap; robots.txt; preload/preconnect; Core Web Vitals ≥95.</li>
+            <li><b>Schema.org:</b> JSON‑LD for Itinerary/TouristTrip/Hotel/Restaurant/Event rich results.</li>
+            <li><b>Backend:</b> Node/Express TS; Edge‑ready endpoints for preview/plan; strict validators; rate‑limits.</li>
+            <li><b>Data:</b> Postgres + Prisma; Redis cache for AI/weather/maps with adaptive TTL.</li>
+            <li><b>AI Orchestration:</b> templated prompts + guardrails (regex/JSON validators), cost caps, deterministic link sourcing to widgets, auto‑validation + scoring.</li>
+            <li><b>Observability:</b> Pino logs, OpenTelemetry tracing, metrics + alerts.</li>
+            <li><b>Security/Perf:</b> Helmet/CSP/CORS; HTTP/3; CDN; AVIF/SVG; SLOs.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>🌍 International i18n & SEO (Languages: EN, IT, FR, DE, ES, RU, HE, JA)</h3>
+        <ul>
+          <li><b>URL structure:</b> <code>/{lang}/...</code> (e.g., <code>/en/</code>, <code>/de/</code>); add <b>x-default</b>.</li>
+          <li><b>hreflang:</b> automatic injection per page; strict <code>canonical</code> handling.</li>
+          <li><b>Schema.org JSON‑LD:</b> include <code>@language</code> where applicable.</li>
+          <li><b>Localization pipeline:</b> <u>next‑intl</u> + TMS (Phrase/Lokalise); ICU messages; basic LQA checks.</li>
+          <li><b>Content hubs:</b> destination × trip type × season; ISR for long‑tail; locale keyword research.</li>
+          <li><b>Formats/Currency:</b> locale date/time; currency conversion; localized PDF/ICS; RTL only for HE.</li>
+          <li><b>Fonts:</b> Inter (Latin), Noto Sans Hebrew, Noto Sans JP; complete fallbacks for Cyrillic/CJK.</li>
+          <li><b>Language → hreflang map:</b> en, it, fr, de, es, ru, he, ja + x‑default.</li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <h3>Roadmap — Continuous Stream</h3>
+        <table class="tbl">
+          <thead><tr><th>Priority</th><th>Item</th><th>Outcome</th><th>Effort</th></tr></thead>
+          <tbody>
+            <tr class="r"><td>🔥 P0</td><td>Report accuracy (hours/distances/pacing); <b>single map per section</b>; precise budget table</td><td>Trust + conversions</td><td>1–2 weeks</td></tr>
+            <tr class="r"><td>🔥 P0</td><td>Full SEO stack: SSR/ISR, JSON‑LD, i18n, sitemap, OG/Twitter</td><td>Organic growth</td><td>~2 weeks</td></tr>
+            <tr class="r"><td>P1</td><td>Affiliate widgets + tracking + postbacks</td><td>Stable revenue</td><td>~1 week</td></tr>
+            <tr class="r"><td>P1</td><td>Basic realtime hooks: weather/load alerts + "Update route"</td><td>In‑trip value</td><td>2–3 weeks</td></tr>
+            <tr class="r"><td>P2</td><td>PWA offline (plan + map), later: Voice/expenses/B2B</td><td>Field usability</td><td>3–4 weeks</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section">
+        <h3>KPIs — Year 1 (Realistic)</h3>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-number">1–2K</div>
+            <div class="stat-label">MAU</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">10–12%</div>
+            <div class="stat-label">Preview→Paid</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">$5–10K</div>
+            <div class="stat-label">MRR</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">2–3</div>
+            <div class="stat-label">Affiliate Partners</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Feedback Loop & Quality Measures</h3>
+        <ul>
+          <li>Automatic report scoring: Accuracy / Executability / Pacing / Persona Fit / Clarity (0–5; <4 → guided retry).</li>
+          <li>Inline feedback: "Were hours/prices/distances accurate?" → training labels.</li>
+          <li>Analytics: widget clicks, PDF/ICS downloads, checklist events → GA4/Plausible + BI.</li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <h3>Professional Assessment (Dev + AI + Innovation + Investor)</h3>
+        <ul>
+          <li><b>Strengths:</b> working MVP E2E; clear monetization; vision beyond a planner.</li>
+          <li><b>Gaps:</b> data reliability, SEO built‑in, affiliate depth/measurement, model cost/latency, data flywheel.</li>
+          <li><b>Investability:</b> SEO traction, positive unit economics with affiliates, rapid "no‑regrets" roadmap.</li>
+          <li><b>Top‑10 (next 30–60 days):</b> lock SEO stack; guardrails; Budget v2; affiliate tracking; caching; scoring; feedback loop; spontaneous trips UX; content hubs; analytics.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============ Language placeholders (templates) ============ -->
+    <section id="it" class="lang section" style="display:none" dir="ltr" lang="it">
+      <h2>📘 Modello PRD — Italiano (anteprima)</h2>
+      <p class="muted">Questo tab usa la struttura del PRD inglese come base. Localizzazione completa seguirà il piano i18n (next‑intl, JSON‑LD, hreflang, sitemap IT).</p>
+    </section>
+    <section id="fr" class="lang section" style="display:none" dir="ltr" lang="fr">
+      <h2>📘 Modèle PRD — Français (aperçu)</h2>
+      <p class="muted">Cet onglet reprend la structure du PRD anglais. La localisation complète suivra le plan i18n (next‑intl, JSON‑LD, hreflang, sitemap FR).</p>
+    </section>
+    <section id="de" class="lang section" style="display:none" dir="ltr" lang="de">
+      <h2>📘 PRD‑Vorlage — Deutsch (Vorschau)</h2>
+      <p class="muted">Dieser Tab verwendet die englische PRD‑Struktur. Vollständige Lokalisierung folgt dem i18n‑Plan (next‑intl, JSON‑LD, hreflang, Sitemap DE).</p>
+    </section>
+    <section id="es" class="lang section" style="display:none" dir="ltr" lang="es">
+      <h2>📘 Plantilla PRD — Español (vista previa)</h2>
+      <p class="muted">Esta pestaña usa la estructura del PRD en inglés. La localización completa seguirá el plan i18n (next‑intl, JSON‑LD, hreflang, sitemap ES).</p>
+    </section>
+    <section id="ru" class="lang section" style="display:none" dir="ltr" lang="ru">
+      <h2>📘 Шаблон PRD — Русский (предпросмотр)</h2>
+      <p class="muted">Эта вкладка использует английскую структуру PRD. Полная локализация будет выполнена по i18n‑плану (next‑intl, JSON‑LD, hreflang, sitemap RU).</p>
+    </section>
+    <section id="ja" class="lang section" style="display:none" dir="ltr" lang="ja">
+      <h2>📘 PRD テンプレート — 日本語（プレビュー）</h2>
+      <p class="muted">このタブは英語版PRDの構成をベースにしています。正式なローカライズは i18n 計画（next‑intl、JSON‑LD、hreflang、JP サイトマップ）に従って進めます。</p>
+    </section>
+
+  </main>
+
+  <!-- Back to Top Button -->
+  <a href="#" class="back-to-top" id="backToTop">↑</a>
+
+  <script>
+    function switchLang(lang){
+      // activate tab
+      const order = ['he','en','it','fr','de','es','ru','ja'];
+      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+      const idx = Math.max(0, order.indexOf(lang));
+      const tabs = document.querySelectorAll('.tab');
+      if (tabs[idx]) tabs[idx].classList.add('active');
+      // toggle sections
+      document.querySelectorAll('.lang').forEach(sec=>sec.style.display='none');
+      const el = document.getElementById(lang);
+      if (el) el.style.display='';
+      // dir & lang
+      const rtlLangs = ['he','ar','fa','ur'];
+      document.documentElement.setAttribute('dir', rtlLangs.includes(lang) ? 'rtl' : 'ltr');
+      document.documentElement.setAttribute('lang', lang);
+    }
+
+    // Back to top button functionality
+    const backToTopButton = document.getElementById('backToTop');
+    if (backToTopButton) {
+      window.addEventListener('scroll', () => {
+        if (window.pageYOffset > 300) {
+          backToTopButton.classList.add('visible');
+        } else {
+          backToTopButton.classList.remove('visible');
+        }
+      });
+
+      backToTopButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      });
+    }
+  </script>
+</body>
+</html>

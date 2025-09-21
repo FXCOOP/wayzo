@@ -231,7 +231,7 @@ function getWidgetsForDestination(destination, tripType, interests = []) {
 }
 
 // JSDOM-based widget injection with precise placement
-async function injectWidgetsIntoSections(html, widgets, destination = '', startDate = null, endDate = null) {
+async function injectWidgetsIntoSections(html, widgets, destination = '', startDate = null, endDate = null, budgetData = null) {
   if (!widgets || widgets.length === 0) return html;
   
   try {
@@ -370,7 +370,7 @@ async function injectWidgetsIntoSections(html, widgets, destination = '', startD
         }
       });
     }
-    // If budget section lacks a table with 6 checkboxes, inject a default checklist table
+    // If budget section lacks a table with 6 checkboxes, inject a budget table with actual calculations
     if (budgetH2) {
       let hasTable = false;
       let node = budgetH2.nextElementSibling;
@@ -379,17 +379,100 @@ async function injectWidgetsIntoSections(html, widgets, destination = '', startD
         node = node.nextElementSibling;
       }
       if (!hasTable) {
+        // Calculate budget amounts if budget data is provided
+        let flightCost = '€450';
+        let accommodationCost = '€500';
+        let foodCost = '€300';
+        let transportCost = '€150';
+        let activitiesCost = '€150';
+        let miscCost = '€100';
+
+        // If we have budget data, use it for calculations
+        if (budgetData && budgetData.budget && budgetData.budget > 0) {
+          const totalBudget = budgetData.budget;
+          const currency = budgetData.currency || 'USD';
+          const currencySymbol = currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : currency;
+
+          // Budget distribution percentages
+          flightCost = `${currencySymbol}${Math.round(totalBudget * 0.30)}`;
+          accommodationCost = `${currencySymbol}${Math.round(totalBudget * 0.35)}`;
+          foodCost = `${currencySymbol}${Math.round(totalBudget * 0.20)}`;
+          transportCost = `${currencySymbol}${Math.round(totalBudget * 0.10)}`;
+          activitiesCost = `${currencySymbol}${Math.round(totalBudget * 0.08)}`;
+          miscCost = `${currencySymbol}${Math.round(totalBudget * 0.07)}`;
+        }
+
         const tbl = doc.createElement('div');
         tbl.innerHTML = `
-        <table class="budget-table" style="border-collapse: collapse; border: 1px solid black; padding: 10px; width: 100%;">
-          <thead><tr><th>Item</th><th>Cost (€)</th><th>Status</th></tr></thead>
+        <table class="budget-table" style="border-collapse: collapse; border: 1px solid #ddd; width: 100%; margin: 15px 0; font-family: Arial, sans-serif;">
+          <thead>
+            <tr style="background-color: #f8f9fa;">
+              <th style="border: 1px solid #ddd; padding: 12px; text-align: left; font-weight: 600;">Item</th>
+              <th style="border: 1px solid #ddd; padding: 12px; text-align: right; font-weight: 600;">Cost</th>
+              <th style="border: 1px solid #ddd; padding: 12px; text-align: center; font-weight: 600;">Status</th>
+            </tr>
+          </thead>
           <tbody>
-            <tr><td><div class="budget-checkbox"><input type="checkbox" id="budget1"><label for="budget1">Flights</label></div></td><td>€0</td><td>Pending</td></tr>
-            <tr><td><div class="budget-checkbox"><input type="checkbox" id="budget2"><label for="budget2">Accommodation</label></div></td><td>€0</td><td>Pending</td></tr>
-            <tr><td><div class="budget-checkbox"><input type="checkbox" id="budget3"><label for="budget3">Food</label></div></td><td>€0</td><td>Pending</td></tr>
-            <tr><td><div class="budget-checkbox"><input type="checkbox" id="budget4"><label for="budget4">Transportation</label></div></td><td>€0</td><td>Pending</td></tr>
-            <tr><td><div class="budget-checkbox"><input type="checkbox" id="budget5"><label for="budget5">Activities</label></div></td><td>€0</td><td>Pending</td></tr>
-            <tr><td><div class="budget-checkbox"><input type="checkbox" id="budget6"><label for="budget6">Miscellaneous</label></div></td><td>€0</td><td>Pending</td></tr>
+            <tr>
+              <td style="border: 1px solid #ddd; padding: 10px;">
+                <div class="budget-checkbox">
+                  <input type="checkbox" id="budget1" style="margin-right: 8px;">
+                  <label for="budget1">Flights</label>
+                </div>
+              </td>
+              <td style="border: 1px solid #ddd; padding: 10px; text-align: right; font-weight: 500;">${flightCost}</td>
+              <td style="border: 1px solid #ddd; padding: 10px; text-align: center; color: #f57c00;">Pending</td>
+            </tr>
+            <tr style="background-color: #fafafa;">
+              <td style="border: 1px solid #ddd; padding: 10px;">
+                <div class="budget-checkbox">
+                  <input type="checkbox" id="budget2" style="margin-right: 8px;">
+                  <label for="budget2">Accommodation</label>
+                </div>
+              </td>
+              <td style="border: 1px solid #ddd; padding: 10px; text-align: right; font-weight: 500;">${accommodationCost}</td>
+              <td style="border: 1px solid #ddd; padding: 10px; text-align: center; color: #f57c00;">Pending</td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid #ddd; padding: 10px;">
+                <div class="budget-checkbox">
+                  <input type="checkbox" id="budget3" style="margin-right: 8px;">
+                  <label for="budget3">Food</label>
+                </div>
+              </td>
+              <td style="border: 1px solid #ddd; padding: 10px; text-align: right; font-weight: 500;">${foodCost}</td>
+              <td style="border: 1px solid #ddd; padding: 10px; text-align: center; color: #f57c00;">Pending</td>
+            </tr>
+            <tr style="background-color: #fafafa;">
+              <td style="border: 1px solid #ddd; padding: 10px;">
+                <div class="budget-checkbox">
+                  <input type="checkbox" id="budget4" style="margin-right: 8px;">
+                  <label for="budget4">Transportation</label>
+                </div>
+              </td>
+              <td style="border: 1px solid #ddd; padding: 10px; text-align: right; font-weight: 500;">${transportCost}</td>
+              <td style="border: 1px solid #ddd; padding: 10px; text-align: center; color: #f57c00;">Pending</td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid #ddd; padding: 10px;">
+                <div class="budget-checkbox">
+                  <input type="checkbox" id="budget5" style="margin-right: 8px;">
+                  <label for="budget5">Activities</label>
+                </div>
+              </td>
+              <td style="border: 1px solid #ddd; padding: 10px; text-align: right; font-weight: 500;">${activitiesCost}</td>
+              <td style="border: 1px solid #ddd; padding: 10px; text-align: center; color: #f57c00;">Pending</td>
+            </tr>
+            <tr style="background-color: #fafafa;">
+              <td style="border: 1px solid #ddd; padding: 10px;">
+                <div class="budget-checkbox">
+                  <input type="checkbox" id="budget6" style="margin-right: 8px;">
+                  <label for="budget6">Miscellaneous</label>
+                </div>
+              </td>
+              <td style="border: 1px solid #ddd; padding: 10px; text-align: right; font-weight: 500;">${miscCost}</td>
+              <td style="border: 1px solid #ddd; padding: 10px; text-align: center; color: #f57c00;">Pending</td>
+            </tr>
           </tbody>
         </table>`;
         budgetH2.parentNode.insertBefore(tbl, budgetH2.nextElementSibling);

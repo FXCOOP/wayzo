@@ -978,7 +978,7 @@ app.post('/api/plan', async (req, res) => {
     const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
     let finalHTML;
     try {
-      finalHTML = await injectWidgetsIntoSections(html, widgets, payload.destination, payload.start, payload.end);
+      finalHTML = await injectWidgetsIntoSections(html, widgets, payload.destination, payload.start, payload.end, payload);
     } catch (widgetError) {
       console.error('Widget injection failed:', widgetError);
       finalHTML = html; // Fallback to HTML without widgets
@@ -1041,7 +1041,7 @@ app.post('/api/plan', async (req, res) => {
       const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
       let finalHTML;
       try {
-        finalHTML = await injectWidgetsIntoSections(html, widgets, payload.destination, payload.start, payload.end);
+        finalHTML = await injectWidgetsIntoSections(html, widgets, payload.destination, payload.start, payload.end, payload);
       } catch (widgetError) {
         console.error('Widget injection failed:', widgetError);
         finalHTML = html;
@@ -1072,7 +1072,7 @@ app.post('/api/plan.pdf', async (req, res) => {
     const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
     let finalHTML;
     try {
-      finalHTML = await injectWidgetsIntoSections(html, widgets, payload.destination, payload.start, payload.end);
+      finalHTML = await injectWidgetsIntoSections(html, widgets, payload.destination, payload.start, payload.end, payload);
     } catch (widgetError) {
       console.error('Widget injection failed in PDF generation:', widgetError);
       finalHTML = html; // Fallback to HTML without widgets
