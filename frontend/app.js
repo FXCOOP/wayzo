@@ -34,7 +34,19 @@
   const initializeGoogleAuth = () => {};
   const ensureLoginVisible = () => { if (loginBtn) loginBtn.classList.add('btn-primary'); };
   const showUserMenu = () => {};
-  const detectUserLocation = async () => {};
+  const detectUserLocation = async () => {
+    try {
+      const response = await fetch('https://ipapi.co/json/');
+      const data = await response.json();
+      const fromField = $('#from');
+      if (fromField && data.city && data.country_name) {
+        fromField.value = `${data.city}, ${data.country_name}`;
+        fromField.placeholder = `${data.city}, ${data.country_name}`;
+      }
+    } catch (error) {
+      console.log('Location detection failed:', error);
+    }
+  };
   
   // Cookie Consent Management
   const initializeCookieConsent = () => {
@@ -929,6 +941,38 @@
     } catch (e) { console.warn('initGoogleFromConfig error', e); }
   };
 
+  // Setup date validation
+  const setupDateValidation = () => {
+    const startInput = $('#start');
+    const endInput = $('#end');
+
+    if (startInput) {
+      // Allow dates from today or historical (no minimum date restriction)
+      startInput.addEventListener('change', () => {
+        if (endInput && startInput.value) {
+          // Set minimum date for end date to be start date
+          endInput.min = startInput.value;
+          // If end date is earlier than start date, clear it
+          if (endInput.value && endInput.value < startInput.value) {
+            endInput.value = '';
+          }
+        }
+      });
+    }
+
+    if (endInput) {
+      endInput.addEventListener('change', () => {
+        if (startInput && endInput.value && startInput.value) {
+          // Ensure end date is not earlier than start date
+          if (endInput.value < startInput.value) {
+            alert('End date cannot be earlier than start date');
+            endInput.value = '';
+          }
+        }
+      });
+    }
+  };
+
   // Main initialization
   const init = () => {
     setupDateModes();
@@ -936,15 +980,18 @@
     addUIEnhancements();
     initGoogleFromConfig();
     bindPaywall();
-    
+
     // Initialize autocomplete
     initializeAutocomplete();
-    
+
+    // Detect user location for "from" field
+    detectUserLocation();
+
+    // Setup date validation
+    setupDateValidation();
+
     // Initialize cookie consent
     initializeCookieConsent();
-    
-    // Detect user location
-    detectUserLocation();
     
     // Ensure login is visible
     ensureLoginVisible();

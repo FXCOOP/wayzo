@@ -107,10 +107,16 @@
             </div>
           </div>
 
+          <div class="field">
+            <span>Traveling from</span>
+            <input id="from" type="text" name="from" placeholder="Your location will be detected..." />
+            <div class="field-help">Your location helps us find the best flight deals.</div>
+          </div>
+
           <div id="singleDestination" class="field">
             <span>Destination</span>
-            <input id="dest" type="text" name="destination" placeholder="e.g., Paris, Tokyo, Bali" data-required />
-            <div class="field-help">Add country for clarity if needed.</div>
+            <input id="dest" type="text" name="destination" placeholder="e.g., Paris, Tokyo, Bali, Tyrol" data-required />
+            <div class="field-help">Enter any city, region, or country.</div>
           </div>
 
           <div id="multiDestination" class="field hidden">
@@ -181,9 +187,9 @@
 
           <div class="fields-2">
             <div class="field">
-              <span>Budget</span>
+              <span>Budget (optional)</span>
               <div class="fields-2">
-                <input id="budget" type="number" min="100" step="50" name="budget" placeholder="1500" required />
+                <input id="budget" type="number" min="100" step="50" name="budget" placeholder="1500" />
                 <select id="currency" name="currency" aria-label="Currency">
                   <option value="USD" selected>USD $</option>
                   <option value="EUR">EUR €</option>
@@ -226,7 +232,21 @@
 
           <div class="field">
             <span>Preferences</span>
-            <input id="prefs" type="text" name="prefs" placeholder="e.g., museums, beaches, hiking, kid-friendly" />
+            <select id="prefs" name="prefs" multiple size="4">
+              <option value="museums">Museums & Culture</option>
+              <option value="beaches">Beaches & Water</option>
+              <option value="hiking">Hiking & Nature</option>
+              <option value="kid-friendly">Kid-Friendly</option>
+              <option value="nightlife">Nightlife & Entertainment</option>
+              <option value="food">Food & Dining</option>
+              <option value="shopping">Shopping</option>
+              <option value="adventure">Adventure Sports</option>
+              <option value="relaxation">Relaxation & Spa</option>
+              <option value="history">Historical Sites</option>
+              <option value="photography">Photography</option>
+              <option value="local-culture">Local Culture</option>
+            </select>
+            <div class="field-help">Hold Ctrl/Cmd to select multiple preferences.</div>
           </div>
 
           <div class="field">
@@ -242,24 +262,16 @@
           </div>
 
           <div class="field">
-            <span>Professional brief (optional)</span>
-            <textarea id="brief" name="brief" rows="4" placeholder="Detailed requirements: must-see places, vibe preferences, group details, dining preferences, time constraints, anchor events, rainy-day backups..."></textarea>
-            <div class="field-help">This helps us create a more personalized and detailed plan.</div>
-          </div>
-
-          <div class="field">
-            <span>Upload existing plans (optional)</span>
+            <span>Describe in your words</span>
+            <textarea id="brief" name="brief" rows="4" placeholder="Tell us about your ideal trip: must-see places, vibe preferences, group details, dining preferences, time constraints, special events, or any other requirements..."></textarea>
+            <div class="field-help">The more details you provide, the better we can personalize your trip.</div>
             <div class="file-upload">
-              <input id="planFiles" type="file" name="planFiles" multiple accept=".pdf,.doc,.docx,.txt" />
-              <div class="field-help">Upload existing itineraries, hotel confirmations, or travel documents for analysis.</div>
+              <input id="planFiles" type="file" name="planFiles" multiple accept=".pdf,.doc,.docx,.txt,.jpg,.png" />
+              <label for="planFiles" class="btn btn-ghost">📎 Attach files (optional)</label>
+              <div class="field-help">Upload existing itineraries, inspiration photos, or travel documents.</div>
             </div>
           </div>
 
-          <div class="field">
-            <span>Referral code (optional)</span>
-            <input id="referralCode" type="text" name="referralCode" placeholder="Enter friend's referral code for $5 off" />
-            <div class="field-help">Get $5 off your plan when you use a friend's referral code!</div>
-          </div>
 
           <div class="actions">
             <button class="btn btn-primary" type="submit" id="previewBtn">Generate preview</button>
