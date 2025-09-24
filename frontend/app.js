@@ -602,6 +602,45 @@
     localStorage.setItem('wayzo_last_full_plan', JSON.stringify(planData));
   };
 
+  // Create professional trip overview wrapper
+  const createTripOverview = (data, destination) => {
+    const formatDate = (dateStr) => {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-GB');
+    };
+
+    const startDate = formatDate(data.start);
+    const endDate = formatDate(data.end);
+    const budget = data.budget ? `${data.budget} ${data.currency || 'EUR'}` : 'Not specified';
+    const travelers = `${data.adults || 1} adult${(data.adults || 1) > 1 ? 's' : ''}${data.children ? `, ${data.children} children` : ''}`;
+    const style = data.level || 'Mid-range';
+
+    return `
+      <div class="trip-overview">
+        <h1>🚀 ${destination} Trip Plan</h1>
+        <div class="overview-grid">
+          <div class="overview-item">
+            <strong>📅 Travel Dates</strong>
+            ${startDate} → ${endDate}
+          </div>
+          <div class="overview-item">
+            <strong>💰 Budget</strong>
+            ${budget}
+          </div>
+          <div class="overview-item">
+            <strong>👥 Travelers</strong>
+            ${travelers}
+          </div>
+          <div class="overview-item">
+            <strong>🎯 Travel Style</strong>
+            ${style}
+          </div>
+        </div>
+      </div>
+    `;
+  };
+
   // Restore full plan from localStorage
   const restoreFullPlan = () => {
     const planData = localStorage.getItem('wayzo_last_full_plan');
@@ -609,7 +648,19 @@
       try {
         const data = JSON.parse(planData);
         if (data.type === 'full_plan') {
-          previewEl.innerHTML = data.html;
+          // Try to recreate the overview from stored data or use basic format
+          const basicOverview = `
+            <div class="trip-overview">
+              <h1>🚀 ${data.destination} Trip Plan</h1>
+              <p>Restored from ${new Date(data.timestamp).toLocaleDateString()}</p>
+            </div>
+          `;
+          previewEl.innerHTML = `
+            ${basicOverview}
+            <main class="content trip-report">
+              ${data.html}
+            </main>
+          `;
           setAffiliates(data.destination);
           
           // Show all download buttons
@@ -772,12 +823,16 @@
       if (true) {
         console.log('🎉 Free access enabled - bypassing payment!');
         // Test user or staging - show full plan immediately without payment
+        const tripOverview = createTripOverview(data, data.destination);
         previewEl.innerHTML = `
           <div class="test-user-notice">
             <h3>🎉 FREE ACCESS - Full Plan Available!</h3>
             <p>Enjoy your complete travel itinerary with all features unlocked.</p>
           </div>
-          ${result.html}
+          ${tripOverview}
+          <main class="content trip-report">
+            ${result.html}
+          </main>
         `;
         setAffiliates(data.destination);
         
@@ -1030,8 +1085,19 @@
             const destination = localStorage.getItem('wayzo_pending_destination');
             
             if (fullPlanContent) {
-              // Show the full plan content
-              previewEl.innerHTML = fullPlanContent;
+              // Show the full plan content with professional overview
+              const basicOverview = `
+                <div class="trip-overview">
+                  <h1>🚀 ${destination} Trip Plan</h1>
+                  <p>Payment completed successfully!</p>
+                </div>
+              `;
+              previewEl.innerHTML = `
+                ${basicOverview}
+                <main class="content trip-report">
+                  ${fullPlanContent}
+                </main>
+              `;
               setAffiliates(destination);
               
               // Save full plan for "Get Back" functionality
