@@ -618,27 +618,80 @@ async function injectWidgetsIntoSections(html, widgets, destination = '', startD
 
     // Build Google Map Preview with points extracted from map links
     const points = new Set();
-    doc.querySelectorAll('a[href*="maps.google"]').forEach(a => {
+    // Look for various map link formats and extract locations
+    doc.querySelectorAll('a[href*="maps.google"], a[href*="google.com/maps"], a[text*="Map"]').forEach(a => {
       const href = a.getAttribute('href') || '';
-      try {
-        const u = new URL(href, 'https://maps.google.com');
-        const q = u.searchParams.get('q');
-        if (q) points.add(q);
-      } catch {}
+      const text = a.textContent || '';
+
+      // Extract from URL
+      if (href.includes('maps.google') || href.includes('google.com/maps')) {
+        try {
+          const u = new URL(href, 'https://maps.google.com');
+          const q = u.searchParams.get('q');
+          if (q) {
+            // Clean up the query - remove extra parameters and decode
+            const cleanQ = decodeURIComponent(q).replace(/\+/g, ' ');
+            points.add(cleanQ);
+          }
+        } catch {}
+      }
+
+      // Extract from link text like "Map: Location Name"
+      if (text.includes('Map:') || text.includes('Map ')) {
+        const location = text.replace(/Map:?\s*/i, '').trim();
+        if (location && location !== 'Map') {
+          points.add(location);
+        }
+      }
     });
+
+    // Also add the destination itself
+    if (destination) {
+      points.add(destination);
+    }
     const arr = Array.from(points);
     if (arr.length > 0) {
       const mapH2 = doc.createElement('h2');
-      mapH2.textContent = 'Google Map Preview';
+      mapH2.textContent = '🗺️ Google Map Preview';
       const p = doc.createElement('p');
       const link = doc.createElement('a');
-      link.textContent = 'Open Map';
+      link.textContent = `Open Map with ${arr.length} points`;
       link.setAttribute('target', '_blank');
-      const query = encodeURIComponent(arr.join(' | '));
-      link.setAttribute('href', `https://maps.google.com/maps?q=${query}`);
+
+      // Create a better multi-point map URL
+      if (arr.length === 1) {
+        link.setAttribute('href', `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(arr[0])}`);
+      } else {
+        // For multiple points, use the directions API to show route between points
+        const start = encodeURIComponent(arr[0]);
+        const waypoints = arr.slice(1, -1).map(p => encodeURIComponent(p)).join('|');
+        const destination = encodeURIComponent(arr[arr.length - 1]);
+
+        if (waypoints) {
+          link.setAttribute('href', `https://www.google.com/maps/dir/?api=1&origin=${start}&destination=${destination}&waypoints=${waypoints}`);
+        } else if (arr.length === 2) {
+          link.setAttribute('href', `https://www.google.com/maps/dir/?api=1&origin=${start}&destination=${destination}`);
+        } else {
+          // Fallback to search with all points
+          link.setAttribute('href', `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(arr.join(' | '))}`);
+        }
+      }
+
       p.appendChild(link);
+
+      // Add a list of all points
+      const ul = doc.createElement('ul');
+      ul.style.marginTop = '10px';
+      ul.style.fontSize = '14px';
+      arr.forEach(point => {
+        const li = doc.createElement('li');
+        li.textContent = point;
+        ul.appendChild(li);
+      });
+
       doc.body.appendChild(mapH2);
       doc.body.appendChild(p);
+      doc.body.appendChild(ul);
     }
 
     // Wrap day sections with better styling

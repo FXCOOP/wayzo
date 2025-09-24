@@ -427,25 +427,25 @@ Start immediately with the content in this format:
 [destination highlights, travelers, dates, budget, style summary]
 
 ## 💰 Budget Breakdown
-[detailed cost breakdown with realistic prices]
+[detailed cost breakdown with actual ${budget} ${currency} budget - calculate exact amounts based on the user's budget, not a fixed 1400 EUR]
 
 ## 🗺️ Getting Around
 [transportation options, tips, getting from/to airport]
 
 ## 🏨 Accommodation
-[3-5 hotel recommendations with price ranges and [Book Now](#hotel-widget) links for each hotel]
+[Specific accommodation recommendations with exact names, addresses, prices, and [Book Now](#hotel-widget) links - NO suggestions like "If you'd like, I can swap to guesthouses" - provide definitive recommendations only]
 
 ## 🎫 Must-See Attractions
-[8-12 main attractions with detailed descriptions, entry fees, hours, and GetYourGuide booking links for tickets]
+[8-12 main attractions with detailed descriptions, entry fees, hours, and GetYourGuide booking links using partner_id=PUHVJ53 format: https://www.getyourguide.com/search?q=${destination}&partner_id=PUHVJ53]
 
 ## 🍽️ Dining Guide
 [6-10 restaurants by area with price ranges and specialties]
 
 ## 🎭 Daily Itineraries
-[Full hour-by-hour schedule for ALL ${nDays} days. Each day must have 6-8 activities with specific times, place names, and brief descriptions. NO generic activities.]
+[Full hour-by-hour schedule for ALL ${nDays} days with specific times, place names, and brief descriptions. Include [Map](https://maps.google.com/maps?q=location) links for each location and [Tickets](https://www.getyourguide.com/search?q=attraction&partner_id=PUHVJ53) links for attractions. NO generic activities.]
 
 ## 🧳 Don't Forget List
-[packing checklist with HTML checkboxes and links to relevant widgets like eSIM, travel insurance]
+[Simple packing checklist as bullet points - NO HTML checkboxes, NO fake interactive elements - just plain text list with widget links like eSIM]
 
 ## 🛡️ Travel Tips
 [local customs, money, safety, practical advice]
@@ -457,17 +457,21 @@ Start immediately with the content in this format:
 [contacts, healthcare, embassy info]
 
 ## ⚠️ Disclaimer
-*Prices and schedules subject to change. Verify details before booking. For assistance contact support.*
+*Prices and schedules are subject to change. Verify all details before booking. Check current opening hours and availability. Weather forecasts based on historical averages - check current conditions closer to travel dates. For assistance contact support. This plan provides structure but all prices, hours, and availability should be verified closer to travel.*
 
 Use specific places, real addresses, current prices. Weather will be added automatically. NO images.
 
 **CRITICAL - FINAL REPORT REQUIREMENTS:**
 - This is a FINAL, COMPLETE travel report - NOT a draft
 - DO NOT ask for user input or suggest further customization
-- DO NOT include phrases like "If you'd like, I can tailor this further" or "confirm preferred gateways"
-- DO NOT offer to recalculate or fix anything
-- Present everything as definitive information
+- DO NOT include phrases like "If you'd like, I can swap to guesthouses" or "confirm preferred gateways" or "I can tailor this further"
+- DO NOT offer alternatives, recalculations, or options
+- Present everything as definitive information with exact amounts
+- Use the exact budget provided: ${budget} ${currency} - NO default amounts like 1400 EUR
 - End the report with the disclaimer section - NO additional offers or suggestions
+- Include proper GetYourGuide links with partner_id=PUHVJ53 in attractions
+- Include Map and Tickets links in daily itineraries
+- NO fake HTML checkboxes in Don't Forget List - use plain bullet points only
 
 Generate the complete travel itinerary now using all the sections listed above.`;
 
