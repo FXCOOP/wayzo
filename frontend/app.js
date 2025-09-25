@@ -688,7 +688,9 @@
         show(pdfBtn);
         show(icsBtn);
         show($('#excelBtn'));
-        show($('#shareBtn'));
+        show($('#customizeBtn'));
+        show($('#shareSection'));
+        updateShareDestination();
         show(saveBtn);
         
         // Add test user notice for enhanced preview
@@ -806,7 +808,9 @@
         show(pdfBtn);
         show(icsBtn);
         show($('#excelBtn'));
-        show($('#shareBtn'));
+        show($('#customizeBtn'));
+        show($('#shareSection'));
+        updateShareDestination();
         
         // Hide paywall for test user
         hide($('#purchaseActions'));
@@ -847,7 +851,8 @@
         hide(pdfBtn);
         hide(icsBtn);
         hide($('#excelBtn'));
-        hide($('#shareBtn'));
+        hide($('#customizeBtn'));
+        hide($('#shareSection'));
         
         // Initialize PayPal buttons for the paywall
         setTimeout(() => {
@@ -1051,7 +1056,9 @@
             show($('#pdfBtn'));
             show($('#icsBtn'));
             show($('#excelBtn'));
-            show($('#shareBtn'));
+            show($('#customizeBtn'));
+        show($('#shareSection'));
+        updateShareDestination();
             
             // Reset PayPal initialization flag for future use
             window.paypalInitialized = false;
@@ -1427,6 +1434,19 @@
   window.downloadICS = downloadICS;
   window.downloadExcel = downloadExcel;
   window.sharePlan = sharePlan;
+  window.toggleShareOptions = toggleShareOptions;
+  window.shareToPlatform = shareToPlatform;
+  window.updateShareDestination = updateShareDestination;
+  window.toggleCustomizeMode = toggleCustomizeMode;
+  window.removeActivity = removeActivity;
+  window.replaceActivity = replaceActivity;
+  window.addActivity = addActivity;
+  window.applyReplacement = applyReplacement;
+  window.applyAddition = applyAddition;
+  window.setFlightTimes = setFlightTimes;
+  window.exportActivityToCalendar = exportActivityToCalendar;
+  window.exportAllActivitiesToCalendar = exportAllActivitiesToCalendar;
+  window.applyCalendarExport = applyCalendarExport;
   window.accessAdminPanel = accessAdminPanel;
 
   // Multi-Destination Management
@@ -2055,14 +2075,62 @@
     showNotification('Printable version opened in new tab!', 'success');
   }
 
-  function downloadICS() {
+  // Calendar Export Helper Functions
+  function showCalendarExportModal(formData) {
+    const modal = document.createElement('div');
+    modal.className = 'replacement-modal';
+    modal.innerHTML = `
+      <div class="replacement-modal-content">
+        <div class="replacement-modal-header">
+          <h3>Export to Calendar</h3>
+          <button class="btn-close" onclick="this.closest('.replacement-modal').remove()">×</button>
+        </div>
+
+        <p>Choose what to export to your calendar:</p>
+
+        <div class="replacement-options">
+          <label class="replacement-option">
+            <input type="radio" name="calendarExport" value="overview" checked>
+            <div class="replacement-option-content">
+              <h4>Trip Overview</h4>
+              <p>Single event for the entire trip duration</p>
+            </div>
+          </label>
+          <label class="replacement-option">
+            <input type="radio" name="calendarExport" value="detailed">
+            <div class="replacement-option-content">
+              <h4>All Activities</h4>
+              <p>Individual events for each activity with specific times</p>
+            </div>
+          </label>
+        </div>
+
+        <div class="replacement-modal-actions">
+          <button class="btn btn-secondary" onclick="this.closest('.replacement-modal').remove()">Cancel</button>
+          <button class="btn btn-primary" onclick="applyCalendarExport()">Export</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+  }
+
+  function applyCalendarExport() {
+    const modal = document.querySelector('.replacement-modal');
+    const selectedOption = modal.querySelector('input[name="calendarExport"]:checked');
     const formData = readForm();
-    if (!formData.destination || !formData.start) {
-      showNotification('Please generate a plan with dates first.', 'warning');
-      return;
+
+    if (selectedOption.value === 'detailed') {
+      exportAllActivitiesToCalendar();
+    } else {
+      exportTripOverview(formData);
     }
-    
-    // Create ICS content
+
+    modal.remove();
+  }
+
+  function exportTripOverview(formData) {
+    // Create ICS content for trip overview
     const startDate = new Date(formData.start);
     const endDate = new Date(formData.end);
     const icsContent = [
@@ -2074,20 +2142,41 @@
       `DTSTART:${startDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
       `DTEND:${endDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
       `DESCRIPTION:Trip planned with Wayzo - ${formData.destination}`,
+      `CATEGORIES:Travel,Wayzo`,
       'END:VEVENT',
       'END:VCALENDAR'
     ].join('\r\n');
-    
+
     // Download ICS file
     const blob = new Blob([icsContent], { type: 'text/calendar' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `trip-${formData.destination.toLowerCase()}.ics`;
+    a.download = `wayzo-trip-${formData.destination.toLowerCase().replace(/\s+/g, '-')}.ics`;
     a.click();
     window.URL.revokeObjectURL(url);
-    
-    showNotification('Calendar file downloaded!', 'success');
+
+    showNotification('Trip overview exported to calendar! 📅', 'success');
+  }
+
+  function downloadICS() {
+    const formData = readForm();
+    if (!formData.destination || !formData.start) {
+      showNotification('Please generate a plan with dates first.', 'warning');
+      return;
+    }
+
+    // Check if activities exist in the plan
+    const previewEl = $('#preview');
+    const hasActivities = previewEl && previewEl.querySelectorAll('li').length > 3;
+
+    if (hasActivities) {
+      // Show options modal for detailed vs. overview export
+      showCalendarExportModal(formData);
+    } else {
+      // No activities found, export trip overview only
+      exportTripOverview(formData);
+    }
   }
 
   function downloadExcel() {
@@ -2123,27 +2212,662 @@
     showNotification('Excel file downloaded!', 'success');
   }
 
-  function sharePlan() {
+  // Social Sharing Functions
+  function updateShareDestination() {
+    const formData = readForm();
+    const shareDestElement = $('#shareDestination');
+    if (shareDestElement && formData.destination) {
+      shareDestElement.textContent = formData.destination;
+    }
+  }
+
+  function toggleShareOptions() {
+    const shareOptions = $('#shareOptions');
+    if (shareOptions.classList.contains('hidden')) {
+      shareOptions.classList.remove('hidden');
+      // Close when clicking outside
+      document.addEventListener('click', closeShareOnClickOutside);
+    } else {
+      shareOptions.classList.add('hidden');
+      document.removeEventListener('click', closeShareOnClickOutside);
+    }
+  }
+
+  function closeShareOnClickOutside(event) {
+    const shareSection = $('#shareSection');
+    if (!shareSection.contains(event.target)) {
+      $('#shareOptions').classList.add('hidden');
+      document.removeEventListener('click', closeShareOnClickOutside);
+    }
+  }
+
+  function getShareContent() {
+    const formData = readForm();
+    const shareType = document.querySelector('input[name="shareType"]:checked')?.value || 'preview';
+    const destination = formData.destination || 'Amazing Destination';
+
+    if (shareType === 'preview') {
+      return {
+        title: `My Trip to ${destination} - Wayzo`,
+        text: `🌟 Look at my amazing trip to ${destination}! ✈️ Perfectly planned with Wayzo AI. Check out the highlights and get inspired for your next adventure! 🚀`,
+        url: window.location.href,
+        hashtags: 'Wayzo,TravelPlanning,AITravel,TripPlanner'
+      };
+    } else {
+      const previewEl = $('#preview');
+      const reportText = previewEl ? previewEl.textContent.substring(0, 200) + '...' : '';
+      return {
+        title: `Complete Trip Plan: ${destination} - Wayzo`,
+        text: `🎯 Check out my complete trip to ${destination} planned with Wayzo! Full itinerary with daily schedules, activities, and local recommendations. ${reportText}`,
+        url: window.location.href,
+        hashtags: 'Wayzo,TravelPlanning,AITravel,TripPlanner,Itinerary'
+      };
+    }
+  }
+
+  function shareToPlatform(platform) {
     const formData = readForm();
     if (!formData.destination) {
       showNotification('Please generate a plan first.', 'warning');
       return;
     }
-    
-    const shareText = `Check out my trip to ${formData.destination} planned with Wayzo! 🚀✈️`;
-    const shareUrl = window.location.href;
-    
-    if (navigator.share) {
-      navigator.share({
-        title: 'My Wayzo Trip Plan',
-        text: shareText,
-        url: shareUrl
-      });
-    } else {
-      // Fallback for browsers without native sharing
-      navigator.clipboard.writeText(shareText + ' ' + shareUrl);
-      showNotification('Trip details copied to clipboard!', 'success');
+
+    const content = getShareContent();
+    let shareUrl = '';
+
+    // Track sharing event
+    trackEvent('social_share', {
+      platform: platform,
+      destination: formData.destination,
+      shareType: document.querySelector('input[name="shareType"]:checked')?.value || 'preview'
+    });
+
+    switch (platform) {
+      case 'facebook':
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(content.url)}&quote=${encodeURIComponent(content.text)}`;
+        break;
+
+      case 'twitter':
+        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(content.text)}&url=${encodeURIComponent(content.url)}&hashtags=${content.hashtags}`;
+        break;
+
+      case 'linkedin':
+        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(content.url)}&title=${encodeURIComponent(content.title)}&summary=${encodeURIComponent(content.text)}`;
+        break;
+
+      case 'whatsapp':
+        shareUrl = `https://wa.me/?text=${encodeURIComponent(content.text + ' ' + content.url)}`;
+        break;
+
+      case 'instagram':
+        // Instagram doesn't support direct URL sharing, so copy to clipboard with instructions
+        navigator.clipboard.writeText(content.text + ' ' + content.url).then(() => {
+          showNotification('Content copied! Paste it into your Instagram post or story 📸', 'success');
+        });
+        return;
+
+      case 'email':
+        shareUrl = `mailto:?subject=${encodeURIComponent(content.title)}&body=${encodeURIComponent(content.text + '\n\n' + content.url)}`;
+        break;
+
+      case 'copy':
+        navigator.clipboard.writeText(content.text + ' ' + content.url).then(() => {
+          showNotification('Trip details copied to clipboard! 📋', 'success');
+        });
+        return;
     }
+
+    if (shareUrl) {
+      window.open(shareUrl, '_blank', 'width=600,height=400');
+      // Hide the share dropdown after sharing
+      $('#shareOptions').classList.add('hidden');
+    }
+  }
+
+  // Legacy function for backwards compatibility
+  function sharePlan() {
+    toggleShareOptions();
+  }
+
+  // Activity Customization Functions
+  let customizeMode = false;
+
+  function toggleCustomizeMode() {
+    const previewEl = $('#preview');
+    const customizeBtn = $('#customizeBtn');
+
+    customizeMode = !customizeMode;
+
+    if (customizeMode) {
+      previewEl.classList.add('customize-mode-active');
+      customizeBtn.textContent = '✓ Done Customizing';
+      customizeBtn.classList.add('btn-success');
+      customizeBtn.classList.remove('btn-primary');
+
+      addCustomizeNotice();
+      enableActivityCustomization();
+
+      trackEvent('customize_mode_enabled');
+    } else {
+      previewEl.classList.remove('customize-mode-active');
+      customizeBtn.textContent = '✏️ Customize Activities';
+      customizeBtn.classList.add('btn-primary');
+      customizeBtn.classList.remove('btn-success');
+
+      removeCustomizeNotice();
+
+      trackEvent('customize_mode_disabled');
+    }
+  }
+
+  function addCustomizeNotice() {
+    const previewEl = $('#preview');
+    const existingNotice = $('.customize-mode-notice');
+
+    if (existingNotice) {
+      existingNotice.remove();
+    }
+
+    const notice = document.createElement('div');
+    notice.className = 'customize-mode-notice';
+    notice.innerHTML = `
+      <h4>🎨 Customize Mode Active</h4>
+      <p>Hover over any activity to remove, replace, or add alternatives. Your changes will be saved automatically.</p>
+    `;
+
+    previewEl.insertBefore(notice, previewEl.firstChild);
+  }
+
+  function removeCustomizeNotice() {
+    const notice = $('.customize-mode-notice');
+    if (notice) {
+      notice.remove();
+    }
+  }
+
+  function enableActivityCustomization() {
+    const previewEl = $('#preview');
+
+    // Find all activity items (activities within daily itineraries)
+    const activityLines = previewEl.querySelectorAll('li');
+
+    activityLines.forEach((line, index) => {
+      const text = line.textContent.trim();
+
+      // Skip empty lines or non-activity lines
+      if (!text || text.length < 10 || !text.includes('—') && !text.includes('-')) {
+        return;
+      }
+
+      // Skip lines that are just times without activities
+      if (text.match(/^\d{1,2}:\d{2}\s*(AM|PM)?\s*$/)) {
+        return;
+      }
+
+      line.classList.add('activity-item');
+      line.dataset.activityIndex = index;
+
+      // Add control buttons
+      const controls = document.createElement('div');
+      controls.className = 'activity-controls';
+      controls.innerHTML = `
+        <button class="btn-calendar" onclick="exportActivityToCalendar(${index})" title="Add to calendar">📅</button>
+        <button class="btn-remove" onclick="removeActivity(${index})" title="Remove activity">×</button>
+        <button class="btn-replace" onclick="replaceActivity(${index})" title="Replace activity">↻</button>
+        <button class="btn-add" onclick="addActivity(${index})" title="Add alternative">+</button>
+      `;
+
+      line.style.position = 'relative';
+      line.appendChild(controls);
+    });
+  }
+
+  function removeActivity(index) {
+    const activityEl = document.querySelector(`[data-activity-index="${index}"]`);
+    if (activityEl) {
+      activityEl.style.opacity = '0.3';
+      activityEl.style.textDecoration = 'line-through';
+
+      // Mark as removed
+      activityEl.dataset.removed = 'true';
+
+      showNotification('Activity removed! Generate a new plan to see updated itinerary.', 'success');
+
+      trackEvent('activity_removed', {
+        activity: activityEl.textContent.trim(),
+        index: index
+      });
+    }
+  }
+
+  function replaceActivity(index) {
+    const activityEl = document.querySelector(`[data-activity-index="${index}"]`);
+    if (!activityEl) return;
+
+    const activityText = activityEl.textContent.trim();
+    const formData = readForm();
+
+    showReplacementModal(index, activityText, formData.destination);
+  }
+
+  function addActivity(index) {
+    const activityEl = document.querySelector(`[data-activity-index="${index}"]`);
+    if (!activityEl) return;
+
+    const formData = readForm();
+
+    showAddActivityModal(index, formData.destination);
+  }
+
+  function showReplacementModal(index, activityText, destination) {
+    const modal = document.createElement('div');
+    modal.className = 'replacement-modal';
+
+    // Generate replacement options based on the activity
+    const replacements = generateReplacementOptions(activityText, destination);
+
+    modal.innerHTML = `
+      <div class="replacement-modal-content">
+        <div class="replacement-modal-header">
+          <h3>Replace Activity</h3>
+          <button class="btn-close" onclick="this.closest('.replacement-modal').remove()">×</button>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <strong>Current:</strong> ${activityText}
+        </div>
+
+        <div class="replacement-options">
+          ${replacements.map((option, i) => `
+            <label class="replacement-option">
+              <input type="radio" name="replacement" value="${i}">
+              <div class="replacement-option-content">
+                <h4>${option.title}</h4>
+                <p>${option.description}</p>
+              </div>
+            </label>
+          `).join('')}
+        </div>
+
+        <div class="replacement-modal-actions">
+          <button class="btn btn-secondary" onclick="this.closest('.replacement-modal').remove()">Cancel</button>
+          <button class="btn btn-primary" onclick="applyReplacement(${index})">Apply Replacement</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    trackEvent('replacement_modal_opened', {
+      originalActivity: activityText,
+      destination: destination
+    });
+  }
+
+  function showAddActivityModal(index, destination) {
+    const modal = document.createElement('div');
+    modal.className = 'replacement-modal';
+
+    // Generate activity suggestions
+    const suggestions = generateActivitySuggestions(destination);
+
+    modal.innerHTML = `
+      <div class="replacement-modal-content">
+        <div class="replacement-modal-header">
+          <h3>Add Activity</h3>
+          <button class="btn-close" onclick="this.closest('.replacement-modal').remove()">×</button>
+        </div>
+
+        <p>Choose an additional activity to add after the selected item:</p>
+
+        <div class="replacement-options">
+          ${suggestions.map((option, i) => `
+            <label class="replacement-option">
+              <input type="radio" name="addition" value="${i}">
+              <div class="replacement-option-content">
+                <h4>${option.title}</h4>
+                <p>${option.description}</p>
+              </div>
+            </label>
+          `).join('')}
+        </div>
+
+        <div class="replacement-modal-actions">
+          <button class="btn btn-secondary" onclick="this.closest('.replacement-modal').remove()">Cancel</button>
+          <button class="btn btn-primary" onclick="applyAddition(${index})">Add Activity</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    trackEvent('add_activity_modal_opened', {
+      destination: destination
+    });
+  }
+
+  function generateReplacementOptions(activityText, destination) {
+    // Simple replacement suggestions based on activity type
+    const lowercaseActivity = activityText.toLowerCase();
+
+    if (lowercaseActivity.includes('museum')) {
+      return [
+        { title: 'Art Gallery Visit', description: 'Explore local art galleries and exhibitions' },
+        { title: 'Historical Walking Tour', description: 'Guided tour of historical district' },
+        { title: 'Cultural Center', description: 'Visit local cultural center and performances' }
+      ];
+    } else if (lowercaseActivity.includes('restaurant') || lowercaseActivity.includes('lunch') || lowercaseActivity.includes('dinner')) {
+      return [
+        { title: 'Local Market Food Tour', description: 'Explore authentic street food and local markets' },
+        { title: 'Rooftop Dining', description: 'Scenic dining with city views' },
+        { title: 'Cooking Class', description: 'Learn to cook traditional local dishes' }
+      ];
+    } else if (lowercaseActivity.includes('park') || lowercaseActivity.includes('walk')) {
+      return [
+        { title: 'Botanical Garden', description: 'Peaceful walk through beautiful gardens' },
+        { title: 'Riverside Path', description: 'Scenic walk along the waterfront' },
+        { title: 'Viewpoint Hike', description: 'Short hike to panoramic city views' }
+      ];
+    } else {
+      return [
+        { title: 'Local Experience', description: `Alternative ${destination} experience` },
+        { title: 'Cultural Activity', description: 'Immersive local cultural activity' },
+        { title: 'Relaxation Time', description: 'Free time to explore at your own pace' }
+      ];
+    }
+  }
+
+  function generateActivitySuggestions(destination) {
+    return [
+      { title: 'Photo Walking Tour', description: 'Capture the best Instagram-worthy spots' },
+      { title: 'Local Coffee Experience', description: 'Visit the best local coffee shops' },
+      { title: 'Souvenir Shopping', description: 'Browse unique local crafts and souvenirs' },
+      { title: 'People Watching', description: 'Relax in a popular local square' },
+      { title: 'Mini Food Tour', description: 'Try 3-4 local specialties' }
+    ];
+  }
+
+  function applyReplacement(index) {
+    const modal = document.querySelector('.replacement-modal');
+    const selectedOption = modal.querySelector('input[name="replacement"]:checked');
+
+    if (!selectedOption) {
+      showNotification('Please select a replacement option.', 'warning');
+      return;
+    }
+
+    const activityEl = document.querySelector(`[data-activity-index="${index}"]`);
+    const replacementIndex = selectedOption.value;
+    const replacements = generateReplacementOptions(activityEl.textContent, readForm().destination);
+    const replacement = replacements[replacementIndex];
+
+    if (activityEl && replacement) {
+      // Update the activity text
+      const timeMatch = activityEl.textContent.match(/\d{1,2}:\d{2}(?:\s*[AP]M)?/);
+      const time = timeMatch ? timeMatch[0] : '';
+
+      activityEl.innerHTML = `${time} — ${replacement.title}. <em>(Customized)</em>`;
+      activityEl.style.backgroundColor = '#f0f9ff';
+      activityEl.style.borderColor = '#0ea5e9';
+
+      modal.remove();
+
+      showNotification(`Activity replaced with "${replacement.title}"!`, 'success');
+
+      trackEvent('activity_replaced', {
+        original: activityEl.dataset.originalText,
+        replacement: replacement.title,
+        index: index
+      });
+    }
+  }
+
+  function applyAddition(index) {
+    const modal = document.querySelector('.replacement-modal');
+    const selectedOption = modal.querySelector('input[name="addition"]:checked');
+
+    if (!selectedOption) {
+      showNotification('Please select an activity to add.', 'warning');
+      return;
+    }
+
+    const activityEl = document.querySelector(`[data-activity-index="${index}"]`);
+    const suggestionIndex = selectedOption.value;
+    const suggestions = generateActivitySuggestions(readForm().destination);
+    const addition = suggestions[suggestionIndex];
+
+    if (activityEl && addition) {
+      // Create new activity element
+      const newActivity = document.createElement('li');
+      newActivity.className = 'activity-item added-activity';
+      newActivity.innerHTML = `<span style="color: #16a34a;">+ ${addition.title}</span> <em>(Added)</em>`;
+      newActivity.style.backgroundColor = '#f0fdf4';
+      newActivity.style.borderColor = '#22c55e';
+      newActivity.style.marginLeft = '20px';
+
+      // Insert after current activity
+      activityEl.parentNode.insertBefore(newActivity, activityEl.nextSibling);
+
+      modal.remove();
+
+      showNotification(`"${addition.title}" added to your itinerary!`, 'success');
+
+      trackEvent('activity_added', {
+        addition: addition.title,
+        afterIndex: index
+      });
+    }
+  }
+
+  // Flight Time Functions
+  function setFlightTimes(arrivalTime, departureTime) {
+    const arrivalInput = document.querySelector('input[name="arrivalTime"]');
+    const departureInput = document.querySelector('input[name="departureTime"]');
+
+    if (arrivalInput) arrivalInput.value = arrivalTime;
+    if (departureInput) departureInput.value = departureTime;
+
+    trackEvent('flight_times_preset', {
+      arrival: arrivalTime,
+      departure: departureTime
+    });
+
+    if (arrivalTime && departureTime) {
+      showNotification(`Flight times set: Arrival ${arrivalTime}, Departure ${departureTime}`, 'success');
+    } else {
+      showNotification('Flight times cleared', 'info');
+    }
+  }
+
+  // Calendar Export Functions
+  function exportActivityToCalendar(index) {
+    const activityEl = document.querySelector(`[data-activity-index="${index}"]`);
+    if (!activityEl) return;
+
+    const activityText = activityEl.textContent.trim();
+    const formData = readForm();
+
+    if (!formData.start) {
+      showNotification('Trip dates are required for calendar export.', 'warning');
+      return;
+    }
+
+    // Parse activity details
+    const activity = parseActivityDetails(activityText, formData, activityEl);
+
+    if (activity) {
+      createActivityCalendarEvent(activity);
+    } else {
+      showNotification('Could not parse activity details.', 'error');
+    }
+  }
+
+  function parseActivityDetails(activityText, formData, activityEl = null) {
+    // Extract time from activity text (e.g., "09:30 — City tower lookout")
+    const timeMatch = activityText.match(/(\d{1,2}):(\d{2})(?:\s*(AM|PM))?/);
+    if (!timeMatch) {
+      return null;
+    }
+
+    const hours = parseInt(timeMatch[1]);
+    const minutes = parseInt(timeMatch[2]);
+    const isPM = timeMatch[3] === 'PM';
+
+    // Extract day information from context
+    let dayNumber = 1;
+    const dayMatch = activityText.match(/Day (\d+)/i);
+
+    if (dayMatch) {
+      dayNumber = parseInt(dayMatch[1]);
+    } else if (activityEl) {
+      // Try to find day information from parent elements
+      const parentSection = activityEl.closest('section, div');
+      const dayHeader = parentSection?.querySelector('h3, h4, h2, strong');
+      const headerText = dayHeader?.textContent || '';
+      const headerDayMatch = headerText.match(/Day (\d+)/i);
+      if (headerDayMatch) {
+        dayNumber = parseInt(headerDayMatch[1]);
+      }
+    }
+
+    // Extract activity name (everything after the time and dash)
+    const activityName = activityText.replace(/^\d{1,2}:\d{2}(?:\s*[AP]M)?\s*[—-]\s*/, '').split('.')[0].trim();
+
+    // Calculate the actual date
+    const startDate = new Date(formData.start);
+    const activityDate = new Date(startDate);
+    activityDate.setDate(startDate.getDate() + (dayNumber - 1));
+
+    // Set the time
+    const activityTime = new Date(activityDate);
+    const hour24 = isPM && hours !== 12 ? hours + 12 : (isPM || hours !== 12) ? hours : hours;
+    activityTime.setHours(hour24, minutes, 0, 0);
+
+    // Set end time (assume 1-2 hours duration based on activity type)
+    const endTime = new Date(activityTime);
+    const duration = activityName.toLowerCase().includes('museum') ||
+                     activityName.toLowerCase().includes('tour') ? 120 : 60; // 2 hours for museums/tours, 1 hour for others
+    endTime.setMinutes(activityTime.getMinutes() + duration);
+
+    return {
+      title: activityName,
+      startTime: activityTime,
+      endTime: endTime,
+      location: formData.destination,
+      day: dayNumber
+    };
+  }
+
+  function createActivityCalendarEvent(activity) {
+    const formatDateTime = (date) => {
+      return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    };
+
+    const icsContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Wayzo//Activity Export//EN',
+      'BEGIN:VEVENT',
+      `SUMMARY:${activity.title}`,
+      `DTSTART:${formatDateTime(activity.startTime)}`,
+      `DTEND:${formatDateTime(activity.endTime)}`,
+      `LOCATION:${activity.location}`,
+      `DESCRIPTION:Day ${activity.day} activity from your ${activity.location} trip planned with Wayzo.`,
+      `CATEGORIES:Travel,Wayzo`,
+      'END:VEVENT',
+      'END:VCALENDAR'
+    ].join('\r\n');
+
+    // Download ICS file
+    const blob = new Blob([icsContent], { type: 'text/calendar' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `wayzo-activity-${activity.title.toLowerCase().replace(/\s+/g, '-')}.ics`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+
+    showNotification(`Calendar event created for "${activity.title}"! 📅`, 'success');
+
+    trackEvent('activity_calendar_export', {
+      activity: activity.title,
+      location: activity.location,
+      day: activity.day
+    });
+  }
+
+  // Enhanced bulk calendar export for all activities
+  function exportAllActivitiesToCalendar() {
+    const formData = readForm();
+    if (!formData.start || !formData.destination) {
+      showNotification('Trip dates and destination are required.', 'warning');
+      return;
+    }
+
+    const previewEl = $('#preview');
+    const activityElements = previewEl.querySelectorAll('.activity-item, li');
+    const events = [];
+
+    activityElements.forEach((el) => {
+      const activityText = el.textContent.trim();
+      const activity = parseActivityDetails(activityText, formData);
+
+      if (activity) {
+        events.push({
+          title: activity.title,
+          startTime: activity.startTime,
+          endTime: activity.endTime,
+          location: activity.location,
+          day: activity.day
+        });
+      }
+    });
+
+    if (events.length === 0) {
+      showNotification('No activities found to export.', 'warning');
+      return;
+    }
+
+    const formatDateTime = (date) => {
+      return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    };
+
+    let icsContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Wayzo//Trip Activities//EN'
+    ];
+
+    events.forEach((event) => {
+      icsContent.push(
+        'BEGIN:VEVENT',
+        `SUMMARY:${event.title}`,
+        `DTSTART:${formatDateTime(event.startTime)}`,
+        `DTEND:${formatDateTime(event.endTime)}`,
+        `LOCATION:${event.location}`,
+        `DESCRIPTION:Day ${event.day} activity from your ${event.location} trip planned with Wayzo.`,
+        `CATEGORIES:Travel,Wayzo`,
+        'END:VEVENT'
+      );
+    });
+
+    icsContent.push('END:VCALENDAR');
+
+    // Download ICS file
+    const blob = new Blob([icsContent.join('\r\n')], { type: 'text/calendar' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `wayzo-all-activities-${formData.destination.toLowerCase().replace(/\s+/g, '-')}.ics`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+
+    showNotification(`${events.length} activities exported to calendar! 📅`, 'success');
+
+    trackEvent('all_activities_calendar_export', {
+      destination: formData.destination,
+      activityCount: events.length
+    });
   }
 
   // Admin Panel Access

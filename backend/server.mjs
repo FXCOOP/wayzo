@@ -374,9 +374,9 @@ function localPlanMarkdown(input) {
 - 20:00 — Early night.
 ### Day 2 — Downtown Exploration
 - 08:30 — Breakfast cafe.
-- 09:30 — City tower lookout. [Tickets](tickets:${destination} tower)
+- 09:30 — City tower lookout. [Tickets](https://www.getyourguide.com/search?q=${destination} tower&partner_id=PUHVJ53)
 - 12:00 — Lunch spot.
-- 13:30 — Notable museum. [Tickets](tickets:${destination} museum)
+- 13:30 — Notable museum. [Tickets](https://www.getyourguide.com/search?q=${destination} museum&partner_id=PUHVJ53)
 - 17:00 — Riverfront stroll. [Map](map:${destination} waterfront)
 - 19:00 — Dinner.
 ### Day 3 — Nature & Parks
@@ -394,24 +394,27 @@ function containsDaySections(md = "") {
 /* OpenAI (optional) */
 const client = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 async function generatePlanWithAI(payload) {
-  const { 
-    destination = '', 
-    start = '', 
-    end = '', 
-    budget = 0, 
-    currency = 'USD $', 
-    adults = 2, 
-    children = 0, 
+  const {
+    destination = '',
+    start = '',
+    end = '',
+    budget = 0,
+    currency = 'USD $',
+    adults = 2,
+    children = 0,
     childrenAges = [],
-    level = 'mid', 
-    prefs = '', 
-    dietary = [], 
+    level = 'mid',
+    prefs = '',
+    dietary = [],
     professional_brief = '',
     from = '',
     dateMode = 'exact',
     flexibleDates = null,
     uploadedFiles = [],
-    mode = 'full'
+    mode = 'full',
+    arrivalTime = '',
+    departureTime = '',
+    tripPurpose = 'leisure'
   } = payload || {};
   
   const nDays = dateMode === 'flexible' && flexibleDates ? flexibleDates.duration : daysBetween(start, end);
@@ -440,7 +443,7 @@ Calculate realistic costs for ${level} style travel:
 [Specific accommodation recommendations with exact names, addresses, prices, and [Book Now](#hotel-widget) links - NO suggestions like "If you'd like, I can swap to guesthouses" - provide definitive recommendations only]
 
 ## 🎫 Must-See Attractions
-[8-12 main attractions with detailed descriptions, entry fees, hours, and GetYourGuide booking links using partner_id=PUHVJ53 format: https://www.getyourguide.com/search?q=${destination}&partner_id=PUHVJ53]
+[8-12 main attractions with detailed descriptions, entry fees, hours, and GetYourGuide booking links. Use format: [Book Tickets](https://www.getyourguide.com/search?q=SPECIFIC_ATTRACTION_NAME&partner_id=PUHVJ53) - replace SPECIFIC_ATTRACTION_NAME with actual attraction name. NEVER use generic "Tickets" text.]
 
 **GetYourGuide Attractions Widget**: After listing 6-8 attractions, insert this widget:
 <div data-gyg-href="https://widget.getyourguide.com/default/activities.frame" data-gyg-locale-code="en-US" data-gyg-widget="activities" data-gyg-number-of-items="3" data-gyg-partner-id="PUHVJ53" data-gyg-q="${destination} attractions"><span>Powered by <a target="_blank" rel="sponsored" href="https://www.getyourguide.com/">GetYourGuide</a></span></div>
@@ -450,12 +453,13 @@ Calculate realistic costs for ${level} style travel:
 
 ## 🎭 Daily Itineraries
 Create SPECIFIC daily schedules for all ${nDays} days with:
-- Day 1 (Arrival): MAX 1 activity only, based on realistic flight arrival times
-- Days 2-${nDays}: MAX 2-3 activities per day (holiday pace, not rushed)
+- Day 1 (Arrival): ${arrivalTime ? `Arrival at ${arrivalTime} - plan activities accordingly, MAX 1 activity if arriving after noon` : 'MAX 1 activity only, based on realistic flight arrival times'}
+- Days 2-${nDays-1}: MAX 2-3 activities per day (holiday pace, not rushed)
+- Day ${nDays} (Departure): ${departureTime ? `Departure at ${departureTime} - include checkout time and airport transfer, light morning activities only` : 'Include checkout and departure logistics'}
 - Exact times (9:00 AM, 2:30 PM, etc.)
 - Real ${destination} locations and attraction names
 - [Map](https://maps.google.com/maps?q=specific-location-name) for each location
-- [Tickets](https://www.getyourguide.com/search?q=specific-attraction-name&partner_id=PUHVJ53) for attractions
+- [Book Tickets](https://www.getyourguide.com/search?q=specific-attraction-name&partner_id=PUHVJ53) for attractions (ALWAYS use full GetYourGuide URLs with partner_id=PUHVJ53, NEVER generic "Tickets" text)
 - NO generic activities like "sunset viewpoint & dinner"
 - Each day format: **Day X - Date (YYYY-MM-DD)**
 
@@ -488,8 +492,9 @@ Use specific places, real addresses, current prices. Weather will be added autom
 - Present everything as definitive information with exact amounts
 - Use the exact budget provided: ${budget} ${currency} - NO default amounts like 1400 EUR
 - End the report with the disclaimer section - NO additional offers or suggestions
-- Include proper GetYourGuide links with partner_id=PUHVJ53 in attractions
-- Include Map and Tickets links in daily itineraries
+- Include proper GetYourGuide links with partner_id=PUHVJ53 in attractions: [Book Tickets](https://www.getyourguide.com/search?q=ATTRACTION_NAME&partner_id=PUHVJ53)
+- Include Map links in daily itineraries: [Map](https://maps.google.com/maps?q=location)
+- NEVER use shortened "Tickets" text - always use descriptive link text like "Book Tickets" or "Reserve Now"
 - NO fake HTML checkboxes in Don't Forget List - use plain bullet points only
 
 Generate the complete travel itinerary now using all the sections listed above.`;
@@ -502,6 +507,11 @@ ${from ? `**Traveling From:** ${from}` : ''}
 **Dates:** ${dateMode === 'flexible' ? `Flexible dates in ${flexibleDates?.month || 'selected month'} for ${nDays} days` : `${start} to ${end} (${nDays} days)`}
 **Travelers:** ${adults} adults${children ? `, ${children} children${childrenAges.length > 0 ? ` (ages: ${childrenAges.join(', ')})` : ''}` : ''}
 **Style:** ${level}${prefs ? ` + ${prefs}` : ""}
+**Trip Purpose:** ${tripPurpose || 'leisure'} - Adjust itinerary pacing and activities accordingly (business = efficient timing, leisure = relaxed pace, day-trips = local focus)
+
+**Flight Schedule:**
+${arrivalTime ? `- Arrival Time: ${arrivalTime} on Day 1 - adjust first day activities accordingly` : '- Arrival Time: Not specified'}
+${departureTime ? `- Departure Time: ${departureTime} on Day ${nDays} - ensure checkout/departure logistics are included` : '- Departure Time: Not specified'}
 **Budget:** ${budget} ${currency} (${Math.round(budget / nDays / totalTravelers)} per person per day)
 ${dietary && dietary.length > 0 ? `**Dietary Needs:** ${dietary.join(', ')}` : ''}
 
