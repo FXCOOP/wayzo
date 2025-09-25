@@ -689,7 +689,7 @@
         show(icsBtn);
         show($('#excelBtn'));
         show($('#customizeBtn'));
-        show($('#shareBtn'));
+        show($('#shareSection'));
         updateShareDestination();
         show(saveBtn);
         
@@ -809,7 +809,7 @@
         show(icsBtn);
         show($('#excelBtn'));
         show($('#customizeBtn'));
-        show($('#shareBtn'));
+        show($('#shareSection'));
         updateShareDestination();
         
         // Hide paywall for test user
@@ -852,7 +852,7 @@
         hide(icsBtn);
         hide($('#excelBtn'));
         hide($('#customizeBtn'));
-        hide($('#shareBtn'));
+        hide($('#shareSection'));
         
         // Initialize PayPal buttons for the paywall
         setTimeout(() => {
@@ -1057,7 +1057,7 @@
             show($('#icsBtn'));
             show($('#excelBtn'));
             show($('#customizeBtn'));
-        show($('#shareBtn'));
+        show($('#shareSection'));
         updateShareDestination();
             
             // Reset PayPal initialization flag for future use

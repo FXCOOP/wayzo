@@ -94,6 +94,19 @@
         <form id="tripForm" class="form" style="margin-top:12px">
 
           <div class="field">
+            <span>Trip Purpose</span>
+            <div class="trip-purpose-selector">
+              <label class="chip">
+                <input type="radio" name="tripPurpose" value="leisure" checked /> Leisure
+              </label>
+              <label class="chip">
+                <input type="radio" name="tripPurpose" value="business" /> Business
+              </label>
+            </div>
+            <div class="field-help">We'll customize your itinerary based on your travel purpose.</div>
+          </div>
+
+          <div class="field">
             <span>Traveling from</span>
             <input id="from" type="text" name="from" placeholder="Your location will be detected..." />
             <div class="field-help">Your location helps us find the best flight deals.</div>
@@ -184,6 +197,24 @@
             </div>
           </div>
 
+          <div class="field">
+            <span>Flight Schedule (optional)</span>
+            <div class="flight-times">
+              <div class="fields-2">
+                <div class="field">
+                  <label>Arrival Time</label>
+                  <input type="time" name="arrivalTime" placeholder="e.g., 14:30" />
+                  <div class="field-help">Expected arrival time on first day</div>
+                </div>
+                <div class="field">
+                  <label>Departure Time</label>
+                  <input type="time" name="departureTime" placeholder="e.g., 16:00" />
+                  <div class="field-help">Flight departure time on last day</div>
+                </div>
+              </div>
+            </div>
+            <div class="field-help">We'll adjust your first and last day activities based on your flight schedule.</div>
+          </div>
 
           <div class="fields-2">
             <div class="field">
@@ -298,7 +329,17 @@
           <button id="pdfBtn" class="btn btn-ghost hidden" onclick="downloadPDF()">📄 Download PDF</button>
           <button id="icsBtn" class="btn btn-ghost hidden" onclick="downloadICS()">📅 Add to Calendar</button>
           <button id="excelBtn" class="btn btn-ghost hidden" onclick="downloadExcel()">📊 Download Excel</button>
-          <button id="shareBtn" class="btn btn-ghost hidden" onclick="shareTrip()">📤 Share</button>
+          <div id="shareSection" class="share-section hidden">
+            <button id="shareToggle" class="btn btn-ghost" onclick="toggleShareOptions()">📤 Share Plan</button>
+            <div id="shareOptions" class="share-dropdown hidden">
+              <div class="share-platforms">
+                <button class="share-btn facebook" onclick="shareToPlatform('facebook')" title="Share on Facebook">📘 Facebook</button>
+                <button class="share-btn twitter" onclick="shareToPlatform('twitter')" title="Share on Twitter">🐦 Twitter</button>
+                <button class="share-btn whatsapp" onclick="shareToPlatform('whatsapp')" title="Share on WhatsApp">💬 WhatsApp</button>
+                <button class="share-btn copy" onclick="shareToPlatform('copy')" title="Copy Link">📋 Copy Link</button>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="actions hidden" id="purchaseActions">
           <!-- PayPal buttons will be rendered here by JavaScript -->

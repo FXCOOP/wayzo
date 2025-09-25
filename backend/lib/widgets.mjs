@@ -610,10 +610,20 @@ async function injectWidgetsIntoSections(html, widgets, destination = '', startD
     });
     // GetYourGuide partner and target
     doc.querySelectorAll('a[href*="getyourguide.com"]').forEach(a => {
-      const url = new URL(a.getAttribute('href'), 'https://www.getyourguide.com');
-      url.searchParams.set('partner_id', 'PUHVJ53');
-      a.setAttribute('href', url.toString());
-      a.setAttribute('target', '_blank');
+      const href = a.getAttribute('href');
+      try {
+        const url = new URL(href);
+        // Only add partner_id if it's not already present
+        if (!url.searchParams.has('partner_id')) {
+          url.searchParams.set('partner_id', 'PUHVJ53');
+        }
+        a.setAttribute('href', url.toString());
+        a.setAttribute('target', '_blank');
+      } catch (e) {
+        // If URL parsing fails, just add target=_blank
+        a.setAttribute('target', '_blank');
+        console.warn('Failed to process GetYourGuide URL:', href, e);
+      }
     });
 
     // Build Google Map Preview with points extracted from map links
@@ -743,10 +753,20 @@ function processLinks(html, destination = '') {
     doc.querySelectorAll('a[href*="rentalcars.com"]').forEach(a => a.setAttribute('href', '#car-widget'));
     doc.querySelectorAll('a[href*="airport"]').forEach(a => a.setAttribute('href', '#airport-widget'));
     doc.querySelectorAll('a[href*="getyourguide.com"]').forEach(a => {
-      const url = new URL(a.getAttribute('href'), 'https://www.getyourguide.com');
-      url.searchParams.set('partner_id', 'PUHVJ53');
-      a.setAttribute('href', url.toString());
-      a.setAttribute('target', '_blank');
+      const href = a.getAttribute('href');
+      try {
+        const url = new URL(href);
+        // Only add partner_id if it's not already present
+        if (!url.searchParams.has('partner_id')) {
+          url.searchParams.set('partner_id', 'PUHVJ53');
+        }
+        a.setAttribute('href', url.toString());
+        a.setAttribute('target', '_blank');
+      } catch (e) {
+        // If URL parsing fails, just add target=_blank
+        a.setAttribute('target', '_blank');
+        console.warn('Failed to process GetYourGuide URL in processLinks:', href, e);
+      }
     });
     return dom.serialize();
   } catch (e) {
