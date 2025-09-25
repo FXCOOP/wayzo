@@ -416,7 +416,10 @@ async function generatePlanWithAI(payload) {
     departureTime = '',
     tripPurpose = 'leisure'
   } = payload || {};
-  
+
+  // Normalize dietary to always be an array
+  const normalizedDietary = Array.isArray(dietary) ? dietary : (dietary && dietary.trim() ? [dietary.trim()] : []);
+
   const nDays = dateMode === 'flexible' && flexibleDates ? flexibleDates.duration : daysBetween(start, end);
   const totalTravelers = adults + children;
   
@@ -484,6 +487,8 @@ Create SPECIFIC daily schedules for all ${nDays} days with:
 
 Use specific places, real addresses, current prices. Weather will be added automatically. NO images.
 
+**MANDATORY**: Keep disclaimer section MINIMAL - only the single line above. DO NOT add lengthy "CRITICAL FINAL NOTES" or verbose explanations.
+
 **CRITICAL - FINAL REPORT REQUIREMENTS:**
 - This is a FINAL, COMPLETE travel report - NOT a draft
 - DO NOT ask for user input or suggest further customization
@@ -514,7 +519,7 @@ ${from ? `**Traveling From:** ${from}` : ''}
 ${arrivalTime ? `- Arrival Time: ${arrivalTime} on Day 1 - adjust first day activities accordingly` : '- Arrival Time: Not specified'}
 ${departureTime ? `- Departure Time: ${departureTime} on Day ${nDays} - ensure checkout/departure logistics are included` : '- Departure Time: Not specified'}
 **Budget:** ${budget} ${currency} (${Math.round(budget / nDays / totalTravelers)} per person per day)
-${dietary && dietary.length > 0 ? `**Dietary Needs:** ${dietary.join(', ')}` : ''}
+${normalizedDietary && normalizedDietary.length > 0 ? `**Dietary Needs:** ${normalizedDietary.join(', ')}` : ''}
 
 ${professional_brief ? `**PROFESSIONAL BRIEF:** ${professional_brief}
 
@@ -527,7 +532,7 @@ ${children > 0 ? `- **Family-Friendly Focus**: Include activities suitable for c
 - **Age-Appropriate Activities**: Tailor activities to the children's ages (${childrenAges.join(', ')})
 - **Flexible Timing**: Include breaks and downtime suitable for families` : ''}
 
-${dietary && dietary.length > 0 ? `- **Dietary Accommodations**: Ensure all restaurant recommendations accommodate ${dietary.join(', ')} dietary needs
+${normalizedDietary && normalizedDietary.length > 0 ? `- **Dietary Accommodations**: Ensure all restaurant recommendations accommodate ${normalizedDietary.join(', ')} dietary needs
 - **Local Cuisine**: Highlight local dishes that fit dietary restrictions` : ''}
 
 ${dateMode === 'flexible' ? `- **Flexible Date Optimization**: Suggest the best times within the month for optimal weather, prices, and fewer crowds
@@ -651,13 +656,14 @@ Widgets should be placed in appropriate sections:
 - **ABSOLUTELY NO "Open Exploration" days** - this is forbidden
 - **ABSOLUTELY NO generic placeholders** like "Neighborhood warm-up walk" or "Local market + museum"
 - **ABSOLUTELY NO duplicate content** - each day must be unique
-- **ABSOLUTELY NO generic activities** - every activity must be specific to Santorini
+- **ABSOLUTELY NO generic activities** - every activity must be specific to ${destination}
 - **ABSOLUTELY NO "warm-up walk" or "get oriented"** - these are generic placeholders
 - **ABSOLUTELY NO "Local market + museum"** - these are generic placeholders
 - **ABSOLUTELY NO "Sunset viewpoint & dinner"** - these are generic placeholders
+- **ABSOLUTELY NO repetitive activities** - each activity must be completely unique and specific
 
 **MANDATORY - SPECIFIC CONTENT ONLY:**
-- **Every day must have specific Santorini activities** like "Visit Akrotiri Archaeological Site", "Wine tasting at Santo Wines", "Explore Oia Castle"
+- **Every day must have specific ${destination} activities** with exact names and locations
 - **Every restaurant must be named** like "Taverna Katina", "Pelekanos Restaurant", "Kastro Oia Restaurant"
 - **Every attraction must be specific** like "Red Beach", "Fira Caldera", "Museum of Prehistoric Thera"
 - **Every time must be exact** like "9:00 AM", "2:30 PM", "7:45 PM"
