@@ -374,9 +374,9 @@ function localPlanMarkdown(input) {
 - 20:00 — Early night.
 ### Day 2 — Downtown Exploration
 - 08:30 — Breakfast cafe.
-- 09:30 — City tower lookout. [Tickets](https://www.getyourguide.com/search?q=${destination} tower&partner_id=PUHVJ53)
+- 09:30 — City tower lookout. [Tickets](https://www.getyourguide.com/s/?q=${destination}+tower&partner_id=PUHVJ53)
 - 12:00 — Lunch spot.
-- 13:30 — Notable museum. [Tickets](https://www.getyourguide.com/search?q=${destination} museum&partner_id=PUHVJ53)
+- 13:30 — Notable museum. [Tickets](https://www.getyourguide.com/s/?q=${destination}+museum&partner_id=PUHVJ53)
 - 17:00 — Riverfront stroll. [Map](map:${destination} waterfront)
 - 19:00 — Dinner.
 ### Day 3 — Nature & Parks
@@ -443,7 +443,7 @@ Calculate realistic costs for ${level} style travel:
 [Specific accommodation recommendations with exact names, addresses, prices, and [Book Now](#hotel-widget) links - NO suggestions like "If you'd like, I can swap to guesthouses" - provide definitive recommendations only]
 
 ## 🎫 Must-See Attractions
-[8-12 main attractions with detailed descriptions, entry fees, hours, and GetYourGuide booking links. Use format: [Book Tickets](https://www.getyourguide.com/${destination.toLowerCase().replace(/\s+/g, '-')}/d/SPECIFIC_ATTRACTION_NAME?partner_id=PUHVJ53) OR search format: [Book Tickets](https://www.getyourguide.com/search?q=${destination}+ATTRACTION_NAME&partner_id=PUHVJ53) - always include destination + attraction name for better results. NEVER use generic "Tickets" text.]
+[8-12 main attractions with detailed descriptions, entry fees, hours, and GetYourGuide booking links. Use format: [Book Tickets](https://www.getyourguide.com/s/?q=${destination}+ATTRACTION_NAME&partner_id=PUHVJ53) - always include destination + attraction name for better results. NEVER use generic "Tickets" text.]
 
 **GetYourGuide Attractions Widget**: After listing 6-8 attractions, insert this widget:
 <div data-gyg-href="https://widget.getyourguide.com/default/activities.frame" data-gyg-locale-code="en-US" data-gyg-widget="activities" data-gyg-number-of-items="3" data-gyg-partner-id="PUHVJ53" data-gyg-q="${destination} attractions"><span>Powered by <a target="_blank" rel="sponsored" href="https://www.getyourguide.com/">GetYourGuide</a></span></div>
@@ -459,7 +459,7 @@ Create SPECIFIC daily schedules for all ${nDays} days with:
 - Exact times (9:00 AM, 2:30 PM, etc.)
 - Real ${destination} locations and attraction names
 - [Map](https://maps.google.com/maps?q=specific-location-name) for each location
-- [Book Tickets](https://www.getyourguide.com/search?q=${destination}+SPECIFIC_ATTRACTION_NAME&partner_id=PUHVJ53) for attractions (ALWAYS use full GetYourGuide URLs with ${destination}+attraction name and partner_id=PUHVJ53, NEVER generic "Tickets" text)
+- [Book Tickets](https://www.getyourguide.com/s/?q=${destination}+SPECIFIC_ATTRACTION_NAME&partner_id=PUHVJ53) for attractions (ALWAYS use full GetYourGuide URLs with ${destination}+attraction name and partner_id=PUHVJ53, NEVER generic "Tickets" text)
 - NO generic activities like "sunset viewpoint & dinner"
 - Each day format: **Day X - Date (YYYY-MM-DD)**
 
@@ -493,7 +493,7 @@ Use specific places, real addresses, current prices. Weather will be added autom
 - Use the exact budget provided: ${budget} ${currency} - If budget seems unrealistic for the destination/duration, provide a note about realistic expectations without changing the budget
 - Show realistic cost estimates that match current market prices for ${destination}
 - End the report with the disclaimer section - NO additional offers or suggestions
-- Include proper GetYourGuide links with partner_id=PUHVJ53 in attractions: [Book Tickets](https://www.getyourguide.com/search?q=ATTRACTION_NAME&partner_id=PUHVJ53)
+- Include proper GetYourGuide links with partner_id=PUHVJ53 in attractions: [Book Tickets](https://www.getyourguide.com/s/?q=ATTRACTION_NAME&partner_id=PUHVJ53)
 - Include Map links in daily itineraries: [Map](https://maps.google.com/maps?q=location)
 - NEVER use shortened "Tickets" text - always use descriptive link text like "Book Tickets" or "Reserve Now"
 - NO fake HTML checkboxes in Don't Forget List - use plain bullet points only

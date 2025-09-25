@@ -689,7 +689,7 @@
         show(icsBtn);
         show($('#excelBtn'));
         show($('#customizeBtn'));
-        show($('#shareSection'));
+        show($('#shareBtn'));
         updateShareDestination();
         show(saveBtn);
         
@@ -809,7 +809,7 @@
         show(icsBtn);
         show($('#excelBtn'));
         show($('#customizeBtn'));
-        show($('#shareSection'));
+        show($('#shareBtn'));
         updateShareDestination();
         
         // Hide paywall for test user
@@ -852,7 +852,7 @@
         hide(icsBtn);
         hide($('#excelBtn'));
         hide($('#customizeBtn'));
-        hide($('#shareSection'));
+        hide($('#shareBtn'));
         
         // Initialize PayPal buttons for the paywall
         setTimeout(() => {
@@ -1057,7 +1057,7 @@
             show($('#icsBtn'));
             show($('#excelBtn'));
             show($('#customizeBtn'));
-        show($('#shareSection'));
+        show($('#shareBtn'));
         updateShareDestination();
             
             // Reset PayPal initialization flag for future use
@@ -1438,6 +1438,7 @@
   window.shareToPlatform = shareToPlatform;
   window.updateShareDestination = updateShareDestination;
   window.toggleCustomizeMode = toggleCustomizeMode;
+  window.shareTrip = shareTrip;
   window.removeActivity = removeActivity;
   window.replaceActivity = replaceActivity;
   window.addActivity = addActivity;
@@ -2411,47 +2412,42 @@
 
   function enableActivityCustomization() {
     const previewEl = $('#preview');
+    if (!previewEl) return;
 
-    // Find activity items specifically within daily itineraries
-    // Look for content that has time stamps followed by activities
-    const allElements = previewEl.querySelectorAll('*');
+    // Only target LI elements within UL elements that are part of daily itinerary sections
+    const listItems = previewEl.querySelectorAll('h3 + ul li, h3 + * ul li');
 
-    allElements.forEach((element, index) => {
-      const text = element.textContent.trim();
+    listItems.forEach((listItem, index) => {
+      const text = listItem.textContent.trim();
 
-      // Only target elements with time-based activity format: "HH:MM — Activity description"
-      const isTimeBasedActivity = text.match(/^\d{1,2}:\d{2}\s*(AM|PM)?\s*[—-]\s*.+/);
+      // Only target list items with time-based activity format: "HH:MM — Activity description"
+      const hasTimePattern = text.match(/^\d{1,2}:\d{2}\s*(AM|PM)?\s*[—-]\s*.+/);
 
-      if (!isTimeBasedActivity) {
-        return;
-      }
+      if (!hasTimePattern) return;
 
-      // Additional check: must be in a context that looks like a daily schedule
-      let isInDailySchedule = false;
-      let parent = element.parentElement;
-      let checkDepth = 0;
+      // Must be in a section that has "Day" in a preceding heading
+      let isDailyItinerary = false;
+      let currentEl = listItem.parentElement;
 
-      while (parent && checkDepth < 5) {
-        const parentText = parent.textContent;
-        if (parentText.includes('Day ') || parentText.includes('daily') || parentText.includes('Daily')) {
-          isInDailySchedule = true;
-          break;
+      // Look backwards in the DOM for a "Day X" heading
+      while (currentEl && currentEl !== previewEl) {
+        const prevSibling = currentEl.previousElementSibling;
+        if (prevSibling && (prevSibling.tagName === 'H3' || prevSibling.tagName === 'H2')) {
+          if (prevSibling.textContent.includes('Day ')) {
+            isDailyItinerary = true;
+            break;
+          }
         }
-        parent = parent.parentElement;
-        checkDepth++;
+        currentEl = currentEl.parentElement;
       }
 
-      if (!isInDailySchedule) {
-        return;
-      }
+      if (!isDailyItinerary) return;
 
-      // Skip if it's already processed or if it's too short
-      if (element.classList.contains('activity-item') || text.length < 20) {
-        return;
-      }
+      // Skip if already processed
+      if (listItem.classList.contains('activity-item')) return;
 
-      element.classList.add('activity-item');
-      element.dataset.activityIndex = index;
+      listItem.classList.add('activity-item');
+      listItem.dataset.activityIndex = index;
 
       // Add control buttons
       const controls = document.createElement('div');
@@ -2463,8 +2459,8 @@
         <button class="btn-add" onclick="addActivity(${index})" title="Add alternative">+</button>
       `;
 
-      line.style.position = 'relative';
-      line.appendChild(controls);
+      listItem.style.position = 'relative';
+      listItem.appendChild(controls);
     });
   }
 
@@ -3539,6 +3535,31 @@
       showNotification('📝 Budget item marked as pending', 'info');
     }
   };
+
+  function shareTrip() {
+    const formData = readForm();
+    const destination = formData.destination || 'Amazing Destination';
+    const title = `Check out my ${destination} trip plan!`;
+    const url = window.location.href;
+
+    if (navigator.share) {
+      navigator.share({
+        title: title,
+        text: `I just created an amazing trip plan for ${destination} with Wayzo AI! Check it out:`,
+        url: url
+      }).then(() => {
+        trackEvent('trip_shared', { method: 'native', destination });
+      }).catch(console.error);
+    } else {
+      // Fallback to copying link
+      navigator.clipboard.writeText(url).then(() => {
+        showNotification('Link copied to clipboard!', 'success');
+        trackEvent('trip_shared', { method: 'clipboard', destination });
+      }).catch(() => {
+        showNotification('Unable to copy link', 'error');
+      });
+    }
+  }
 
 })();
 // Trigger redeploy for manual signup fix
