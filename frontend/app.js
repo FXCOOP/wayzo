@@ -642,46 +642,6 @@
   };
 
   // Restore full plan from localStorage
-  const restoreFullPlan = () => {
-    const planData = localStorage.getItem('wayzo_last_full_plan');
-    if (planData) {
-      try {
-        const data = JSON.parse(planData);
-        if (data.type === 'full_plan') {
-          // Try to recreate the overview from stored data or use basic format
-          const basicOverview = `
-            <div class="trip-overview">
-              <h1>🚀 ${data.destination} Trip Plan</h1>
-              <p>Restored from ${new Date(data.timestamp).toLocaleDateString()}</p>
-            </div>
-          `;
-          previewEl.innerHTML = `
-            ${basicOverview}
-            <main class="content trip-report">
-              ${data.html}
-            </main>
-          `;
-          setAffiliates(data.destination);
-          
-          // Show all download buttons
-          show(pdfBtn);
-          show(icsBtn);
-          show($('#excelBtn'));
-          show($('#shareBtn'));
-          
-          // Hide paywall
-          hide($('#purchaseActions'));
-          
-          show(previewEl);
-          showNotification('Full plan restored!', 'success');
-          return true;
-        }
-      } catch (error) {
-        console.error('Error restoring full plan:', error);
-      }
-    }
-    return false;
-  };
 
   // Form submission handler
   form.addEventListener('submit', async (e) => {
@@ -935,8 +895,6 @@
       actions.appendChild(restoreBtn);
     }
     
-    // Check if full plan is available and show "Get Back" button
-    checkAndShowGetBackButton();
     
     // Setup image error handling
     setupImageErrorHandling();
@@ -963,26 +921,6 @@
     }, true);
   };
 
-  // Check if full plan is available and show "Get Back" button
-  const checkAndShowGetBackButton = () => {
-    const fullPlanData = localStorage.getItem('wayzo_last_full_plan');
-    const getBackSection = $('#getBackSection');
-    
-    if (fullPlanData && getBackSection) {
-      try {
-        const data = JSON.parse(fullPlanData);
-        if (data.type === 'full_plan') {
-          getBackSection.style.display = 'block';
-        } else {
-          getBackSection.style.display = 'none';
-        }
-      } catch (error) {
-        getBackSection.style.display = 'none';
-      }
-    } else if (getBackSection) {
-      getBackSection.style.display = 'none';
-    }
-  };
 
   // Debug function to check authentication status
   window.checkAuthStatus = () => {

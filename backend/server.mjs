@@ -427,7 +427,11 @@ Start immediately with the content in this format:
 [destination highlights, travelers, dates, budget, style summary]
 
 ## 💰 Budget Breakdown
-[detailed cost breakdown with actual ${budget} ${currency} budget - calculate exact amounts based on the user's budget, not a fixed 1400 EUR]
+Calculate realistic costs for ${level} style travel:
+- Show actual estimated costs for ${destination} in ${currency}
+- Breakdown: Flights, Accommodation (${nDays} nights), Food, Activities, Transport
+- If user budget ${budget} ${currency} is unrealistic, show: "Estimated realistic cost: [amount] for ${level} style"
+- Present as clear table with specific amounts
 
 ## 🗺️ Getting Around
 [transportation options, tips, getting from/to airport]
@@ -438,11 +442,26 @@ Start immediately with the content in this format:
 ## 🎫 Must-See Attractions
 [8-12 main attractions with detailed descriptions, entry fees, hours, and GetYourGuide booking links using partner_id=PUHVJ53 format: https://www.getyourguide.com/search?q=${destination}&partner_id=PUHVJ53]
 
+**GetYourGuide Attractions Widget**: After listing 6-8 attractions, insert this widget:
+<div data-gyg-href="https://widget.getyourguide.com/default/activities.frame" data-gyg-locale-code="en-US" data-gyg-widget="activities" data-gyg-number-of-items="3" data-gyg-partner-id="PUHVJ53" data-gyg-q="${destination} attractions"><span>Powered by <a target="_blank" rel="sponsored" href="https://www.getyourguide.com/">GetYourGuide</a></span></div>
+
 ## 🍽️ Dining Guide
 [6-10 restaurants by area with price ranges and specialties]
 
 ## 🎭 Daily Itineraries
-[Full hour-by-hour schedule for ALL ${nDays} days with specific times, place names, and brief descriptions. Include [Map](https://maps.google.com/maps?q=location) links for each location and [Tickets](https://www.getyourguide.com/search?q=attraction&partner_id=PUHVJ53) links for attractions. NO generic activities.]
+Create SPECIFIC daily schedules for all ${nDays} days with:
+- Day 1 (Arrival): MAX 1 activity only, based on realistic flight arrival times
+- Days 2-${nDays}: MAX 2-3 activities per day (holiday pace, not rushed)
+- Exact times (9:00 AM, 2:30 PM, etc.)
+- Real ${destination} locations and attraction names
+- [Map](https://maps.google.com/maps?q=specific-location-name) for each location
+- [Tickets](https://www.getyourguide.com/search?q=specific-attraction-name&partner_id=PUHVJ53) for attractions
+- NO generic activities like "sunset viewpoint & dinner"
+- Each day format: **Day X - Date (YYYY-MM-DD)**
+
+**MANDATORY GetYourGuide Widgets**: Insert exactly 2 GetYourGuide widgets between daily itineraries:
+- After Day 3-4: <div data-gyg-href="https://widget.getyourguide.com/default/activities.frame" data-gyg-locale-code="en-US" data-gyg-widget="activities" data-gyg-number-of-items="3" data-gyg-partner-id="PUHVJ53" data-gyg-q="${destination}"><span>Powered by <a target="_blank" rel="sponsored" href="https://www.getyourguide.com/">GetYourGuide</a></span></div>
+- After middle day: <div data-gyg-href="https://widget.getyourguide.com/default/activities.frame" data-gyg-locale-code="en-US" data-gyg-widget="activities" data-gyg-number-of-items="3" data-gyg-partner-id="PUHVJ53" data-gyg-q="${destination}"><span>Powered by <a target="_blank" rel="sponsored" href="https://www.getyourguide.com/">GetYourGuide</a></span></div>
 
 ## 🧳 Don't Forget List
 [Simple packing checklist as bullet points - NO HTML checkboxes, NO fake interactive elements - just plain text list with widget links like eSIM]
@@ -457,7 +476,7 @@ Start immediately with the content in this format:
 [contacts, healthcare, embassy info]
 
 ## ⚠️ Disclaimer
-*Prices and schedules are subject to change. Verify all details before booking. Check current opening hours and availability. Weather forecasts based on historical averages - check current conditions closer to travel dates. For assistance contact support. This plan provides structure but all prices, hours, and availability should be verified closer to travel.*
+*Prices subject to change. Verify details before booking.*
 
 Use specific places, real addresses, current prices. Weather will be added automatically. NO images.
 
