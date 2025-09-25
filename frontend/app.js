@@ -2355,6 +2355,7 @@
       customizeBtn.classList.remove('btn-success');
 
       removeCustomizeNotice();
+      cleanupActivityControls();
 
       trackEvent('customize_mode_disabled');
     }
@@ -2372,7 +2373,8 @@
     notice.className = 'customize-mode-notice';
     notice.innerHTML = `
       <h4>🎨 Customize Mode Active</h4>
-      <p>Hover over any activity to remove, replace, or add alternatives. Your changes will be saved automatically.</p>
+      <p>Hover over daily itinerary activities (with times like "09:00 —") to customize them. Changes are preview-only.</p>
+      <small>Note: Only activities in your daily schedule can be customized.</small>
     `;
 
     previewEl.insertBefore(notice, previewEl.firstChild);
@@ -2385,27 +2387,71 @@
     }
   }
 
+  function cleanupActivityControls() {
+    const previewEl = $('#preview');
+    const activityItems = previewEl.querySelectorAll('.activity-item');
+
+    activityItems.forEach(item => {
+      item.classList.remove('activity-item');
+      delete item.dataset.activityIndex;
+
+      const controls = item.querySelector('.activity-controls');
+      if (controls) {
+        controls.remove();
+      }
+
+      // Reset any styling changes
+      item.style.position = '';
+      item.style.backgroundColor = '';
+      item.style.borderColor = '';
+      item.style.opacity = '';
+      item.style.textDecoration = '';
+    });
+  }
+
   function enableActivityCustomization() {
     const previewEl = $('#preview');
 
-    // Find all activity items (activities within daily itineraries)
-    const activityLines = previewEl.querySelectorAll('li');
+    // Find activity items specifically within daily itineraries
+    // Look for content that has time stamps followed by activities
+    const allElements = previewEl.querySelectorAll('*');
 
-    activityLines.forEach((line, index) => {
-      const text = line.textContent.trim();
+    allElements.forEach((element, index) => {
+      const text = element.textContent.trim();
 
-      // Skip empty lines or non-activity lines
-      if (!text || text.length < 10 || !text.includes('—') && !text.includes('-')) {
+      // Only target elements with time-based activity format: "HH:MM — Activity description"
+      const isTimeBasedActivity = text.match(/^\d{1,2}:\d{2}\s*(AM|PM)?\s*[—-]\s*.+/);
+
+      if (!isTimeBasedActivity) {
         return;
       }
 
-      // Skip lines that are just times without activities
-      if (text.match(/^\d{1,2}:\d{2}\s*(AM|PM)?\s*$/)) {
+      // Additional check: must be in a context that looks like a daily schedule
+      let isInDailySchedule = false;
+      let parent = element.parentElement;
+      let checkDepth = 0;
+
+      while (parent && checkDepth < 5) {
+        const parentText = parent.textContent;
+        if (parentText.includes('Day ') || parentText.includes('daily') || parentText.includes('Daily')) {
+          isInDailySchedule = true;
+          break;
+        }
+        parent = parent.parentElement;
+        checkDepth++;
+      }
+
+      if (!isInDailySchedule) {
         return;
       }
 
-      line.classList.add('activity-item');
-      line.dataset.activityIndex = index;
+      // Skip if it's already processed or if it's too short
+      if (element.classList.contains('activity-item') || text.length < 20) {
+        return;
+      }
+
+      element.classList.add('activity-item');
+      element.dataset.activityIndex = index;
 
       // Add control buttons
       const controls = document.createElement('div');
