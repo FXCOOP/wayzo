@@ -728,7 +728,7 @@ async function injectWidgetsIntoSections(html, widgets, destination = '', startD
       mapH2.textContent = '🗺️ Google Map Preview';
       const p = doc.createElement('p');
       const link = doc.createElement('a');
-      link.textContent = `Open Map with ${arr.length} points`;
+      link.textContent = `Open Interactive Map`;
       link.setAttribute('target', '_blank');
 
       // Create a multi-point map URL that shows individual points instead of routes

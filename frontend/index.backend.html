@@ -264,23 +264,25 @@
             <label class="chip"><input type="radio" name="level" value="luxury" /> Luxury</label>
           </fieldset>
 
-          <div class="field">
-            <span>Preferences <span style="color: #007bff; font-size: 0.9em;">(Select multiple)</span></span>
-            <select id="prefs" name="prefs" multiple size="4" style="border: 2px solid #007bff; background: #f8f9ff;">
-              <option value="museums">Museums & Culture</option>
-              <option value="beaches">Beaches & Water</option>
-              <option value="hiking">Hiking & Nature</option>
-              <option value="kid-friendly">Kid-Friendly</option>
-              <option value="nightlife">Nightlife & Entertainment</option>
-              <option value="food">Food & Dining</option>
-              <option value="shopping">Shopping</option>
-              <option value="adventure">Adventure Sports</option>
-              <option value="relaxation">Relaxation & Spa</option>
-              <option value="history">Historical Sites</option>
-              <option value="photography">Photography</option>
-              <option value="local-culture">Local Culture</option>
-            </select>
-            <div class="field-help">✅ <strong>Multiple selection enabled:</strong> Hold Ctrl/Cmd (Windows/Linux) or Cmd (Mac) to select multiple preferences. Click on multiple items to customize your trip!</div>
+          <div class="field preferences-field">
+            <span>Preferences <small>(Select multiple interests)</small></span>
+            <div class="preferences-container">
+              <div class="preference-tags">
+                <label class="preference-tag"><input type="checkbox" name="prefs" value="museums" /> Museums & Culture</label>
+                <label class="preference-tag"><input type="checkbox" name="prefs" value="beaches" /> Beaches & Water</label>
+                <label class="preference-tag"><input type="checkbox" name="prefs" value="hiking" /> Hiking & Nature</label>
+                <label class="preference-tag"><input type="checkbox" name="prefs" value="kid-friendly" /> Kid-Friendly</label>
+                <label class="preference-tag"><input type="checkbox" name="prefs" value="nightlife" /> Nightlife & Entertainment</label>
+                <label class="preference-tag"><input type="checkbox" name="prefs" value="food" /> Food & Dining</label>
+                <label class="preference-tag"><input type="checkbox" name="prefs" value="shopping" /> Shopping</label>
+                <label class="preference-tag"><input type="checkbox" name="prefs" value="adventure" /> Adventure Sports</label>
+                <label class="preference-tag"><input type="checkbox" name="prefs" value="relaxation" /> Relaxation & Spa</label>
+                <label class="preference-tag"><input type="checkbox" name="prefs" value="history" /> Historical Sites</label>
+                <label class="preference-tag"><input type="checkbox" name="prefs" value="photography" /> Photography</label>
+                <label class="preference-tag"><input type="checkbox" name="prefs" value="local-culture" /> Local Culture</label>
+              </div>
+              <div class="preferences-help">💡 Click multiple tags to personalize your trip experience</div>
+            </div>
           </div>
 
           <div class="field">

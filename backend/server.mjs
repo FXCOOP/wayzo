@@ -439,16 +439,16 @@ Use these visual insights to personalize recommendations throughout the itinerar
 # ${destination} — ${start} → ${end}
 
 ## 🎯 Trip Overview
-[destination highlights, travelers, dates, budget, style summary]
+[Brief, compelling 2-3 sentence summary highlighting destination essence, travel dates, and key experiences. Focus on what makes this trip special - avoid generic descriptions.]
 
 ## 💰 Budget Breakdown
-Calculate realistic costs for ${level} style travel:
-- Show actual estimated costs for ${destination} in ${currency}
-- Breakdown: Flights, Accommodation (${nDays} nights), Food, Activities, Transport${destination.toLowerCase().includes('ski') || destination.toLowerCase().includes('diving') || destination.toLowerCase().includes('safari') || destination.toLowerCase().includes('trekking') ? ', Equipment Rental' : ''}
-- Include equipment costs for activity-based trips (ski equipment, diving gear, trekking equipment, etc.)
-- If user budget ${budget} ${currency} is unrealistic, show: "Estimated realistic cost: [amount] for ${level} style travel in ${destination}"
-- Present as clear table with specific amounts and justify any significant cost adjustments
-- Be realistic about pricing - don't create artificially low budgets that aren't achievable
+**Smart Budget Summary:** Create a clean, concise breakdown:
+- Present costs in simple table format with key categories
+- If user didn't specify budget or specified 0: Calculate realistic estimates for ${level} travel style without assuming they have no money - they simply need guidance on expected costs
+- Show estimated ranges: "Budget ${level} travel: €X-Y per person" rather than assuming zero budget means no money
+- Brief justification for major costs (1-2 lines max)
+- Include equipment costs for activity-based destinations
+- Keep explanation short and actionable - avoid lengthy budget discussions
 
 ## 🗺️ Getting Around
 [transportation options, tips, getting from/to airport]
@@ -473,16 +473,13 @@ CRITICAL: Research current market prices for ${destination} accommodation in ${s
 [6-10 restaurants by area with price ranges and specialties]
 
 ## 🎭 Daily Itineraries
-Create SPECIFIC daily schedules for all ${nDays} days with:
-- Day 1 (Arrival): ${arrivalTime ? `Arrival at ${arrivalTime} - plan activities accordingly, MAX 1 activity if arriving after noon` : 'MAX 1 activity only, based on realistic flight arrival times'}
-- Days 2-${nDays-1}: MAX 2-3 activities per day (holiday pace, not rushed)
-- Day ${nDays} (Departure): ${departureTime ? `Departure at ${departureTime} - include checkout time and airport transfer, light morning activities only` : 'Include checkout and departure logistics'}
-- Exact times (9:00 AM, 2:30 PM, etc.)
-- Real ${destination} locations and attraction names
-- [Map](map:SPECIFIC_PLACE_NAME+${destination}) for each location (replace SPECIFIC_PLACE_NAME with actual venue/attraction names)
-- [Book Tickets](https://www.getyourguide.com/s/?q=${destination}+SPECIFIC_ATTRACTION_NAME&partner_id=PUHVJ53) for attractions (ALWAYS use full GetYourGuide URLs with ${destination}+attraction name and partner_id=PUHVJ53, NEVER generic "Tickets" text)
-- NO generic activities like "sunset viewpoint & dinner"
-- Each day format: **Day X - Date (YYYY-MM-DD)**
+**Enhanced Daily Structure:**
+- **Format:** **Day X - Date (YYYY-MM-DD)** with clear time stamps
+- **Visual Hierarchy:** Use **bold** for important times, locations, and key activities
+- **Ticket Links:** [Book Tickets](https://www.getyourguide.com/s/?q=${destination}+ATTRACTION&partner_id=PUHVJ53) for all attractions
+- **Map Integration:** [Map](map:VENUE_NAME+${destination}) for each location
+- **Clear Schedule:** 09:00 format for times, realistic pacing (2-3 activities/day)
+- **Logical Flow:** Morning arrival → afternoon activity → evening plans with travel time considered
 
 **MANDATORY GetYourGuide Widgets**: Insert exactly 2 GetYourGuide widgets between daily itineraries:
 - After Day 3-4: <div data-gyg-href="https://widget.getyourguide.com/default/activities.frame" data-gyg-locale-code="en-US" data-gyg-widget="activities" data-gyg-number-of-items="3" data-gyg-partner-id="PUHVJ53" data-gyg-q="${destination}"><span>Powered by <a target="_blank" rel="sponsored" href="https://www.getyourguide.com/">GetYourGuide</a></span></div>
@@ -520,21 +517,12 @@ Create SPECIFIC daily schedules for all ${nDays} days with:
 
 Use specific places, real addresses, current prices. Weather will be added automatically. NO images.
 
-**MANDATORY**: The disclaimer section consolidates all verification notes - DO NOT repeat "Note:" messages throughout the content. NO lengthy "CRITICAL FINAL NOTES" or additional verbose explanations.
-
-**CRITICAL - FINAL REPORT REQUIREMENTS:**
-- This is a FINAL, COMPLETE travel report - NOT a draft
-- DO NOT ask for user input or suggest further customization
-- DO NOT include phrases like "If you'd like, I can swap to guesthouses" or "confirm preferred gateways" or "I can tailor this further"
-- DO NOT offer alternatives, recalculations, or options
-- Present everything as definitive information with exact amounts
-- Use the exact budget provided: ${budget} ${currency} - If budget seems unrealistic for the destination/duration, provide a note about realistic expectations without changing the budget
-- Show realistic cost estimates that match current market prices for ${destination}
-- End the report with the disclaimer section - NO additional offers or suggestions
-- Include proper GetYourGuide links with partner_id=PUHVJ53 in attractions: [Book Tickets](https://www.getyourguide.com/s/?q=ATTRACTION_NAME&partner_id=PUHVJ53)
-- Include Map links in daily itineraries: [Map](map:ACTUAL_VENUE_NAME+${destination}) - always replace ACTUAL_VENUE_NAME with specific restaurant, hotel, attraction, or landmark names
-- NEVER use shortened "Tickets" text - always use descriptive link text like "Book Tickets" or "Reserve Now"
-- Don't Forget List items will be automatically converted to interactive checkboxes - use plain bullet points in the AI generation
+**FINAL REPORT REQUIREMENTS:**
+- Complete, definitive travel report - no draft language or suggestions for further customization
+- End with disclaimer section only - NO "CRITICAL FINAL NOTES" or internal notes visible to user
+- GetYourGuide links: [Book Tickets](https://www.getyourguide.com/s/?q=ATTRACTION&partner_id=PUHVJ53)
+- Map links: [Map](map:VENUE_NAME+${destination})
+- Professional, client-ready presentation
 
 Generate the complete travel itinerary now using all the sections listed above.`;
 

@@ -186,15 +186,22 @@
 
   // Enhanced form reading with professional brief
   const readForm = () => {
-    const data = Object.fromEntries(new FormData(form).entries());
-    
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
     // Parse numbers
     data.adults = Number(data.adults || 2);
     data.children = Number(data.children || 0);
     data.budget = Number(data.budget || 0);
     data.duration = Number(data.duration || 5);
     data.currency = data.currency || 'USD';
-    
+
+    // Handle multiple preferences checkboxes
+    const prefsCheckboxes = formData.getAll('prefs');
+    if (prefsCheckboxes && prefsCheckboxes.length > 0) {
+      data.prefs = prefsCheckboxes.join(', ');
+    }
+
     // Add autocomplete functionality for destination fields
     initializeAutocomplete();
     
