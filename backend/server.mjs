@@ -454,14 +454,11 @@ Use these visual insights to personalize recommendations throughout the itinerar
 [transportation options, tips, getting from/to airport]
 
 ## 🏨 Accommodation
-CRITICAL: Research current market prices for ${destination} accommodation in ${start.split('-')[0]} using current hotel booking data:
-- Provide 3-4 specific hotels with REAL current prices (check typical rates for ${destination})
-- Include exact property names, addresses, and realistic price ranges per night
-- Base prices on actual ${level} style accommodation costs in ${destination}
-- Account for seasonal pricing variations and current market rates
-- Verify hotel existence and avoid fictional properties
-- Include [Book Now](#hotel-widget) links but NO alternative suggestions
-- Present as definitive, researched recommendations with accurate pricing
+**Hotel Recommendations:** Provide 3-4 well-known hotels in ${destination}:
+- Include property names, addresses, and estimated price ranges per night for ${level} style
+- Consider seasonal pricing for the travel dates
+- Include [Book Now](#hotel-widget) booking links
+- Focus on hotels appropriate for the trip purpose and group size
 
 ## 🎫 Must-See Attractions
 [8-12 main attractions with detailed descriptions, entry fees, hours, and GetYourGuide booking links. Use format: [Book Tickets](https://www.getyourguide.com/s/?q=${destination}+ATTRACTION_NAME&partner_id=PUHVJ53) - always include destination + attraction name for better results. NEVER use generic "Tickets" text.]
@@ -559,22 +556,31 @@ ${normalizedDietary && normalizedDietary.length > 0 ? `- **Dietary Accommodation
 ${dateMode === 'flexible' ? `- **Flexible Date Optimization**: Suggest the best times within the month for optimal weather, prices, and fewer crowds
 - **Price Optimization**: Focus on getting the best value during the flexible period` : ''}
 
-**CRITICAL - REAL-TIME ACCURACY REQUIREMENTS:**
-You MUST research current information for ${destination} to ensure accuracy:
+**CONTENT REQUIREMENTS:**
+- Create comprehensive, detailed itinerary with specific venue names and activities
+- Include realistic pricing estimates based on destination and travel style
+- Always complete the full itinerary - never stop mid-generation or ask for user input
+- Present definitive recommendations without verification notes
 
-**MANDATORY RESEARCH REQUIREMENTS:**
-- **Current Prices**: Check real-time prices for hotels, restaurants, attractions
-- **Opening Hours**: Verify current opening hours for all recommended places
-- **Weather**: Check current weather forecasts for ${start} to ${end}
-- **Closures**: Verify no recommended places are permanently closed
-- **Seasonal Changes**: Account for seasonal pricing and availability
-- **Local Events**: Check for any events that might affect availability
+**SKI DESTINATION SPECIFIC REQUIREMENTS:**
+${destination.toLowerCase().includes('ski') || destination.toLowerCase().includes('bansko') || destination.toLowerCase().includes('alps') || professional_brief?.toLowerCase().includes('ski') ? `
+- **SKI FOCUS**: This is a SKI VACATION - center everything around skiing activities
+- **Daily Ski Schedule**: Each day should include morning/afternoon ski sessions with specific lift recommendations
+- **Equipment Rental**: Include specific ski rental shops with estimated costs
+- **Ski Passes**: Detail lift pass prices and multi-day options
+- **Ski Schools**: Recommend lessons for different skill levels if applicable
+- **Après-ski**: Include traditional après-ski dining and entertainment
+- **Weather Considerations**: Account for skiing weather conditions and backup indoor activities
+- **Ski-Specific Dining**: Recommend mountain restaurants and ski lodge dining
+- **Equipment Lists**: Include ski-specific packing recommendations
+- **Slope Recommendations**: Detail beginner, intermediate, and advanced slopes available
+` : ''}
 
-**ACCURACY ENFORCEMENT:**
-- If you cannot verify current information, DO NOT recommend that place
-- DO NOT add repetitive "Note:" or "Check current prices" messages - all disclaimers are consolidated in the final disclaimer section
-- Avoid repetitive verification notes throughout the content
-- Prioritize places with verified current information
+**GENERATION COMPLETION REQUIREMENT:**
+- **NEVER STOP MID-GENERATION** - Always complete the full itinerary through all sections
+- **NO USER INPUT REQUESTS** - Never ask user to choose options or provide additional information
+- **COMPLETE ALL SECTIONS** - Generate every section from Trip Overview through Emergency Info
+- **DEFINITIVE CONTENT** - Present all recommendations as final, researched suggestions
 - **ACCOMMODATION PRICES**: Research realistic market rates for ${destination} - avoid generic estimates
 - **HOTEL VERIFICATION**: Only recommend hotels that actually exist with correct names and locations
 - **SEASONAL PRICING**: Account for actual pricing variations during ${start} to ${end} period
