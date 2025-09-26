@@ -3808,3 +3808,155 @@
   } else {
     initializeTripReportFeatures();
   }
+  // ====== Enhanced Visual Hierarchy for Long Reports ======
+  function initializeEnhancedNavigation() {
+    const tripReport = document.querySelector(".trip-report");
+    if (!tripReport) return;
+
+    // Create sticky navigation for day jumping
+    createDayNavigation();
+
+    // Add week separators for long trips
+    addWeekSeparators();
+
+    // Initialize reading progress
+    initializeReadingProgress();
+
+    // Add activity priority indicators
+    addActivityIndicators();
+
+    // Initialize intersection observer for current day highlighting
+    initializeDayTracking();
+  }
+
+  function createDayNavigation() {
+    const dayContainers = document.querySelectorAll(".day-container");
+    if (dayContainers.length <= 3) return; // Only for longer trips
+
+    const nav = document.createElement("div");
+    nav.className = "trip-overview-nav";
+    nav.innerHTML = `
+      <div class="trip-nav-scroll">
+        ${Array.from(dayContainers).map((day, index) => {
+          const dayNumber = index + 1;
+          const dayId = `day-${dayNumber}`;
+          day.id = dayId;
+          day.setAttribute("data-day-number", dayNumber);
+
+          return `<a href="#${dayId}" class="day-nav-item" data-day="${dayNumber}">Day ${dayNumber}</a>`;
+        }).join("")}
+      </div>
+    `;
+
+    const tripReport = document.querySelector(".trip-report");
+    tripReport.insertBefore(nav, tripReport.firstChild);
+
+    // Smooth scroll for navigation
+    nav.addEventListener("click", (e) => {
+      if (e.target.classList.contains("day-nav-item")) {
+        e.preventDefault();
+        const targetId = e.target.getAttribute("href").substring(1);
+        const targetElement = document.getElementById(targetId);
+
+        if (targetElement) {
+          targetElement.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+          });
+
+          // Update active state
+          nav.querySelectorAll(".day-nav-item").forEach(item => {
+            item.classList.remove("active");
+          });
+          e.target.classList.add("active");
+        }
+      }
+    });
+  }
+
+  function addWeekSeparators() {
+    const dayContainers = document.querySelectorAll(".day-container");
+    if (dayContainers.length <= 7) return; // Only for trips longer than a week
+
+    let weekNumber = 1;
+    dayContainers.forEach((day, index) => {
+      const dayNumber = index + 1;
+
+      // Add week separator every 7 days (but not at the very beginning)
+      if (dayNumber > 1 && (dayNumber - 1) % 7 === 0) {
+        weekNumber++;
+        const separator = document.createElement("div");
+        separator.className = "week-separator";
+        separator.innerHTML = `
+          <div class="week-separator-content">
+            Week ${weekNumber} • Days ${dayNumber}-${Math.min(dayNumber + 6, dayContainers.length)}
+          </div>
+        `;
+
+        day.parentNode.insertBefore(separator, day);
+      }
+    });
+  }
+
+  function initializeReadingProgress() {
+    // Create reading progress bar
+    const progressContainer = document.createElement("div");
+    progressContainer.className = "reading-progress";
+    progressContainer.innerHTML = `<div class="reading-progress-bar"></div>`;
+
+    document.body.appendChild(progressContainer);
+
+    const progressBar = progressContainer.querySelector(".reading-progress-bar");
+    const tripReport = document.querySelector(".trip-report");
+
+    if (!tripReport) return;
+
+    // Update progress on scroll
+    function updateProgress() {
+      const tripRect = tripReport.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+      const tripHeight = tripReport.offsetHeight;
+
+      // Calculate how much of the trip report has been viewed
+      const viewed = Math.max(0, -tripRect.top);
+      const viewable = tripHeight - windowHeight;
+      const progress = Math.min(100, (viewed / viewable) * 100);
+
+      progressBar.style.width = `${progress}%`;
+    }
+
+    window.addEventListener("scroll", updateProgress);
+    updateProgress(); // Initial call
+  }
+
+  // Initialize enhanced features when trip report is ready
+  function initializeAllEnhancements() {
+    initializeEnhancedNavigation();
+    console.log("🎯 Enhanced visual hierarchy initialized");
+  }
+
+  // Auto-initialize when trip reports are loaded
+  const enhancedObserver = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === "childList") {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === Node.ELEMENT_NODE &&
+              (node.classList?.contains("trip-report") ||
+               node.querySelector?.(".trip-report"))) {
+
+            setTimeout(initializeAllEnhancements, 200);
+          }
+        });
+      }
+    });
+  });
+
+  enhancedObserver.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+
+  // Initialize immediately if content exists
+  if (document.querySelector(".trip-report")) {
+    setTimeout(initializeAllEnhancements, 200);
+  }

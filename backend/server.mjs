@@ -463,14 +463,20 @@ ${destination.toLowerCase().includes('ski') || destination.toLowerCase().include
 [transportation options, tips, getting from/to airport]
 
 ## 🏨 Accommodation
-**Hotel Recommendations:** Provide 3-4 well-known hotels in ${destination}:
+**Context-Aware Hotel Integration:** Provide 3-4 well-known hotels in ${destination}:
 - Include property names, addresses, and estimated price ranges per night for ${level} style
-- Consider seasonal pricing for the travel dates
-- Include [Book Now](#hotel-widget) booking links
+- **Each hotel should have:** [Book This Hotel] link to #hotel-widget
+- **Section footer:** [Compare All Hotels] [Read Reviews] links
+- **Mobile-optimized:** Clear action buttons with specific purposes
 - Focus on hotels appropriate for the trip purpose and group size
 
 ## 🎫 Must-See Attractions
-[8-12 main attractions with detailed descriptions, entry fees, hours, and GetYourGuide booking links. Use format: [Book Tickets](https://www.getyourguide.com/s/?q=${destination}+ATTRACTION_NAME&partner_id=PUHVJ53) - always include destination + attraction name for better results. NEVER use generic "Tickets" text.]
+**Context-Aware Attraction Booking:** 8-12 main attractions with smart booking integration:
+- **Paid attractions:** [Book Entry Tickets](https://www.getyourguide.com/s/?q=${destination}+ATTRACTION_NAME&partner_id=PUHVJ53) for museums, tours, experiences
+- **Free attractions:** [Get Directions] [Find Nearby Tours] links instead of booking
+- **Group activities:** [Book for ${adults + children} People] for tours and experiences
+- **Time-sensitive:** [Check Availability] for popular attractions that book up
+- **Section context:** Only show relevant booking options per attraction type
 
 **GetYourGuide Attractions Widget**: After listing 6-8 attractions, insert this widget:
 <div data-gyg-href="https://widget.getyourguide.com/default/activities.frame" data-gyg-locale-code="en-US" data-gyg-widget="activities" data-gyg-number-of-items="3" data-gyg-partner-id="PUHVJ53" data-gyg-q="${destination} attractions"><span>Powered by <a target="_blank" rel="sponsored" href="https://www.getyourguide.com/">GetYourGuide</a></span></div>
