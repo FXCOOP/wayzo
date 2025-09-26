@@ -442,13 +442,22 @@ Use these visual insights to personalize recommendations throughout the itinerar
 [Brief, compelling 2-3 sentence summary highlighting destination essence, travel dates, and key experiences. Focus on what makes this trip special - avoid generic descriptions.]
 
 ## 💰 Budget Breakdown
-**Smart Budget Summary:** Create a clean, concise breakdown:
-- Present costs in simple table format with key categories
-- If user didn't specify budget or specified 0: Calculate realistic estimates for ${level} travel style without assuming they have no money - they simply need guidance on expected costs
-- Show estimated ranges: "Budget ${level} travel: €X-Y per person" rather than assuming zero budget means no money
-- Brief justification for major costs (1-2 lines max)
-- Include equipment costs for activity-based destinations
-- Keep explanation short and actionable - avoid lengthy budget discussions
+**Progressive Disclosure Format for Mobile-Friendly Experience:**
+
+**Budget Overview (Always Visible):**
+- Show total estimated range for trip: "€X,XXX-€X,XXX for ${adults + children} travelers, ${nDays} days"
+- Brief one-line summary of travel style and approach
+- **[See Detailed Breakdown ▼]** expandable button
+
+**Detailed Breakdown (Expandable Section):**
+- **Accommodation:** €XXX-€XXX (${nDays} nights, price per night range)
+- **Food & Dining:** €XXX-€XXX (daily estimates, local restaurant ranges)
+- **Activities:** €XXX-€XXX (attraction entries, tours, experiences)
+- **Transportation:** €XXX-€XXX (local transit, airport transfers)
+${destination.toLowerCase().includes('ski') || destination.toLowerCase().includes('bansko') || destination.toLowerCase().includes('alps') || professional_brief?.toLowerCase().includes('ski') ? '- **Equipment Rental:** €XXX-€XXX (ski gear, lessons, lift passes)' : ''}
+- **Brief Notes:** 2-3 bullet points explaining major cost factors
+
+**Mobile Optimization:** Use expandable format with summary-first approach
 
 ## 🗺️ Getting Around
 [transportation options, tips, getting from/to airport]
@@ -470,13 +479,18 @@ Use these visual insights to personalize recommendations throughout the itinerar
 [6-10 restaurants by area with price ranges and specialties]
 
 ## 🎭 Daily Itineraries
-**Enhanced Daily Structure:**
-- **Format:** **Day X - Date (YYYY-MM-DD)** with clear time stamps
-- **Visual Hierarchy:** Use **bold** for important times, locations, and key activities
-- **Ticket Links:** [Book Tickets](https://www.getyourguide.com/s/?q=${destination}+ATTRACTION&partner_id=PUHVJ53) for all attractions
-- **Map Integration:** [Map](map:VENUE_NAME+${destination}) for each location
-- **Clear Schedule:** 09:00 format for times, realistic pacing (2-3 activities/day)
-- **Logical Flow:** Morning arrival → afternoon activity → evening plans with travel time considered
+**Time-Blocked Daily Structure for Mobile-Friendly Format:**
+- **Day Format:** **Day X - Date (YYYY-MM-DD)**
+- **Time Blocks:** Organize each day into clear time sections:
+  - **🌅 MORNING (9:00-12:00):** Early activities, museums, sightseeing
+  - **🌞 AFTERNOON (12:00-17:00):** Main activities, lunch, major attractions
+  - **🌆 EVENING (17:00-21:00):** Dinner, leisure, entertainment
+- **Activity Format:** For each time block, list:
+  - **Activity Name** with duration estimate
+  - **Location/Address** for navigation
+  - **[Book Tickets](https://www.getyourguide.com/s/?q=${destination}+ATTRACTION&partner_id=PUHVJ53)** for paid attractions
+  - **[Map](map:VENUE_NAME+${destination})** for each location
+- **Mobile Optimization:** Clear visual separation between time blocks, easy scanning
 
 **MANDATORY GetYourGuide Widgets**: Insert exactly 2 GetYourGuide widgets between daily itineraries:
 - After Day 3-4: <div data-gyg-href="https://widget.getyourguide.com/default/activities.frame" data-gyg-locale-code="en-US" data-gyg-widget="activities" data-gyg-number-of-items="3" data-gyg-partner-id="PUHVJ53" data-gyg-q="${destination}"><span>Powered by <a target="_blank" rel="sponsored" href="https://www.getyourguide.com/">GetYourGuide</a></span></div>

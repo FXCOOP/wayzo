@@ -3570,3 +3570,241 @@
 
 })();
 // Trigger redeploy for manual signup fix
+
+
+  // ====== Progressive Disclosure Budget Functionality ======
+  function initializeBudgetDisclosure() {
+    // Find all budget expand buttons in trip reports
+    const budgetExpandBtns = document.querySelectorAll(".budget-expand-btn");
+    
+    budgetExpandBtns.forEach(btn => {
+      btn.addEventListener("click", function(e) {
+        e.preventDefault();
+        
+        const detailsSection = this.parentElement.querySelector(".budget-details");
+        const icon = this.querySelector(".budget-expand-icon");
+        const btnText = this.querySelector(".budget-btn-text");
+        
+        if (!detailsSection) return;
+        
+        // Toggle expanded state
+        const isExpanded = this.classList.contains("expanded");
+        
+        if (isExpanded) {
+          // Collapse
+          this.classList.remove("expanded");
+          detailsSection.classList.remove("expanded");
+          if (btnText) btnText.textContent = "See Detailed Breakdown";
+          if (icon) icon.textContent = "▼";
+          
+          // Analytics
+          if (typeof gtag !== "undefined") {
+            gtag("event", "budget_collapse", {
+              event_category: "engagement",
+              event_label: "budget_section"
+            });
+          }
+        } else {
+          // Expand
+          this.classList.add("expanded");
+          detailsSection.classList.add("expanded");
+          if (btnText) btnText.textContent = "Hide Details";
+          if (icon) icon.textContent = "▲";
+          
+          // Smooth scroll to ensure visibility
+          setTimeout(() => {
+            detailsSection.scrollIntoView({ 
+              behavior: "smooth", 
+              block: "nearest" 
+            });
+          }, 200);
+          
+          // Analytics
+          if (typeof gtag !== "undefined") {
+            gtag("event", "budget_expand", {
+              event_category: "engagement", 
+              event_label: "budget_section"
+            });
+          }
+        }
+      });
+    });
+  }
+
+  // ====== Time Block Navigation for Mobile ======
+  function initializeTimeBlockNavigation() {
+    // Add quick navigation for mobile users
+    if (window.innerWidth <= 767) {
+      const timeBlocks = document.querySelectorAll(".time-block");
+      
+      timeBlocks.forEach((block, index) => {
+        const header = block.querySelector(".time-block-header");
+        if (header) {
+          header.style.cursor = "pointer";
+          header.addEventListener("click", function() {
+            const content = block.querySelector(".time-block-content");
+            if (content) {
+              const isHidden = content.style.display === "none";
+              content.style.display = isHidden ? "block" : "none";
+              
+              // Update header appearance
+              header.style.opacity = isHidden ? "1" : "0.7";
+            }
+          });
+        }
+      });
+    }
+  }
+
+  // ====== Enhanced Trip Report Initialization ======
+  function initializeTripReportFeatures() {
+    // Wait for trip report content to load
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === "childList") {
+          mutation.addedNodes.forEach((node) => {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              // Check if trip report content was added
+              if (node.classList?.contains("trip-report") || 
+                  node.querySelector?.(".trip-report")) {
+                
+                console.log("🎯 Trip report loaded, initializing features...");
+                
+                // Initialize progressive disclosure
+                setTimeout(() => {
+                  initializeBudgetDisclosure();
+                  initializeTimeBlockNavigation();
+                  initializeMobileOptimizations();
+                }, 100);
+              }
+            }
+          });
+        }
+      });
+    });
+
+    // Start observing
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+
+    // Also initialize immediately if content already exists
+    if (document.querySelector(".trip-report")) {
+      setTimeout(() => {
+        initializeBudgetDisclosure();
+        initializeTimeBlockNavigation(); 
+        initializeMobileOptimizations();
+      }, 100);
+    }
+  }
+
+  // ====== Mobile-Specific Optimizations ======
+  function initializeMobileOptimizations() {
+    if (window.innerWidth <= 767) {
+      // Add sticky navigation for long reports
+      addStickyNavigation();
+      
+      // Optimize touch targets
+      optimizeTouchTargets();
+      
+      // Add swipe gestures for day navigation
+      addSwipeGestures();
+    }
+  }
+
+  function addStickyNavigation() {
+    const tripReport = document.querySelector(".trip-report");
+    if (!tripReport) return;
+
+    const nav = document.createElement("div");
+    nav.className = "trip-nav";
+    nav.innerHTML = `
+      <div class="nav-buttons">
+        <button class="nav-btn" onclick="scrollToSection(\"budget\")">💰 Budget</button>
+        <button class="nav-btn" onclick="scrollToSection(\"itinerary\")">📅 Days</button>
+        <button class="nav-btn" onclick="scrollToSection(\"attractions\")">🎫 Places</button>
+      </div>
+    `;
+
+    tripReport.insertBefore(nav, tripReport.firstChild);
+
+    // Show/hide nav on scroll
+    let lastScrollY = window.scrollY;
+    window.addEventListener("scroll", () => {
+      if (window.scrollY > 300) {
+        if (window.scrollY > lastScrollY) {
+          nav.classList.remove("show");
+        } else {
+          nav.classList.add("show");
+        }
+      } else {
+        nav.classList.remove("show");
+      }
+      lastScrollY = window.scrollY;
+    });
+  }
+
+  function optimizeTouchTargets() {
+    // Ensure all interactive elements are at least 44px
+    const interactiveElements = document.querySelectorAll("a, button, .action-btn");
+    
+    interactiveElements.forEach(el => {
+      const rect = el.getBoundingClientRect();
+      if (rect.height < 44) {
+        el.style.minHeight = "44px";
+        el.style.display = "flex";
+        el.style.alignItems = "center";
+        el.style.justifyContent = "center";
+      }
+    });
+  }
+
+  function addSwipeGestures() {
+    // Add swipe navigation between days (mobile only)
+    const dayContainers = document.querySelectorAll(".day-container");
+    
+    dayContainers.forEach((day, index) => {
+      let startX = 0;
+      
+      day.addEventListener("touchstart", (e) => {
+        startX = e.touches[0].clientX;
+      });
+      
+      day.addEventListener("touchend", (e) => {
+        const endX = e.changedTouches[0].clientX;
+        const diff = startX - endX;
+        
+        if (Math.abs(diff) > 50) { // Minimum swipe distance
+          if (diff > 0 && index < dayContainers.length - 1) {
+            // Swipe left - next day
+            dayContainers[index + 1].scrollIntoView({ behavior: "smooth" });
+          } else if (diff < 0 && index > 0) {
+            // Swipe right - previous day
+            dayContainers[index - 1].scrollIntoView({ behavior: "smooth" });
+          }
+        }
+      });
+    });
+  }
+
+  // ====== Utility Functions ======
+  window.scrollToSection = (sectionName) => {
+    const section = document.querySelector(`[data-section="${sectionName}"]`) ||
+                   document.querySelector(`h2:contains("${sectionName}")`) ||
+                   document.querySelector(`[id*="${sectionName}"]`);
+    
+    if (section) {
+      section.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  // Initialize trip report features when DOM is ready
+  document.addEventListener("DOMContentLoaded", initializeTripReportFeatures);
+  
+  // Also initialize immediately if DOM is already ready
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initializeTripReportFeatures);
+  } else {
+    initializeTripReportFeatures();
+  }
