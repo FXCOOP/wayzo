@@ -102,6 +102,9 @@
               <label class="chip">
                 <input type="radio" name="tripPurpose" value="business" /> Business
               </label>
+              <label class="chip">
+                <input type="radio" name="tripPurpose" value="day-trip" /> 1 day trip
+              </label>
             </div>
             <div class="field-help">We'll customize your itinerary based on your travel purpose.</div>
           </div>
@@ -198,22 +201,22 @@
           </div>
 
           <div class="field">
-            <span>Flight Schedule (optional)</span>
-            <div class="flight-times">
+            <span style="font-size: 0.9em;">Flight Schedule (optional)</span>
+            <div class="flight-times" style="font-size: 0.85em;">
               <div class="fields-2">
                 <div class="field">
-                  <label>Arrival Time</label>
-                  <input type="time" name="arrivalTime" placeholder="e.g., 14:30" />
-                  <div class="field-help">Expected arrival time on first day</div>
+                  <label style="font-size: 0.8em;">Arrival Time</label>
+                  <input type="time" name="arrivalTime" placeholder="e.g., 14:30" style="font-size: 0.8em;" />
+                  <div class="field-help" style="font-size: 0.75em;">Expected arrival time on first day</div>
                 </div>
                 <div class="field">
-                  <label>Departure Time</label>
-                  <input type="time" name="departureTime" placeholder="e.g., 16:00" />
-                  <div class="field-help">Flight departure time on last day</div>
+                  <label style="font-size: 0.8em;">Departure Time</label>
+                  <input type="time" name="departureTime" placeholder="e.g., 16:00" style="font-size: 0.8em;" />
+                  <div class="field-help" style="font-size: 0.75em;">Flight departure time on last day</div>
                 </div>
               </div>
             </div>
-            <div class="field-help">We'll adjust your first and last day activities based on your flight schedule.</div>
+            <div class="field-help" style="font-size: 0.75em;">We'll adjust your first and last day activities based on your flight schedule.</div>
           </div>
 
           <div class="fields-2">
@@ -262,8 +265,8 @@
           </fieldset>
 
           <div class="field">
-            <span>Preferences</span>
-            <select id="prefs" name="prefs" multiple size="4">
+            <span>Preferences <span style="color: #007bff; font-size: 0.9em;">(Select multiple)</span></span>
+            <select id="prefs" name="prefs" multiple size="4" style="border: 2px solid #007bff; background: #f8f9ff;">
               <option value="museums">Museums & Culture</option>
               <option value="beaches">Beaches & Water</option>
               <option value="hiking">Hiking & Nature</option>
@@ -277,7 +280,7 @@
               <option value="photography">Photography</option>
               <option value="local-culture">Local Culture</option>
             </select>
-            <div class="field-help">Hold Ctrl/Cmd to select multiple preferences.</div>
+            <div class="field-help">✅ <strong>Multiple selection enabled:</strong> Hold Ctrl/Cmd (Windows/Linux) or Cmd (Mac) to select multiple preferences. Click on multiple items to customize your trip!</div>
           </div>
 
           <div class="field">
@@ -297,9 +300,8 @@
             <textarea id="brief" name="brief" rows="4" placeholder="Tell us about your ideal trip: must-see places, vibe preferences, group details, dining preferences, time constraints, special events, or any other requirements..."></textarea>
             <div class="field-help">The more details you provide, the better we can personalize your trip.</div>
             <div class="file-upload">
-              <input id="planFiles" type="file" name="planFiles" multiple accept=".pdf,.doc,.docx,.txt,.jpg,.png" />
+              <input id="planFiles" type="file" name="planFiles" multiple accept=".pdf,.doc,.docx,.txt,.jpg,.png" style="display: none;" />
               <label for="planFiles" class="btn btn-ghost">📎 Attach files (optional)</label>
-              <div class="field-help">Upload existing itineraries, inspiration photos, or travel documents.</div>
             </div>
           </div>
 
@@ -394,9 +396,6 @@
             <li><a href="#features">Features</a></li>
             <li><a href="#destinations">Destinations</a></li>
             <li><a href="#pricing">Pricing</a></li>
-            <li><a href="#enterprise">Enterprise</a></li>
-            <li><a href="#api">API Access</a></li>
-            <li><a href="#integrations">Integrations</a></li>
           </ul>
         </div>
         
@@ -404,10 +403,6 @@
           <h4>Company</h4>
           <ul class="footer-links">
             <li><a href="/about">About Us</a></li>
-            <li><a href="/careers">Careers</a></li>
-            <li><a href="/press">Press & Media</a></li>
-            <li><a href="/partners">Partnerships</a></li>
-            <li><a href="/investors">Investors</a></li>
             <li><a href="/blog">Blog & News</a></li>
           </ul>
         </div>
@@ -417,10 +412,7 @@
           <ul class="footer-links">
             <li><a href="/help">Help Center</a></li>
             <li><a href="/contact">Contact Us</a></li>
-            <li><a href="/status">System Status</a></li>
             <li><a href="/feedback">Feedback</a></li>
-            <li><a href="/community">Community</a></li>
-            <li><a href="/developers">Developer Docs</a></li>
           </ul>
         </div>
         
@@ -429,31 +421,9 @@
           <ul class="footer-links">
             <li><a href="/privacy">Privacy Policy</a></li>
             <li><a href="/terms">Terms of Service</a></li>
-            <li><a href="/cookies">Cookie Policy</a></li>
-            <li><a href="/gdpr">GDPR Compliance</a></li>
-            <li><a href="/accessibility">Accessibility</a></li>
-            <li><a href="/security">Security</a></li>
           </ul>
         </div>
         
-        <div class="footer-section">
-          <h4>Referral Program</h4>
-          <p class="referral-info">Share Wayzo and earn $5 off your next plan!</p>
-          <div class="referral-display">
-            <div class="referral-code-container">
-              <span class="referral-label">Your Referral Code:</span>
-              <div class="referral-code-wrapper">
-                <span class="referral-code" id="userReferralCode">WAYZO123</span>
-                <button class="copy-btn" onclick="copyReferralCode()" title="Copy code">
-                  <i class="fas fa-copy"></i>
-                </button>
-              </div>
-            </div>
-            <button class="btn btn-primary btn-small" onclick="showReferralModal()">
-              <i class="fas fa-share-alt"></i> Share Now
-            </button>
-          </div>
-        </div>
       </div>
       
       <div class="footer-bottom">

@@ -3014,7 +3014,7 @@
   document.addEventListener('DOMContentLoaded', () => {
     setupDietaryNeeds();
     setupStyleSelection();
-    setupReferralSystem();
+    // setupReferralSystem(); // Disabled per user request to remove referral program
   });
 
   // Global function for easy test user login

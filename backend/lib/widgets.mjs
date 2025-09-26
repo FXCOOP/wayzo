@@ -203,12 +203,20 @@ const AFFILIATE_WIDGETS = {
 
   // Activities Widget - SIMPLE WORKING IMPLEMENTATION (No Connection Issues)
   getyourguide: {
-    name: "Activities & Tours", 
+    name: "Activities & Tours",
     description: "Curated tours and activities",
-    script: (destination) => {
+    script: (destination, variant = 'auto') => {
       const dest = destination.replace(/,.*/, '').trim();
       const href = `https://www.getyourguide.com/s/?q=${encodeURIComponent(dest)}&partner_id=PUHVJ53`;
-      return `<div data-gyg-widget="auto" data-gyg-partner-id="PUHVJ53" data-gyg-href="${href}" data-gyg-locale="en-US"></div>`;
+
+      // Use different widget configurations to avoid conflicts
+      const widgetConfigs = {
+        'auto': `<div data-gyg-widget="auto" data-gyg-partner-id="PUHVJ53" data-gyg-href="${href}" data-gyg-locale="en-US" data-gyg-number-of-items="3"></div>`,
+        'activities': `<div data-gyg-widget="activities" data-gyg-partner-id="PUHVJ53" data-gyg-q="${encodeURIComponent(dest)}" data-gyg-locale="en-US" data-gyg-number-of-items="4"></div>`,
+        'tours': `<div data-gyg-widget="tours" data-gyg-partner-id="PUHVJ53" data-gyg-q="${encodeURIComponent(dest)}" data-gyg-locale="en-US" data-gyg-number-of-items="3"></div>`
+      };
+
+      return widgetConfigs[variant] || widgetConfigs['auto'];
     },
     category: "activities",
     placement: "must_see"
@@ -266,6 +274,46 @@ async function injectWidgetsIntoSections(html, widgets, destination = '', startD
         } else {
           current = current.nextElementSibling;
         }
+      }
+    }
+
+    // 1.5. Make Don't Forget List items interactive/checkable
+    if (dontForgetH2) {
+      let current = dontForgetH2.nextElementSibling;
+      while (current && current.tagName !== 'H2') {
+        if (current.tagName === 'UL') {
+          // Convert bullet points to checkboxes
+          const listItems = current.querySelectorAll('li');
+          listItems.forEach((li, index) => {
+            const text = li.textContent || '';
+            if (text.trim()) {
+              const checkbox = doc.createElement('input');
+              checkbox.type = 'checkbox';
+              checkbox.id = `packing-item-${index}`;
+              checkbox.style.marginRight = '8px';
+              checkbox.style.cursor = 'pointer';
+
+              const label = doc.createElement('label');
+              label.setAttribute('for', checkbox.id);
+              label.style.cursor = 'pointer';
+              label.style.display = 'flex';
+              label.style.alignItems = 'center';
+              label.style.marginBottom = '8px';
+
+              // Add the checkbox and text to the label
+              label.appendChild(checkbox);
+              label.appendChild(doc.createTextNode(text));
+
+              // Clear the li and add the labeled checkbox
+              li.innerHTML = '';
+              li.appendChild(label);
+              li.style.listStyle = 'none';
+              li.style.marginLeft = '0';
+            }
+          });
+          current.style.paddingLeft = '0';
+        }
+        current = current.nextElementSibling;
       }
     }
 
@@ -513,7 +561,7 @@ async function injectWidgetsIntoSections(html, widgets, destination = '', startD
     }
 
     // 5. Add GetYourGuide widget to Must-See Attractions section with destination-specific href
-    const mustSeeH2 = Array.from(doc.querySelectorAll('h2')).find(h => 
+    const mustSeeH2 = Array.from(doc.querySelectorAll('h2')).find(h =>
       h.textContent.includes("Must-See Attractions") || h.textContent.includes("🎫")
     );
     if (mustSeeH2) {
@@ -521,7 +569,8 @@ async function injectWidgetsIntoSections(html, widgets, destination = '', startD
       if (gygWidget) {
         const widgetDiv = doc.createElement('div');
         widgetDiv.className = 'section-widget gyg-widget';
-        const scriptContent = typeof gygWidget.script === 'function' ? gygWidget.script(destination) : gygWidget.script;
+        // Use 'activities' variant for the main attractions section
+        const scriptContent = typeof gygWidget.script === 'function' ? gygWidget.script(destination, 'activities') : gygWidget.script;
         widgetDiv.innerHTML = scriptContent;
         
         // Insert after Must-See Attractions section content
@@ -549,52 +598,66 @@ async function injectWidgetsIntoSections(html, widgets, destination = '', startD
           h.textContent.match(/Day\s+\d+/i)
         );
         
-        // Insert after Day 2
+        // Insert after Day 2 with different variant to avoid conflicts
         const day2 = dayHeadings.find(h => h.textContent.match(/Day\s+2/i));
-        if (day2) {
+        if (day2 && widgetsInjected["Must-See"] > 0) { // Only if main widget was added
           let nextElement = day2.nextElementSibling;
           // Skip content until next day or end of section
           while (nextElement && !nextElement.textContent?.match(/Day\s+\d+/i) && nextElement.tagName !== 'H2') {
             if (nextElement.textContent?.match(/Day\s+3/i)) break;
             nextElement = nextElement.nextElementSibling;
           }
-          
+
           if (nextElement) {
             const widgetDiv = doc.createElement('div');
             widgetDiv.className = 'gyg-widget-inline';
-            const scriptContent = typeof gygWidget.script === 'function' ? gygWidget.script(destination) : gygWidget.script;
-            widgetDiv.innerHTML = scriptContent;
+            widgetDiv.style.marginTop = '30px'; // Add spacing to prevent visual conflicts
+            // Use 'tours' variant to differentiate from main 'activities' widget
+            const scriptContent = typeof gygWidget.script === 'function' ? gygWidget.script(destination, 'tours') : gygWidget.script;
+
+            widgetDiv.innerHTML = `<div style="text-align: center; margin: 20px 0; color: #666;">
+              <p style="margin-bottom: 15px;">🎟️ Additional Tours & Activities</p>
+              ${scriptContent}
+            </div>`;
+
             nextElement.parentNode.insertBefore(widgetDiv, nextElement);
             widgetsInjected["Daily Itineraries"]++;
           }
         }
         
-        // Insert after Day 4
-        const day4 = dayHeadings.find(h => h.textContent.match(/Day\s+4/i));
-        if (day4) {
-          let nextElement = day4.nextElementSibling;
-          // Skip content until next day or end of section
-          while (nextElement && !nextElement.textContent?.match(/Day\s+\d+/i) && nextElement.tagName !== 'H2') {
-            if (nextElement.textContent?.match(/Day\s+5/i)) break;
-            nextElement = nextElement.nextElementSibling;
-          }
-          
-          if (nextElement) {
-            const widgetDiv = doc.createElement('div');
-            widgetDiv.className = 'gyg-widget-inline';
-            const scriptContent = typeof gygWidget.script === 'function' ? gygWidget.script(destination) : gygWidget.script;
-            widgetDiv.innerHTML = scriptContent;
-            nextElement.parentNode.insertBefore(widgetDiv, nextElement);
-            widgetsInjected["Daily Itineraries"]++;
-          }
-        }
+        // REMOVED: Insert after Day 4 widget to prevent connection conflicts
+        // Only keeping one widget in Daily Itineraries section to avoid GetYourGuide connection issues
       }
     }
 
-    // 7. Post-process links: enforce anchors and targets; add Google Map Preview at end
-    // Maps: ensure target _blank
+    // 7. Post-process links: enhance map URLs and enforce anchors and targets
+    // Maps: enhance URLs with proper formatting and ensure target _blank
     doc.querySelectorAll('a[href^="https://www.google.com/maps"], a[href^="https://maps.google.com"]').forEach(a => {
+      const href = a.getAttribute('href');
+      const text = a.textContent || '';
       a.setAttribute('target', '_blank');
+
+      // If the href contains generic "location", try to extract context from surrounding text
+      if (href.includes('q=location') || href.includes('q=ACTUAL_VENUE_NAME') || href.includes('q=SPECIFIC_PLACE_NAME')) {
+        const parentText = a.parentElement?.textContent || '';
+        // Try to extract venue/location names from the text context
+        const timeMatch = parentText.match(/\d+:\d+\s*[—-]\s*([^.!?]+)/);
+        if (timeMatch) {
+          const activityText = timeMatch[1].trim();
+          // Remove common words and get location-relevant terms
+          const cleanActivity = activityText
+            .replace(/\[Map\]/g, '')
+            .replace(/\[.*?\]/g, '')
+            .replace(/(visit|explore|enjoy|see|go to|walk through)\s*/gi, '')
+            .trim();
+
+          if (cleanActivity && cleanActivity.length > 3 && !cleanActivity.includes('Map')) {
+            const newHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cleanActivity + ' ' + destination)}`;
+            a.setAttribute('href', newHref);
+            console.log('Enhanced map link:', cleanActivity, '->', newHref);
+          }
+        }
+      }
     });
     // Hotels to internal anchor
     doc.querySelectorAll('a[href*="booking.com"], a[href*="#hotel"]').forEach(a => {
@@ -668,23 +731,19 @@ async function injectWidgetsIntoSections(html, widgets, destination = '', startD
       link.textContent = `Open Map with ${arr.length} points`;
       link.setAttribute('target', '_blank');
 
-      // Create a better multi-point map URL
+      // Create a multi-point map URL that shows individual points instead of routes
       if (arr.length === 1) {
         link.setAttribute('href', `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(arr[0])}`);
       } else {
-        // For multiple points, use the directions API to show route between points
-        const start = encodeURIComponent(arr[0]);
-        const waypoints = arr.slice(1, -1).map(p => encodeURIComponent(p)).join('|');
-        const destination = encodeURIComponent(arr[arr.length - 1]);
+        // For multiple points, show all as individual markers by creating a search query
+        // This approach shows points as markers rather than creating a route
+        const searchQuery = arr.join(' OR ');
+        link.setAttribute('href', `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(searchQuery)}`);
 
-        if (waypoints) {
-          link.setAttribute('href', `https://www.google.com/maps/dir/?api=1&origin=${start}&destination=${destination}&waypoints=${waypoints}`);
-        } else if (arr.length === 2) {
-          link.setAttribute('href', `https://www.google.com/maps/dir/?api=1&origin=${start}&destination=${destination}`);
-        } else {
-          // Fallback to search with all points
-          link.setAttribute('href', `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(arr.join(' | '))}`);
-        }
+        // Alternative: Use the place search for better point display
+        // You can also try this format for better results:
+        // const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(arr.join(', '))}`;
+        // link.setAttribute('href', mapsUrl);
       }
 
       p.appendChild(link);

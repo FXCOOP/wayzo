@@ -343,9 +343,9 @@ const travelerLabel = (ad = 2, ch = 0) => ch > 0 ? `Family (${ad} adult${ad === 
 const perPersonPerDay = (t = 0, d = 1, tr = 1) => Math.round((Number(t) || 0) / Math.max(1, d) / Math.max(1, tr));
 /* Local Fallback Plan */
 function localPlanMarkdown(input) {
-  const { destination = 'Your destination', start = 'start', end = 'end', budget = 1500, adults = 2, children = 0, level = 'mid', prefs = '', diet = '', currency = 'USD $' } = input || {};
+  const { destination = 'Your destination', start = 'start', end = 'end', budget = 1500, adults = 2, children = 0, level = 'mid', prefs = '', diet = '', currency = 'USD $', tripPurpose = 'leisure' } = input || {};
   const nDays = daysBetween(start, end);
-  const b = computeBudget(budget, nDays, level, Math.max(1, adults + children));
+  const b = computeBudget(budget, nDays, level, Math.max(1, adults + children), destination, tripPurpose);
   const style = level === "luxury" ? "Luxury" : level === "budget" ? "Budget" : "Mid-range";
   const pppd = perPersonPerDay(budget, nDays, Math.max(1, adults + children));
   return linkifyTokens(`
@@ -362,7 +362,7 @@ function localPlanMarkdown(input) {
 - Stay: **${b.stay.total}** (~${b.stay.perDay}/day)
 - Food: **${b.food.total}** (~${b.food.perDay}/person/day)
 - Activities: **${b.act.total}** (~${b.act.perDay}/day)
-- Transit: **${b.transit.total}** (~${b.transit.perDay}/day)
+- Transit: **${b.transit.total}** (~${b.transit.perDay}/day)${b.equipment && b.equipment.total > 0 ? `\n- Equipment: **${b.equipment.total}** (~${b.equipment.perDay}/day)` : ''}
 ---
 ## 🎭 Daily Itineraries
 ### Day 1 — Arrival & Relaxation (${start})
@@ -425,7 +425,16 @@ async function generatePlanWithAI(payload) {
   
   const sys = `Create a complete ${nDays}-day itinerary for ${destination} from ${start} to ${end}, 2 adults, ${budget} USD budget.
 
-Start immediately with the content in this format:
+${uploadedFiles && uploadedFiles.some(f => f.type && f.type.startsWith('image/')) ?
+`**IMPORTANT**: The user has provided images that may show their travel style preferences, destination inspiration, or specific interests. Analyze these images carefully and incorporate insights into the itinerary recommendations. Consider:
+- Visual preferences and travel style shown in images
+- Types of experiences, accommodations, or activities depicted
+- Photography interests or scenic preferences
+- Adventure level or comfort preferences shown
+
+Use these visual insights to personalize recommendations throughout the itinerary.
+
+` : ''}Start immediately with the content in this format:
 
 # ${destination} — ${start} → ${end}
 
@@ -435,15 +444,24 @@ Start immediately with the content in this format:
 ## 💰 Budget Breakdown
 Calculate realistic costs for ${level} style travel:
 - Show actual estimated costs for ${destination} in ${currency}
-- Breakdown: Flights, Accommodation (${nDays} nights), Food, Activities, Transport
-- If user budget ${budget} ${currency} is unrealistic, show: "Estimated realistic cost: [amount] for ${level} style"
-- Present as clear table with specific amounts
+- Breakdown: Flights, Accommodation (${nDays} nights), Food, Activities, Transport${destination.toLowerCase().includes('ski') || destination.toLowerCase().includes('diving') || destination.toLowerCase().includes('safari') || destination.toLowerCase().includes('trekking') ? ', Equipment Rental' : ''}
+- Include equipment costs for activity-based trips (ski equipment, diving gear, trekking equipment, etc.)
+- If user budget ${budget} ${currency} is unrealistic, show: "Estimated realistic cost: [amount] for ${level} style travel in ${destination}"
+- Present as clear table with specific amounts and justify any significant cost adjustments
+- Be realistic about pricing - don't create artificially low budgets that aren't achievable
 
 ## 🗺️ Getting Around
 [transportation options, tips, getting from/to airport]
 
 ## 🏨 Accommodation
-[Specific accommodation recommendations with exact names, addresses, prices, and [Book Now](#hotel-widget) links - NO suggestions like "If you'd like, I can swap to guesthouses" - provide definitive recommendations only]
+CRITICAL: Research current market prices for ${destination} accommodation in ${start.split('-')[0]} using current hotel booking data:
+- Provide 3-4 specific hotels with REAL current prices (check typical rates for ${destination})
+- Include exact property names, addresses, and realistic price ranges per night
+- Base prices on actual ${level} style accommodation costs in ${destination}
+- Account for seasonal pricing variations and current market rates
+- Verify hotel existence and avoid fictional properties
+- Include [Book Now](#hotel-widget) links but NO alternative suggestions
+- Present as definitive, researched recommendations with accurate pricing
 
 ## 🎫 Must-See Attractions
 [8-12 main attractions with detailed descriptions, entry fees, hours, and GetYourGuide booking links. Use format: [Book Tickets](https://www.getyourguide.com/s/?q=${destination}+ATTRACTION_NAME&partner_id=PUHVJ53) - always include destination + attraction name for better results. NEVER use generic "Tickets" text.]
@@ -461,7 +479,7 @@ Create SPECIFIC daily schedules for all ${nDays} days with:
 - Day ${nDays} (Departure): ${departureTime ? `Departure at ${departureTime} - include checkout time and airport transfer, light morning activities only` : 'Include checkout and departure logistics'}
 - Exact times (9:00 AM, 2:30 PM, etc.)
 - Real ${destination} locations and attraction names
-- [Map](https://maps.google.com/maps?q=specific-location-name) for each location
+- [Map](map:SPECIFIC_PLACE_NAME+${destination}) for each location (replace SPECIFIC_PLACE_NAME with actual venue/attraction names)
 - [Book Tickets](https://www.getyourguide.com/s/?q=${destination}+SPECIFIC_ATTRACTION_NAME&partner_id=PUHVJ53) for attractions (ALWAYS use full GetYourGuide URLs with ${destination}+attraction name and partner_id=PUHVJ53, NEVER generic "Tickets" text)
 - NO generic activities like "sunset viewpoint & dinner"
 - Each day format: **Day X - Date (YYYY-MM-DD)**
@@ -471,7 +489,7 @@ Create SPECIFIC daily schedules for all ${nDays} days with:
 - After middle day: <div data-gyg-href="https://widget.getyourguide.com/default/activities.frame" data-gyg-locale-code="en-US" data-gyg-widget="activities" data-gyg-number-of-items="3" data-gyg-partner-id="PUHVJ53" data-gyg-q="${destination}"><span>Powered by <a target="_blank" rel="sponsored" href="https://www.getyourguide.com/">GetYourGuide</a></span></div>
 
 ## 🧳 Don't Forget List
-[Simple packing checklist as bullet points - NO HTML checkboxes, NO fake interactive elements - just plain text list with widget links like eSIM]
+[Simple packing checklist as bullet points - items will be automatically converted to interactive checkboxes in post-processing. Include widget links like eSIM where relevant.]
 
 ## 🛡️ Travel Tips
 [local customs, money, safety, practical advice]
@@ -480,14 +498,29 @@ Create SPECIFIC daily schedules for all ${nDays} days with:
 [helpful apps for the destination]
 
 ## 🚨 Emergency Info
-[contacts, healthcare, embassy info]
+**Essential Emergency Information for ${destination}:**
+- **General Emergency**: Research and provide the correct emergency number for ${destination}
+- **Police & Fire**: Provide specific emergency contact numbers
+- **Medical Emergency**: Include ambulance/hospital emergency numbers
+- **Tourist Police**: If available in the destination
+- **Embassy Contact**: Include relevant embassy/consulate contact for travelers from ${from || 'your country'}
+- **Local Healthcare**: Provide information about nearest hospitals or medical facilities
+- **Important Local Numbers**: Include any destination-specific emergency services
+**Note**: Research CURRENT and ACCURATE emergency numbers - do not use generic placeholders
 
 ## ⚠️ Disclaimer
-*Prices subject to change. Verify details before booking.*
+**General Travel Information:**
+- Prices, hours, and availability are subject to change - verify current details before booking
+- Weather conditions may vary - check forecasts closer to travel dates
+- Restaurant menus and operating hours may change seasonally
+- Attraction opening hours and entry fees should be confirmed before visits
+- Hotel rates vary by season and availability - check current pricing
+- Transportation schedules and costs may change
+- All recommendations based on general travel information - verify specifics for your travel dates
 
 Use specific places, real addresses, current prices. Weather will be added automatically. NO images.
 
-**MANDATORY**: Keep disclaimer section MINIMAL - only the single line above. DO NOT add lengthy "CRITICAL FINAL NOTES" or verbose explanations.
+**MANDATORY**: The disclaimer section consolidates all verification notes - DO NOT repeat "Note:" messages throughout the content. NO lengthy "CRITICAL FINAL NOTES" or additional verbose explanations.
 
 **CRITICAL - FINAL REPORT REQUIREMENTS:**
 - This is a FINAL, COMPLETE travel report - NOT a draft
@@ -499,9 +532,9 @@ Use specific places, real addresses, current prices. Weather will be added autom
 - Show realistic cost estimates that match current market prices for ${destination}
 - End the report with the disclaimer section - NO additional offers or suggestions
 - Include proper GetYourGuide links with partner_id=PUHVJ53 in attractions: [Book Tickets](https://www.getyourguide.com/s/?q=ATTRACTION_NAME&partner_id=PUHVJ53)
-- Include Map links in daily itineraries: [Map](https://maps.google.com/maps?q=location)
+- Include Map links in daily itineraries: [Map](map:ACTUAL_VENUE_NAME+${destination}) - always replace ACTUAL_VENUE_NAME with specific restaurant, hotel, attraction, or landmark names
 - NEVER use shortened "Tickets" text - always use descriptive link text like "Book Tickets" or "Reserve Now"
-- NO fake HTML checkboxes in Don't Forget List - use plain bullet points only
+- Don't Forget List items will be automatically converted to interactive checkboxes - use plain bullet points in the AI generation
 
 Generate the complete travel itinerary now using all the sections listed above.`;
 
@@ -551,9 +584,13 @@ You MUST research current information for ${destination} to ensure accuracy:
 
 **ACCURACY ENFORCEMENT:**
 - If you cannot verify current information, DO NOT recommend that place
-- Use phrases like "Check current prices" or "Verify opening hours"
-- Include disclaimers about price changes
+- DO NOT add repetitive "Note:" or "Check current prices" messages - all disclaimers are consolidated in the final disclaimer section
+- Avoid repetitive verification notes throughout the content
 - Prioritize places with verified current information
+- **ACCOMMODATION PRICES**: Research realistic market rates for ${destination} - avoid generic estimates
+- **HOTEL VERIFICATION**: Only recommend hotels that actually exist with correct names and locations
+- **SEASONAL PRICING**: Account for actual pricing variations during ${start} to ${end} period
+- **EMERGENCY INFORMATION**: Research and provide ACCURATE emergency numbers specific to ${destination} - never use generic placeholders like "ask hotel" or "check local"
 
 **DAILY ITINERARIES REQUIREMENT:**
 - Create detailed, specific daily itineraries for each day
@@ -599,14 +636,15 @@ You MUST research current information for ${destination} to ensure accuracy:
    - **Opening hours** if relevant
    - **Atmosphere description** (e.g., "Cozy family-run taverna with stunning caldera views")
 
-3. **Accommodation Section**: Include 6-8 specific hotels with:
+3. **Accommodation Section**: Include 3-4 specific hotels with VERIFIED pricing:
    - **Exact names and locations** (e.g., "Villa Manos - Karterados, 10-minute walk to Fira")
-   - **Price ranges per night** (e.g., "€80-120/night")
+   - **CURRENT market-based prices per night** researched from booking platforms (not estimated!)
    - **Room types** (e.g., "Double rooms with private balconies")
    - **Amenities** (e.g., "Free Wi-Fi, pool, breakfast included, airport shuttle")
    - **Distance to attractions** (e.g., "5-minute walk to Fira center, 15-minute drive to Oia")
-   - **Booking links and reviews**
-   - **Seasonal pricing notes**
+   - **Seasonal pricing context** for the travel dates provided (${start} to ${end})
+   - Only recommend hotels that actually exist - verify property names and locations
+   - Price ranges must reflect actual ${destination} accommodation costs for ${level} style travel
 
 4. **Must-See Attractions**: Include 10-12 specific attractions with:
    - **Exact names and locations**
@@ -680,11 +718,14 @@ Create the most amazing, detailed, and useful trip plan possible!`;
     return md;
   }
   
-  // Model selection and retry logic with Responses API preference
+  // Model selection and retry logic with image support
   const preferredModel = process.env.WAYZO_MODEL || 'gpt-5-nano-2025-08-07';
   const fallbackModel = 'gpt-4o-mini-2024-07-18';
+  const visionModel = 'gpt-4o-2024-08-06'; // Vision-capable model for images
   const isNano = preferredModel.includes('gpt-5-nano');
+  const hasImages = uploadedFiles && uploadedFiles.some(file => file.type && file.type.startsWith('image/'));
   const maxTokens = mode === 'full' ? (isNano ? 128000 : 16384) : 500;
+
   let respText = '';
   if (!client) {
     console.warn('OpenAI API key not set, using local fallback');
@@ -692,9 +733,57 @@ Create the most amazing, detailed, and useful trip plan possible!`;
     md = ensureDaySections(md, nDays, start);
     return md;
   }
+
+  // Prepare messages with image support
+  const prepareMessages = () => {
+    if (hasImages) {
+      // Use vision model for images
+      const content = [
+        { type: 'text', text: `${sys}\n\n${user}` }
+      ];
+
+      // Add images to content
+      uploadedFiles.forEach(file => {
+        if (file.type && file.type.startsWith('image/')) {
+          if (file.url) {
+            // URL format
+            content.push({
+              type: 'image_url',
+              image_url: { url: file.url }
+            });
+          } else if (file.data) {
+            // Base64 format - ensure proper data URL format
+            const mimeType = file.type || 'image/jpeg';
+            const dataUrl = file.data.startsWith('data:') ? file.data : `data:${mimeType};base64,${file.data}`;
+            content.push({
+              type: 'image_url',
+              image_url: { url: dataUrl }
+            });
+          }
+        }
+      });
+
+      return [{ role: 'user', content }];
+    } else {
+      // Text-only messages
+      return [{ role: 'user', content: `${sys}\n\n${user}` }];
+    }
+  };
+
   for (let attempt = 0; attempt < 8; attempt++) {
     try {
-      if (isNano) {
+      if (hasImages) {
+        // Use vision model for image processing
+        const messages = prepareMessages();
+        const resp = await client.chat.completions.create({
+          model: visionModel,
+          max_tokens: maxTokens,
+          messages,
+          stream: false,
+        });
+        respText = resp.choices?.[0]?.message?.content || '';
+        console.log(`API call: model=${visionModel}, max_tokens=${maxTokens}, images=${uploadedFiles.filter(f => f.type?.startsWith('image/')).length}`);
+      } else if (isNano) {
         const resp = await client.responses.create({
           model: preferredModel,
           input: `${sys}\n\n${user}`,
@@ -1601,6 +1690,59 @@ app.get(/^\/(?!api\/).*/, (_req, res) => {
   console.log('Serving index:', INDEX);
   res.sendFile(INDEX);
 });
+// Test endpoint for image integration
+app.post('/api/test-image', async (req, res) => {
+  try {
+    const fs = await import('fs');
+    const path = await import('path');
+
+    // Get one of the example images
+    const imagesDir = path.join(ROOT, 'frontend', 'images example');
+    const imageFiles = fs.readdirSync(imagesDir).filter(f => f.endsWith('.jpeg') || f.endsWith('.jpg'));
+
+    if (imageFiles.length === 0) {
+      return res.status(404).json({ error: 'No example images found' });
+    }
+
+    // Use the first image for testing
+    const imageFile = imageFiles[0];
+    const imagePath = path.join(imagesDir, imageFile);
+    const imageData = fs.readFileSync(imagePath, 'base64');
+
+    // Create test payload with image
+    const testPayload = {
+      destination: 'Santorini, Greece',
+      start: '2025-10-01',
+      end: '2025-10-05',
+      budget: 2000,
+      currency: 'USD',
+      adults: 2,
+      children: 0,
+      level: 'mid',
+      prefs: 'romantic, photography',
+      uploadedFiles: [{
+        name: imageFile,
+        type: 'image/jpeg',
+        data: imageData
+      }],
+      mode: 'preview'
+    };
+
+    console.log(`Testing image integration with: ${imageFile}`);
+    const result = await generatePlanWithAI(testPayload);
+
+    res.json({
+      success: true,
+      imageUsed: imageFile,
+      result: result.substring(0, 500) + '...' // First 500 chars for testing
+    });
+
+  } catch (error) {
+    console.error('Image test error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Wayzo backend running on :${PORT}`);
   console.log('Version:', VERSION);
