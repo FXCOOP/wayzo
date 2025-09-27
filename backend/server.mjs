@@ -223,7 +223,7 @@ app.get('/debug/ping', (_req, res) => {
       openai_configured: !!process.env.OPENAI_API_KEY,
       openai_key_length: process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.length : 0,
       wayzo_model: process.env.WAYZO_MODEL || 'gpt-5-nano-2025-08-07',
-      client_initialized: !!client
+      client_initialized: !!getOpenAIClient()
     },
     timestamp: new Date().toISOString()
   });
@@ -436,8 +436,18 @@ function localPlanMarkdown(input) {
 function containsDaySections(md = "") {
   try { return /(^|\n)\s*#{0,6}\s*Day\s+\d+/i.test(md); } catch { return false; }
 }
-/* OpenAI (optional) */
-const client = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
+/* OpenAI (dynamic initialization) */
+function getOpenAIClient() {
+  if (!process.env.OPENAI_API_KEY) {
+    return null;
+  }
+  try {
+    return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  } catch (error) {
+    console.error('Failed to initialize OpenAI client:', error);
+    return null;
+  }
+}
 async function generatePlanWithAI(payload) {
   const {
     destination = '',
@@ -788,13 +798,14 @@ Create a RICH, DETAILED, and PROFESSIONAL report that travelers can actually use
 
 Create the most amazing, detailed, and useful trip plan possible!`;
 
+  const client = getOpenAIClient();
   if (!client) {
     console.warn('OpenAI API key not set, using local fallback');
     let md = localPlanMarkdown(payload);
     md = ensureDaySections(md, nDays, start);
     return md;
   }
-  
+
   // Model selection and retry logic with image support
   const preferredModel = process.env.WAYZO_MODEL || 'gpt-5-nano-2025-08-07';
   const fallbackModel = 'gpt-4o-mini-2024-07-18';
@@ -804,12 +815,6 @@ Create the most amazing, detailed, and useful trip plan possible!`;
   const maxTokens = mode === 'full' ? (isNano ? 128000 : 16384) : 500;
 
   let respText = '';
-  if (!client) {
-    console.warn('OpenAI API key not set, using local fallback');
-    let md = localPlanMarkdown(payload);
-    md = ensureDaySections(md, nDays, start);
-    return md;
-  }
 
   // Prepare messages with image support
   const prepareMessages = () => {
