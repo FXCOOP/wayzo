@@ -3932,7 +3932,9 @@
   // Initialize enhanced features when trip report is ready
   function initializeAllEnhancements() {
     initializeEnhancedNavigation();
+    initializeActivitySpecificButtons();
     console.log("🎯 Enhanced visual hierarchy initialized");
+    console.log("🎫 Activity-specific buttons initialized");
   }
 
   // Auto-initialize when trip reports are loaded
@@ -3955,6 +3957,111 @@
     childList: true,
     subtree: true
   });
+
+  // ====== Activity-Specific Button Enhancement ======
+  function initializeActivitySpecificButtons() {
+    const tripContent = document.querySelector(".trip-report");
+    if (!tripContent) return;
+
+    // Activity type button mappings
+    const buttonMappings = {
+      'RESTAURANT': {
+        primary: 'Reserve Table',
+        secondary: 'View Menu',
+        primaryIcon: '🍽️',
+        secondaryIcon: '📋'
+      },
+      'MUSEUM': {
+        primary: 'Buy Tickets',
+        secondary: 'Check Hours',
+        primaryIcon: '🎫',
+        secondaryIcon: '🕐'
+      },
+      'ACTIVITY': {
+        primary: 'Book Experience',
+        secondary: 'Details',
+        primaryIcon: '🎯',
+        secondaryIcon: 'ℹ️'
+      },
+      'TRANSPORT': {
+        primary: 'Book Ride',
+        secondary: 'Directions',
+        primaryIcon: '🚗',
+        secondaryIcon: '🗺️'
+      },
+      'HOTEL': {
+        primary: 'Check Availability',
+        secondary: 'Photos',
+        primaryIcon: '🏨',
+        secondaryIcon: '📸'
+      }
+    };
+
+    // Process each time block for activity categorization
+    const timeBlocks = tripContent.querySelectorAll(".time-block-content, .day-content p, .day-content li");
+
+    timeBlocks.forEach(block => {
+      const text = block.textContent || '';
+
+      // Look for category tags like [RESTAURANT], [MUSEUM], etc.
+      const categoryMatch = text.match(/\[(\w+)\]/);
+      if (categoryMatch) {
+        const category = categoryMatch[1];
+        const mapping = buttonMappings[category];
+
+        if (mapping) {
+          // Find and update booking buttons in this block
+          const bookingActions = block.parentElement?.querySelector('.booking-actions') ||
+                               block.querySelector('.booking-actions') ||
+                               block.nextElementSibling?.querySelector?.('.booking-actions');
+
+          if (bookingActions) {
+            updateButtonsForCategory(bookingActions, mapping, category);
+          } else {
+            // Create booking actions if they don't exist
+            createContextualBookingButtons(block, mapping, category);
+          }
+
+          // Remove the category tag from visible text
+          block.innerHTML = block.innerHTML.replace(/\[\w+\]/g, '');
+        }
+      }
+    });
+  }
+
+  function updateButtonsForCategory(bookingActions, mapping, category) {
+    const primaryBtn = bookingActions.querySelector('.btn-book-primary');
+    const secondaryBtn = bookingActions.querySelector('.btn-book-secondary');
+
+    if (primaryBtn) {
+      primaryBtn.innerHTML = `${mapping.primaryIcon} ${mapping.primary}`;
+      primaryBtn.setAttribute('data-category', category.toLowerCase());
+    }
+
+    if (secondaryBtn) {
+      secondaryBtn.innerHTML = `${mapping.secondaryIcon} ${mapping.secondary}`;
+      secondaryBtn.setAttribute('data-category', category.toLowerCase());
+    }
+  }
+
+  function createContextualBookingButtons(block, mapping, category) {
+    // Only create if this looks like an activity item
+    if (block.textContent.includes('—') || block.textContent.includes(':')) {
+      const bookingDiv = document.createElement('div');
+      bookingDiv.className = 'booking-actions';
+      bookingDiv.innerHTML = `
+        <button class="btn-book-primary" data-category="${category.toLowerCase()}">
+          ${mapping.primaryIcon} ${mapping.primary}
+        </button>
+        <button class="btn-book-secondary" data-category="${category.toLowerCase()}">
+          ${mapping.secondaryIcon} ${mapping.secondary}
+        </button>
+      `;
+
+      // Insert after the current block
+      block.parentNode.insertBefore(bookingDiv, block.nextSibling);
+    }
+  }
 
   // Initialize immediately if content exists
   if (document.querySelector(".trip-report")) {

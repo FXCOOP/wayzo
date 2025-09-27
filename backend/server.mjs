@@ -494,8 +494,15 @@ ${destination.toLowerCase().includes('ski') || destination.toLowerCase().include
 - **Activity Format:** For each time block, list:
   - **Activity Name** with duration estimate
   - **Location/Address** for navigation
-  - **[Book Tickets](https://www.getyourguide.com/s/?q=${destination}+ATTRACTION&partner_id=PUHVJ53)** for paid attractions
+  - **Activity-Specific Booking Buttons** (choose based on activity type):
+    - **Museums/Attractions:** [Buy Tickets] + [Check Hours]
+    - **Restaurants:** [Reserve Table] + [View Menu]
+    - **Tours/Activities:** [Book Experience] + [Details]
+    - **Transport:** [Book Ride] + [Directions]
+    - **Hotels:** [Check Availability] + [Photos]
+    - **General:** [Book Now] + [More Info]
   - **[Map](map:VENUE_NAME+${destination})** for each location
+  - **Category Tags:** Add activity type in format `[RESTAURANT]`, `[MUSEUM]`, `[ACTIVITY]`, `[TRANSPORT]`, `[HOTEL]` for button styling
 - **Mobile Optimization:** Clear visual separation between time blocks, easy scanning
 
 **MANDATORY GetYourGuide Widgets**: Insert exactly 2 GetYourGuide widgets between daily itineraries:

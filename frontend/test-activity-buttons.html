@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity-Specific Buttons Test</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🎫 Activity-Specific Button Test</h1>
+
+        <div class="trip-report">
+            <div class="day-container">
+                <h2>Day 1 - Testing Different Activity Types</h2>
+
+                <div class="time-block morning-block">
+                    <div class="time-block-header">
+                        <span class="time-block-emoji">🌅</span>
+                        <div>
+                            <h3 class="time-block-title">MORNING (9:00-12:00)</h3>
+                            <p class="time-block-subtitle">Museums and Culture</p>
+                        </div>
+                    </div>
+                    <div class="time-block-content">
+                        <p><strong>Louvre Museum</strong> [MUSEUM] — Visit the world's largest art museum (2-3 hours)</p>
+                        <div class="booking-actions">
+                            <button class="btn-book-primary">Book Now</button>
+                            <button class="btn-book-secondary">More Info</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="time-block afternoon-block">
+                    <div class="time-block-header">
+                        <span class="time-block-emoji">🌞</span>
+                        <div>
+                            <h3 class="time-block-title">AFTERNOON (12:00-17:00)</h3>
+                            <p class="time-block-subtitle">Lunch and Activities</p>
+                        </div>
+                    </div>
+                    <div class="time-block-content">
+                        <p><strong>Le Comptoir du Relais</strong> [RESTAURANT] — Traditional French bistro (1 hour)</p>
+                        <div class="booking-actions">
+                            <button class="btn-book-primary">Book Now</button>
+                            <button class="btn-book-secondary">More Info</button>
+                        </div>
+
+                        <p><strong>Seine River Cruise</strong> [ACTIVITY] — Scenic boat tour through Paris (1.5 hours)</p>
+                        <div class="booking-actions">
+                            <button class="btn-book-primary">Book Now</button>
+                            <button class="btn-book-secondary">More Info</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="time-block evening-block">
+                    <div class="time-block-header">
+                        <span class="time-block-emoji">🌆</span>
+                        <div>
+                            <h3 class="time-block-title">EVENING (17:00-21:00)</h3>
+                            <p class="time-block-subtitle">Transport and Hotel</p>
+                        </div>
+                    </div>
+                    <div class="time-block-content">
+                        <p><strong>Taxi to Hotel</strong> [TRANSPORT] — Return to accommodation (30 minutes)</p>
+                        <div class="booking-actions">
+                            <button class="btn-book-primary">Book Now</button>
+                            <button class="btn-book-secondary">More Info</button>
+                        </div>
+
+                        <p><strong>Hotel des Grands Boulevards</strong> [HOTEL] — Check availability for extra night (15 minutes)</p>
+                        <div class="booking-actions">
+                            <button class="btn-book-primary">Book Now</button>
+                            <button class="btn-book-secondary">More Info</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Wait for page load then initialize
+        window.addEventListener('load', function() {
+            console.log('🧪 Testing activity-specific buttons...');
+
+            setTimeout(() => {
+                const categories = ['MUSEUM', 'RESTAURANT', 'ACTIVITY', 'TRANSPORT', 'HOTEL'];
+                categories.forEach(cat => {
+                    const elements = document.querySelectorAll(`[data-category="${cat.toLowerCase()}"]`);
+                    console.log(`✅ Found ${elements.length} ${cat} buttons`);
+                });
+            }, 500);
+        });
+    </script>
+</body>
+</html>

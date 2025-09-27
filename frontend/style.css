@@ -5453,8 +5453,134 @@ a:hover { text-decoration: underline; color: #FFC107; }
   .day-container {
     animation: none;
   }
-  
+
   .activity-item:hover {
     transform: none;
+  }
+}
+
+
+/* ====== Activity-Specific Button Styling ====== */
+
+/* Restaurant category buttons */
+.btn-book-primary[data-category="restaurant"],
+.btn-book-secondary[data-category="restaurant"] {
+  border-left: 4px solid #f56565;
+}
+
+.btn-book-primary[data-category="restaurant"] {
+  background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+}
+
+.btn-book-secondary[data-category="restaurant"] {
+  background: linear-gradient(135deg, #fc8181 0%, #f56565 100%);
+}
+
+/* Museum category buttons */
+.btn-book-primary[data-category="museum"],
+.btn-book-secondary[data-category="museum"] {
+  border-left: 4px solid #9f7aea;
+}
+
+.btn-book-primary[data-category="museum"] {
+  background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
+}
+
+.btn-book-secondary[data-category="museum"] {
+  background: linear-gradient(135deg, #b794f6 0%, #9f7aea 100%);
+}
+
+/* Activity category buttons */
+.btn-book-primary[data-category="activity"],
+.btn-book-secondary[data-category="activity"] {
+  border-left: 4px solid #38a169;
+}
+
+.btn-book-primary[data-category="activity"] {
+  background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+}
+
+.btn-book-secondary[data-category="activity"] {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+}
+
+/* Transport category buttons */
+.btn-book-primary[data-category="transport"],
+.btn-book-secondary[data-category="transport"] {
+  border-left: 4px solid #ed8936;
+}
+
+.btn-book-primary[data-category="transport"] {
+  background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+}
+
+.btn-book-secondary[data-category="transport"] {
+  background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
+}
+
+/* Hotel category buttons */
+.btn-book-primary[data-category="hotel"],
+.btn-book-secondary[data-category="hotel"] {
+  border-left: 4px solid #3182ce;
+}
+
+.btn-book-primary[data-category="hotel"] {
+  background: linear-gradient(135deg, #3182ce 0%, #2c5aa0 100%);
+}
+
+.btn-book-secondary[data-category="hotel"] {
+  background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+}
+
+/* Enhanced button spacing and mobile optimization */
+.booking-actions[data-has-categories="true"] {
+  margin-top: 12px;
+  gap: 10px;
+}
+
+.booking-actions[data-has-categories="true"] .btn-book-primary,
+.booking-actions[data-has-categories="true"] .btn-book-secondary {
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Activity category hover effects */
+.btn-book-primary[data-category]:hover,
+.btn-book-secondary[data-category]:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+/* Category badge styling for better visual hierarchy */
+.btn-book-primary[data-category]::before,
+.btn-book-secondary[data-category]::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 12px 12px 0;
+  border-color: transparent rgba(255,255,255,0.2) transparent transparent;
+}
+
+@media (max-width: 767px) {
+  .booking-actions[data-has-categories="true"] {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .booking-actions[data-has-categories="true"] .btn-book-primary,
+  .booking-actions[data-has-categories="true"] .btn-book-secondary {
+    width: 100%;
+    min-height: 50px;
+    font-size: 14px;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    gap: 8px;
   }
 }
