@@ -203,13 +203,13 @@ app.get('/keep-alive', (_req, res) => {
   });
 });
 
-// Debug endpoint with memory tracking
+// Debug endpoint with memory tracking and API status
 app.get('/debug/ping', (_req, res) => {
   const memUsage = process.memoryUsage();
   const heapUsedMB = Math.round(memUsage.heapUsed / 1024 / 1024);
   const heapTotalMB = Math.round(memUsage.heapTotal / 1024 / 1024);
   const heapUsedGB = heapUsedMB / 1024;
-  
+
   res.json({
     ok: true,
     version: VERSION,
@@ -218,6 +218,12 @@ app.get('/debug/ping', (_req, res) => {
       heapUsed: `${heapUsedMB}MB`,
       heapTotal: `${heapTotalMB}MB`,
       healthy: heapUsedGB < 1.5 // Less than 1.5GB
+    },
+    api: {
+      openai_configured: !!process.env.OPENAI_API_KEY,
+      openai_key_length: process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.length : 0,
+      wayzo_model: process.env.WAYZO_MODEL || 'gpt-5-nano-2025-08-07',
+      client_initialized: !!client
     },
     timestamp: new Date().toISOString()
   });
