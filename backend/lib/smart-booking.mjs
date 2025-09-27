@@ -51,6 +51,20 @@ const HOLIDAYS_AND_EVENTS = {
       { name: 'Unity Day', dates: ['10-03'], closures: ['government'], crowds: 'medium' }
     ]
   },
+  'austria': {
+    holidays: [
+      { name: 'National Holiday', dates: ['10-26'], closures: ['government', 'some_museums'], crowds: 'medium' },
+      { name: 'All Saints Day', dates: ['11-01'], closures: ['shops'], crowds: 'low' },
+      { name: 'Christmas Markets', period: 'Nov-Dec', crowds: 'high', note: 'Salzburg and Innsbruck markets very popular' },
+      { name: 'Summer Season End', period: 'Sep', note: 'Shoulder season - good value, some alpine lifts closing' },
+      { name: 'Autumn Hiking Season', period: 'Sep-Oct', note: 'Perfect weather for hiking, fewer crowds' }
+    ],
+    events: [
+      { name: 'Long Night of Museums', period: 'Oct', location: 'Vienna', crowds: 'medium', note: 'Special museum events' },
+      { name: 'Wine Harvest Season', period: 'Sep-Oct', location: 'Wachau Valley', crowds: 'medium', note: 'Wine festivals and tastings' },
+      { name: 'Alpine Fall Colors', period: 'Sep-Oct', note: 'Peak autumn foliage in the Alps' }
+    ]
+  },
   'japan': {
     holidays: [
       { name: 'Cherry Blossom', period: 'Mar-May', crowds: 'extreme', note: 'Peak tourism season' },
@@ -172,6 +186,7 @@ function checkHolidaysAndEvents(destination, date) {
   else if (dest.includes('italy') || dest.includes('rome') || dest.includes('venice')) country = 'italy';
   else if (dest.includes('spain') || dest.includes('madrid')) country = 'spain';
   else if (dest.includes('germany') || dest.includes('munich') || dest.includes('berlin')) country = 'germany';
+  else if (dest.includes('austria') || dest.includes('vienna') || dest.includes('salzburg') || dest.includes('innsbruck') || dest.includes('tyrol')) country = 'austria';
   else if (dest.includes('japan') || dest.includes('tokyo')) country = 'japan';
   else if (dest.includes('thailand') || dest.includes('bangkok')) country = 'thailand';
 
@@ -300,10 +315,17 @@ function isInPeriod(date, period) {
   const month = date.getMonth() + 1;
   const day = date.getDate();
 
+  // Handle simple month names like "Sep", "Oct", "Nov"
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  if (monthNames.includes(period)) {
+    const targetMonth = monthNames.indexOf(period) + 1;
+    return month === targetMonth;
+  }
+
   // Handle month ranges like "Sep-Oct"
-  if (period.includes('-')) {
+  if (period.includes('-') && !period.includes(' ')) {
     const [start, end] = period.split('-');
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const startMonth = monthNames.indexOf(start) + 1;
     const endMonth = monthNames.indexOf(end) + 1;
 
@@ -316,7 +338,6 @@ function isInPeriod(date, period) {
   if (period.includes(' ')) {
     const parts = period.split(' ');
     const monthName = parts[0];
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const targetMonth = monthNames.indexOf(monthName) + 1;
 
     if (targetMonth === month) {
