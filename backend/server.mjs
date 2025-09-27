@@ -18,6 +18,7 @@ import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
 import { getWidgetsForDestination, generateWidgetHTML, injectWidgetsIntoSections } from './lib/widgets.mjs';
+import { generateBookingRecommendations, WEATHER_IMPACT, CROWD_PATTERNS } from './lib/smart-booking.mjs';
 const VERSION = 'staging-v64';
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
@@ -341,6 +342,40 @@ const daysBetween = (a, b) => { if (!a || !b) return 1; const s = new Date(a), e
 const seasonFromDate = (iso = "") => ([12, 1, 2].includes(new Date(iso).getMonth() + 1) ? "Winter" : [3, 4, 5].includes(new Date(iso).getMonth() + 1) ? "Spring" : [6, 7, 8].includes(new Date(iso).getMonth() + 1) ? "Summer" : "Autumn");
 const travelerLabel = (ad = 2, ch = 0) => ch > 0 ? `Family (${ad} adult${ad === 1 ? "" : "s"} + ${ch} kid${ch === 1 ? "" : "s"})` : (ad === 2 ? "Couple" : ad === 1 ? "Solo" : `${ad} adult${ad === 1 ? "" : "s"}`);
 const perPersonPerDay = (t = 0, d = 1, tr = 1) => Math.round((Number(t) || 0) / Math.max(1, d) / Math.max(1, tr));
+/* Smart Booking Context Generator */
+function generateSmartBookingContext(destination, startDate, groupSize) {
+  const date = new Date(startDate);
+  const recommendations = generateBookingRecommendations(destination, 'general', startDate, '10:00-12:00', groupSize);
+
+  let context = '';
+
+  // Add major holiday/event warnings
+  if (recommendations.warnings.length > 0) {
+    context += `\n**🚨 IMPORTANT BOOKING ALERTS:**\n`;
+    recommendations.warnings.forEach(warning => {
+      context += `- ${warning}\n`;
+    });
+  }
+
+  // Add special opportunities
+  if (recommendations.opportunities.length > 0) {
+    context += `\n**🎉 SPECIAL EVENTS DURING YOUR VISIT:**\n`;
+    recommendations.opportunities.forEach(opportunity => {
+      context += `- ${opportunity}\n`;
+    });
+  }
+
+  // Add general recommendations
+  if (recommendations.recommendations.length > 0) {
+    context += `\n**💡 SMART BOOKING TIPS:**\n`;
+    recommendations.recommendations.forEach(rec => {
+      context += `- ${rec}\n`;
+    });
+  }
+
+  return context;
+}
+
 /* Local Fallback Plan */
 function localPlanMarkdown(input) {
   const { destination = 'Your destination', start = 'start', end = 'end', budget = 1500, adults = 2, children = 0, level = 'mid', prefs = '', diet = '', currency = 'USD $', tripPurpose = 'leisure' } = input || {};
@@ -348,12 +383,16 @@ function localPlanMarkdown(input) {
   const b = computeBudget(budget, nDays, level, Math.max(1, adults + children), destination, tripPurpose);
   const style = level === "luxury" ? "Luxury" : level === "budget" ? "Budget" : "Mid-range";
   const pppd = perPersonPerDay(budget, nDays, Math.max(1, adults + children));
+
+  // Generate smart booking context for this trip
+  const smartBookingContext = generateSmartBookingContext(destination, start, adults + children);
+
   return linkifyTokens(`
 # ${destination} — ${start} → ${end}
 **Travelers:** ${travelerLabel(adults, children)}
 **Style:** ${style}${prefs ? ` · ${prefs}` : ""}
 **Budget:** ${budget} ${currency} (${pppd}/day/person)
-**Season:** ${seasonFromDate(start)}
+**Season:** ${seasonFromDate(start)}${smartBookingContext}
 ---
 ## 🎯 Trip Overview
 - Destination overview and key highlights tailored to your inputs.
@@ -503,6 +542,14 @@ ${destination.toLowerCase().includes('ski') || destination.toLowerCase().include
     - **General:** [Book Now] + [More Info]
   - **[Map](map:VENUE_NAME+${destination})** for each location
   - **Category Tags:** Add activity type in format `[RESTAURANT]`, `[MUSEUM]`, `[ACTIVITY]`, `[TRANSPORT]`, `[HOTEL]` for button styling
+  - **Smart Booking Intelligence:** Add contextual booking advice where relevant:
+    - **Peak Hours:** "⏰ Visit before 10 AM to avoid crowds"
+    - **Holiday Warnings:** "🚨 Bastille Day (July 14): Expect huge crowds, book early"
+    - **Local Events:** "🎉 Fashion Week happening - unique atmosphere but higher prices"
+    - **Weather Tips:** "☔ Rainy day perfect for indoor museums"
+    - **Group Optimization:** "👥 Groups 6+: Call ahead for reservations"
+    - **Seasonal Notes:** "🌸 Cherry blossom season: Peak tourism, book months ahead"
+    - **Time Optimization:** "🍽️ Lunch 12-2 PM: Book ahead, prix fixe menus available"
 - **Mobile Optimization:** Clear visual separation between time blocks, easy scanning
 
 **MANDATORY GetYourGuide Widgets**: Insert exactly 2 GetYourGuide widgets between daily itineraries:
