@@ -391,7 +391,13 @@ function localPlanMarkdown(input) {
   const pppd = perPersonPerDay(budget, nDays, Math.max(1, adults + children));
 
   // Generate smart booking context for this trip
-  const smartBookingContext = generateSmartBookingContext(destination, start, adults + children);
+  let smartBookingContext = '';
+  try {
+    smartBookingContext = generateSmartBookingContext(destination, start, adults + children);
+  } catch (error) {
+    console.warn('Smart Booking Intelligence error in fallback:', error);
+    smartBookingContext = 'No specific booking intelligence available for this destination.';
+  }
 
   return linkifyTokens(`
 # ${destination} — ${start} → ${end}
@@ -636,7 +642,14 @@ Use this detailed brief to create a highly personalized plan that addresses ever
 ${uploadedFiles && uploadedFiles.length > 0 ? `**UPLOADED DOCUMENTS:** User has uploaded ${uploadedFiles.length} document(s) including: ${uploadedFiles.map(f => f.name).join(', ')}. Consider any existing plans or preferences mentioned in these documents when creating the itinerary.` : ''}
 
 **SMART BOOKING INTELLIGENCE:**
-${generateSmartBookingContext(destination, start, adults + children)}
+${(() => {
+  try {
+    return generateSmartBookingContext(destination, start, adults + children);
+  } catch (error) {
+    console.warn('Smart Booking Intelligence error:', error);
+    return 'No specific booking intelligence available for this destination.';
+  }
+})()}
 
 **SPECIAL CONSIDERATIONS:**
 ${children > 0 ? `- **Family-Friendly Focus**: Include activities suitable for children, family-friendly accommodations, and consider child safety and entertainment
