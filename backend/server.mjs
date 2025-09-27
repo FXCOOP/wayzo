@@ -619,6 +619,9 @@ Use this detailed brief to create a highly personalized plan that addresses ever
 
 ${uploadedFiles && uploadedFiles.length > 0 ? `**UPLOADED DOCUMENTS:** User has uploaded ${uploadedFiles.length} document(s) including: ${uploadedFiles.map(f => f.name).join(', ')}. Consider any existing plans or preferences mentioned in these documents when creating the itinerary.` : ''}
 
+**SMART BOOKING INTELLIGENCE:**
+${generateSmartBookingContext(destination, start, adults + children)}
+
 **SPECIAL CONSIDERATIONS:**
 ${children > 0 ? `- **Family-Friendly Focus**: Include activities suitable for children, family-friendly accommodations, and consider child safety and entertainment
 - **Age-Appropriate Activities**: Tailor activities to the children's ages (${childrenAges.join(', ')})
