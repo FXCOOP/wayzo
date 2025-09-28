@@ -459,7 +459,7 @@ async function injectWidgetsIntoSections(html, widgets, destination = '', startD
         if (node.tagName === 'TABLE' && node.classList.contains('budget-table')) { hasTable = true; break; }
         node = node.nextElementSibling;
       }
-      if (!hasTable) {
+      if (false) { // DISABLED: Let AI generate the accurate budget table instead
         // Smart budget calculation based on destination and data provided
         let flightCost, accommodationCost, foodCost, transportCost, activitiesCost, miscCost;
         let currency = '€';
