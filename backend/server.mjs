@@ -1838,6 +1838,19 @@ app.post('/api/test-image', async (req, res) => {
   }
 });
 
+// Debug endpoint to check OpenAI configuration
+app.get('/api/debug', (req, res) => {
+  const client = getOpenAIClient();
+  res.json({
+    hasOpenAIKey: !!process.env.OPENAI_API_KEY,
+    keyLength: process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.length : 0,
+    clientInitialized: !!client,
+    preferredModel: process.env.WAYZO_MODEL || 'gpt-5-nano-2025-08-07',
+    nodeEnv: process.env.NODE_ENV,
+    timestamp: new Date().toISOString()
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Wayzo backend running on :${PORT}`);
   console.log('Version:', VERSION);
