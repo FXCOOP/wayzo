@@ -504,22 +504,37 @@ Use these visual insights to personalize recommendations throughout the itinerar
 ## 🎯 Your Journey at a Glance
 Write a warm, personal welcome that makes the traveler excited about their upcoming adventure. Start with something like "Experience the magic of..." or "Your ${nDays}-day journey to..." Focus on what makes this destination special and what awaits them. Avoid AI-sounding language and make it feel like a knowledgeable friend is describing their trip.
 
-## 💰 Budget Breakdown
+## 💰 Budget Overview
 
-Create a beautiful, realistic budget breakdown for ${destination}. Research actual ${destination} prices for ${level} travel style. Format as:
+**IMPORTANT: Research real market prices for ${destination}**
+
+Create ONE clean, beautiful budget table with REAL researched price ranges:
+
+1. **Research actual costs** for ${level} travel in ${destination}:
+   - Flights: ${from} to ${destination} (check airline prices)
+   - Accommodation: Real ${level} hotels/hostels in ${destination}
+   - Food: Actual restaurant prices and grocery costs
+   - Transportation: Real local transport and intercity costs
+   - Activities: Current admission prices for attractions
+
+2. **Present as realistic ranges** (like €450-€1,100, not fixed numbers)
+
+3. **Format as clean table:**
 
 **💰 Total Budget Estimate: €X,XXX - €X,XXX**
 *For ${adults + children} travelers • ${nDays} days*
 
-| Category | Amount Range | Notes |
-|----------|-------------|--------|
-| 🏨 **Accommodation** | €X - €X | (${nDays} nights, €X-X per night) |
-| 🍽️ **Food & Dining** | €X - €X | (€X-X per person/day, local restaurants) |
-| 🎫 **Activities** | €X - €X | (Museums, tours, attractions) |
-| 🚌 **Transportation** | €X - €X | (Local transit, airport transfers) |
-| 🛍️ **Miscellaneous** | €X - €X | (Souvenirs, tips, emergency fund) |
+| Category | Cost Range | Details |
+|----------|------------|---------|
+| ✈️ **Flights** | €XXX - €XXX | ${from} to ${destination}, economy class |
+| 🏨 **Accommodation** | €XXX - €XXX | ${nDays} nights, ${level} style (€XX-XX per night) |
+| 🍽️ **Food & Dining** | €XXX - €XXX | €XX-XX per person/day, local restaurants + groceries |
+| 🚌 **Transportation** | €XXX - €XXX | Local transit, trains, airport transfers |
+| 🎫 **Activities** | €XXX - €XXX | Museums, tours, attractions, experiences |
+| 🛍️ **Miscellaneous** | €XXX - €XXX | Souvenirs, tips, emergency fund |
+| **💰 TOTAL** | **€X,XXX - €X,XXX** | **Complete trip estimate** |
 
-Use realistic ${destination} market prices for ${level} style travel. Make it clean, professional, and budget-appropriate.${destination.toLowerCase().includes('ski') || destination.toLowerCase().includes('bansko') || destination.toLowerCase().includes('alps') || professional_brief?.toLowerCase().includes('ski') ? ' Include equipment rental costs for ski gear, lessons, and lift passes.' : ''}
+Use REAL market research for accurate pricing. Make it professional and beautiful.${destination.toLowerCase().includes('ski') || destination.toLowerCase().includes('bansko') || destination.toLowerCase().includes('alps') || professional_brief?.toLowerCase().includes('ski') ? ' Include equipment rental costs for ski gear, lessons, and lift passes.' : ''}
 
 ## 🗺️ Getting Around
 [transportation options, tips, getting from/to airport]
