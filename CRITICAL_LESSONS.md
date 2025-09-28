@@ -13,15 +13,15 @@
 2. **Attempt 2**: After recent deployment, duplication returned → STILL BROKEN
 
 ### CURRENT STATUS (2025-01-XX):
-- Live site showing massive widget duplication again
-- User frustrated: "you ruined everything again"
-- Same issue recurring despite previous fixes
+- ✅ **ROOT CAUSE IDENTIFIED**: AI prompt was generating widgets (line 522-523)
+- ✅ **DUAL GENERATION**: AI generating widgets + post-processing adding more = massive duplication
+- 🚀 **FIX DEPLOYED**: Commit `545c655` - removed AI widget generation prompt + cleanup regex
 
-### ROOT ANALYSIS NEEDED:
-1. **Check if git commit actually applied changes properly**
-2. **Verify Daily Itineraries widget injection is actually disabled**
-3. **Look for other sources of widget generation**
-4. **Check if AI prompt is generating duplicate content in HTML**
+### ROOT CAUSE ANALYSIS:
+1. ✅ **Primary**: AI prompt instructing to generate GetYourGuide widgets in HTML
+2. ✅ **Secondary**: Post-processing widget injection adding more widgets
+3. ✅ **Result**: Multiple layers of widget generation = 14+ duplicates
+4. ✅ **Fix**: Remove AI widget generation, rely only on post-processing injection
 
 ### CRITICAL ACTION ITEMS:
 1. ✅ Document this recurring pattern

@@ -1077,11 +1077,7 @@ app.post('/api/plan', async (req, res) => {
       // Remove GetYourGuide widget duplications
       .replace(
         /(<div[^>]*data-gyg-[^>]*>.*?<\/div>\s*)+/gs,
-        (match) => {
-          // Keep only the first GetYourGuide widget, remove duplicates
-          const widgets = match.match(/<div[^>]*data-gyg-[^>]*>.*?<\/div>/g);
-          return widgets ? widgets[0] : '';
-        }
+        '$1'
       )
       // Original cleanup patterns
       .replace(
