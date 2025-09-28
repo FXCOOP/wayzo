@@ -409,11 +409,13 @@ function localPlanMarkdown(input) {
 ## 🎯 Your Journey at a Glance
 Experience the magic of ${destination} over ${nDays} unforgettable ${nDays === 1 ? 'day' : 'days'}. This carefully curated ${level} adventure is designed for ${adults + children} traveler${adults + children === 1 ? '' : 's'}, blending must-see highlights with authentic local experiences. From ${seasonFromDate(start)} weather to hidden gems, every detail has been thoughtfully planned for your perfect getaway.
 ---
-## 💰 Budget Breakdown (rough)
-- Stay: **${b.stay.total}** (~${b.stay.perDay}/day)
-- Food: **${b.food.total}** (~${b.food.perDay}/person/day)
-- Activities: **${b.act.total}** (~${b.act.perDay}/day)
-- Transit: **${b.transit.total}** (~${b.transit.perDay}/day)${b.equipment && b.equipment.total > 0 ? `\n- Equipment: **${b.equipment.total}** (~${b.equipment.perDay}/day)` : ''}
+## 💰 Budget Overview
+**Total: ${budget} ${currency}** (${pppd}/person/day)
+
+- 🏨 Stay: **${b.stay.total}** (${b.stay.perDay}/day)
+- 🍽️ Food: **${b.food.total}** (${b.food.perDay}/day)
+- 🎫 Activities: **${b.act.total}** (${b.act.perDay}/day)
+- 🚌 Transport: **${b.transit.total}** (${b.transit.perDay}/day)${b.equipment && b.equipment.total > 0 ? `\n- 🎿 Equipment: **${b.equipment.total}** (${b.equipment.perDay}/day)` : ''}
 ---
 ## 🎭 Daily Itineraries
 ### Day 1 — Arrival & Relaxation (${start})
@@ -574,14 +576,7 @@ Must-have mobile apps for navigating ${destination} and enhancing your travel ex
 - **Important Local Numbers**: Destination-specific emergency services
 
 ## ⚠️ Disclaimer
-**General Travel Information:**
-- Prices, hours, and availability are subject to change - verify current details before booking
-- Weather conditions may vary - check forecasts closer to travel dates
-- Restaurant menus and operating hours may change seasonally
-- Attraction opening hours and entry fees should be confirmed before visits
-- Hotel rates vary by season and availability - check current pricing
-- Transportation schedules and costs may change
-- All recommendations based on general travel information - verify specifics for your travel dates
+*Prices and availability subject to change. Verify details before booking.*
 
 Generate the complete travel itinerary now using all the sections listed above.`;
 
