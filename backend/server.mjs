@@ -829,11 +829,10 @@ Create the most amazing, detailed, and useful trip plan possible!`;
   console.log('✅ OpenAI client ready - proceeding with API call');
 
   // Model selection and retry logic with image support
-  // TEMPORARILY DISABLE NANO MODEL - returning empty responses
-  const preferredModel = process.env.WAYZO_MODEL || 'gpt-4o-mini-2024-07-18';
+  const preferredModel = process.env.WAYZO_MODEL || 'gpt-5-nano-2025-08-07';
   const fallbackModel = 'gpt-4o-mini-2024-07-18';
   const visionModel = 'gpt-4o-2024-08-06'; // Vision-capable model for images
-  const isNano = false; // DISABLED - nano model returning empty responses
+  const isNano = preferredModel.includes('gpt-5-nano');
   const hasImages = uploadedFiles && uploadedFiles.some(file => file.type && file.type.startsWith('image/'));
   const maxTokens = mode === 'full' ? (isNano ? 128000 : 16384) : 500;
 
@@ -897,7 +896,9 @@ Create the most amazing, detailed, and useful trip plan possible!`;
           input: `${sys}\n\n${user}`,
           max_output_tokens: maxTokens,
         });
-        respText = resp.output_text || resp?.output?.[0]?.content?.[0]?.text || '';
+        console.log('🔍 RAW NANO RESPONSE:', JSON.stringify(resp, null, 2));
+        respText = resp.output_text || resp?.output?.[0]?.content?.[0]?.text || resp?.content || '';
+        console.log('🔍 EXTRACTED TEXT:', respText ? respText.substring(0, 100) + '...' : 'EMPTY');
         console.log(`✅ API call success: model=${preferredModel}, max_tokens=${maxTokens}`);
       } else {
         console.log(`🤖 Using fallback model: ${fallbackModel}`);
