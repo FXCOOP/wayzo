@@ -339,10 +339,32 @@ async function injectWidgetsIntoSections(html, widgets, destination = '', startD
       // Get weather data based on destination and dates
       const weatherData = await getWeatherData(destination, startDate, endDate);
 
-      // Generate weather table rows
-      const weatherRows = weatherData.map(day =>
-        `<tr><td>${day.date}</td><td>${day.minTemp}°</td><td>${day.maxTemp}°</td><td>${day.rainChance}%</td><td><a href="https://maps.google.com/?q=${encodeURIComponent(destination)}+weather" target="_blank">Details</a></td></tr>`
-      ).join('');
+      // Generate weather table rows with improved styling and safety checks
+      const weatherRows = weatherData.map((day, index) => {
+        const isEven = index % 2 === 0;
+        const bgColor = isEven ? '#ffffff' : '#f8f9fa';
+
+        // Safety checks for undefined values
+        const minTemp = day.minTemp !== undefined ? day.minTemp : 15;
+        const maxTemp = day.maxTemp !== undefined ? day.maxTemp : 22;
+        const rainChance = day.rainChance !== undefined ? day.rainChance : 35;
+        const date = day.date || 'N/A';
+
+        const rainColor = rainChance > 70 ? '#dc3545' : rainChance > 40 ? '#fd7e14' : '#28a745';
+
+        return `<tr style="background-color: ${bgColor}; transition: background-color 0.2s;">
+          <td style="padding: 12px 10px; text-align: center; font-weight: 500; border-right: 1px solid #e9ecef;">${date}</td>
+          <td style="padding: 12px 10px; text-align: center; color: #007bff; font-weight: 600; border-right: 1px solid #e9ecef;">${minTemp}°C</td>
+          <td style="padding: 12px 10px; text-align: center; color: #dc3545; font-weight: 600; border-right: 1px solid #e9ecef;">${maxTemp}°C</td>
+          <td style="padding: 12px 10px; text-align: center; color: ${rainColor}; font-weight: 600; border-right: 1px solid #e9ecef;">${rainChance}%</td>
+          <td style="padding: 12px 10px; text-align: center;">
+            <a href="https://www.google.com/search?q=${encodeURIComponent(destination + ' weather ' + date)}" target="_blank"
+               style="color: #4285f4; text-decoration: none; font-weight: 500; padding: 4px 8px; border-radius: 4px; transition: background-color 0.2s;">
+              View
+            </a>
+          </td>
+        </tr>`;
+      }).join('');
 
       // Determine data source
       let dataSource;
@@ -360,17 +382,28 @@ async function injectWidgetsIntoSections(html, widgets, destination = '', startD
       const weatherSection = doc.createElement('div');
       weatherSection.innerHTML = `
         <h2>🌤️ Weather Forecast</h2>
-        <table class="budget-table" style="border-collapse: collapse; border: 1px solid black;">
-          <thead>
-            <tr><th>Date</th><th>Min</th><th>Max</th><th>Rain%</th><th>Details</th></tr>
-          </thead>
-          <tbody>
-            ${weatherRows}
-          </tbody>
-        </table>
-        <p style="font-size: 12px; color: #666; margin-top: 8px;">
-          <em>Weather data based on ${dataSource}. Check current forecast closer to travel dates for most accurate information.</em>
-        </p>
+        <div class="weather-table-container" style="overflow-x: auto; margin: 15px 0;">
+          <table class="weather-table" style="border-collapse: collapse; width: 100%; min-width: 300px; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden;">
+            <thead>
+              <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <th style="padding: 15px 10px; text-align: center; font-weight: 600; font-size: 14px; border-right: 1px solid rgba(255,255,255,0.2);">📅 Date</th>
+                <th style="padding: 15px 10px; text-align: center; font-weight: 600; font-size: 14px; border-right: 1px solid rgba(255,255,255,0.2);">🌡️ Min</th>
+                <th style="padding: 15px 10px; text-align: center; font-weight: 600; font-size: 14px; border-right: 1px solid rgba(255,255,255,0.2);">🌡️ Max</th>
+                <th style="padding: 15px 10px; text-align: center; font-weight: 600; font-size: 14px; border-right: 1px solid rgba(255,255,255,0.2);">🌧️ Rain</th>
+                <th style="padding: 15px 10px; text-align: center; font-weight: 600; font-size: 14px;">🔗 Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${weatherRows}
+            </tbody>
+          </table>
+        </div>
+        <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #4285f4;">
+          <p style="font-size: 13px; color: #5f6368; margin: 0; line-height: 1.4;">
+            <strong>📊 Data Source:</strong> Weather information based on ${dataSource}.
+            <br><span style="font-size: 12px;">💡 Tip: Check current forecast closer to travel dates for most accurate conditions.</span>
+          </p>
+        </div>
       `;
       
       // Find next h2 after Trip Overview and insert weather before it
@@ -427,19 +460,16 @@ async function injectWidgetsIntoSections(html, widgets, destination = '', startD
         node = node.nextElementSibling;
       }
       if (!hasTable) {
-        // Calculate budget amounts if budget data is provided
-        let flightCost = '€450';
-        let accommodationCost = '€500';
-        let foodCost = '€300';
-        let transportCost = '€150';
-        let activitiesCost = '€150';
-        let miscCost = '€100';
+        // Smart budget calculation based on destination and data provided
+        let flightCost, accommodationCost, foodCost, transportCost, activitiesCost, miscCost;
+        let currency = '€';
+        let currencySymbol = '€';
 
         // If we have budget data, use it for calculations
         if (budgetData && budgetData.budget && budgetData.budget > 0) {
           const totalBudget = budgetData.budget;
-          const currency = budgetData.currency || 'USD';
-          const currencySymbol = currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : currency;
+          currency = budgetData.currency || 'USD';
+          currencySymbol = currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : currency;
 
           // Budget distribution percentages
           flightCost = `${currencySymbol}${Math.round(totalBudget * 0.30)}`;
@@ -448,6 +478,33 @@ async function injectWidgetsIntoSections(html, widgets, destination = '', startD
           transportCost = `${currencySymbol}${Math.round(totalBudget * 0.10)}`;
           activitiesCost = `${currencySymbol}${Math.round(totalBudget * 0.08)}`;
           miscCost = `${currencySymbol}${Math.round(totalBudget * 0.07)}`;
+        } else {
+          // Smart defaults based on destination and trip details
+          const isTokyoTrip = destination.toLowerCase().includes('tokyo') || destination.toLowerCase().includes('japan');
+          const days = budgetData?.nDays || ((endDate && startDate) ? Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)) : 7);
+          const travelers = (budgetData?.adults || 1) + (budgetData?.children || 0);
+          const isBudgetStyle = budgetData?.level === 'budget' || budgetData?.style === 'budget';
+
+          if (isTokyoTrip) {
+            // Tokyo-specific realistic budget estimates (16 days, 2 travelers, budget style)
+            const dailyBudgetPerPerson = isBudgetStyle ? 80 : 120; // €80-120 per person per day
+            const totalTripBudget = dailyBudgetPerPerson * days * travelers;
+
+            flightCost = `€${Math.round(totalTripBudget * 0.25)}`; // 25% for flights
+            accommodationCost = `€${Math.round(totalTripBudget * 0.30)}`; // 30% for accommodation
+            foodCost = `€${Math.round(totalTripBudget * 0.25)}`; // 25% for food
+            transportCost = `€${Math.round(totalTripBudget * 0.10)}`; // 10% for transport
+            activitiesCost = `€${Math.round(totalTripBudget * 0.08)}`; // 8% for activities
+            miscCost = `€${Math.round(totalTripBudget * 0.07)}`; // 7% for misc
+          } else {
+            // Generic defaults for other destinations
+            flightCost = '€450';
+            accommodationCost = '€500';
+            foodCost = '€300';
+            transportCost = '€150';
+            activitiesCost = '€150';
+            miscCost = '€100';
+          }
         }
 
         const tbl = doc.createElement('div');
@@ -586,49 +643,9 @@ async function injectWidgetsIntoSections(html, widgets, destination = '', startD
       }
     }
 
-    // 6. Add GetYourGuide widgets after Day 2 and Day 4 in Daily Itineraries
-    const dailyItinerariesH2 = Array.from(doc.querySelectorAll('h2')).find(h => 
-      h.textContent.includes("Daily Itineraries") || h.textContent.includes("🎭")
-    );
-    if (dailyItinerariesH2) {
-      const gygWidget = widgets.find(w => w.category === "activities");
-      if (gygWidget) {
-        // Find Day headings (h3)
-        const dayHeadings = Array.from(doc.querySelectorAll('h3')).filter(h => 
-          h.textContent.match(/Day\s+\d+/i)
-        );
-        
-        // Insert after Day 2 with different variant to avoid conflicts
-        const day2 = dayHeadings.find(h => h.textContent.match(/Day\s+2/i));
-        if (day2 && widgetsInjected["Must-See"] > 0) { // Only if main widget was added
-          let nextElement = day2.nextElementSibling;
-          // Skip content until next day or end of section
-          while (nextElement && !nextElement.textContent?.match(/Day\s+\d+/i) && nextElement.tagName !== 'H2') {
-            if (nextElement.textContent?.match(/Day\s+3/i)) break;
-            nextElement = nextElement.nextElementSibling;
-          }
-
-          if (nextElement) {
-            const widgetDiv = doc.createElement('div');
-            widgetDiv.className = 'gyg-widget-inline';
-            widgetDiv.style.marginTop = '30px'; // Add spacing to prevent visual conflicts
-            // Use 'tours' variant to differentiate from main 'activities' widget
-            const scriptContent = typeof gygWidget.script === 'function' ? gygWidget.script(destination, 'tours') : gygWidget.script;
-
-            widgetDiv.innerHTML = `<div style="text-align: center; margin: 20px 0; color: #666;">
-              <p style="margin-bottom: 15px;">🎟️ Additional Tours & Activities</p>
-              ${scriptContent}
-            </div>`;
-
-            nextElement.parentNode.insertBefore(widgetDiv, nextElement);
-            widgetsInjected["Daily Itineraries"]++;
-          }
-        }
-        
-        // REMOVED: Insert after Day 4 widget to prevent connection conflicts
-        // Only keeping one widget in Daily Itineraries section to avoid GetYourGuide connection issues
-      }
-    }
+    // 6. DISABLED: Daily Itineraries widget injection to prevent massive duplication
+    // This was causing the 14+ duplicate widget issue seen on the live site
+    // Keeping only the Must-See Attractions widget for now
 
     // 7. Post-process links: enhance map URLs and enforce anchors and targets
     // Maps: enhance URLs with proper formatting and ensure target _blank
@@ -689,78 +706,29 @@ async function injectWidgetsIntoSections(html, widgets, destination = '', startD
       }
     });
 
-    // Build Google Map Preview with points extracted from map links
-    const points = new Set();
-    // Look for various map link formats and extract locations
-    doc.querySelectorAll('a[href*="maps.google"], a[href*="google.com/maps"], a[text*="Map"]').forEach(a => {
-      const href = a.getAttribute('href') || '';
-      const text = a.textContent || '';
-
-      // Extract from URL
-      if (href.includes('maps.google') || href.includes('google.com/maps')) {
-        try {
-          const u = new URL(href, 'https://maps.google.com');
-          const q = u.searchParams.get('q');
-          if (q) {
-            // Clean up the query - remove extra parameters and decode
-            const cleanQ = decodeURIComponent(q).replace(/\+/g, ' ');
-            points.add(cleanQ);
-          }
-        } catch {}
-      }
-
-      // Extract from link text like "Map: Location Name"
-      if (text.includes('Map:') || text.includes('Map ')) {
-        const location = text.replace(/Map:?\s*/i, '').trim();
-        if (location && location !== 'Map') {
-          points.add(location);
-        }
-      }
-    });
-
-    // Also add the destination itself
+    // Build Google Map Preview with cleaned destination-specific URL
     if (destination) {
-      points.add(destination);
-    }
-    const arr = Array.from(points);
-    if (arr.length > 0) {
       const mapH2 = doc.createElement('h2');
       mapH2.textContent = '🗺️ Google Map Preview';
-      const p = doc.createElement('p');
+
+      const mapContainer = doc.createElement('div');
+      mapContainer.style.cssText = 'background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;';
+
       const link = doc.createElement('a');
-      link.textContent = `Open Interactive Map`;
+      link.textContent = `🗺️ Open ${destination} Interactive Map`;
       link.setAttribute('target', '_blank');
+      link.setAttribute('href', `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destination + ' attractions')}`);
+      link.style.cssText = 'display: inline-block; background: #4285f4; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 500; margin: 10px 0;';
 
-      // Create a multi-point map URL that shows individual points instead of routes
-      if (arr.length === 1) {
-        link.setAttribute('href', `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(arr[0])}`);
-      } else {
-        // For multiple points, show all as individual markers by creating a search query
-        // This approach shows points as markers rather than creating a route
-        const searchQuery = arr.join(' OR ');
-        link.setAttribute('href', `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(searchQuery)}`);
+      const description = doc.createElement('p');
+      description.textContent = `Explore ${destination} with interactive maps, directions, and nearby attractions.`;
+      description.style.cssText = 'color: #666; margin: 10px 0 0 0; font-size: 14px;';
 
-        // Alternative: Use the place search for better point display
-        // You can also try this format for better results:
-        // const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(arr.join(', '))}`;
-        // link.setAttribute('href', mapsUrl);
-      }
-
-      p.appendChild(link);
-
-      // Add a list of all points
-      const ul = doc.createElement('ul');
-      ul.style.marginTop = '10px';
-      ul.style.fontSize = '14px';
-      arr.forEach(point => {
-        const li = doc.createElement('li');
-        li.textContent = point;
-        ul.appendChild(li);
-      });
+      mapContainer.appendChild(link);
+      mapContainer.appendChild(description);
 
       doc.body.appendChild(mapH2);
-      doc.body.appendChild(p);
-      doc.body.appendChild(ul);
+      doc.body.appendChild(mapContainer);
     }
 
     // Wrap day sections with better styling

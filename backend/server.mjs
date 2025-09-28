@@ -502,34 +502,14 @@ Use these visual insights to personalize recommendations throughout the itinerar
 ## 🎯 Your Journey at a Glance
 Write a warm, personal welcome that makes the traveler excited about their upcoming adventure. Start with something like "Experience the magic of..." or "Your ${nDays}-day journey to..." Focus on what makes this destination special and what awaits them. Avoid AI-sounding language and make it feel like a knowledgeable friend is describing their trip.
 
-## 💰 Budget Breakdown
-**Progressive Disclosure Format for Mobile-Friendly Experience:**
-
-**Budget Overview (Always Visible):**
-- Show total estimated range for trip: "€X,XXX-€X,XXX for ${adults + children} travelers, ${nDays} days"
-- Brief one-line summary of travel style and approach
-- **[See Detailed Breakdown ▼]** expandable button
-
-**Detailed Breakdown (Expandable Section):**
-- **Accommodation:** €XXX-€XXX (${nDays} nights, price per night range)
-- **Food & Dining:** €XXX-€XXX (daily estimates, local restaurant ranges)
-- **Activities:** €XXX-€XXX (attraction entries, tours, experiences)
-- **Transportation:** €XXX-€XXX (local transit, airport transfers)
-${destination.toLowerCase().includes('ski') || destination.toLowerCase().includes('bansko') || destination.toLowerCase().includes('alps') || professional_brief?.toLowerCase().includes('ski') ? '- **Equipment Rental:** €XXX-€XXX (ski gear, lessons, lift passes)' : ''}
-- **Brief Notes:** 2-3 bullet points explaining major cost factors
-
-**Mobile Optimization:** Use expandable format with summary-first approach
+## 💰 Budget Overview
+Provide a realistic cost breakdown for ${nDays} days in ${destination} for ${adults + children} travelers, ${level} style travel. Include accommodation (${nDays} nights), meals, activities, and transportation. Give ranges rather than exact figures and explain what's included in each category.${destination.toLowerCase().includes('ski') || destination.toLowerCase().includes('bansko') || destination.toLowerCase().includes('alps') || professional_brief?.toLowerCase().includes('ski') ? ' Include equipment rental costs for ski gear, lessons, and lift passes.' : ''}
 
 ## 🗺️ Getting Around
 [transportation options, tips, getting from/to airport]
 
-## 🏨 Accommodation
-**Context-Aware Hotel Integration:** Provide 3-4 well-known hotels in ${destination}:
-- Include property names, addresses, and estimated price ranges per night for ${level} style
-- **Each hotel should have:** [Book This Hotel] link to #hotel-widget
-- **Section footer:** [Compare All Hotels] [Read Reviews] links
-- **Mobile-optimized:** Clear action buttons with specific purposes
-- Focus on hotels appropriate for the trip purpose and group size
+## 🏨 Where to Stay
+Recommend 3-4 excellent hotels in ${destination} suitable for ${level} travelers. Include specific property names, addresses, estimated rates per night for ${nDays} nights, and what makes each special. Add [Book Now] links and brief descriptions of location advantages.
 
 ## 🎫 Must-See Attractions
 **Context-Aware Attraction Booking:** 8-12 main attractions with smart booking integration:
@@ -563,7 +543,7 @@ ${destination.toLowerCase().includes('ski') || destination.toLowerCase().include
     - **Hotels:** [Check Availability] + [Photos]
     - **General:** [Book Now] + [More Info]
   - **[Map](map:VENUE_NAME+${destination})** for each location
-  - **Category Tags:** Add activity type in format \`[RESTAURANT]\`, \`[MUSEUM]\`, \`[ACTIVITY]\`, \`[TRANSPORT]\`, \`[HOTEL]\` for button styling
+  - **Booking Options:** Include relevant booking links for each activity type
   - **Smart Booking Intelligence:** Add contextual booking advice where relevant:
     - **Peak Hours:** "⏰ Visit before 10 AM to avoid crowds"
     - **Holiday Warnings:** "🚨 Bastille Day (July 14): Expect huge crowds, book early"
@@ -574,29 +554,25 @@ ${destination.toLowerCase().includes('ski') || destination.toLowerCase().include
     - **Time Optimization:** "🍽️ Lunch 12-2 PM: Book ahead, prix fixe menus available"
 - **Mobile Optimization:** Clear visual separation between time blocks, easy scanning
 
-**MANDATORY GetYourGuide Widgets**: Insert exactly 2 GetYourGuide widgets between daily itineraries:
-- After Day 3-4: <div data-gyg-href="https://widget.getyourguide.com/default/activities.frame" data-gyg-locale-code="en-US" data-gyg-widget="activities" data-gyg-number-of-items="3" data-gyg-partner-id="PUHVJ53" data-gyg-q="${destination}"><span>Powered by <a target="_blank" rel="sponsored" href="https://www.getyourguide.com/">GetYourGuide</a></span></div>
-- After middle day: <div data-gyg-href="https://widget.getyourguide.com/default/activities.frame" data-gyg-locale-code="en-US" data-gyg-widget="activities" data-gyg-number-of-items="3" data-gyg-partner-id="PUHVJ53" data-gyg-q="${destination}"><span>Powered by <a target="_blank" rel="sponsored" href="https://www.getyourguide.com/">GetYourGuide</a></span></div>
 
 ## 🧳 Don't Forget List
-[Simple packing checklist as bullet points - items will be automatically converted to interactive checkboxes in post-processing. Include widget links like eSIM where relevant.]
+Essential items to pack for your ${destination} adventure.
 
 ## 🛡️ Travel Tips
-[local customs, money, safety, practical advice]
+Essential travel advice for ${destination}: local customs, currency, safety tips, and practical guidance.
 
 ## 📱 Useful Apps
-[helpful apps for the destination]
+Must-have mobile apps for navigating ${destination} and enhancing your travel experience.
 
 ## 🚨 Emergency Info
 **Essential Emergency Information for ${destination}:**
-- **General Emergency**: Research and provide the correct emergency number for ${destination}
-- **Police & Fire**: Provide specific emergency contact numbers
-- **Medical Emergency**: Include ambulance/hospital emergency numbers
-- **Tourist Police**: If available in the destination
-- **Embassy Contact**: Include relevant embassy/consulate contact for travelers from ${from || 'your country'}
-- **Local Healthcare**: Provide information about nearest hospitals or medical facilities
-- **Important Local Numbers**: Include any destination-specific emergency services
-**Note**: Research CURRENT and ACCURATE emergency numbers - do not use generic placeholders
+- **General Emergency**: Local emergency services number
+- **Police & Fire**: Emergency contact numbers
+- **Medical Emergency**: Ambulance and hospital emergency numbers
+- **Tourist Police**: Tourist assistance services (if available)
+- **Embassy Contact**: Embassy/consulate contact information
+- **Local Healthcare**: Nearest hospitals and medical facilities
+- **Important Local Numbers**: Destination-specific emergency services
 
 ## ⚠️ Disclaimer
 **General Travel Information:**
@@ -607,15 +583,6 @@ ${destination.toLowerCase().includes('ski') || destination.toLowerCase().include
 - Hotel rates vary by season and availability - check current pricing
 - Transportation schedules and costs may change
 - All recommendations based on general travel information - verify specifics for your travel dates
-
-Use specific places, real addresses, current prices. Weather will be added automatically. NO images.
-
-**FINAL REPORT REQUIREMENTS:**
-- Complete, definitive travel report - no draft language or suggestions for further customization
-- End with disclaimer section only - NO "CRITICAL FINAL NOTES" or internal notes visible to user
-- GetYourGuide links: [Book Tickets](https://www.getyourguide.com/s/?q=ATTRACTION&partner_id=PUHVJ53)
-- Map links: [Map](map:VENUE_NAME+${destination})
-- Professional, client-ready presentation
 
 Generate the complete travel itinerary now using all the sections listed above.`;
 
@@ -682,132 +649,9 @@ ${destination.toLowerCase().includes('ski') || destination.toLowerCase().include
 - **Slope Recommendations**: Detail beginner, intermediate, and advanced slopes available
 ` : ''}
 
-**GENERATION COMPLETION REQUIREMENT:**
-- **NEVER STOP MID-GENERATION** - Always complete the full itinerary through all sections
-- **NO USER INPUT REQUESTS** - Never ask user to choose options or provide additional information
-- **COMPLETE ALL SECTIONS** - Generate every section from Trip Overview through Emergency Info
-- **DEFINITIVE CONTENT** - Present all recommendations as final, researched suggestions
-- **ACCOMMODATION PRICES**: Research realistic market rates for ${destination} - avoid generic estimates
-- **HOTEL VERIFICATION**: Only recommend hotels that actually exist with correct names and locations
-- **SEASONAL PRICING**: Account for actual pricing variations during ${start} to ${end} period
-- **EMERGENCY INFORMATION**: Research and provide ACCURATE emergency numbers specific to ${destination} - never use generic placeholders like "ask hotel" or "check local"
-
-**DAILY ITINERARIES REQUIREMENT:**
-- Create detailed, specific daily itineraries for each day
-- DO NOT use generic "Open Exploration" or placeholder text
-- Each day should have specific activities, times, and locations
-- Include specific restaurant names and attraction names
-- Make it feel like a real, actionable itinerary
-- Include relevant booking widgets within each day's activities
-- **CRITICAL**: Each day must be unique and specific to the destination
-- **CRITICAL**: Include exact times, restaurant names, and attraction names
-- **CRITICAL**: Make it family-friendly if children are included
-- **CRITICAL**: Consider the starting location (${from || 'user\'s location'}) for flight/transport recommendations
-
-**WIDGET INTEGRATION REQUIREMENTS:**
-- DO NOT place widgets in the "Don't Forget List" section
-- Place relevant booking widgets within their appropriate sections
-- Add flight search widget in the "Getting Around" section
-- Add hotel booking widget in the "Accommodation" section
-- Add car rental widget in the "Transportation" section
-- Add eSIM widget in the "Useful Apps" or "Don't Forget List" section
-- Add airport transfers widget in the "Getting Around" section
-- Make widgets feel natural and integrated into the content flow
-
-**REPORT QUALITY REQUIREMENTS - ENHANCED:**
-
-**CONTENT RICHNESS REQUIREMENTS:**
-1. **Daily Itineraries**: Each day must include:
-   - **Exact times** (e.g., "9:00 AM", "2:30 PM", "7:45 PM")
-   - **Specific restaurant names** with exact locations (e.g., "Taverna Katina in Amoudi Bay")
-   - **Detailed activity descriptions** (e.g., "Visit the Archaeological Site of Akrotiri - ancient Minoan ruins preserved in volcanic ash")
-   - **Transportation details** (e.g., "Take the local bus from Fira to Oia, 20-minute ride")
-   - **Duration estimates** (e.g., "Wine tasting tour at Santo Wines - 2 hours")
-   - **Booking information** (e.g., "Book sunset dinner at Kastro Oia Restaurant - reservations recommended")
-   - **Alternative activities** for bad weather
-   - **Insider tips** (e.g., "Best time to visit Oia Castle for sunset is 1 hour before sunset")
-
-2. **Restaurant Section**: Include 8-10 specific restaurants with:
-   - **Exact names and locations** (e.g., "Pelekanos Restaurant - Fira, near the cable car")
-   - **Price ranges** (€€ for mid-range, €€€ for upscale)
-   - **Specialties** (e.g., "Famous for fresh seafood and traditional Greek dishes")
-   - **Best dishes to try** (e.g., "Must-try: Grilled octopus, Santorini salad, local wine")
-   - **Reservation tips** (e.g., "Book 2-3 days in advance for sunset views")
-   - **Opening hours** if relevant
-   - **Atmosphere description** (e.g., "Cozy family-run taverna with stunning caldera views")
-
-3. **Accommodation Section**: Include 3-4 specific hotels with VERIFIED pricing:
-   - **Exact names and locations** (e.g., "Villa Manos - Karterados, 10-minute walk to Fira")
-   - **CURRENT market-based prices per night** researched from booking platforms (not estimated!)
-   - **Room types** (e.g., "Double rooms with private balconies")
-   - **Amenities** (e.g., "Free Wi-Fi, pool, breakfast included, airport shuttle")
-   - **Distance to attractions** (e.g., "5-minute walk to Fira center, 15-minute drive to Oia")
-   - **Seasonal pricing context** for the travel dates provided (${start} to ${end})
-   - Only recommend hotels that actually exist - verify property names and locations
-   - Price ranges must reflect actual ${destination} accommodation costs for ${level} style travel
-
-4. **Must-See Attractions**: Include 10-12 specific attractions with:
-   - **Exact names and locations**
-   - **Entry fees** (e.g., "€12 for adults, €6 for children")
-   - **Opening hours** (e.g., "8:00 AM - 8:00 PM daily")
-   - **Best times to visit** (e.g., "Early morning to avoid crowds")
-   - **Booking requirements** (e.g., "Advance booking required for wine tours")
-   - **Duration estimates** (e.g., "Allow 2-3 hours for Akrotiri")
-   - **Insider tips** (e.g., "Visit Red Beach early morning for best photos")
-
-5. **Budget Breakdown**: Create detailed table with actual costs adding up to ${budget} ${currency}:
-   - **Flights**: Show realistic flight costs (${Math.round(budget * 0.3)} ${currency})
-   - **Accommodation**: Calculate for ${nDays} nights for ${totalTravelers} travelers
-   - **Food**: Daily meal budget breakdown (${Math.round(budget / nDays / totalTravelers)} per person per day)
-   - **Activities**: Entry fees and tours cost breakdown
-   - **Transportation**: Local transport costs
-   - **Create clickable HTML table with checkboxes linking to booking widgets**
-
-6. **Travel Tips**: Include:
-   - **Local customs and etiquette** (e.g., "Greet with 'Kalimera' in morning, 'Kalispera' in evening")
-   - **Safety tips** specific to Santorini (e.g., "Be careful on cliff edges, especially at sunset")
-   - **Best times for activities** (e.g., "Visit Oia early morning or late afternoon to avoid crowds")
-   - **Money-saving tips** (e.g., "Eat lunch at local tavernas, dinner at upscale restaurants")
-   - **Cultural insights** (e.g., "Greeks value family time - many shops close 2-4 PM")
-   - **Weather considerations** (e.g., "September is perfect - warm but not crowded")
 
 
-**CRITICAL BOOKING LINKS - USE ONLY THESE:**
-- **Hotels**: Use [Book Now](#hotel-widget) or [Reserve](#hotel-widget) - NEVER use booking.com or external sites
-- **Flights**: Use [Find Flights](#flight-widget) or [Book Flights](#flight-widget) - NEVER use external flight sites
-- **Activities**: Use GetYourGuide links with partner ID PUHVJ53: https://www.getyourguide.com/s/?q=${destination}&partner_id=PUHVJ53
-- **Reviews**: Leave empty for now - NO TripAdvisor links until provided
-- **Maps**: Use [Map](map:location) format for interactive maps - add maps for each major location
-- **Checkboxes**: Use <input type="checkbox" id="unique-id"> for all checklists to make them clickable
-- **Professional Language**: Never use the word "widget" in the final report - use "Book Now", "Reserve", "Find" instead
-
-**WIDGET INTEGRATION REQUIREMENTS:**
-DO NOT place widgets in the "Don't Forget List" section
-Widgets should be placed in appropriate sections:
-- Flight widget → "Getting Around" section
-- Hotel widget → "Accommodation" section
-- Car rental widget → "Getting Around" section
-- eSIM widget → "Useful Apps" section
-- GetYourGuide widget → "Must-See Attractions" section
-
-**CRITICAL - NO GENERIC CONTENT:**
-- **ABSOLUTELY NO "Open Exploration" days** - this is forbidden
-- **ABSOLUTELY NO generic placeholders** like "Neighborhood warm-up walk" or "Local market + museum"
-- **ABSOLUTELY NO duplicate content** - each day must be unique
-- **ABSOLUTELY NO generic activities** - every activity must be specific to ${destination}
-- **ABSOLUTELY NO "warm-up walk" or "get oriented"** - these are generic placeholders
-- **ABSOLUTELY NO "Local market + museum"** - these are generic placeholders
-- **ABSOLUTELY NO "Sunset viewpoint & dinner"** - these are generic placeholders
-- **ABSOLUTELY NO repetitive activities** - each activity must be completely unique and specific
-
-**MANDATORY - SPECIFIC CONTENT ONLY:**
-- **Every day must have specific ${destination} activities** with exact names and locations
-- **Every restaurant must be named** like "Taverna Katina", "Pelekanos Restaurant", "Kastro Oia Restaurant"
-- **Every attraction must be specific** like "Red Beach", "Fira Caldera", "Museum of Prehistoric Thera"
-- **Every time must be exact** like "9:00 AM", "2:30 PM", "7:45 PM"
-- **Every location must be specific** like "Amoudi Bay", "Fira", "Oia", "Karterados"
-
-Create a RICH, DETAILED, and PROFESSIONAL report that travelers can actually use to plan their trip. Make it comprehensive, actionable, and visually appealing.
+Create a comprehensive and professional travel guide that provides actionable recommendations for an amazing ${destination} experience.
 
 Create the most amazing, detailed, and useful trip plan possible!`;
 
