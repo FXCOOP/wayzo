@@ -829,10 +829,11 @@ Create the most amazing, detailed, and useful trip plan possible!`;
   console.log('✅ OpenAI client ready - proceeding with API call');
 
   // Model selection and retry logic with image support
-  const preferredModel = process.env.WAYZO_MODEL || 'gpt-5-nano-2025-08-07';
+  // TEMPORARILY DISABLE NANO MODEL - returning empty responses
+  const preferredModel = process.env.WAYZO_MODEL || 'gpt-4o-mini-2024-07-18';
   const fallbackModel = 'gpt-4o-mini-2024-07-18';
   const visionModel = 'gpt-4o-2024-08-06'; // Vision-capable model for images
-  const isNano = preferredModel.includes('gpt-5-nano');
+  const isNano = false; // DISABLED - nano model returning empty responses
   const hasImages = uploadedFiles && uploadedFiles.some(file => file.type && file.type.startsWith('image/'));
   const maxTokens = mode === 'full' ? (isNano ? 128000 : 16384) : 500;
 
