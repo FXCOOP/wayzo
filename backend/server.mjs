@@ -406,8 +406,8 @@ function localPlanMarkdown(input) {
 **Budget:** ${budget} ${currency} (${pppd}/day/person)
 **Season:** ${seasonFromDate(start)}${smartBookingContext}
 ---
-## 🎯 Trip Overview
-- Destination overview and key highlights tailored to your inputs.
+## 🎯 Your Journey at a Glance
+Experience the magic of ${destination} over ${nDays} unforgettable ${nDays === 1 ? 'day' : 'days'}. This carefully curated ${level} adventure is designed for ${adults + children} traveler${adults + children === 1 ? '' : 's'}, blending must-see highlights with authentic local experiences. From ${seasonFromDate(start)} weather to hidden gems, every detail has been thoughtfully planned for your perfect getaway.
 ---
 ## 💰 Budget Breakdown (rough)
 - Stay: **${b.stay.total}** (~${b.stay.perDay}/day)
@@ -499,8 +499,8 @@ Use these visual insights to personalize recommendations throughout the itinerar
 
 # ${destination} — ${start} → ${end}
 
-## 🎯 Trip Overview
-[Brief, compelling 2-3 sentence summary highlighting destination essence, travel dates, and key experiences. Focus on what makes this trip special - avoid generic descriptions.]
+## 🎯 Your Journey at a Glance
+Write a warm, personal welcome that makes the traveler excited about their upcoming adventure. Start with something like "Experience the magic of..." or "Your ${nDays}-day journey to..." Focus on what makes this destination special and what awaits them. Avoid AI-sounding language and make it feel like a knowledgeable friend is describing their trip.
 
 ## 💰 Budget Breakdown
 **Progressive Disclosure Format for Mobile-Friendly Experience:**

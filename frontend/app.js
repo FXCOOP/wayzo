@@ -625,7 +625,7 @@
 
     return `
       <div class="trip-overview">
-        <h1>🚀 ${destination} Trip Plan</h1>
+        <h1>Your Personalized ${destination} Travel Guide</h1>
         <div class="overview-grid">
           <div class="overview-item">
             <strong>📅 Travel Dates</strong>
@@ -795,8 +795,8 @@
         const tripOverview = createTripOverview(data, data.destination);
         previewEl.innerHTML = `
           <div class="test-user-notice">
-            <h3>🎉 FREE ACCESS - Full Plan Available!</h3>
-            <p>Enjoy your complete travel itinerary with all features unlocked.</p>
+            <h3>✨ Your Complete Travel Guide is Ready!</h3>
+            <p>Curated by Wayzo Travel Intelligence - Everything you need for an amazing trip.</p>
           </div>
           ${tripOverview}
           <main class="content trip-report">
@@ -1038,7 +1038,7 @@
               // Show the full plan content with professional overview
               const basicOverview = `
                 <div class="trip-overview">
-                  <h1>🚀 ${destination} Trip Plan</h1>
+                  <h1>Your Personalized ${destination} Travel Guide</h1>
                   <p>Payment completed successfully!</p>
                 </div>
               `;
