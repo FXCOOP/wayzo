@@ -563,7 +563,7 @@ ${destination.toLowerCase().includes('ski') || destination.toLowerCase().include
     - **Hotels:** [Check Availability] + [Photos]
     - **General:** [Book Now] + [More Info]
   - **[Map](map:VENUE_NAME+${destination})** for each location
-  - **Category Tags:** Add activity type in format `[RESTAURANT]`, `[MUSEUM]`, `[ACTIVITY]`, `[TRANSPORT]`, `[HOTEL]` for button styling
+  - **Category Tags:** Add activity type in format \`[RESTAURANT]\`, \`[MUSEUM]\`, \`[ACTIVITY]\`, \`[TRANSPORT]\`, \`[HOTEL]\` for button styling
   - **Smart Booking Intelligence:** Add contextual booking advice where relevant:
     - **Peak Hours:** "⏰ Visit before 10 AM to avoid crowds"
     - **Holiday Warnings:** "🚨 Bastille Day (July 14): Expect huge crowds, book early"
