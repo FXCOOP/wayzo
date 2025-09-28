@@ -504,8 +504,22 @@ Use these visual insights to personalize recommendations throughout the itinerar
 ## 🎯 Your Journey at a Glance
 Write a warm, personal welcome that makes the traveler excited about their upcoming adventure. Start with something like "Experience the magic of..." or "Your ${nDays}-day journey to..." Focus on what makes this destination special and what awaits them. Avoid AI-sounding language and make it feel like a knowledgeable friend is describing their trip.
 
-## 💰 Budget Overview
-Provide a realistic cost breakdown for ${nDays} days in ${destination} for ${adults + children} travelers, ${level} style travel. Include accommodation (${nDays} nights), meals, activities, and transportation. Give ranges rather than exact figures and explain what's included in each category.${destination.toLowerCase().includes('ski') || destination.toLowerCase().includes('bansko') || destination.toLowerCase().includes('alps') || professional_brief?.toLowerCase().includes('ski') ? ' Include equipment rental costs for ski gear, lessons, and lift passes.' : ''}
+## 💰 Budget Breakdown
+
+Create a beautiful, realistic budget breakdown for ${destination}. Research actual ${destination} prices for ${level} travel style. Format as:
+
+**💰 Total Budget Estimate: €X,XXX - €X,XXX**
+*For ${adults + children} travelers • ${nDays} days*
+
+| Category | Amount Range | Notes |
+|----------|-------------|--------|
+| 🏨 **Accommodation** | €X - €X | (${nDays} nights, €X-X per night) |
+| 🍽️ **Food & Dining** | €X - €X | (€X-X per person/day, local restaurants) |
+| 🎫 **Activities** | €X - €X | (Museums, tours, attractions) |
+| 🚌 **Transportation** | €X - €X | (Local transit, airport transfers) |
+| 🛍️ **Miscellaneous** | €X - €X | (Souvenirs, tips, emergency fund) |
+
+Use realistic ${destination} market prices for ${level} style travel. Make it clean, professional, and budget-appropriate.${destination.toLowerCase().includes('ski') || destination.toLowerCase().includes('bansko') || destination.toLowerCase().includes('alps') || professional_brief?.toLowerCase().includes('ski') ? ' Include equipment rental costs for ski gear, lessons, and lift passes.' : ''}
 
 ## 🗺️ Getting Around
 [transportation options, tips, getting from/to airport]
