@@ -812,12 +812,21 @@ Create a RICH, DETAILED, and PROFESSIONAL report that travelers can actually use
 Create the most amazing, detailed, and useful trip plan possible!`;
 
   const client = getOpenAIClient();
+  console.log('🔍 OpenAI Client Debug:');
+  console.log('- API Key exists:', !!process.env.OPENAI_API_KEY);
+  console.log('- API Key length:', process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.length : 0);
+  console.log('- Client initialized:', !!client);
+  console.log('- Preferred model:', process.env.WAYZO_MODEL || 'gpt-5-nano-2025-08-07');
+
   if (!client) {
-    console.warn('OpenAI API key not set, using local fallback');
+    console.warn('❌ OpenAI client is null - using local fallback');
+    console.warn('❌ This means API calls will NOT be made');
     let md = localPlanMarkdown(payload);
     md = ensureDaySections(md, nDays, start);
     return md;
   }
+
+  console.log('✅ OpenAI client ready - proceeding with API call');
 
   // Model selection and retry logic with image support
   const preferredModel = process.env.WAYZO_MODEL || 'gpt-5-nano-2025-08-07';
@@ -867,8 +876,10 @@ Create the most amazing, detailed, and useful trip plan possible!`;
 
   for (let attempt = 0; attempt < 8; attempt++) {
     try {
+      console.log(`🔄 API Attempt ${attempt + 1}/8 starting...`);
+
       if (hasImages) {
-        // Use vision model for image processing
+        console.log(`📸 Using vision model: ${visionModel}`);
         const messages = prepareMessages();
         const resp = await client.chat.completions.create({
           model: visionModel,
@@ -877,16 +888,18 @@ Create the most amazing, detailed, and useful trip plan possible!`;
           stream: false,
         });
         respText = resp.choices?.[0]?.message?.content || '';
-        console.log(`API call: model=${visionModel}, max_tokens=${maxTokens}, images=${uploadedFiles.filter(f => f.type?.startsWith('image/')).length}`);
+        console.log(`✅ API call success: model=${visionModel}, max_tokens=${maxTokens}, images=${uploadedFiles.filter(f => f.type?.startsWith('image/')).length}`);
       } else if (isNano) {
+        console.log(`🔬 Using nano model: ${preferredModel}`);
         const resp = await client.responses.create({
           model: preferredModel,
           input: `${sys}\n\n${user}`,
           max_output_tokens: maxTokens,
         });
         respText = resp.output_text || resp?.output?.[0]?.content?.[0]?.text || '';
-        console.log(`API call: model=${preferredModel}, max_tokens=${maxTokens}`);
+        console.log(`✅ API call success: model=${preferredModel}, max_tokens=${maxTokens}`);
       } else {
+        console.log(`🤖 Using fallback model: ${fallbackModel}`);
         const resp = await client.chat.completions.create({
           model: fallbackModel,
           max_tokens: maxTokens,
@@ -894,11 +907,12 @@ Create the most amazing, detailed, and useful trip plan possible!`;
           stream: false,
         });
         respText = resp.choices?.[0]?.message?.content || '';
-        console.log(`API call: model=${fallbackModel}, max_tokens=${maxTokens}`);
+        console.log(`✅ API call success: model=${fallbackModel}, max_tokens=${maxTokens}`);
       }
       if (respText) break;
       throw new Error('Empty response text');
     } catch (retryError) {
+      console.error(`❌ API Attempt ${attempt + 1} failed:`, retryError.message);
       const delayMs = attempt === 0 ? 0 : Math.pow(2, attempt - 1) * 1000;
       console.warn(`AI attempt ${attempt + 1} failed: ${retryError.message}. Retrying in ${delayMs}ms`);
       if (attempt === 3 && isNano) {
