@@ -519,8 +519,7 @@ Recommend 3-4 excellent hotels in ${destination} suitable for ${level} travelers
 - **Time-sensitive:** [Check Availability] for popular attractions that book up
 - **Section context:** Only show relevant booking options per attraction type
 
-**GetYourGuide Attractions Widget**: After listing 6-8 attractions, insert this widget:
-<div data-gyg-href="https://widget.getyourguide.com/default/activities.frame" data-gyg-locale-code="en-US" data-gyg-widget="activities" data-gyg-number-of-items="3" data-gyg-partner-id="PUHVJ53" data-gyg-q="${destination} attractions"><span>Powered by <a target="_blank" rel="sponsored" href="https://www.getyourguide.com/">GetYourGuide</a></span></div>
+**Attraction Booking**: Use booking links for activities where relevant.
 
 ## 🍽️ Dining Guide
 [6-10 restaurants by area with price ranges and specialties]
@@ -1068,23 +1067,39 @@ app.post('/api/plan', async (req, res) => {
       finalHTML = html; // Fallback to HTML without widgets
     }
     
-    // Remove any duplicate content that might have been generated
-    const cleanedHTML = finalHTML.replace(
-      /(Day \d+ — Open Exploration.*?Evening: Sunset viewpoint & dinner\. Map · Book\s*)+/gs,
-      ''
-    ).replace(
-      /(Open Exploration.*?Map · Book\s*)+/gs,
-      ''
-    ).replace(
-      /(Day \d+ — Open Exploration.*?Book\s*)+/gs,
-      ''
-    ).replace(
-      /(<h3>Day \d+ — Open Exploration.*?<\/ul>\s*)+/gs,
-      ''
-    ).replace(
-      /(### Day \d+ — Open Exploration.*?Book<\/a><\/li>\s*<\/ul>\s*)+/gs,
-      ''
-    );
+    // Remove any duplicate content and widget duplications that might have been generated
+    const cleanedHTML = finalHTML
+      // Remove the specific "Activities Evening: Sunset viewpoint & dinner" duplications
+      .replace(
+        /(Activities\s*Evening:\s*Sunset viewpoint & dinner\.\s*Map\s*·\s*Book Hotel\s*)+/gs,
+        ''
+      )
+      // Remove GetYourGuide widget duplications
+      .replace(
+        /(<div[^>]*data-gyg-[^>]*>.*?<\/div>\s*)+/gs,
+        (match) => {
+          // Keep only the first GetYourGuide widget, remove duplicates
+          const widgets = match.match(/<div[^>]*data-gyg-[^>]*>.*?<\/div>/g);
+          return widgets ? widgets[0] : '';
+        }
+      )
+      // Original cleanup patterns
+      .replace(
+        /(Day \d+ — Open Exploration.*?Evening: Sunset viewpoint & dinner\. Map · Book\s*)+/gs,
+        ''
+      ).replace(
+        /(Open Exploration.*?Map · Book\s*)+/gs,
+        ''
+      ).replace(
+        /(Day \d+ — Open Exploration.*?Book\s*)+/gs,
+        ''
+      ).replace(
+        /(<h3>Day \d+ — Open Exploration.*?<\/ul>\s*)+/gs,
+        ''
+      ).replace(
+        /(### Day \d+ — Open Exploration.*?Book<\/a><\/li>\s*<\/ul>\s*)+/gs,
+        ''
+      );
     
     const aff = affiliatesFor(payload.destination);
     
