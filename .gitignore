@@ -2,3 +2,4 @@ backend/.env
 **/node_modules
 *.sqlite
 *.sqlite-*
+# Deploy trigger for f0bbb2e - Tue, Sep 30, 2025  4:24:39 PM
