@@ -42,10 +42,10 @@
     fromField.placeholder = 'Detecting your location...';
 
     try {
-      console.log('Starting location detection with ipapi.co...');
+      console.log('Starting location detection with ipinfo.io...');
 
-      // Try ipapi.co first
-      let response = await fetch('https://ipapi.co/json/', {
+      // Try ipinfo.io without token first (limited free tier but CORS-friendly)
+      let response = await fetch('https://ipinfo.io/json', {
         method: 'GET',
         headers: {
           'Accept': 'application/json'
@@ -57,56 +57,56 @@
       }
 
       let data = await response.json();
-      console.log('Location data from ipapi.co:', data);
+      console.log('Location data from ipinfo.io:', data);
 
-      // Check for valid response
+      // Check for valid response (ipinfo.io format)
       if (data.error) {
-        throw new Error(data.error);
+        throw new Error(data.error.message || 'Location API failed');
       }
 
-      if (data.city && data.country_name) {
-        const location = `${data.city}, ${data.country_name}`;
+      if (data.city && data.country) {
+        const location = `${data.city}, ${data.country}`;
         fromField.value = location;
         fromField.placeholder = location;
         console.log('✅ Location detected successfully:', location);
         return;
-      } else if (data.country_name) {
-        fromField.value = data.country_name;
-        fromField.placeholder = data.country_name;
-        console.log('✅ Country detected:', data.country_name);
+      } else if (data.country) {
+        fromField.value = data.country;
+        fromField.placeholder = data.country;
+        console.log('✅ Country detected:', data.country);
         return;
       }
 
       throw new Error('Incomplete location data');
 
     } catch (error) {
-      console.log('First service failed, trying backup:', error.message);
+      console.log('Primary service failed, trying backup:', error.message);
 
-      // Fallback to ipify + ip-api.com
+      // Fallback to freeipapi.com (fully CORS-friendly, no key needed)
       try {
-        console.log('Trying backup location detection...');
+        console.log('Trying backup location detection with freeipapi.com...');
 
-        // Get IP first
-        const ipResponse = await fetch('https://api.ipify.org?format=json');
-        const ipData = await ipResponse.json();
-        console.log('IP detected:', ipData.ip);
+        const backupResponse = await fetch('https://freeipapi.com/api/json/', {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
 
-        // Get location from IP
-        const locationResponse = await fetch(`https://ipapi.co/${ipData.ip}/json/`);
-        const locationData = await locationResponse.json();
-        console.log('Backup location data:', locationData);
+        if (backupResponse.ok) {
+          const backupData = await backupResponse.json();
+          console.log('Backup location data:', backupData);
 
-        if (locationData && !locationData.error) {
-          if (locationData.city && locationData.country_name) {
-            const location = `${locationData.city}, ${locationData.country_name}`;
+          if (backupData.cityName && backupData.countryName) {
+            const location = `${backupData.cityName}, ${backupData.countryName}`;
             fromField.value = location;
             fromField.placeholder = location;
             console.log('✅ Backup location detected:', location);
             return;
-          } else if (locationData.country_name) {
-            fromField.value = locationData.country_name;
-            fromField.placeholder = locationData.country_name;
-            console.log('✅ Backup country detected:', locationData.country_name);
+          } else if (backupData.countryName) {
+            fromField.value = backupData.countryName;
+            fromField.placeholder = backupData.countryName;
+            console.log('✅ Backup country detected:', backupData.countryName);
             return;
           }
         }
@@ -114,18 +114,72 @@
         throw new Error('Backup service also failed');
 
       } catch (backupError) {
-        console.error('❌ All location detection services failed:', backupError);
-        fromField.placeholder = 'Enter your departure city...';
-        fromField.value = ''; // Ensure field is completely empty on failure
+        console.log('Backup failed, trying browser geolocation:', backupError.message);
 
-        // Show a subtle notification to user
-        setTimeout(() => {
-          console.log('Location detection not available, please enter manually');
-          // Clear any previous values that might have been set
-          if (fromField.value.includes('Tel Aviv') || fromField.value.includes('undefined')) {
-            fromField.value = '';
+        // Final fallback to browser geolocation API
+        try {
+          if ('geolocation' in navigator) {
+            console.log('Trying browser geolocation API...');
+
+            const position = await new Promise((resolve, reject) => {
+              navigator.geolocation.getCurrentPosition(resolve, reject, {
+                timeout: 10000,
+                enableHighAccuracy: false
+              });
+            });
+
+            const { latitude, longitude } = position.coords;
+            console.log('Browser location detected:', latitude, longitude);
+
+            // Use reverse geocoding with OpenStreetMap Nominatim (CORS-friendly)
+            const geoResponse = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`, {
+              method: 'GET',
+              headers: {
+                'Accept': 'application/json',
+                'User-Agent': 'Wayzo Travel Planner'
+              }
+            });
+
+            if (geoResponse.ok) {
+              const geoData = await geoResponse.json();
+              console.log('Reverse geocoding data:', geoData);
+
+              if (geoData.address) {
+                const city = geoData.address.city || geoData.address.town || geoData.address.village;
+                const country = geoData.address.country;
+
+                if (city && country) {
+                  const location = `${city}, ${country}`;
+                  fromField.value = location;
+                  fromField.placeholder = location;
+                  console.log('✅ Geolocation detected:', location);
+                  return;
+                } else if (country) {
+                  fromField.value = country;
+                  fromField.placeholder = country;
+                  console.log('✅ Geolocation country detected:', country);
+                  return;
+                }
+              }
+            }
           }
-        }, 1000);
+
+          throw new Error('Browser geolocation unavailable');
+
+        } catch (geoError) {
+          console.error('❌ All location detection methods failed:', geoError);
+          fromField.placeholder = 'Enter your departure city...';
+          fromField.value = ''; // Ensure field is completely empty on failure
+
+          // Show a subtle notification to user
+          setTimeout(() => {
+            console.log('Location detection not available, please enter manually');
+            // Clear any previous values that might have been set
+            if (fromField.value.includes('Tel Aviv') || fromField.value.includes('undefined')) {
+              fromField.value = '';
+            }
+          }, 1000);
+        }
       }
     }
   };
