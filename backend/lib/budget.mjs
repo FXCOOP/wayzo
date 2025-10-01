@@ -7,10 +7,10 @@ export function normalizeBudget(value = '', _currency = 'USD') {
     return parsed;
   }
 
-  // If no budget provided, return 0 to let AI provide realistic budget guidance
-  // User may simply need help estimating costs - not assuming they have no money
-  console.log('💡 No budget specified, will provide realistic cost estimates');
-  return 0;
+  // If no budget provided, return a reasonable default instead of 0
+  // This prevents "0 USD" from appearing in budget calculations
+  console.log('💡 No budget specified, using realistic default estimate');
+  return 1500; // Default $1500 budget for mid-range travel
 }
 export function computeBudget(total = 0, days = 1, style = 'mid', travelers = 2, destination = '', tripPurpose = 'leisure') {
   let t = Number(total) || 0;

@@ -344,11 +344,16 @@ async function injectWidgetsIntoSections(html, widgets, destination = '', startD
         const isEven = index % 2 === 0;
         const bgColor = isEven ? '#ffffff' : '#f8f9fa';
 
-        // Safety checks for undefined values
-        const minTemp = day.minTemp !== undefined ? day.minTemp : 15;
-        const maxTemp = day.maxTemp !== undefined ? day.maxTemp : 22;
-        const rainChance = day.rainChance !== undefined ? day.rainChance : 35;
-        const date = day.date || 'N/A';
+        // Enhanced safety checks for undefined values with better fallbacks
+        let minTemp = (day && day.minTemp !== undefined && day.minTemp !== null) ? Number(day.minTemp) : 15;
+        let maxTemp = (day && day.maxTemp !== undefined && day.maxTemp !== null) ? Number(day.maxTemp) : 22;
+        let rainChance = (day && day.rainChance !== undefined && day.rainChance !== null) ? Number(day.rainChance) : 35;
+        const date = (day && day.date && typeof day.date === 'string') ? day.date.trim() : 'N/A';
+
+        // Additional safety checks for NaN values
+        if (isNaN(minTemp)) minTemp = 15;
+        if (isNaN(maxTemp)) maxTemp = 22;
+        if (isNaN(rainChance)) rainChance = 35;
 
         const rainColor = rainChance > 70 ? '#dc3545' : rainChance > 40 ? '#fd7e14' : '#28a745';
 

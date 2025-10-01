@@ -116,11 +116,15 @@
       } catch (backupError) {
         console.error('❌ All location detection services failed:', backupError);
         fromField.placeholder = 'Enter your departure city...';
-        fromField.value = '';
+        fromField.value = ''; // Ensure field is completely empty on failure
 
         // Show a subtle notification to user
         setTimeout(() => {
           console.log('Location detection not available, please enter manually');
+          // Clear any previous values that might have been set
+          if (fromField.value.includes('Tel Aviv') || fromField.value.includes('undefined')) {
+            fromField.value = '';
+          }
         }, 1000);
       }
     }
