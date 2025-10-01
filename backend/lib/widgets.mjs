@@ -451,8 +451,9 @@ async function injectWidgetsIntoSections(html, widgets, destination = '', startD
         }
       });
     }
-    // If budget section lacks a table with 6 checkboxes, inject a budget table with actual calculations
-    if (budgetH2) {
+    // DISABLED: Budget table generation now handled by AI prompt system only
+    // This prevents duplication of budget tables that was causing formatting issues
+    if (false && budgetH2) {
       let hasTable = false;
       let node = budgetH2.nextElementSibling;
       while (node && node.tagName !== 'H2') {

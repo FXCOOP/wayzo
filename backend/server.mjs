@@ -222,7 +222,7 @@ app.get('/debug/ping', (_req, res) => {
     api: {
       openai_configured: !!process.env.OPENAI_API_KEY,
       openai_key_length: process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.length : 0,
-      wayzo_model: process.env.WAYZO_MODEL || 'gpt-5-nano-2025-08-07',
+      wayzo_model: process.env.WAYZO_MODEL || 'gpt-4o-mini-2024-07-18',
       client_initialized: !!getOpenAIClient()
     },
     timestamp: new Date().toISOString()
@@ -683,7 +683,7 @@ Create the most amazing, detailed, and useful trip plan possible!`;
   console.log('- API Key exists:', !!process.env.OPENAI_API_KEY);
   console.log('- API Key length:', process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.length : 0);
   console.log('- Client initialized:', !!client);
-  console.log('- Preferred model:', process.env.WAYZO_MODEL || 'gpt-5-nano-2025-08-07');
+  console.log('- Preferred model:', process.env.WAYZO_MODEL || 'gpt-4o-mini-2024-07-18');
 
   if (!client) {
     console.warn('❌ OpenAI client is null - using local fallback');
@@ -696,7 +696,7 @@ Create the most amazing, detailed, and useful trip plan possible!`;
   console.log('✅ OpenAI client ready - proceeding with API call');
 
   // Model selection and retry logic with image support
-  const preferredModel = process.env.WAYZO_MODEL || 'gpt-5-nano-2025-08-07';
+  const preferredModel = process.env.WAYZO_MODEL || 'gpt-4o-mini-2024-07-18';
   const fallbackModel = 'gpt-4o-mini-2024-07-18';
   const visionModel = 'gpt-4o-2024-08-06'; // Vision-capable model for images
   const isNano = preferredModel.includes('gpt-5-nano');
@@ -758,13 +758,16 @@ Create the most amazing, detailed, and useful trip plan possible!`;
         console.log(`✅ API call success: model=${visionModel}, max_tokens=${maxTokens}, images=${uploadedFiles.filter(f => f.type?.startsWith('image/')).length}`);
       } else if (isNano) {
         console.log(`🔬 Using nano model: ${preferredModel}`);
-        const resp = await client.responses.create({
+        const resp = await client.chat.completions.create({
           model: preferredModel,
-          input: `${sys}\n\n${user}`,
-          max_output_tokens: maxTokens,
+          messages: [
+            { role: 'system', content: sys },
+            { role: 'user', content: user }
+          ],
+          max_tokens: maxTokens,
         });
         console.log('🔍 RAW NANO RESPONSE:', JSON.stringify(resp, null, 2));
-        respText = resp.output_text || resp?.output?.[0]?.content?.[0]?.text || resp?.content || '';
+        respText = resp.choices?.[0]?.message?.content || '';
         console.log('🔍 EXTRACTED TEXT:', respText ? respText.substring(0, 100) + '...' : 'EMPTY');
         console.log(`✅ API call success: model=${preferredModel}, max_tokens=${maxTokens}`);
       } else {
@@ -1740,7 +1743,7 @@ app.get('/api/debug', (req, res) => {
     hasOpenAIKey: !!process.env.OPENAI_API_KEY,
     keyLength: process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.length : 0,
     clientInitialized: !!client,
-    preferredModel: process.env.WAYZO_MODEL || 'gpt-5-nano-2025-08-07',
+    preferredModel: process.env.WAYZO_MODEL || 'gpt-4o-mini-2024-07-18',
     nodeEnv: process.env.NODE_ENV,
     timestamp: new Date().toISOString()
   });

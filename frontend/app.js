@@ -92,21 +92,21 @@
         console.log('IP detected:', ipData.ip);
 
         // Get location from IP
-        const locationResponse = await fetch(`http://ip-api.com/json/${ipData.ip}`);
+        const locationResponse = await fetch(`https://ipapi.co/${ipData.ip}/json/`);
         const locationData = await locationResponse.json();
         console.log('Backup location data:', locationData);
 
-        if (locationData.status === 'success') {
-          if (locationData.city && locationData.country) {
-            const location = `${locationData.city}, ${locationData.country}`;
+        if (locationData && !locationData.error) {
+          if (locationData.city && locationData.country_name) {
+            const location = `${locationData.city}, ${locationData.country_name}`;
             fromField.value = location;
             fromField.placeholder = location;
             console.log('✅ Backup location detected:', location);
             return;
-          } else if (locationData.country) {
-            fromField.value = locationData.country;
-            fromField.placeholder = locationData.country;
-            console.log('✅ Backup country detected:', locationData.country);
+          } else if (locationData.country_name) {
+            fromField.value = locationData.country_name;
+            fromField.placeholder = locationData.country_name;
+            console.log('✅ Backup country detected:', locationData.country_name);
             return;
           }
         }
