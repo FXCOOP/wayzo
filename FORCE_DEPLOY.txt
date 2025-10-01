@@ -1,0 +1,3 @@
+Force deployment trigger - Location Detection Fix
+Timestamp: 2025-10-01 13:30
+Fix: Replaced CORS-blocked APIs with working alternatives
