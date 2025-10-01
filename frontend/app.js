@@ -4,17 +4,32 @@
   const $ = (sel) => document.querySelector(sel);
   const $$ = (sel) => document.querySelectorAll(sel);
 
-  // Form elements
-  const form = $('#tripForm');
-  const previewEl = $('#preview');
-  const loadingEl = $('#loading');
-  const pdfBtn = $('#pdfBtn');
-  const icsBtn = $('#icsBtn');
-  const fullPlanBtn = $('#fullPlanBtn');
-  const saveBtn = $('#saveBtn');
-  const loginBtn = $('#loginBtn');
+  // Form elements (declare once DOM is ready)
+  let form, previewEl, loadingEl, pdfBtn, icsBtn, fullPlanBtn, saveBtn, loginBtn;
 
-  if (!form || !previewEl) return; // nothing to wire up
+  // Initialize form elements when DOM is ready
+  function initializeFormElements() {
+    form = $('#tripForm');
+    previewEl = $('#preview');
+    loadingEl = $('#loading');
+    pdfBtn = $('#pdfBtn');
+    icsBtn = $('#icsBtn');
+    fullPlanBtn = $('#fullPlanBtn');
+    saveBtn = $('#saveBtn');
+    loginBtn = $('#loginBtn');
+
+    if (!form || !previewEl) {
+      console.warn('Form or preview element not found, retrying in 100ms...');
+      setTimeout(initializeFormElements, 100);
+      return;
+    }
+
+    console.log('✅ Form elements found, attaching event listeners...');
+    attachFormEventListeners();
+  }
+
+  // Form submission handler moved into a separate function
+  function attachFormEventListeners() {
 
   // Check if we're on staging environment - but don't auto-login, let user sign up
   const isStaging = window.location.hostname.includes('staging') || window.location.hostname.includes('onrender.com');
@@ -708,8 +723,8 @@
 
   // Restore full plan from localStorage
 
-  // Form submission handler
-  form.addEventListener('submit', async (e) => {
+    // Form submission handler
+    form.addEventListener('submit', async (e) => {
     e.preventDefault();
     // Free access: no sign-in required for preview
     
@@ -3624,6 +3639,15 @@
         showNotification('Unable to copy link', 'error');
       });
     }
+  }
+
+  } // End of attachFormEventListeners function
+
+  // Start the form initialization
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeFormElements);
+  } else {
+    initializeFormElements();
   }
 
 })();
