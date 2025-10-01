@@ -147,13 +147,76 @@ PAYPAL_CLIENT_ID=your_paypal_client_id
 
 ## Testing
 
+## 🚨 CRITICAL: QA Testing Process (MANDATORY)
+
+**EVERY code change MUST follow this testing protocol to prevent breaking critical functionality:**
+
+### QA Testing Requirements (NON-NEGOTIABLE):
+1. **Pre-Change Testing**: Run full test suite before making ANY changes
+2. **Per-Fix Validation**: Test each fix individually before moving to next
+3. **Regression Testing**: Verify all existing functionality still works
+4. **Cross-Browser Testing**: Validate on Chrome, Firefox, Safari, Edge
+5. **Mobile Testing**: Test responsive design on multiple screen sizes
+6. **User Journey Testing**: Complete end-to-end user flows
+
+### Mandatory Test Commands:
+```bash
+# 1. ALWAYS run before starting work
+cd backend && npm run test
+
+# 2. Run after each fix (HIGH PRIORITY first)
+node tests/run-critical-tests.mjs --priority=high
+
+# 3. Run comprehensive validation before deployment
+npx playwright test tests/e2e/critical-fixes.test.js
+
+# 4. Validate specific functionality
+npm run test:openai  # For GPT API fixes
+npm run test:location  # For location detection fixes
+npm run test:widgets  # For widget integration fixes
+```
+
+### Critical Test Checkpoints:
+- **Location Detection**: Must auto-populate form fields
+- **Date Validation**: Prevent past dates, validate date ranges
+- **Multi-Language**: All 10 languages must work
+- **Authentication**: Google OAuth, demo mode, manual auth
+- **Payment Flow**: Stripe integration must remain functional
+- **Admin Panel**: All admin functionality preserved
+- **Mobile Responsive**: Tables and forms work on mobile
+
+### QA Agent Usage (REQUIRED):
+```bash
+# Use QA agent for every significant change
+Task(subagent_type="qa-testing", description="Validate [specific fix]")
+```
+
+### Rollback Triggers (IMMEDIATE ACTION):
+- Any test failure rate >20%
+- Location detection stops working
+- Trip generation fails for any destination
+- Payment processing broken
+- Admin panel inaccessible
+- Mobile layout completely broken
+
+### Emergency Rollback Procedure:
+```bash
+# Immediate rollback to last known good state
+git checkout f0bbb2e
+git push origin HEAD:fix-links-v68 --force
+```
+
+**⚠️ WARNING: Do NOT skip QA testing steps. Breaking core functionality affects user experience and business operations.**
+
 ### Manual Testing
 - Frontend: `http://localhost:8000/test.html`
-- Test features: language switching, authentication, multi-destination planning, admin panel
+- Test features: location detection, language switching, authentication, multi-destination planning, admin panel
 
 ### Automated Testing
 - E2E tests: `cd backend && npm run test:e2e`
 - Uses Playwright for browser automation
+- QA-specific tests: `cd backend && npm run test:critical-fixes`
+- Mobile testing: Uses Playwright MCP integration
 
 ## Deployment Configurations
 

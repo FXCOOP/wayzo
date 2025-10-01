@@ -8,7 +8,27 @@
   },
   "scripts": {
     "start": "node --max-old-space-size=4096 server.mjs",
-    "test:e2e": "playwright test backend/tests/e2e"
+    "test:e2e": "playwright test backend/tests/e2e",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:openai": "vitest tests/openai-*.test.mjs tests/server-openai-*.test.mjs tests/api-endpoints-openai.test.mjs --reporter=verbose",
+    "test:coverage": "vitest --coverage",
+    "test:run": "vitest run",
+
+    "test:baseline": "node tests/playwright-mcp-runner.mjs --priority=baseline --skip-baseline=false",
+    "test:critical-high": "node tests/playwright-mcp-runner.mjs --priority=high",
+    "test:critical-medium": "node tests/playwright-mcp-runner.mjs --priority=medium",
+    "test:critical-low": "node tests/playwright-mcp-runner.mjs --priority=low",
+    "test:integration": "node tests/playwright-mcp-runner.mjs --priority=integration",
+    "test:cross-browser": "node tests/playwright-mcp-runner.mjs --browsers=chromium,firefox,webkit",
+    "test:mobile": "playwright test --project=mobile-chrome --project=mobile-safari --project=tablet",
+    "test:complete-regression": "node tests/playwright-mcp-runner.mjs --priority=all --browsers=chromium,firefox",
+    "test:debug": "node tests/playwright-mcp-runner.mjs --headed --verbose",
+
+    "test:priority-high": "npm run test:baseline && npm run test:critical-high",
+    "test:priority-medium": "npm run test:priority-high && npm run test:critical-medium",
+    "test:priority-low": "npm run test:priority-medium && npm run test:critical-low",
+    "test:full-suite": "npm run test:complete-regression && npm run test:mobile"
   },
   "dependencies": {
     "better-sqlite3": "^9.6.0",
@@ -26,6 +46,9 @@
     "puppeteer": "^22.15.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.48.0"
+    "@playwright/test": "^1.48.0",
+    "vitest": "^2.1.5",
+    "@vitest/coverage-v8": "^2.1.5",
+    "supertest": "^7.0.0"
   }
 }

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wayzo Location Detection Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; }
+        input { padding: 10px; width: 300px; font-size: 16px; }
+        button { padding: 10px 20px; font-size: 16px; margin: 10px; }
+        #log { background: #f8f9fa; padding: 15px; border-radius: 4px; margin: 20px 0; max-height: 400px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+
+<h1>🗺️ Wayzo Location Detection Test</h1>
+
+<div class="info">
+    <strong>Testing location auto-detection functionality</strong><br>
+    This will test the exact same code used in Wayzo frontend
+</div>
+
+<div>
+    <label for="from">From (should auto-detect):</label><br>
+    <input type="text" id="from" placeholder="Click 'Detect Location' to test">
+    <button onclick="testLocationDetection()">🔍 Detect Location</button>
+    <button onclick="clearLog()">🗑️ Clear Log</button>
+</div>
+
+<div id="status"></div>
+<div id="log"></div>
+
+<script>
+function log(message, type = 'info') {
+    const logDiv = document.getElementById('log');
+    const timestamp = new Date().toLocaleTimeString();
+    const colorClass = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+    logDiv.innerHTML += `<div class="${colorClass}">[${timestamp}] ${message}</div>`;
+    logDiv.scrollTop = logDiv.scrollHeight;
+    console.log(`[${timestamp}] ${message}`);
+}
+
+function clearLog() {
+    document.getElementById('log').innerHTML = '';
+    document.getElementById('status').innerHTML = '';
+}
+
+function updateStatus(message, type = 'info') {
+    const statusDiv = document.getElementById('status');
+    const colorClass = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+    statusDiv.innerHTML = `<div class="status ${colorClass}">${message}</div>`;
+}
+
+// EXACT SAME CODE AS WAYZO FRONTEND
+async function testLocationDetection() {
+    const fromField = document.getElementById('from');
+    if (!fromField) {
+        log('❌ From field not found', 'error');
+        return;
+    }
+
+    // Show detection in progress
+    fromField.placeholder = 'Detecting your location...';
+    updateStatus('🔍 Starting location detection...', 'info');
+    log('🔍 Starting location detection with ipapi.co...');
+
+    try {
+        log('📡 Fetching from ipapi.co...');
+
+        // Try ipapi.co first
+        let response = await fetch('https://ipapi.co/json/', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+
+        log(`📡 Response status: ${response.status} ${response.statusText}`);
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        let data = await response.json();
+        log(`📊 Location data from ipapi.co: ${JSON.stringify(data, null, 2)}`, 'success');
+
+        // Check for valid response
+        if (data.error) {
+            throw new Error(data.error);
+        }
+
+        if (data.city && data.country_name) {
+            const location = `${data.city}, ${data.country_name}`;
+            fromField.value = location;
+            fromField.placeholder = location;
+            log(`✅ Location detected successfully: ${location}`, 'success');
+            updateStatus(`✅ Location detected: ${location}`, 'success');
+            return;
+        } else if (data.country_name) {
+            fromField.value = data.country_name;
+            fromField.placeholder = data.country_name;
+            log(`✅ Country detected: ${data.country_name}`, 'success');
+            updateStatus(`✅ Country detected: ${data.country_name}`, 'success');
+            return;
+        }
+
+        throw new Error('Incomplete location data');
+
+    } catch (error) {
+        log(`❌ First service failed: ${error.message}`, 'error');
+        log('🔄 Trying backup location detection...');
+
+        // Fallback to ipify + ip-api.com
+        try {
+            log('📡 Getting IP from ipify...');
+
+            // Get IP first
+            const ipResponse = await fetch('https://api.ipify.org?format=json');
+            const ipData = await ipResponse.json();
+            log(`📊 IP detected: ${ipData.ip}`, 'success');
+
+            // Get location from IP
+            log('📡 Getting location from ip-api.com...');
+            const locationResponse = await fetch(`https://ip-api.com/json/${ipData.ip}`);
+            const locationData = await locationResponse.json();
+            log(`📊 Backup location data: ${JSON.stringify(locationData, null, 2)}`, 'success');
+
+            if (locationData.status === 'success') {
+                if (locationData.city && locationData.country) {
+                    const location = `${locationData.city}, ${locationData.country}`;
+                    fromField.value = location;
+                    fromField.placeholder = location;
+                    log(`✅ Backup location detected: ${location}`, 'success');
+                    updateStatus(`✅ Backup location detected: ${location}`, 'success');
+                    return;
+                } else if (locationData.country) {
+                    fromField.value = locationData.country;
+                    fromField.placeholder = locationData.country;
+                    log(`✅ Backup country detected: ${locationData.country}`, 'success');
+                    updateStatus(`✅ Backup country detected: ${locationData.country}`, 'success');
+                    return;
+                }
+            }
+
+            throw new Error('Backup service also failed');
+
+        } catch (backupError) {
+            log(`❌ All location detection services failed: ${backupError.message}`, 'error');
+            fromField.placeholder = 'Enter your departure city...';
+            fromField.value = '';
+            updateStatus('❌ Location detection failed - enter manually', 'error');
+
+            // Show a subtle notification to user
+            setTimeout(() => {
+                log('💡 Location detection not available, please enter manually');
+            }, 1000);
+        }
+    }
+}
+
+// Auto-run test on page load
+window.onload = () => {
+    log('🚀 Location detection test page loaded');
+    log('👆 Click "Detect Location" button to test');
+};
+</script>
+
+</body>
+</html>
