@@ -30,12 +30,18 @@
 
   // Form submission handler moved into a separate function
   function attachFormEventListeners() {
+    console.log('🔧 attachFormEventListeners called, form:', !!form);
 
-  // Check if we're on staging environment - but don't auto-login, let user sign up
-  const isStaging = window.location.hostname.includes('staging') || window.location.hostname.includes('onrender.com');
-  if (isStaging) {
-    console.log('🚀 Staging environment detected - user needs to sign up manually');
-  }
+    if (!form) {
+      console.error('❌ Cannot attach form listeners - form not found');
+      return;
+    }
+
+    // Check if we're on staging environment - but don't auto-login, let user sign up
+    const isStaging = window.location.hostname.includes('staging') || window.location.hostname.includes('onrender.com');
+    if (isStaging) {
+      console.log('🚀 Staging environment detected - user needs to sign up manually');
+    }
 
   const show = (el) => el && el.classList.remove('hidden');
   const hide = (el) => el && el.classList.add('hidden');
@@ -724,7 +730,9 @@
   // Restore full plan from localStorage
 
     // Form submission handler
+    console.log('🔧 Attaching form submit event listener to:', form);
     form.addEventListener('submit', async (e) => {
+    console.log('🚀 FORM SUBMITTED! Event triggered:', e);
     e.preventDefault();
     // Free access: no sign-in required for preview
     
