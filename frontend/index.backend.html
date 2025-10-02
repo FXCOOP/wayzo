@@ -805,6 +805,99 @@
   <script src="/config.js"></script>
   <script src="/paypal-config.js"></script>
 
+  <!-- EMERGENCY FIX: Direct form handler -->
+  <script>
+  console.log('🚨 EMERGENCY FIX: Direct form handler loading...');
+
+  function emergencyFormHandler() {
+    const form = document.querySelector('#tripForm');
+    const previewEl = document.querySelector('#preview');
+    const loadingEl = document.querySelector('#loading');
+
+    console.log('🔧 Emergency handler - Form found:', !!form);
+    console.log('🔧 Emergency handler - Preview found:', !!previewEl);
+    console.log('🔧 Emergency handler - Loading found:', !!loadingEl);
+
+    if (!form) {
+      console.error('❌ Emergency handler: Form not found');
+      return;
+    }
+
+    // Remove any existing listeners
+    const newForm = form.cloneNode(true);
+    form.parentNode.replaceChild(newForm, form);
+
+    console.log('✅ Emergency handler: Attaching fresh event listener');
+
+    newForm.addEventListener('submit', async (e) => {
+      console.log('🚀 EMERGENCY HANDLER: Form submitted!');
+      e.preventDefault();
+
+      // Show loading
+      if (previewEl) previewEl.style.display = 'none';
+      if (loadingEl) loadingEl.style.display = 'block';
+
+      // Get form data
+      const formData = new FormData(newForm);
+      const data = {
+        destination: formData.get('destination') || document.querySelector('[name="destination"]')?.value || 'Prague, Czech Republic',
+        from: formData.get('from') || document.querySelector('[name="from"]')?.value || 'Tel Aviv, Israel',
+        start: formData.get('start') || document.querySelector('[name="start"]')?.value || '2025-01-15',
+        end: formData.get('end') || document.querySelector('[name="end"]')?.value || '2025-01-20',
+        adults: formData.get('adults') || document.querySelector('[name="adults"]')?.value || '2',
+        budget: formData.get('budget') || document.querySelector('[name="budget"]')?.value || '1500',
+        style: 'mid',
+        purpose: 'leisure'
+      };
+
+      console.log('📤 EMERGENCY HANDLER: Sending data:', data);
+
+      try {
+        const response = await fetch('/api/preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        console.log('📥 EMERGENCY HANDLER: Response status:', response.status);
+
+        if (response.ok) {
+          const result = await response.json();
+          console.log('✅ EMERGENCY HANDLER: Success!', result);
+
+          if (previewEl && result.teaser_html) {
+            previewEl.innerHTML = result.teaser_html;
+            previewEl.style.display = 'block';
+          }
+        } else {
+          console.error('❌ EMERGENCY HANDLER: API failed:', response.status);
+          if (previewEl) {
+            previewEl.innerHTML = '<div class="error">❌ Failed to generate preview. Status: ' + response.status + '</div>';
+            previewEl.style.display = 'block';
+          }
+        }
+      } catch (error) {
+        console.error('❌ EMERGENCY HANDLER: Error:', error);
+        if (previewEl) {
+          previewEl.innerHTML = '<div class="error">❌ Network error: ' + error.message + '</div>';
+          previewEl.style.display = 'block';
+        }
+      } finally {
+        if (loadingEl) loadingEl.style.display = 'none';
+      }
+    });
+
+    console.log('✅ Emergency form handler attached successfully!');
+  }
+
+  // Run emergency handler
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', emergencyFormHandler);
+  } else {
+    emergencyFormHandler();
+  }
+  </script>
+
   <!-- DEBUG: Form testing script (temporary) -->
   <script src="/debug-form.js"></script>
 
