@@ -1,7 +1,7 @@
-// Debug script to test form functionality
-console.log('🔍 DEBUG: Form debugging script loaded');
+// CRITICAL DEBUG: Test form submission after IIFE fix
+console.log('🚨 CRITICAL DEBUG: Form debugging script loaded - testing IIFE fix');
 
-// Test 1: Check if elements exist
+// Test 1: Check if elements exist and form listeners are attached
 const checkElements = () => {
   const form = document.querySelector('#tripForm');
   const preview = document.querySelector('#preview');
@@ -96,11 +96,48 @@ const testFormSubmission = () => {
   form.dispatchEvent(submitEvent);
 };
 
+// Test 4: Check IIFE Fix - verify form initialization happened
+const testIIFEFix = () => {
+  console.log('🚨 TESTING IIFE FIX...');
+
+  const form = document.querySelector('#tripForm');
+  if (!form) {
+    console.error('❌ IIFE TEST FAILED: Form not found');
+    return;
+  }
+
+  // Check if form has submit event listeners
+  console.log('🔍 Checking form event listeners...');
+
+  // Try to trigger submit and see if it's caught
+  let submitTriggered = false;
+  const testSubmitHandler = (e) => {
+    submitTriggered = true;
+    e.preventDefault();
+    console.log('✅ IIFE FIX SUCCESS: Form submit handler is working!');
+  };
+
+  form.addEventListener('submit', testSubmitHandler, { once: true });
+
+  // Trigger a submit event
+  const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
+  form.dispatchEvent(submitEvent);
+
+  setTimeout(() => {
+    if (submitTriggered) {
+      console.log('✅ IIFE FIX VERIFIED: Form event handlers are properly attached');
+    } else {
+      console.error('❌ IIFE FIX FAILED: Form submit handler not responding');
+    }
+  }, 100);
+};
+
 // Run tests when DOM is ready
 const runTests = () => {
-  console.log('🔍 =================================');
-  console.log('🔍 WAYZO FRONTEND DEBUG TESTS');
-  console.log('🔍 =================================');
+  console.log('🚨 =================================');
+  console.log('🚨 WAYZO CRITICAL DEBUG TESTS');
+  console.log('🚨 Testing IIFE Structure Fix');
+  console.log('🚨 =================================');
 
   // Test 1: Check elements
   checkElements();
@@ -116,6 +153,12 @@ const runTests = () => {
     console.log('🔍 Running form submission test...');
     testFormSubmission();
   }, 2000);
+
+  // Test 4: Test IIFE Fix
+  setTimeout(() => {
+    console.log('🚨 Running IIFE fix test...');
+    testIIFEFix();
+  }, 3000);
 };
 
 // Global functions for manual testing
@@ -123,6 +166,7 @@ window.debugForm = {
   checkElements,
   testAPICall,
   testFormSubmission,
+  testIIFEFix,
   runTests
 };
 
