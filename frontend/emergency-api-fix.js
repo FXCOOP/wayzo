@@ -69,14 +69,51 @@ setTimeout(() => {
       console.log('📤 EMERGENCY: Sending data:', data);
 
       try {
-        const response = await fetch('/api/preview', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify(data)
-        });
+        // Multiple URL attempts for maximum compatibility
+        const possibleUrls = [
+          '/api/preview',  // Relative URL (should work on production)
+          `${window.location.origin}/api/preview`,  // Full URL
+          'https://wayzo-staging.onrender.com/api/preview'  // Direct production URL as fallback
+        ];
+
+        let response = null;
+        let lastError = null;
+
+        for (let i = 0; i < possibleUrls.length; i++) {
+          const apiUrl = possibleUrls[i];
+          console.log(`🔥 EMERGENCY: Attempt ${i + 1} - Using API URL:`, apiUrl);
+
+          try {
+            response = await fetch(apiUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+              },
+              body: JSON.stringify(data)
+            });
+
+            console.log(`📥 EMERGENCY: Attempt ${i + 1} - Response status:`, response.status);
+
+            // If we get a good response, break out of the loop
+            if (response.ok) {
+              console.log(`✅ EMERGENCY: Success on attempt ${i + 1}!`);
+              break;
+            } else if (response.status !== 404) {
+              // If it's not a 404, it might be our server responding with an error
+              console.log(`⚠️ EMERGENCY: Non-404 error on attempt ${i + 1}, continuing...`);
+              break;
+            }
+          } catch (error) {
+            console.error(`❌ EMERGENCY: Attempt ${i + 1} failed:`, error);
+            lastError = error;
+            response = null;
+          }
+        }
+
+        if (!response) {
+          throw lastError || new Error('All API URL attempts failed');
+        }
 
         console.log('📥 EMERGENCY: Response status:', response.status);
         console.log('📥 EMERGENCY: Response headers:', Object.fromEntries(response.headers.entries()));
