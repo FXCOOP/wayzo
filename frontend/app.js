@@ -3651,17 +3651,6 @@
 
   } // End of attachFormEventListeners function
 
-  // Start the form initialization
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeFormElements);
-  } else {
-    initializeFormElements();
-  }
-
-})();
-// Trigger redeploy for manual signup fix
-
-
   // ====== Progressive Disclosure Budget Functionality ======
   function initializeBudgetDisclosure() {
     // Find all budget expand buttons in trip reports
@@ -4157,3 +4146,13 @@
   if (document.querySelector(".trip-report")) {
     setTimeout(initializeAllEnhancements, 200);
   }
+
+  // Start the form initialization
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeFormElements);
+  } else {
+    initializeFormElements();
+  }
+
+})();
+// Trigger redeploy for form fix
