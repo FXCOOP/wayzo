@@ -1,4 +1,4 @@
-import { JSDOM } from 'jsdom';
+// import { JSDOM } from 'jsdom'; // Temporarily disabled due to dependency issues
 
 // Historical weather data (10-year averages) for major destinations
 const HISTORICAL_WEATHER = {
@@ -241,9 +241,13 @@ function getWidgetsForDestination(destination, tripType, interests = []) {
 // JSDOM-based widget injection with precise placement
 async function injectWidgetsIntoSections(html, widgets, destination = '', startDate = null, endDate = null, budgetData = null) {
   if (!widgets || widgets.length === 0) return html;
-  
+
+  // Temporarily return HTML unchanged due to JSDOM dependency issues
+  console.log('⚠️ Widget injection temporarily disabled - JSDOM not available');
+  return html;
+
   try {
-    const dom = new JSDOM(html);
+    // const dom = new JSDOM(html); // Disabled
     const doc = dom.window.document;
     
     let widgetsInjected = {
@@ -777,8 +781,12 @@ async function injectWidgetsIntoSections(html, widgets, destination = '', startD
 
 // Link post-processing for raw HTML if needed externally
 function processLinks(html, destination = '') {
+  // Temporarily return HTML unchanged due to JSDOM dependency issues
+  console.log('⚠️ Link processing temporarily disabled - JSDOM not available');
+  return html;
+
   try {
-    const dom = new JSDOM(html);
+    // const dom = new JSDOM(html); // Disabled
     const doc = dom.window.document;
     // Apply same rules as above
     doc.querySelectorAll('a[href^="https://www.google.com/maps"], a[href^="https://maps.google.com"]').forEach(a => a.setAttribute('target', '_blank'));
