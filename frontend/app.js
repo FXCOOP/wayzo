@@ -3905,7 +3905,7 @@
     // addActivityIndicators(); // Temporarily disabled - function not defined
 
     // Initialize intersection observer for current day highlighting
-    initializeDayTracking();
+    // initializeDayTracking(); // Temporarily disabled - function not defined
   }
 
   function createDayNavigation() {
