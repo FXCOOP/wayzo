@@ -222,7 +222,7 @@ app.get('/debug/ping', (_req, res) => {
     api: {
       openai_configured: !!process.env.OPENAI_API_KEY,
       openai_key_length: process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.length : 0,
-      wayzo_model: process.env.WAYZO_MODEL || 'gpt-4o-mini-2024-07-18',
+      wayzo_model: process.env.WAYZO_MODEL || 'gpt-4o',
       client_initialized: !!getOpenAIClient()
     },
     timestamp: new Date().toISOString()
@@ -683,7 +683,7 @@ Create the most amazing, detailed, and useful trip plan possible!`;
   console.log('- API Key exists:', !!process.env.OPENAI_API_KEY);
   console.log('- API Key length:', process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.length : 0);
   console.log('- Client initialized:', !!client);
-  console.log('- Preferred model:', process.env.WAYZO_MODEL || 'gpt-4o-mini-2024-07-18');
+  console.log('- Preferred model:', process.env.WAYZO_MODEL || 'gpt-4o');
 
   if (!client) {
     console.warn('❌ OpenAI client is null - using local fallback');
@@ -696,10 +696,10 @@ Create the most amazing, detailed, and useful trip plan possible!`;
   console.log('✅ OpenAI client ready - proceeding with API call');
 
   // Model selection and retry logic with image support
-  const preferredModel = process.env.WAYZO_MODEL || 'gpt-4o-mini-2024-07-18';
-  const fallbackModel = 'gpt-4o-mini-2024-07-18';
-  const visionModel = 'gpt-4o-2024-08-06'; // Vision-capable model for images
-  const isNano = preferredModel.includes('gpt-5-nano');
+  const preferredModel = process.env.WAYZO_MODEL || 'gpt-4o';
+  const fallbackModel = 'gpt-4o-mini';
+  const visionModel = 'gpt-4o'; // Vision-capable model for images
+  const isNano = false; // gpt-5-nano doesn't exist, removed
   const hasImages = uploadedFiles && uploadedFiles.some(file => file.type && file.type.startsWith('image/'));
   const maxTokens = mode === 'full' ? (isNano ? 128000 : 16384) : 500;
 
@@ -1743,7 +1743,7 @@ app.get('/api/debug', (req, res) => {
     hasOpenAIKey: !!process.env.OPENAI_API_KEY,
     keyLength: process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.length : 0,
     clientInitialized: !!client,
-    preferredModel: process.env.WAYZO_MODEL || 'gpt-4o-mini-2024-07-18',
+    preferredModel: process.env.WAYZO_MODEL || 'gpt-4o',
     nodeEnv: process.env.NODE_ENV,
     timestamp: new Date().toISOString()
   });
