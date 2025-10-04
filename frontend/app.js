@@ -3902,7 +3902,7 @@
     initializeReadingProgress();
 
     // Add activity priority indicators
-    addActivityIndicators();
+    // addActivityIndicators(); // Temporarily disabled - function not defined
 
     // Initialize intersection observer for current day highlighting
     initializeDayTracking();
