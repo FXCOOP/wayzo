@@ -222,7 +222,7 @@ app.get('/debug/ping', (_req, res) => {
     api: {
       openai_configured: !!process.env.OPENAI_API_KEY,
       openai_key_length: process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.length : 0,
-      wayzo_model: process.env.WAYZO_MODEL || 'gpt-4o',
+      wayzo_model: process.env.WAYZO_MODEL || 'gpt-5-nano-2025-08-07',
       client_initialized: !!getOpenAIClient()
     },
     timestamp: new Date().toISOString()
@@ -683,7 +683,7 @@ Create the most amazing, detailed, and useful trip plan possible!`;
   console.log('- API Key exists:', !!process.env.OPENAI_API_KEY);
   console.log('- API Key length:', process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.length : 0);
   console.log('- Client initialized:', !!client);
-  console.log('- Preferred model:', process.env.WAYZO_MODEL || 'gpt-4o');
+  console.log('- Preferred model:', process.env.WAYZO_MODEL || 'gpt-5-nano-2025-08-07');
 
   if (!client) {
     console.warn('❌ OpenAI client is null - using local fallback');
@@ -696,10 +696,10 @@ Create the most amazing, detailed, and useful trip plan possible!`;
   console.log('✅ OpenAI client ready - proceeding with API call');
 
   // Model selection and retry logic with image support
-  const preferredModel = process.env.WAYZO_MODEL || 'gpt-4o';
-  const fallbackModel = 'gpt-4o-mini';
-  const visionModel = 'gpt-4o'; // Vision-capable model for images
-  const isNano = false; // gpt-5-nano doesn't exist, removed
+  const preferredModel = process.env.WAYZO_MODEL || 'gpt-5-nano-2025-08-07';
+  const fallbackModel = 'gpt-5-nano-2025-08-07'; // ONLY use GPT-5 nano
+  const visionModel = 'gpt-5-nano-2025-08-07'; // Use GPT-5 nano for everything
+  const isNano = true; // Always treat as nano since we only use GPT-5 nano
   const hasImages = uploadedFiles && uploadedFiles.some(file => file.type && file.type.startsWith('image/'));
   const maxTokens = mode === 'full' ? (isNano ? 128000 : 16384) : 500;
 
@@ -755,7 +755,7 @@ Create the most amazing, detailed, and useful trip plan possible!`;
           stream: false,
         });
         respText = resp.choices?.[0]?.message?.content || '';
-        console.log(`✅ API call success: model=${visionModel}, max_tokens=${maxTokens}, images=${uploadedFiles.filter(f => f.type?.startsWith('image/')).length}`);
+        console.log(`✅ GPT-5 NANO API call success (with images): model=${visionModel}, max_tokens=${maxTokens}, images=${uploadedFiles.filter(f => f.type?.startsWith('image/')).length}`);
       } else if (isNano) {
         console.log(`🔬 Using nano model: ${preferredModel}`);
         const resp = await client.chat.completions.create({
@@ -769,9 +769,9 @@ Create the most amazing, detailed, and useful trip plan possible!`;
         console.log('🔍 RAW NANO RESPONSE:', JSON.stringify(resp, null, 2));
         respText = resp.choices?.[0]?.message?.content || '';
         console.log('🔍 EXTRACTED TEXT:', respText ? respText.substring(0, 100) + '...' : 'EMPTY');
-        console.log(`✅ API call success: model=${preferredModel}, max_tokens=${maxTokens}`);
+        console.log(`✅ GPT-5 NANO API call success: model=${preferredModel}, max_tokens=${maxTokens}`);
       } else {
-        console.log(`🤖 Using fallback model: ${fallbackModel}`);
+        console.log(`🔬 Using GPT-5 NANO (fallback path): ${fallbackModel}`);
         const resp = await client.chat.completions.create({
           model: fallbackModel,
           max_tokens: maxTokens,
@@ -779,7 +779,7 @@ Create the most amazing, detailed, and useful trip plan possible!`;
           stream: false,
         });
         respText = resp.choices?.[0]?.message?.content || '';
-        console.log(`✅ API call success: model=${fallbackModel}, max_tokens=${maxTokens}`);
+        console.log(`✅ GPT-5 NANO API call success (fallback): model=${fallbackModel}, max_tokens=${maxTokens}`);
       }
       if (respText) break;
       throw new Error('Empty response text');
@@ -1743,7 +1743,7 @@ app.get('/api/debug', (req, res) => {
     hasOpenAIKey: !!process.env.OPENAI_API_KEY,
     keyLength: process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.length : 0,
     clientInitialized: !!client,
-    preferredModel: process.env.WAYZO_MODEL || 'gpt-4o',
+    preferredModel: process.env.WAYZO_MODEL || 'gpt-5-nano-2025-08-07',
     nodeEnv: process.env.NODE_ENV,
     timestamp: new Date().toISOString()
   });
