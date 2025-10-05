@@ -50,10 +50,16 @@ export function linkifyTokens(markdown = '', dest = '') {
     .replace(/\[(Book|Book Now|Flights|Flight)\]\(flight:([^)]+)\)/gi,      (_m, _t, q) => `[Book Flights](#flight-widget)`)
     .replace(/\[(Book|Book Now|Flights|Flight)\]\(flights:([^)]+)\)/gi,     (_m, _t, q) => `[Book Flights](#flight-widget)`)
 
-    // Activity/Ticket links → GetYourGuide Widget
-    .replace(/\[(Tickets|Book|Book Now|Activities)\]\(tickets:([^)]+)\)/gi, (_m, _t, q) => `[Book Activities](#gyg-widget)`)
-    .replace(/\[(Tickets|Book|Book Now|Activities)\]\(activity:([^)]+)\)/gi,(_m, _t, q) => `[Book Activities](#gyg-widget)`)
-    .replace(/\[(Tickets|Book|Book Now|Activities)\]\(activities:([^)]+)\)/gi,(_m, _t, q) => `[Book Activities](#gyg-widget)`)
+    // Activity/Ticket links → GetYourGuide Widget (including Book Tickets)
+    .replace(/\[(Tickets|Book Tickets|Book Entry Tickets|Book|Book Now|Activities)\]\(tickets:([^)]+)\)/gi, (_m, _t, q) => `[Book Tickets](https://www.getyourguide.com/s/?q=${encodeURIComponent(dest + ' ' + q.trim())}&partner_id=PUHVJ53)`)
+    .replace(/\[(Tickets|Book Tickets|Book Entry Tickets|Book|Book Now|Activities)\]\(activity:([^)]+)\)/gi,(_m, _t, q) => `[Book Tickets](https://www.getyourguide.com/s/?q=${encodeURIComponent(dest + ' ' + q.trim())}&partner_id=PUHVJ53)`)
+    .replace(/\[(Tickets|Book Tickets|Book Entry Tickets|Book|Book Now|Activities)\]\(activities:([^)]+)\)/gi,(_m, _t, q) => `[Book Tickets](https://www.getyourguide.com/s/?q=${encodeURIComponent(dest + ' ' + q.trim())}&partner_id=PUHVJ53)`)
+
+    // Restaurant booking → GetYourGuide Food Experiences
+    .replace(/\[(Reserve Table|Reserve|Book Table|View Menu)\]/gi, (_m, text) => `[${text}](https://www.getyourguide.com/s/?q=${encodeURIComponent(dest + ' food experiences restaurants')}&partner_id=PUHVJ53)`)
+
+    // Standalone [Book Now] in hotel sections → Hotel Widget
+    .replace(/\[Book Now\]/gi, '[Book Now](#hotel-widget)')
 
     // Car rental links → Car Widget
     .replace(/\[(Car|Rent|Car Rental)\]\(car:([^)]+)\)/gi,                  (_m, _t, q) => `[Rent Car](#car-widget)`)
