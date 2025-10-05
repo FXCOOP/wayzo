@@ -1731,6 +1731,53 @@ app.get('/api/debug', (req, res) => {
   });
 });
 
+// Location detection endpoint (CORS-friendly proxy)
+app.get('/api/location', async (req, res) => {
+  try {
+    // Try ipapi.co first (most reliable)
+    const response = await fetch('https://ipapi.co/json/');
+
+    if (!response.ok) {
+      throw new Error(`ipapi.co returned ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // Check for error response
+    if (data.error) {
+      throw new Error(data.reason || 'Location service error');
+    }
+
+    // Return formatted location
+    if (data.city && data.country_name) {
+      return res.json({
+        success: true,
+        location: `${data.city}, ${data.country_name}`,
+        city: data.city,
+        country: data.country_name
+      });
+    } else if (data.country_name) {
+      return res.json({
+        success: true,
+        location: data.country_name,
+        country: data.country_name
+      });
+    }
+
+    throw new Error('Incomplete location data');
+
+  } catch (error) {
+    console.error('Location detection failed:', error.message);
+
+    // Return error but don't crash
+    res.json({
+      success: false,
+      error: 'Location detection unavailable',
+      location: null
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Wayzo backend running on :${PORT}`);
   console.log('Version:', VERSION);

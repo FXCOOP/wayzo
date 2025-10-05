@@ -42,87 +42,36 @@
     fromField.placeholder = 'Detecting your location...';
 
     try {
-      console.log('Starting location detection with ipapi.co...');
+      console.log('Starting location detection via backend...');
 
-      // Try ipapi.co first
-      let response = await fetch('https://ipapi.co/json/', {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
+      // Call our backend proxy endpoint (no CORS issues!)
+      const response = await fetch('/api/location');
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        throw new Error(`Backend returned ${response.status}`);
       }
 
-      let data = await response.json();
-      console.log('Location data from ipapi.co:', data);
+      const data = await response.json();
+      console.log('Location data from backend:', data);
 
-      // Check for valid response
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      if (data.city && data.country_name) {
-        const location = `${data.city}, ${data.country_name}`;
-        fromField.value = location;
-        fromField.placeholder = location;
-        console.log('✅ Location detected successfully:', location);
-        return;
-      } else if (data.country_name) {
-        fromField.value = data.country_name;
-        fromField.placeholder = data.country_name;
-        console.log('✅ Country detected:', data.country_name);
+      if (data.success && data.location) {
+        fromField.value = data.location;
+        fromField.placeholder = data.location;
+        console.log('✅ Location detected successfully:', data.location);
         return;
       }
 
-      throw new Error('Incomplete location data');
+      throw new Error(data.error || 'Location detection failed');
 
     } catch (error) {
-      console.log('First service failed, trying backup:', error.message);
+      console.error('❌ Location detection failed:', error);
+      fromField.placeholder = 'Enter your departure city...';
+      fromField.value = '';
 
-      // Fallback to ipify + ip-api.com
-      try {
-        console.log('Trying backup location detection...');
-
-        // Get IP first
-        const ipResponse = await fetch('https://api.ipify.org?format=json');
-        const ipData = await ipResponse.json();
-        console.log('IP detected:', ipData.ip);
-
-        // Get location from IP
-        const locationResponse = await fetch(`http://ip-api.com/json/${ipData.ip}`);
-        const locationData = await locationResponse.json();
-        console.log('Backup location data:', locationData);
-
-        if (locationData.status === 'success') {
-          if (locationData.city && locationData.country) {
-            const location = `${locationData.city}, ${locationData.country}`;
-            fromField.value = location;
-            fromField.placeholder = location;
-            console.log('✅ Backup location detected:', location);
-            return;
-          } else if (locationData.country) {
-            fromField.value = locationData.country;
-            fromField.placeholder = locationData.country;
-            console.log('✅ Backup country detected:', locationData.country);
-            return;
-          }
-        }
-
-        throw new Error('Backup service also failed');
-
-      } catch (backupError) {
-        console.error('❌ All location detection services failed:', backupError);
-        fromField.placeholder = 'Enter your departure city...';
-        fromField.value = '';
-
-        // Show a subtle notification to user
-        setTimeout(() => {
-          console.log('Location detection not available, please enter manually');
-        }, 1000);
-      }
+      // Show a subtle notification to user
+      setTimeout(() => {
+        console.log('Location detection not available, please enter manually');
+      }, 1000);
     }
   };
   
