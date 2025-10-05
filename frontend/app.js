@@ -82,33 +82,27 @@
     } catch (error) {
       console.log('First service failed, trying backup:', error.message);
 
-      // Fallback to ipify + ip-api.com
+      // Fallback to ip-api.com (using HTTPS-compatible endpoint)
       try {
-        console.log('Trying backup location detection...');
+        console.log('Trying backup location detection with ip-api.com...');
 
-        // Get IP first
-        const ipResponse = await fetch('https://api.ipify.org?format=json');
-        const ipData = await ipResponse.json();
-        console.log('IP detected:', ipData.ip);
-
-        // Get location from IP
-        const locationResponse = await fetch(`http://ip-api.com/json/${ipData.ip}`);
+        // Use freeipapi.com (HTTPS-compatible free service)
+        const locationResponse = await fetch('https://freeipapi.com/api/json');
         const locationData = await locationResponse.json();
         console.log('Backup location data:', locationData);
 
-        if (locationData.status === 'success') {
-          if (locationData.city && locationData.country) {
-            const location = `${locationData.city}, ${locationData.country}`;
-            fromField.value = location;
-            fromField.placeholder = location;
-            console.log('✅ Backup location detected:', location);
-            return;
-          } else if (locationData.country) {
-            fromField.value = locationData.country;
-            fromField.placeholder = locationData.country;
-            console.log('✅ Backup country detected:', locationData.country);
-            return;
-          }
+        // freeipapi.com response format: { cityName, countryName, ... }
+        if (locationData.cityName && locationData.countryName) {
+          const location = `${locationData.cityName}, ${locationData.countryName}`;
+          fromField.value = location;
+          fromField.placeholder = location;
+          console.log('✅ Backup location detected:', location);
+          return;
+        } else if (locationData.countryName) {
+          fromField.value = locationData.countryName;
+          fromField.placeholder = locationData.countryName;
+          console.log('✅ Backup country detected:', locationData.countryName);
+          return;
         }
 
         throw new Error('Backup service also failed');
