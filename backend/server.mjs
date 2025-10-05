@@ -1734,37 +1734,40 @@ app.get('/api/debug', (req, res) => {
 // Location detection endpoint (CORS-friendly proxy)
 app.get('/api/location', async (req, res) => {
   try {
-    // Try ipapi.co first (most reliable)
-    const response = await fetch('https://ipapi.co/json/');
+    // Get client IP from request (Render provides this via x-forwarded-for)
+    const clientIp = req.headers['x-forwarded-for']?.split(',')[0] || req.connection.remoteAddress;
+
+    console.log('Location detection request from IP:', clientIp);
+
+    // Use ip-api.com (free, no API key, allows server requests)
+    const response = await fetch(`http://ip-api.com/json/${clientIp}`);
 
     if (!response.ok) {
-      throw new Error(`ipapi.co returned ${response.status}`);
+      throw new Error(`ip-api.com returned ${response.status}`);
     }
 
     const data = await response.json();
+    console.log('Location API response:', data);
 
-    // Check for error response
-    if (data.error) {
-      throw new Error(data.reason || 'Location service error');
+    // Check for success
+    if (data.status === 'success') {
+      if (data.city && data.country) {
+        return res.json({
+          success: true,
+          location: `${data.city}, ${data.country}`,
+          city: data.city,
+          country: data.country
+        });
+      } else if (data.country) {
+        return res.json({
+          success: true,
+          location: data.country,
+          country: data.country
+        });
+      }
     }
 
-    // Return formatted location
-    if (data.city && data.country_name) {
-      return res.json({
-        success: true,
-        location: `${data.city}, ${data.country_name}`,
-        city: data.city,
-        country: data.country_name
-      });
-    } else if (data.country_name) {
-      return res.json({
-        success: true,
-        location: data.country_name,
-        country: data.country_name
-      });
-    }
-
-    throw new Error('Incomplete location data');
+    throw new Error('Location detection failed: ' + (data.message || 'Unknown error'));
 
   } catch (error) {
     console.error('Location detection failed:', error.message);
