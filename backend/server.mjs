@@ -525,7 +525,22 @@ Use realistic ${destination} market prices for ${level} style travel. Make it cl
 [transportation options, tips, getting from/to airport]
 
 ## 🏨 Where to Stay
-Recommend 3-4 excellent hotels in ${destination} suitable for ${level} travelers. Include specific property names, addresses, estimated rates per night for ${nDays} nights, and what makes each special. Add [Book Now] links and brief descriptions of location advantages.
+Recommend 3-4 excellent hotels in ${destination} for ${level} travelers with these details:
+
+**For EACH hotel include:**
+- Hotel name and type (e.g., "Hotel Goldener Adler - Historic boutique hotel")
+- Full address with postal code
+- Estimated rate: €X-€Y per night (total for ${nDays} nights: €XXX-€XXX)
+- **ALWAYS add: [Book Now] link**
+- Why it's special: Location benefits, unique features, value proposition
+- Distance to main attractions
+
+**Example format:**
+**Hotel Central Innsbruck** (Traditional 3-star)
+- Address: Universitätsstraße 5, 6020 Innsbruck
+- Rate: €75-110/night (15 nights: €1,125-1,650 total)
+- [Book Now]
+- Perfect for: Walking distance to Old Town (5 min), great breakfast, family-run hospitality
 
 ## 🎫 Must-See Attractions
 **Context-Aware Attraction Booking:** 8-12 main attractions with smart booking integration:
@@ -541,33 +556,53 @@ Recommend 3-4 excellent hotels in ${destination} suitable for ${level} travelers
 [6-10 restaurants by area with price ranges and specialties]
 
 ## 🎭 Daily Itineraries
-IMPORTANT INSTRUCTIONS (DO NOT OUTPUT THIS TEXT):
-Create daily itineraries with this exact structure, but DO NOT include these formatting instructions in your output:
+IMPORTANT FORMATTING RULES (DO NOT OUTPUT THIS SECTION):
+Follow this exact structure but DO NOT include these instructions in your output:
 
-1. Format each day as: **Day X - Date (YYYY-MM-DD)**
-2. Organize each day into three time blocks with these emojis:
-   - 🌅 MORNING (9:00-12:00)
-   - 🌞 AFTERNOON (12:00-17:00)
-   - 🌆 EVENING (17:00-21:00)
-3. For each activity include:
-   - Activity name with duration
-   - Location/address
-   - Appropriate booking button: [Reserve Table], [Buy Tickets], [Book Experience], etc.
-   - [Map](map:VENUE_NAME+${destination}) link
-4. Add smart booking tips where relevant (peak hours, holidays, weather, group size, seasonal notes)
+**Daily Structure:**
+- Start each day with: **Day X - YYYY-MM-DD**
+- Use these exact time blocks with emojis:
+  * 🌅 MORNING (9:00-12:00)
+  * 🌞 AFTERNOON (12:00-17:00)
+  * 🌆 EVENING (17:00-21:00)
 
-OUTPUT FORMAT EXAMPLE:
-### Day 1 - 2024-10-15
+**Activity Format (for EACH activity):**
+✓ Activity name with specific venue (e.g., "Dinner at Stiftskeller Restaurant")
+✓ Full address or area (e.g., "Herzog-Friedrich-Straße 5, 6020 Innsbruck")
+✓ Duration estimate (e.g., "2 hours")
+✓ **ALWAYS add booking button** based on activity type:
+  - Restaurants/Cafes: [Reserve Table]
+  - Museums/Attractions: [Buy Tickets] or [Book Entry Tickets]
+  - Tours/Experiences: [Book Experience]
+  - Free activities: [Get Directions] or [Map] only
+✓ Map link: [Map](map:SPECIFIC_VENUE_NAME+${destination})
+✓ Pro tips when relevant (peak times, booking advice, weather notes)
+
+**CRITICAL - Evening Activities:**
+- ALWAYS name a specific restaurant for dinner
+- ALWAYS include [Reserve Table] button for every dinner
+- Include price range and cuisine type
+- Example: "Dinner at Gasthof Goldener Adler (traditional Tyrolean, €18-28) [Reserve Table] | [Map](map:Gasthof Goldener Adler+${destination})"
+
+**OUTPUT EXAMPLE (DO NOT INCLUDE THIS TEXT):**
+Day 1 - 2024-10-15
 
 🌅 MORNING (9:00-12:00)
-- Activity with [Map](map:location) and booking links
-- Tips and contextual advice
+- Arrival and hotel check-in at Hotel Innsbruck (2h)
+- Location: Innrain 3, 6020 Innsbruck
+- [Map](map:Hotel Innsbruck+${destination})
 
 🌞 AFTERNOON (12:00-17:00)
-- Activities with booking options
+- Innsbruck Old Town walking tour (3h)
+- Visit Golden Roof, Hofburg Palace, St. James Cathedral
+- [Buy Tickets] for Hofburg | [Map](map:Innsbruck Old Town+${destination})
+- Tip: Visit before 3 PM to avoid tour groups
 
 🌆 EVENING (17:00-21:00)
-- Evening activities and dining
+- Dinner at Stiftskeller Restaurant (traditional Austrian, €20-35)
+- Location: Herzog-Friedrich-Straße 1, Innsbruck
+- [Reserve Table] | [Map](map:Stiftskeller Innsbruck+${destination})
+- Evening stroll along Inn River promenade
 
 
 ## 🧳 Don't Forget List
