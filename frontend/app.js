@@ -3772,7 +3772,7 @@
     initializeReadingProgress();
 
     // Add activity priority indicators
-    addActivityIndicators();
+    // addActivityIndicators(); // TODO: Function not defined yet
 
     // Initialize intersection observer for current day highlighting
     initializeDayTracking();
@@ -3878,10 +3878,63 @@
     updateProgress(); // Initial call
   }
 
+  // Style booking links as buttons
+  function styleBookingButtons() {
+    const tripReport = document.querySelector(".trip-report");
+    if (!tripReport) return;
+
+    // Find all links that should be styled as buttons
+    const bookingLinks = tripReport.querySelectorAll('a[href*="getyourguide"], a[href*="#hotel-widget"], a[href*="#flight-widget"], a[href*="Book"], a[href*="Tickets"]');
+
+    bookingLinks.forEach(link => {
+      const text = link.textContent.trim();
+
+      // Skip if already has button class
+      if (link.classList.contains('btn-ticket') || link.classList.contains('btn-map')) return;
+
+      // Add appropriate button class based on link type
+      if (text.includes('Map') || link.href.includes('maps.google')) {
+        link.classList.add('btn-map');
+      } else if (text.includes('Book') || text.includes('Tickets') || text.includes('Reserve')) {
+        link.classList.add('btn-ticket');
+      }
+    });
+
+    console.log("✨ Booking buttons styled successfully");
+  }
+
+  // Ensure time separators are visible in daily itineraries
+  function ensureTimeSeparators() {
+    const tripReport = document.querySelector(".trip-report");
+    if (!tripReport) return;
+
+    // Find all H3 headings in itinerary (should be time blocks)
+    const timeHeadings = tripReport.querySelectorAll('h3');
+
+    timeHeadings.forEach(heading => {
+      const text = heading.textContent;
+
+      // Check if it's missing emoji icons
+      if (text.includes('MORNING') && !text.includes('🌅')) {
+        heading.textContent = text.replace('MORNING', '🌅 MORNING');
+      }
+      if (text.includes('AFTERNOON') && !text.includes('🌞')) {
+        heading.textContent = text.replace('AFTERNOON', '🌞 AFTERNOON');
+      }
+      if (text.includes('EVENING') && !text.includes('🌆')) {
+        heading.textContent = text.replace('EVENING', '🌆 EVENING');
+      }
+    });
+
+    console.log("⏰ Time separators verified");
+  }
+
   // Initialize enhanced features when trip report is ready
   function initializeAllEnhancements() {
     initializeEnhancedNavigation();
     initializeActivitySpecificButtons();
+    styleBookingButtons();
+    ensureTimeSeparators();
     console.log("🎯 Enhanced visual hierarchy initialized");
     console.log("🎫 Activity-specific buttons initialized");
   }

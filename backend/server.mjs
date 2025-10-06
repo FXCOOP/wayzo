@@ -513,6 +513,7 @@ Create a beautiful, realistic budget breakdown for ${destination}. Research actu
 
 | Category | Amount Range | Notes |
 |----------|-------------|--------|
+| ✈️ **Flights** | €X - €X | Round-trip for ${adults + children} travelers |
 | 🏨 **Accommodation** | €X - €X | (${nDays} nights, €X-X per night) |
 | 🍽️ **Food & Dining** | €X - €X | (€X-X per person/day, local restaurants) |
 | 🎫 **Activities** | €X - €X | (Museums, tours, attractions) |
@@ -531,7 +532,7 @@ Recommend 3-4 excellent hotels in ${destination} for ${level} travelers with the
 - Hotel name and type (e.g., "Hotel Goldener Adler - Historic boutique hotel")
 - Full address with postal code
 - Estimated rate: €X-€Y per night (total for ${nDays} nights: €XXX-€XXX)
-- **ALWAYS add: [Book Now] link**
+- **ALWAYS add just: [Book Now] with NO URL or anchor**
 - Why it's special: Location benefits, unique features, value proposition
 - Distance to main attractions
 
@@ -543,65 +544,97 @@ Recommend 3-4 excellent hotels in ${destination} for ${level} travelers with the
 - Perfect for: Walking distance to Old Town (5 min), great breakfast, family-run hospitality
 
 ## 🎫 Must-See Attractions
-**Context-Aware Attraction Booking:** 8-12 main attractions with smart booking integration:
-- **Paid attractions:** [Book Entry Tickets](https://www.getyourguide.com/s/?q=${destination}+ATTRACTION_NAME&partner_id=PUHVJ53) for museums, tours, experiences
-- **Free attractions:** [Get Directions] [Find Nearby Tours] links instead of booking
-- **Group activities:** [Book for ${adults + children} People] for tours and experiences
-- **Time-sensitive:** [Check Availability] for popular attractions that book up
-- **Section context:** Only show relevant booking options per attraction type
+**Attraction Booking Links - Use these EXACT tokens for paid attractions:**
+- For museums/attractions with entry fees: **[Book Entry Tickets]**
+- For tickets to events/shows: **[Buy Tickets]**
+- For tours/activities/experiences: **[Book Experience]**
 
-**Attraction Booking**: Use booking links for activities where relevant.
+**IMPORTANT**: These exact tokens will be automatically processed to add GetYourGuide partner links. DO NOT add URLs yourself.
+
+**For each attraction include:**
+- Attraction name and description
+- Address and location details
+- Entry fee or "Free"
+- Opening hours if relevant
+- **Use the exact booking tokens above for paid attractions**
+- [Map] link for location
 
 ## 🍽️ Dining Guide
-[6-10 restaurants by area with price ranges and specialties]
+**Restaurant Recommendations - Format for EACH restaurant:**
+- Restaurant name and cuisine type
+- Full address
+- Price range (€X-€Y per person)
+- Specialties and must-try dishes
+- **ONLY add [Map] link - NO reservation links**
+
+**Example format:**
+**Stiftskeller Innsbruck** (Traditional Tyrolean)
+- Address: Herzog-Friedrich-Straße 1, 6020 Innsbruck
+- Price: €18-€28 per person
+- Specialties: Wiener Schnitzel, Tiroler Gröstl, apple strudel
+- [Map]
 
 ## 🎭 Daily Itineraries
-IMPORTANT FORMATTING RULES (DO NOT OUTPUT THIS SECTION):
-Follow this exact structure but DO NOT include these instructions in your output:
+**CRITICAL FORMATTING REQUIREMENTS - You MUST follow this EXACT structure:**
 
-**Daily Structure:**
-- Start each day with: **Day X - YYYY-MM-DD**
-- Use these exact time blocks with emojis:
-  * 🌅 MORNING (9:00-12:00)
-  * 🌞 AFTERNOON (12:00-17:00)
-  * 🌆 EVENING (17:00-21:00)
+**EACH DAY MUST USE THIS EXACT FORMAT:**
 
-**Activity Format (for EACH activity):**
-✓ Activity name with specific venue (e.g., "Dinner at Stiftskeller Restaurant")
-✓ Full address or area (e.g., "Herzog-Friedrich-Straße 5, 6020 Innsbruck")
-✓ Duration estimate (e.g., "2 hours")
-✓ **ALWAYS add booking button** based on activity type:
-  - Restaurants/Cafes: [Reserve Table]
-  - Museums/Attractions: [Buy Tickets] or [Book Entry Tickets]
-  - Tours/Experiences: [Book Experience]
-  - Free activities: [Get Directions] or [Map] only
-✓ Map link: [Map](map:SPECIFIC_VENUE_NAME+${destination})
-✓ Pro tips when relevant (peak times, booking advice, weather notes)
+## Day 1 - 2025-10-09
 
-**CRITICAL - Evening Activities:**
-- ALWAYS name a specific restaurant for dinner
-- ALWAYS include [Reserve Table] button for every dinner
-- Include price range and cuisine type
-- Example: "Dinner at Gasthof Goldener Adler (traditional Tyrolean, €18-28) [Reserve Table] | [Map](map:Gasthof Goldener Adler+${destination})"
+### 🌅 MORNING (9:00-12:00)
+- Activity name with specific venue
+- Address: Full street address with postal code
+- Duration: X hours
+- [Booking Button] | [Map](map:venue+${destination})
+- Pro tip: Relevant advice
 
-**OUTPUT EXAMPLE (DO NOT INCLUDE THIS TEXT):**
-Day 1 - 2024-10-15
+### 🌞 AFTERNOON (12:00-17:00)
+- Activity name with specific venue
+- Address: Full street address with postal code
+- Duration: X hours
+- [Booking Button] | [Map](map:venue+${destination})
+- Pro tip: Relevant advice
 
-🌅 MORNING (9:00-12:00)
-- Arrival and hotel check-in at Hotel Innsbruck (2h)
-- Location: Innrain 3, 6020 Innsbruck
-- [Map](map:Hotel Innsbruck+${destination})
+### 🌆 EVENING (17:00-21:00)
+- Dinner at [SPECIFIC RESTAURANT NAME] (cuisine type, €X-Y)
+- Address: Full street address with postal code
+- Duration: 2 hours
+- [Map](map:restaurant+${destination})
+- Pro tip: Relevant advice
 
-🌞 AFTERNOON (12:00-17:00)
-- Innsbruck Old Town walking tour (3h)
+**MANDATORY RULES:**
+1. Use ### (H3 heading) for EVERY time block
+2. Include emoji AND time range: "### 🌅 MORNING (9:00-12:00)"
+3. ALWAYS use these exact emojis: 🌅 🌞 🌆
+4. ALWAYS include time ranges in parentheses
+5. For restaurants: ONLY use [Map] link - NO reservation buttons
+6. For attractions: Use [Book Entry Tickets], [Buy Tickets], or [Book Experience]
+7. For hotels: Use [Book Now]
+8. EVERY activity must have a [Map] link with format: [Map](map:venue+${destination})
+
+**EXAMPLE OUTPUT (Follow this EXACTLY):**
+
+## Day 1 - 2025-10-15
+
+### 🌅 MORNING (9:00-12:00)
+- Arrival and hotel check-in at Hotel Innsbruck
+- Address: Innrain 3, 6020 Innsbruck
+- Duration: 2 hours
+- [Book Now] | [Map](map:Hotel Innsbruck+${destination})
+
+### 🌞 AFTERNOON (12:00-17:00)
+- Innsbruck Old Town walking tour
 - Visit Golden Roof, Hofburg Palace, St. James Cathedral
-- [Buy Tickets] for Hofburg | [Map](map:Innsbruck Old Town+${destination})
-- Tip: Visit before 3 PM to avoid tour groups
+- Address: Herzog-Friedrich-Straße, 6020 Innsbruck
+- Duration: 3 hours
+- [Book Entry Tickets] | [Map](map:Innsbruck Old Town+${destination})
+- Pro tip: Visit before 3 PM to avoid tour groups
 
-🌆 EVENING (17:00-21:00)
+### 🌆 EVENING (17:00-21:00)
 - Dinner at Stiftskeller Restaurant (traditional Austrian, €20-35)
-- Location: Herzog-Friedrich-Straße 1, Innsbruck
-- [Reserve Table] | [Map](map:Stiftskeller Innsbruck+${destination})
+- Address: Herzog-Friedrich-Straße 1, 6020 Innsbruck
+- Duration: 2 hours
+- [Map](map:Stiftskeller Innsbruck+${destination})
 - Evening stroll along Inn River promenade
 
 
