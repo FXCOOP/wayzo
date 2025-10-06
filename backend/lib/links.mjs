@@ -50,10 +50,21 @@ export function linkifyTokens(markdown = '', dest = '') {
     .replace(/\[(Book|Book Now|Flights|Flight)\]\(flight:([^)]+)\)/gi,      (_m, _t, q) => `[Book Flights](#flight-widget)`)
     .replace(/\[(Book|Book Now|Flights|Flight)\]\(flights:([^)]+)\)/gi,     (_m, _t, q) => `[Book Flights](#flight-widget)`)
 
-    // Activity/Ticket links → GetYourGuide Widget
-    .replace(/\[(Tickets|Book|Book Now|Activities)\]\(tickets:([^)]+)\)/gi, (_m, _t, q) => `[Book Activities](#gyg-widget)`)
-    .replace(/\[(Tickets|Book|Book Now|Activities)\]\(activity:([^)]+)\)/gi,(_m, _t, q) => `[Book Activities](#gyg-widget)`)
-    .replace(/\[(Tickets|Book|Book Now|Activities)\]\(activities:([^)]+)\)/gi,(_m, _t, q) => `[Book Activities](#gyg-widget)`)
+    // Activity/Ticket links → GetYourGuide with partner ID (process tokens with colons first)
+    .replace(/\[(Tickets|Book Tickets|Book Entry Tickets|Buy Tickets|Book Experience|Book|Book Now|Activities)\]\(tickets:([^)]+)\)/gi, (_m, _t, q) => `[Book Tickets](https://www.getyourguide.com/s/?q=${encodeURIComponent(dest + ' ' + q.trim())}&partner_id=PUHVJ53)`)
+    .replace(/\[(Tickets|Book Tickets|Book Entry Tickets|Buy Tickets|Book Experience|Book|Book Now|Activities)\]\(activity:([^)]+)\)/gi,(_m, _t, q) => `[Book Tickets](https://www.getyourguide.com/s/?q=${encodeURIComponent(dest + ' ' + q.trim())}&partner_id=PUHVJ53)`)
+    .replace(/\[(Tickets|Book Tickets|Book Entry Tickets|Buy Tickets|Book Experience|Book|Book Now|Activities)\]\(activities:([^)]+)\)/gi,(_m, _t, q) => `[Book Tickets](https://www.getyourguide.com/s/?q=${encodeURIComponent(dest + ' ' + q.trim())}&partner_id=PUHVJ53)`)
+
+    // Standalone attraction booking tokens (no parentheses) → GetYourGuide
+    .replace(/\[Book Entry Tickets\]/gi, `[Book Entry Tickets](https://www.getyourguide.com/s/?q=${encodeURIComponent(dest)}&partner_id=PUHVJ53)`)
+    .replace(/\[Buy Tickets\]/gi, `[Buy Tickets](https://www.getyourguide.com/s/?q=${encodeURIComponent(dest)}&partner_id=PUHVJ53)`)
+    .replace(/\[Book Experience\]/gi, `[Book Experience](https://www.getyourguide.com/s/?q=${encodeURIComponent(dest)}&partner_id=PUHVJ53)`)
+
+    // Restaurant booking - REMOVED (no longer adding reservation links)
+    // Restaurants should only have [Map] links now
+
+    // Standalone [Book Now] in hotel sections → Hotel Widget
+    .replace(/\[Book Now\]/gi, '[Book Now](#hotel-widget)')
 
     // Car rental links → Car Widget
     .replace(/\[(Car|Rent|Car Rental)\]\(car:([^)]+)\)/gi,                  (_m, _t, q) => `[Rent Car](#car-widget)`)

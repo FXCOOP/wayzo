@@ -513,6 +513,7 @@ Create a beautiful, realistic budget breakdown for ${destination}. Research actu
 
 | Category | Amount Range | Notes |
 |----------|-------------|--------|
+| ✈️ **Flights** | €X - €X | Round-trip for ${adults + children} travelers |
 | 🏨 **Accommodation** | €X - €X | (${nDays} nights, €X-X per night) |
 | 🍽️ **Food & Dining** | €X - €X | (€X-X per person/day, local restaurants) |
 | 🎫 **Activities** | €X - €X | (Museums, tours, attractions) |
@@ -525,49 +526,116 @@ Use realistic ${destination} market prices for ${level} style travel. Make it cl
 [transportation options, tips, getting from/to airport]
 
 ## 🏨 Where to Stay
-Recommend 3-4 excellent hotels in ${destination} suitable for ${level} travelers. Include specific property names, addresses, estimated rates per night for ${nDays} nights, and what makes each special. Add [Book Now] links and brief descriptions of location advantages.
+Recommend 3-4 excellent hotels in ${destination} for ${level} travelers with these details:
+
+**For EACH hotel include:**
+- Hotel name and type (e.g., "Hotel Goldener Adler - Historic boutique hotel")
+- Full address with postal code
+- Estimated rate: €X-€Y per night (total for ${nDays} nights: €XXX-€XXX)
+- **ALWAYS add just: [Book Now] with NO URL or anchor**
+- Why it's special: Location benefits, unique features, value proposition
+- Distance to main attractions
+
+**Example format:**
+**Hotel Central Innsbruck** (Traditional 3-star)
+- Address: Universitätsstraße 5, 6020 Innsbruck
+- Rate: €75-110/night (15 nights: €1,125-1,650 total)
+- [Book Now]
+- Perfect for: Walking distance to Old Town (5 min), great breakfast, family-run hospitality
 
 ## 🎫 Must-See Attractions
-**Context-Aware Attraction Booking:** 8-12 main attractions with smart booking integration:
-- **Paid attractions:** [Book Entry Tickets](https://www.getyourguide.com/s/?q=${destination}+ATTRACTION_NAME&partner_id=PUHVJ53) for museums, tours, experiences
-- **Free attractions:** [Get Directions] [Find Nearby Tours] links instead of booking
-- **Group activities:** [Book for ${adults + children} People] for tours and experiences
-- **Time-sensitive:** [Check Availability] for popular attractions that book up
-- **Section context:** Only show relevant booking options per attraction type
+**Attraction Booking Links - Use these EXACT tokens for paid attractions:**
+- For museums/attractions with entry fees: **[Book Entry Tickets]**
+- For tickets to events/shows: **[Buy Tickets]**
+- For tours/activities/experiences: **[Book Experience]**
 
-**Attraction Booking**: Use booking links for activities where relevant.
+**IMPORTANT**: These exact tokens will be automatically processed to add GetYourGuide partner links. DO NOT add URLs yourself.
+
+**For each attraction include:**
+- Attraction name and description
+- Address and location details
+- Entry fee or "Free"
+- Opening hours if relevant
+- **Use the exact booking tokens above for paid attractions**
+- [Map] link for location
 
 ## 🍽️ Dining Guide
-[6-10 restaurants by area with price ranges and specialties]
+**Restaurant Recommendations - Format for EACH restaurant:**
+- Restaurant name and cuisine type
+- Full address
+- Price range (€X-€Y per person)
+- Specialties and must-try dishes
+- **ONLY add [Map] link - NO reservation links**
+
+**Example format:**
+**Stiftskeller Innsbruck** (Traditional Tyrolean)
+- Address: Herzog-Friedrich-Straße 1, 6020 Innsbruck
+- Price: €18-€28 per person
+- Specialties: Wiener Schnitzel, Tiroler Gröstl, apple strudel
+- [Map]
 
 ## 🎭 Daily Itineraries
-**Time-Blocked Daily Structure for Mobile-Friendly Format:**
-- **Day Format:** **Day X - Date (YYYY-MM-DD)**
-- **Time Blocks:** Organize each day into clear time sections:
-  - **🌅 MORNING (9:00-12:00):** Early activities, museums, sightseeing
-  - **🌞 AFTERNOON (12:00-17:00):** Main activities, lunch, major attractions
-  - **🌆 EVENING (17:00-21:00):** Dinner, leisure, entertainment
-- **Activity Format:** For each time block, list:
-  - **Activity Name** with duration estimate
-  - **Location/Address** for navigation
-  - **Activity-Specific Booking Buttons** (choose based on activity type):
-    - **Museums/Attractions:** [Buy Tickets] + [Check Hours]
-    - **Restaurants:** [Reserve Table] + [View Menu]
-    - **Tours/Activities:** [Book Experience] + [Details]
-    - **Transport:** [Book Ride] + [Directions]
-    - **Hotels:** [Check Availability] + [Photos]
-    - **General:** [Book Now] + [More Info]
-  - **[Map](map:VENUE_NAME+${destination})** for each location
-  - **Booking Options:** Include relevant booking links for each activity type
-  - **Smart Booking Intelligence:** Add contextual booking advice where relevant:
-    - **Peak Hours:** "⏰ Visit before 10 AM to avoid crowds"
-    - **Holiday Warnings:** "🚨 Bastille Day (July 14): Expect huge crowds, book early"
-    - **Local Events:** "🎉 Fashion Week happening - unique atmosphere but higher prices"
-    - **Weather Tips:** "☔ Rainy day perfect for indoor museums"
-    - **Group Optimization:** "👥 Groups 6+: Call ahead for reservations"
-    - **Seasonal Notes:** "🌸 Cherry blossom season: Peak tourism, book months ahead"
-    - **Time Optimization:** "🍽️ Lunch 12-2 PM: Book ahead, prix fixe menus available"
-- **Mobile Optimization:** Clear visual separation between time blocks, easy scanning
+**CRITICAL FORMATTING REQUIREMENTS - You MUST follow this EXACT structure:**
+
+**EACH DAY MUST USE THIS EXACT FORMAT:**
+
+## Day 1 - 2025-10-09
+
+### 🌅 MORNING (9:00-12:00)
+- Activity name with specific venue
+- Address: Full street address with postal code
+- Duration: X hours
+- [Booking Button] | [Map](map:venue+${destination})
+- Pro tip: Relevant advice
+
+### 🌞 AFTERNOON (12:00-17:00)
+- Activity name with specific venue
+- Address: Full street address with postal code
+- Duration: X hours
+- [Booking Button] | [Map](map:venue+${destination})
+- Pro tip: Relevant advice
+
+### 🌆 EVENING (17:00-21:00)
+- Dinner at [SPECIFIC RESTAURANT NAME] (cuisine type, €X-Y)
+- Address: Full street address with postal code
+- Duration: 2 hours
+- [Map](map:restaurant+${destination})
+- Pro tip: Relevant advice
+
+**MANDATORY RULES:**
+1. Use ### (H3 heading) for EVERY time block
+2. Include emoji AND time range: "### 🌅 MORNING (9:00-12:00)"
+3. ALWAYS use these exact emojis: 🌅 🌞 🌆
+4. ALWAYS include time ranges in parentheses
+5. For restaurants: ONLY use [Map] link - NO reservation buttons
+6. For attractions: Use [Book Entry Tickets], [Buy Tickets], or [Book Experience]
+7. For hotels: Use [Book Now]
+8. EVERY activity must have a [Map] link with format: [Map](map:venue+${destination})
+
+**EXAMPLE OUTPUT (Follow this EXACTLY):**
+
+## Day 1 - 2025-10-15
+
+### 🌅 MORNING (9:00-12:00)
+- Arrival and hotel check-in at Hotel Innsbruck
+- Address: Innrain 3, 6020 Innsbruck
+- Duration: 2 hours
+- [Book Now] | [Map](map:Hotel Innsbruck+${destination})
+
+### 🌞 AFTERNOON (12:00-17:00)
+- Innsbruck Old Town walking tour
+- Visit Golden Roof, Hofburg Palace, St. James Cathedral
+- Address: Herzog-Friedrich-Straße, 6020 Innsbruck
+- Duration: 3 hours
+- [Book Entry Tickets] | [Map](map:Innsbruck Old Town+${destination})
+- Pro tip: Visit before 3 PM to avoid tour groups
+
+### 🌆 EVENING (17:00-21:00)
+- Dinner at Stiftskeller Restaurant (traditional Austrian, €20-35)
+- Address: Herzog-Friedrich-Straße 1, 6020 Innsbruck
+- Duration: 2 hours
+- [Map](map:Stiftskeller Innsbruck+${destination})
+- Evening stroll along Inn River promenade
 
 
 ## 🧳 Don't Forget List
@@ -591,6 +659,12 @@ Must-have mobile apps for navigating ${destination} and enhancing your travel ex
 
 ## ⚠️ Disclaimer
 *Prices and availability subject to change. Verify details before booking.*
+
+CRITICAL INSTRUCTIONS:
+- DO NOT add AI disclaimers or meta-commentary like "This itinerary was generated by AI" or "Please verify information"
+- DO NOT add duplicate disclaimers after sections
+- The single disclaimer above is sufficient
+- Focus on providing practical, actionable travel information
 
 Generate the complete travel itinerary now using all the sections listed above.`;
 
@@ -1729,6 +1803,56 @@ app.get('/api/debug', (req, res) => {
     nodeEnv: process.env.NODE_ENV,
     timestamp: new Date().toISOString()
   });
+});
+
+// Location detection endpoint (CORS-friendly proxy)
+app.get('/api/location', async (req, res) => {
+  try {
+    // Get client IP from request (Render provides this via x-forwarded-for)
+    const clientIp = req.headers['x-forwarded-for']?.split(',')[0] || req.connection.remoteAddress;
+
+    console.log('Location detection request from IP:', clientIp);
+
+    // Use ip-api.com (free, no API key, allows server requests)
+    const response = await fetch(`http://ip-api.com/json/${clientIp}`);
+
+    if (!response.ok) {
+      throw new Error(`ip-api.com returned ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('Location API response:', data);
+
+    // Check for success
+    if (data.status === 'success') {
+      if (data.city && data.country) {
+        return res.json({
+          success: true,
+          location: `${data.city}, ${data.country}`,
+          city: data.city,
+          country: data.country
+        });
+      } else if (data.country) {
+        return res.json({
+          success: true,
+          location: data.country,
+          country: data.country
+        });
+      }
+    }
+
+    throw new Error('Location detection failed: ' + (data.message || 'Unknown error'));
+
+  } catch (error) {
+    console.error('Location detection failed:', error.message);
+
+    // Return error but don't crash
+    res.json({
+      success: false,
+      error: 'Location detection unavailable',
+      location: null
+    });
+  }
 });
 
 app.listen(PORT, () => {

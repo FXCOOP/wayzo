@@ -42,87 +42,36 @@
     fromField.placeholder = 'Detecting your location...';
 
     try {
-      console.log('Starting location detection with ipapi.co...');
+      console.log('Starting location detection via backend...');
 
-      // Try ipapi.co first
-      let response = await fetch('https://ipapi.co/json/', {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
+      // Call our backend proxy endpoint (no CORS issues!)
+      const response = await fetch('/api/location');
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        throw new Error(`Backend returned ${response.status}`);
       }
 
-      let data = await response.json();
-      console.log('Location data from ipapi.co:', data);
+      const data = await response.json();
+      console.log('Location data from backend:', data);
 
-      // Check for valid response
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      if (data.city && data.country_name) {
-        const location = `${data.city}, ${data.country_name}`;
-        fromField.value = location;
-        fromField.placeholder = location;
-        console.log('✅ Location detected successfully:', location);
-        return;
-      } else if (data.country_name) {
-        fromField.value = data.country_name;
-        fromField.placeholder = data.country_name;
-        console.log('✅ Country detected:', data.country_name);
+      if (data.success && data.location) {
+        fromField.value = data.location;
+        fromField.placeholder = data.location;
+        console.log('✅ Location detected successfully:', data.location);
         return;
       }
 
-      throw new Error('Incomplete location data');
+      throw new Error(data.error || 'Location detection failed');
 
     } catch (error) {
-      console.log('First service failed, trying backup:', error.message);
+      console.error('❌ Location detection failed:', error);
+      fromField.placeholder = 'Enter your departure city...';
+      fromField.value = '';
 
-      // Fallback to ipify + ip-api.com
-      try {
-        console.log('Trying backup location detection...');
-
-        // Get IP first
-        const ipResponse = await fetch('https://api.ipify.org?format=json');
-        const ipData = await ipResponse.json();
-        console.log('IP detected:', ipData.ip);
-
-        // Get location from IP
-        const locationResponse = await fetch(`http://ip-api.com/json/${ipData.ip}`);
-        const locationData = await locationResponse.json();
-        console.log('Backup location data:', locationData);
-
-        if (locationData.status === 'success') {
-          if (locationData.city && locationData.country) {
-            const location = `${locationData.city}, ${locationData.country}`;
-            fromField.value = location;
-            fromField.placeholder = location;
-            console.log('✅ Backup location detected:', location);
-            return;
-          } else if (locationData.country) {
-            fromField.value = locationData.country;
-            fromField.placeholder = locationData.country;
-            console.log('✅ Backup country detected:', locationData.country);
-            return;
-          }
-        }
-
-        throw new Error('Backup service also failed');
-
-      } catch (backupError) {
-        console.error('❌ All location detection services failed:', backupError);
-        fromField.placeholder = 'Enter your departure city...';
-        fromField.value = '';
-
-        // Show a subtle notification to user
-        setTimeout(() => {
-          console.log('Location detection not available, please enter manually');
-        }, 1000);
-      }
+      // Show a subtle notification to user
+      setTimeout(() => {
+        console.log('Location detection not available, please enter manually');
+      }, 1000);
     }
   };
   
@@ -3823,7 +3772,7 @@
     initializeReadingProgress();
 
     // Add activity priority indicators
-    addActivityIndicators();
+    // addActivityIndicators(); // TODO: Function not defined yet
 
     // Initialize intersection observer for current day highlighting
     initializeDayTracking();
@@ -3929,10 +3878,63 @@
     updateProgress(); // Initial call
   }
 
+  // Style booking links as buttons
+  function styleBookingButtons() {
+    const tripReport = document.querySelector(".trip-report");
+    if (!tripReport) return;
+
+    // Find all links that should be styled as buttons
+    const bookingLinks = tripReport.querySelectorAll('a[href*="getyourguide"], a[href*="#hotel-widget"], a[href*="#flight-widget"], a[href*="Book"], a[href*="Tickets"]');
+
+    bookingLinks.forEach(link => {
+      const text = link.textContent.trim();
+
+      // Skip if already has button class
+      if (link.classList.contains('btn-ticket') || link.classList.contains('btn-map')) return;
+
+      // Add appropriate button class based on link type
+      if (text.includes('Map') || link.href.includes('maps.google')) {
+        link.classList.add('btn-map');
+      } else if (text.includes('Book') || text.includes('Tickets') || text.includes('Reserve')) {
+        link.classList.add('btn-ticket');
+      }
+    });
+
+    console.log("✨ Booking buttons styled successfully");
+  }
+
+  // Ensure time separators are visible in daily itineraries
+  function ensureTimeSeparators() {
+    const tripReport = document.querySelector(".trip-report");
+    if (!tripReport) return;
+
+    // Find all H3 headings in itinerary (should be time blocks)
+    const timeHeadings = tripReport.querySelectorAll('h3');
+
+    timeHeadings.forEach(heading => {
+      const text = heading.textContent;
+
+      // Check if it's missing emoji icons
+      if (text.includes('MORNING') && !text.includes('🌅')) {
+        heading.textContent = text.replace('MORNING', '🌅 MORNING');
+      }
+      if (text.includes('AFTERNOON') && !text.includes('🌞')) {
+        heading.textContent = text.replace('AFTERNOON', '🌞 AFTERNOON');
+      }
+      if (text.includes('EVENING') && !text.includes('🌆')) {
+        heading.textContent = text.replace('EVENING', '🌆 EVENING');
+      }
+    });
+
+    console.log("⏰ Time separators verified");
+  }
+
   // Initialize enhanced features when trip report is ready
   function initializeAllEnhancements() {
     initializeEnhancedNavigation();
     initializeActivitySpecificButtons();
+    styleBookingButtons();
+    ensureTimeSeparators();
     console.log("🎯 Enhanced visual hierarchy initialized");
     console.log("🎫 Activity-specific buttons initialized");
   }
