@@ -532,7 +532,7 @@ Recommend 3-4 excellent hotels in ${destination} for ${level} travelers with the
 - Hotel name and type (e.g., "Hotel Goldener Adler - Historic boutique hotel")
 - Full address with postal code
 - Estimated rate: €X-€Y per night (total for ${nDays} nights: €XXX-€XXX)
-- **ALWAYS add just: [Book Now] with NO URL or anchor**
+- **ALWAYS add ONLY: [Book Now]** (exactly like this, with square brackets, NO URL, NO anchor, NO extra text)
 - Why it's special: Location benefits, unique features, value proposition
 - Distance to main attractions
 
@@ -544,19 +544,32 @@ Recommend 3-4 excellent hotels in ${destination} for ${level} travelers with the
 - Perfect for: Walking distance to Old Town (5 min), great breakfast, family-run hospitality
 
 ## 🎫 Must-See Attractions
-**Attraction Booking Links - Use these EXACT tokens for paid attractions:**
-- For museums/attractions with entry fees: **[Book Entry Tickets]**
-- For tickets to events/shows: **[Buy Tickets]**
-- For tours/activities/experiences: **[Book Experience]**
 
-**IMPORTANT**: These exact tokens will be automatically processed to add GetYourGuide partner links. DO NOT add URLs yourself.
+**CRITICAL: Booking Link Rules**
+1. Use ONLY these exact tokens (in square brackets):
+   - **[Book Entry Tickets]** for museums/attractions with entry fees
+   - **[Buy Tickets]** for tickets to events/shows
+   - **[Book Experience]** for tours/activities/experiences
+
+2. **NEVER add URLs or links yourself** - the system will automatically convert these tokens to working links
+3. **NEVER add "Booking:" labels** - just use the token directly
+
+**WRONG Examples:**
+- ❌ Booking: Book Entry Tickets(https://...)
+- ❌ [Book Entry Tickets](https://www.getyourguide.com...)
+- ❌ Book Entry Tickets (no brackets)
+
+**CORRECT Examples:**
+- ✅ [Book Entry Tickets]
+- ✅ [Buy Tickets]
+- ✅ [Book Experience]
 
 **For each attraction include:**
 - Attraction name and description
 - Address and location details
 - Entry fee or "Free"
 - Opening hours if relevant
-- **Use the exact booking tokens above for paid attractions**
+- Use ONLY the exact booking tokens above (with square brackets) for paid attractions
 - [Map] link for location
 
 ## 🍽️ Dining Guide
@@ -575,9 +588,12 @@ Recommend 3-4 excellent hotels in ${destination} for ${level} travelers with the
 - [Map]
 
 ## 🎭 Daily Itineraries
-**CRITICAL FORMATTING REQUIREMENTS - You MUST follow this EXACT structure:**
 
-**EACH DAY MUST USE THIS EXACT FORMAT:**
+**INTERNAL INSTRUCTIONS (DO NOT OUTPUT THE TEXT BELOW - FOLLOW THE FORMAT ONLY):**
+
+You MUST follow this EXACT structure for each day. Do NOT include these instructions in your output - they are formatting guidelines only.
+
+**FORMAT TO FOLLOW:**
 
 ## Day 1 - 2025-10-09
 
@@ -610,7 +626,8 @@ Recommend 3-4 excellent hotels in ${destination} for ${level} travelers with the
 5. For restaurants: ONLY use [Map] link - NO reservation buttons
 6. For attractions: Use [Book Entry Tickets], [Buy Tickets], or [Book Experience]
 7. For hotels: Use [Book Now]
-8. EVERY activity must have a [Map] link with format: [Map](map:venue+${destination})
+8. **Map links**: ALWAYS use format [Map](map:VenueName+${destination}) - the system will convert this to Google Maps URL
+9. **NEVER use**: [Map](https://www.google.com/maps...) - this will break the link processing
 
 **EXAMPLE OUTPUT (Follow this EXACTLY):**
 
@@ -636,6 +653,13 @@ Recommend 3-4 excellent hotels in ${destination} for ${level} travelers with the
 - Duration: 2 hours
 - [Map](map:Stiftskeller Innsbruck+${destination})
 - Evening stroll along Inn River promenade
+
+**MANDATORY BOOKING TOKEN RULES:**
+- For hotels: [Book Now]
+- For attractions: [Book Entry Tickets]
+- For restaurants: ONLY [Map] - NO booking buttons
+- NEVER add URLs or "Booking:" labels
+- The system will automatically convert these tokens to working links
 
 
 ## 🧳 Don't Forget List
