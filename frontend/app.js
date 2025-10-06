@@ -3457,9 +3457,11 @@
     newScript.onload = () => {
       console.log('✅ Widget script loaded successfully:', script.src);
     };
-    
-    // Replace the old script with the new one
-    script.parentNode.replaceChild(newScript, script);
+
+    // Replace the old script with the new one (check parent exists)
+    if (script.parentNode) {
+      script.parentNode.replaceChild(newScript, script);
+    }
   }
 
   // Define missing toggle functions
@@ -3775,7 +3777,7 @@
     // addActivityIndicators(); // TODO: Function not defined yet
 
     // Initialize intersection observer for current day highlighting
-    initializeDayTracking();
+    // initializeDayTracking(); // TODO: Function not defined yet
   }
 
   function createDayNavigation() {
