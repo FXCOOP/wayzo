@@ -32,12 +32,27 @@ export function linkifyTokens(markdown = '', dest = '') {
   console.log('Processing markdown for destination:', dest);
   console.log('Image function:', aff.image);
   console.log('Original markdown length:', markdown.length);
-  
+
   // Find all image tokens before processing
   const imageMatches = markdown.match(/!\[([^\]]*)\]\(image:([^)]+)\)/gi);
   console.log('Found image tokens:', imageMatches);
-  
-  const processed = (markdown || '')
+
+  // CLEANUP: Remove AI mistakes before processing
+  let cleaned = (markdown || '')
+    // Remove visible anchor text that AI added by mistake
+    .replace(/\(#hotel-widget\)/g, '')
+    .replace(/\(#flight-widget\)/g, '')
+    .replace(/\(#car-widget\)/g, '')
+    .replace(/\(#gyg-widget\)/g, '')
+    // Remove URLs that AI added to booking tokens
+    .replace(/\[Book Entry Tickets\]\(https:\/\/www\.getyourguide\.com[^)]*\)/gi, '[Book Entry Tickets]')
+    .replace(/\[Buy Tickets\]\(https:\/\/www\.getyourguide\.com[^)]*\)/gi, '[Buy Tickets]')
+    .replace(/\[Book Experience\]\(https:\/\/www\.getyourguide\.com[^)]*\)/gi, '[Book Experience]')
+    // Remove internal instruction text that leaked
+    .replace(/CRITICAL FORMATTING REQUIREMENTS[^]*?(?=##|$)/gi, '')
+    .replace(/INTERNAL INSTRUCTIONS[^]*?(?=##|$)/gi, '');
+
+  const processed = cleaned
     // Maps - keep external link for Google Maps
     .replace(/\[(Map)\]\(map:([^)]+)\)/gi,        (_m, _t, q) => `[Map](${aff.maps(q.trim())})`)
 
