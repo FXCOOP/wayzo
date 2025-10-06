@@ -10,4 +10,4 @@ services:
         value: production
       - key: PORT
         value: 10000
-      # Force deployment trigger
+      # Force deployment trigger - staging 2025-10-06
