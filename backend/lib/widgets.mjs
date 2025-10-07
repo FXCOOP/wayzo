@@ -418,13 +418,19 @@ async function injectWidgetsIntoSections(html, widgets, destination = '', startD
       }
     }
 
-    // 3. Add Flight, Hotel, Car, Airport Transfer widgets to Budget Breakdown section
-    const budgetH2 = Array.from(doc.querySelectorAll('h2')).find(h => 
+    // 3. Add Flight, Hotel, Car, Airport Transfer widgets between Emergency Info and Disclaimer
+    const emergencyH2 = Array.from(doc.querySelectorAll('h2')).find(h =>
+      h.textContent.includes("Emergency Info") || h.textContent.includes("🚨")
+    );
+
+    // Also check if budgetH2 exists for the budget table logic below
+    const budgetH2 = Array.from(doc.querySelectorAll('h2')).find(h =>
       h.textContent.includes("Budget Breakdown") || h.textContent.includes("💰")
     );
-    if (budgetH2) {
+
+    if (emergencyH2) {
       const budgetWidgets = widgets.filter(w => w.placement === "budget_breakdown");
-      
+
       budgetWidgets.forEach(widget => {
         const widgetDiv = doc.createElement('div');
         widgetDiv.className = 'section-widget';
@@ -438,16 +444,16 @@ async function injectWidgetsIntoSections(html, widgets, destination = '', startD
             ${widget.script}
           </div>
         `;
-        
-        // Insert after Budget Breakdown section content
-        let nextH2 = budgetH2.nextElementSibling;
+
+        // Insert after Emergency Info section content (before next H2 which should be Disclaimer)
+        let nextH2 = emergencyH2.nextElementSibling;
         while (nextH2 && nextH2.tagName !== 'H2') {
           nextH2 = nextH2.nextElementSibling;
         }
-        
+
         if (nextH2) {
           nextH2.parentNode.insertBefore(widgetDiv, nextH2);
-          widgetsInjected["Budget Breakdown"]++;
+          widgetsInjected["Emergency Info"]++;
         }
       });
     }
