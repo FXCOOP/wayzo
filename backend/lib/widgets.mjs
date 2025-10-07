@@ -155,8 +155,17 @@ const AFFILIATE_WIDGETS = {
   airport_transfers: {
     name: "Airport Transfers",
     description: "Book reliable airport pickup and drop-off",
-    script: `<div data-airport-widget="transfer" id="airport-widget"></div>
-<script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&show_header=true&campaign_id=627&promo_id=8951" charset="utf-8"></script>`,
+    script: (destination = '', startDate = null, endDate = null, travelers = 2) => {
+      const dest = destination.split(',')[0].trim(); // Extract city name
+      const arrivalDate = startDate ? new Date(startDate).toISOString().split('T')[0] : '';
+
+      // Build data attributes for pre-filling
+      const dataAttrs = arrivalDate ?
+        `data-destination="${dest}" data-arrival-date="${arrivalDate}" data-passengers="${travelers}"` : '';
+
+      return `<div data-airport-widget="transfer" id="airport-widget" ${dataAttrs}></div>
+<script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&show_header=true&campaign_id=627&promo_id=8951" charset="utf-8"></script>`;
+    },
     category: "transport",
     placement: "budget_breakdown"
   },
@@ -175,28 +184,58 @@ const AFFILIATE_WIDGETS = {
   car_rentals: {
     name: "Car Rentals",
     description: "Rent a car for your trip",
-    script: `<div data-car-widget="rental" id="car-widget"></div>
-<script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&border_radius=5&plain=true&show_logo=true&color_background=%23ffca28&color_button=%2355a539&color_text=%23000000&color_input_text=%23000000&color_button_text=%23ffffff&promo_id=4480&campaign_id=10" charset="utf-8"></script>`,
+    script: (destination = '', startDate = null, endDate = null, travelers = 2) => {
+      const dest = destination.split(',')[0].trim(); // Extract city name
+      const pickupDate = startDate ? new Date(startDate).toISOString().split('T')[0] : '';
+      const dropoffDate = endDate ? new Date(endDate).toISOString().split('T')[0] : '';
+
+      // Build data attributes for pre-filling
+      const dataAttrs = pickupDate && dropoffDate ?
+        `data-pickup-date="${pickupDate}" data-dropoff-date="${dropoffDate}" data-destination="${dest}"` : '';
+
+      return `<div data-car-widget="rental" id="car-widget" ${dataAttrs}></div>
+<script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&border_radius=5&plain=true&show_logo=true&color_background=%23ffca28&color_button=%2355a539&color_text=%23000000&color_input_text=%23000000&color_button_text=%23ffffff&promo_id=4480&campaign_id=10" charset="utf-8"></script>`;
+    },
     category: "transport",
     placement: "budget_breakdown"
   },
-  
+
   // Flight Search - for Budget Breakdown
   flight_search: {
     name: "Flight Search",
     description: "Find the best flight deals",
-    script: `<div data-flight-widget="search" id="flight-widget"></div>
-<script async src="https://tpwdgt.com/content?currency=usd&trs=455192&shmarker=634822&show_hotels=true&locale=en&searchUrl=www.aviasales.com%2Fsearch&primary_override=%2332a8dd&color_button=%2355a539&color_icons=%2332a8dd&dark=%23262626&light=%23FFFFFF&secondary=%23FFFFFF&special=%23C4C4C4&color_focused=%2332a8dd&border_radius=5&plain=false&promo_id=7879&campaign_id=100" charset="utf-8"></script>`,
+    script: (destination = '', startDate = null, endDate = null, travelers = 2, origin = '') => {
+      const dest = destination.split(',')[0].trim(); // Extract city name
+      const departDate = startDate ? new Date(startDate).toISOString().split('T')[0] : '';
+      const returnDate = endDate ? new Date(endDate).toISOString().split('T')[0] : '';
+
+      // Build data attributes for pre-filling
+      const dataAttrs = departDate && returnDate ?
+        `data-destination="${dest}" data-origin="${origin}" data-depart-date="${departDate}" data-return-date="${returnDate}" data-passengers="${travelers}"` : '';
+
+      return `<div data-flight-widget="search" id="flight-widget" ${dataAttrs}></div>
+<script async src="https://tpwdgt.com/content?currency=usd&trs=455192&shmarker=634822&show_hotels=true&locale=en&searchUrl=www.aviasales.com%2Fsearch&primary_override=%2332a8dd&color_button=%2355a539&color_icons=%2332a8dd&dark=%23262626&light=%23FFFFFF&secondary=%23FFFFFF&special=%23C4C4C4&color_focused=%2332a8dd&border_radius=5&plain=false&promo_id=7879&campaign_id=100" charset="utf-8"></script>`;
+    },
     category: "flights",
     placement: "budget_breakdown"
   },
-  
+
   // Hotel Booking - for Budget Breakdown
   hotel_booking: {
     name: "Hotel Booking",
     description: "Book your accommodation",
-    script: `<div data-hotel-widget="search" id="hotel-widget"></div>
-<script async src="https://tpwdgt.com/content?currency=usd&trs=455192&shmarker=634822&show_hotels=true&locale=en&powered_by=false&searchUrl=www.aviasales.com%2Fsearch&primary_override=%2332a8dd&color_button=%2355a539&color_icons=%2332a8dd&secondary=%23FFFFFF&dark=%23262626&light=%23FFFFFF&special=%23C4C4C4&color_focused=%2332a8dd&border_radius=5&plain=false&promo_id=7873&campaign_id=101" charset="utf-8"></script>`,
+    script: (destination = '', startDate = null, endDate = null, travelers = 2) => {
+      const dest = destination.split(',')[0].trim(); // Extract city name
+      const checkinDate = startDate ? new Date(startDate).toISOString().split('T')[0] : '';
+      const checkoutDate = endDate ? new Date(endDate).toISOString().split('T')[0] : '';
+
+      // Build data attributes for pre-filling
+      const dataAttrs = checkinDate && checkoutDate ?
+        `data-destination="${dest}" data-checkin="${checkinDate}" data-checkout="${checkoutDate}" data-guests="${travelers}"` : '';
+
+      return `<div data-hotel-widget="search" id="hotel-widget" ${dataAttrs}></div>
+<script async src="https://tpwdgt.com/content?currency=usd&trs=455192&shmarker=634822&show_hotels=true&locale=en&powered_by=false&searchUrl=www.aviasales.com%2Fsearch&primary_override=%2332a8dd&color_button=%2355a539&color_icons=%2332a8dd&secondary=%23FFFFFF&dark=%23262626&light=%23FFFFFF&special=%23C4C4C4&color_focused=%2332a8dd&border_radius=5&plain=false&promo_id=7873&campaign_id=101" charset="utf-8"></script>`;
+    },
     category: "accommodation",
     placement: "budget_breakdown"
   },
@@ -241,7 +280,13 @@ function getWidgetsForDestination(destination, tripType, interests = []) {
 // JSDOM-based widget injection with precise placement
 async function injectWidgetsIntoSections(html, widgets, destination = '', startDate = null, endDate = null, budgetData = null) {
   if (!widgets || widgets.length === 0) return html;
-  
+
+  // Extract traveler count and origin from budgetData
+  const adults = budgetData?.adults || 2;
+  const children = budgetData?.children || 0;
+  const totalTravelers = adults + children;
+  const origin = budgetData?.origin || ''; // Origin city if available
+
   try {
     const dom = new JSDOM(html);
     const doc = dom.window.document;
@@ -435,13 +480,19 @@ async function injectWidgetsIntoSections(html, widgets, destination = '', startD
         const widgetDiv = doc.createElement('div');
         widgetDiv.className = 'section-widget';
         widgetDiv.setAttribute('data-category', widget.category);
+
+        // Generate widget script with trip parameters
+        const widgetScript = typeof widget.script === 'function'
+          ? widget.script(destination, startDate, endDate, totalTravelers, origin)
+          : widget.script;
+
         widgetDiv.innerHTML = `
           <div class="widget-header">
             <h4>${widget.name}</h4>
             <p>${widget.description}</p>
           </div>
           <div class="widget-content">
-            ${widget.script}
+            ${widgetScript}
           </div>
         `;
 
