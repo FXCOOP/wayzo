@@ -506,21 +506,34 @@ Write a warm, personal welcome that makes the traveler excited about their upcom
 
 ## 💰 Budget Breakdown
 
-Create a beautiful, realistic budget breakdown for ${destination}. Research actual ${destination} prices for ${level} travel style. Format as:
+CRITICAL: You MUST generate REALISTIC numeric budget estimates based on actual ${destination} prices for ${level} travel style. DO NOT use placeholder text like "€X" or "€0". Calculate real numbers for ${adults + children} travelers over ${nDays} days.
 
-**💰 Total Budget Estimate: €X,XXX - €X,XXX**
+Research current ${destination} market prices:
+- ${level === 'luxury' ? 'High-end' : level === 'mid-range' ? 'Mid-range' : 'Budget-friendly'} accommodation costs per night
+- Typical meal prices for ${level} dining
+- Flight costs from major European cities to ${destination}
+- Local transportation and activity prices
+
+Format the budget breakdown as:
+
+**💰 Total Budget Estimate: €[calculated total low] - €[calculated total high]**
 *For ${adults + children} travelers • ${nDays} days*
 
 | Category | Amount Range | Notes |
 |----------|-------------|--------|
-| ✈️ **Flights** | €X - €X | Round-trip for ${adults + children} travelers |
-| 🏨 **Accommodation** | €X - €X | (${nDays} nights, €X-X per night) |
-| 🍽️ **Food & Dining** | €X - €X | (€X-X per person/day, local restaurants) |
-| 🎫 **Activities** | €X - €X | (Museums, tours, attractions) |
-| 🚌 **Transportation** | €X - €X | (Local transit, airport transfers) |
-| 🛍️ **Miscellaneous** | €X - €X | (Souvenirs, tips, emergency fund) |
+| ✈️ **Flights** | €[calculate realistic range] | Round-trip for ${adults + children} travelers |
+| 🏨 **Accommodation** | €[calculate: nights × rate × travelers] | (${nDays} nights, €[realistic rate] per night) |
+| 🍽️ **Food & Dining** | €[calculate: days × meals × travelers] | (€[realistic daily rate] per person/day, local restaurants) |
+| 🎫 **Activities** | €[calculate based on typical attraction prices] | (Museums, tours, attractions) |
+| 🚌 **Transportation** | €[calculate local transport costs] | (Local transit, airport transfers) |
+| 🛍️ **Miscellaneous** | €[calculate: 10-15% of subtotal] | (Souvenirs, tips, emergency fund) |
 
-Use realistic ${destination} market prices for ${level} style travel. Make it clean, professional, and budget-appropriate.${destination.toLowerCase().includes('ski') || destination.toLowerCase().includes('bansko') || destination.toLowerCase().includes('alps') || professional_brief?.toLowerCase().includes('ski') ? ' Include equipment rental costs for ski gear, lessons, and lift passes.' : ''}
+EXAMPLE for context (adjust for your destination):
+- Budget style in Eastern Europe: €50-80/night accommodation, €25-35/day food
+- Mid-range in Western Europe: €120-180/night accommodation, €50-70/day food
+- Luxury anywhere: €250+/night accommodation, €100+/day food
+
+Make ALL numbers realistic and appropriate for ${destination}.${destination.toLowerCase().includes('ski') || destination.toLowerCase().includes('bansko') || destination.toLowerCase().includes('alps') || professional_brief?.toLowerCase().includes('ski') ? ' Include equipment rental costs for ski gear (€30-50/day), lessons (€50-100), and lift passes (€40-60/day).' : ''}
 
 ## 🗺️ Getting Around
 [transportation options, tips, getting from/to airport]
