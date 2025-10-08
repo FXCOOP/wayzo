@@ -3508,6 +3508,56 @@
   window.initializeWidgetAutoFill = () => {
     console.log('🎯 Initializing widget auto-fill fallback...');
 
+    // Debug: Check if data attributes exist on widgets
+    const flightWidget = document.querySelector('[data-flight-widget]');
+    const hotelWidget = document.querySelector('[data-hotel-widget]');
+    const carWidget = document.querySelector('[data-car-widget]');
+    const airportWidget = document.querySelector('[data-airport-widget]');
+
+    console.log('🔍 Widget Data Attributes Check:');
+    if (flightWidget) {
+      console.log('✈️ Flight Widget:', {
+        destination: flightWidget.getAttribute('data-destination'),
+        origin: flightWidget.getAttribute('data-origin'),
+        departDate: flightWidget.getAttribute('data-depart-date'),
+        returnDate: flightWidget.getAttribute('data-return-date'),
+        passengers: flightWidget.getAttribute('data-passengers')
+      });
+    } else {
+      console.warn('❌ Flight widget not found in DOM');
+    }
+
+    if (hotelWidget) {
+      console.log('🏨 Hotel Widget:', {
+        destination: hotelWidget.getAttribute('data-destination'),
+        checkin: hotelWidget.getAttribute('data-checkin'),
+        checkout: hotelWidget.getAttribute('data-checkout'),
+        guests: hotelWidget.getAttribute('data-guests')
+      });
+    } else {
+      console.warn('❌ Hotel widget not found in DOM');
+    }
+
+    if (carWidget) {
+      console.log('🚗 Car Widget:', {
+        destination: carWidget.getAttribute('data-destination'),
+        pickupDate: carWidget.getAttribute('data-pickup-date'),
+        dropoffDate: carWidget.getAttribute('data-dropoff-date')
+      });
+    } else {
+      console.warn('❌ Car widget not found in DOM');
+    }
+
+    if (airportWidget) {
+      console.log('🚖 Airport Widget:', {
+        destination: airportWidget.getAttribute('data-destination'),
+        arrivalDate: airportWidget.getAttribute('data-arrival-date'),
+        passengers: airportWidget.getAttribute('data-passengers')
+      });
+    } else {
+      console.warn('❌ Airport widget not found in DOM');
+    }
+
     // Wait for widgets to load before attempting to fill
     setTimeout(() => {
       fillFlightWidget();
