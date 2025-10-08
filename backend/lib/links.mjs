@@ -50,11 +50,17 @@ export function linkifyTokens(markdown = '', dest = '') {
     .replace(/\[Book Experience\]\(https:\/\/www\.getyourguide\.com[^)]*\)/gi, '[Book Experience]')
     // Remove internal instruction text that leaked
     .replace(/CRITICAL FORMATTING REQUIREMENTS[^]*?(?=##|$)/gi, '')
-    .replace(/INTERNAL INSTRUCTIONS[^]*?(?=##|$)/gi, '');
+    .replace(/INTERNAL INSTRUCTIONS[^]*?(?=##|$)/gi, '')
+    // Remove "Restaurant Recommendations - Format..." instruction line
+    .replace(/Restaurant Recommendations - Format for EACH restaurant:\s*\n\s*\n/gi, '')
+    // Fix malformed Day 1 header (** ## Day -> ## Day)
+    .replace(/\*\*\s*##\s*(Day \d+)/gi, '## $1');
 
   const processed = cleaned
     // Maps - keep external link for Google Maps
     .replace(/\[(Map)\]\(map:([^)]+)\)/gi,        (_m, _t, q) => `[Map](${aff.maps(q.trim())})`)
+    // Fix standalone [Map] without protocol (AI mistake)
+    .replace(/\[Map\](?!\()/gi, `[Map](${aff.maps(dest)})`)
 
     // Hotel/Accommodation links → Hotel Widget
     .replace(/\[(Book|Book Now|Book Hotel|Hotel)\]\(book:([^)]+)\)/gi,      (_m, _t, q) => `[Book Hotel](#hotel-widget)`)

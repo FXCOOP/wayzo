@@ -506,21 +506,34 @@ Write a warm, personal welcome that makes the traveler excited about their upcom
 
 ## 💰 Budget Breakdown
 
-Create a beautiful, realistic budget breakdown for ${destination}. Research actual ${destination} prices for ${level} travel style. Format as:
+CRITICAL: You MUST generate REALISTIC numeric budget estimates based on actual ${destination} prices for ${level} travel style. DO NOT use placeholder text like "€X" or "€0". Calculate real numbers for ${adults + children} travelers over ${nDays} days.
 
-**💰 Total Budget Estimate: €X,XXX - €X,XXX**
+Research current ${destination} market prices:
+- ${level === 'luxury' ? 'High-end' : level === 'mid-range' ? 'Mid-range' : 'Budget-friendly'} accommodation costs per night
+- Typical meal prices for ${level} dining
+- Flight costs from major European cities to ${destination}
+- Local transportation and activity prices
+
+Format the budget breakdown as:
+
+**💰 Total Budget Estimate: €[calculated total low] - €[calculated total high]**
 *For ${adults + children} travelers • ${nDays} days*
 
 | Category | Amount Range | Notes |
 |----------|-------------|--------|
-| ✈️ **Flights** | €X - €X | Round-trip for ${adults + children} travelers |
-| 🏨 **Accommodation** | €X - €X | (${nDays} nights, €X-X per night) |
-| 🍽️ **Food & Dining** | €X - €X | (€X-X per person/day, local restaurants) |
-| 🎫 **Activities** | €X - €X | (Museums, tours, attractions) |
-| 🚌 **Transportation** | €X - €X | (Local transit, airport transfers) |
-| 🛍️ **Miscellaneous** | €X - €X | (Souvenirs, tips, emergency fund) |
+| ✈️ **Flights** | €[calculate realistic range] | Round-trip for ${adults + children} travelers |
+| 🏨 **Accommodation** | €[calculate: nights × rate × travelers] | (${nDays} nights, €[realistic rate] per night) |
+| 🍽️ **Food & Dining** | €[calculate: days × meals × travelers] | (€[realistic daily rate] per person/day, local restaurants) |
+| 🎫 **Activities** | €[calculate based on typical attraction prices] | (Museums, tours, attractions) |
+| 🚌 **Transportation** | €[calculate local transport costs] | (Local transit, airport transfers) |
+| 🛍️ **Miscellaneous** | €[calculate: 10-15% of subtotal] | (Souvenirs, tips, emergency fund) |
 
-Use realistic ${destination} market prices for ${level} style travel. Make it clean, professional, and budget-appropriate.${destination.toLowerCase().includes('ski') || destination.toLowerCase().includes('bansko') || destination.toLowerCase().includes('alps') || professional_brief?.toLowerCase().includes('ski') ? ' Include equipment rental costs for ski gear, lessons, and lift passes.' : ''}
+EXAMPLE for context (adjust for your destination):
+- Budget style in Eastern Europe: €50-80/night accommodation, €25-35/day food
+- Mid-range in Western Europe: €120-180/night accommodation, €50-70/day food
+- Luxury anywhere: €250+/night accommodation, €100+/day food
+
+Make ALL numbers realistic and appropriate for ${destination}.${destination.toLowerCase().includes('ski') || destination.toLowerCase().includes('bansko') || destination.toLowerCase().includes('alps') || professional_brief?.toLowerCase().includes('ski') ? ' Include equipment rental costs for ski gear (€30-50/day), lessons (€50-100), and lift passes (€40-60/day).' : ''}
 
 ## 🗺️ Getting Around
 [transportation options, tips, getting from/to airport]
@@ -560,59 +573,16 @@ Recommend 3-4 excellent hotels in ${destination} for ${level} travelers with the
 - [Map] link for location
 
 ## 🍽️ Dining Guide
-**Restaurant Recommendations - Format for EACH restaurant:**
-- Restaurant name and cuisine type
-- Full address
-- Price range (€X-€Y per person)
-- Specialties and must-try dishes
-- **ONLY add [Map] link - NO reservation links**
 
-**Example format:**
 **Stiftskeller Innsbruck** (Traditional Tyrolean)
 - Address: Herzog-Friedrich-Straße 1, 6020 Innsbruck
 - Price: €18-€28 per person
 - Specialties: Wiener Schnitzel, Tiroler Gröstl, apple strudel
 - [Map]
 
+Recommend 3-4 local restaurants following this exact format. Include varied cuisine types and price ranges. Add ONLY [Map] links.
+
 ## 🎭 Daily Itineraries
-**CRITICAL FORMATTING REQUIREMENTS - You MUST follow this EXACT structure:**
-
-**EACH DAY MUST USE THIS EXACT FORMAT:**
-
-## Day 1 - 2025-10-09
-
-### 🌅 MORNING (9:00-12:00)
-- Activity name with specific venue
-- Address: Full street address with postal code
-- Duration: X hours
-- [Booking Button] | [Map](map:venue+${destination})
-- Pro tip: Relevant advice
-
-### 🌞 AFTERNOON (12:00-17:00)
-- Activity name with specific venue
-- Address: Full street address with postal code
-- Duration: X hours
-- [Booking Button] | [Map](map:venue+${destination})
-- Pro tip: Relevant advice
-
-### 🌆 EVENING (17:00-21:00)
-- Dinner at [SPECIFIC RESTAURANT NAME] (cuisine type, €X-Y)
-- Address: Full street address with postal code
-- Duration: 2 hours
-- [Map](map:restaurant+${destination})
-- Pro tip: Relevant advice
-
-**MANDATORY RULES:**
-1. Use ### (H3 heading) for EVERY time block
-2. Include emoji AND time range: "### 🌅 MORNING (9:00-12:00)"
-3. ALWAYS use these exact emojis: 🌅 🌞 🌆
-4. ALWAYS include time ranges in parentheses
-5. For restaurants: ONLY use [Map] link - NO reservation buttons
-6. For attractions: Use [Book Entry Tickets], [Buy Tickets], or [Book Experience]
-7. For hotels: Use [Book Now]
-8. EVERY activity must have a [Map] link with format: [Map](map:venue+${destination})
-
-**EXAMPLE OUTPUT (Follow this EXACTLY):**
 
 ## Day 1 - 2025-10-15
 
@@ -621,6 +591,7 @@ Recommend 3-4 excellent hotels in ${destination} for ${level} travelers with the
 - Address: Innrain 3, 6020 Innsbruck
 - Duration: 2 hours
 - [Book Now] | [Map](map:Hotel Innsbruck+${destination})
+- Pro tip: Arrive early to settle in before exploring
 
 ### 🌞 AFTERNOON (12:00-17:00)
 - Innsbruck Old Town walking tour
@@ -636,6 +607,8 @@ Recommend 3-4 excellent hotels in ${destination} for ${level} travelers with the
 - Duration: 2 hours
 - [Map](map:Stiftskeller Innsbruck+${destination})
 - Evening stroll along Inn River promenade
+
+Create ${nDays} days following this exact format. Use emojis 🌅 MORNING, 🌞 AFTERNOON, 🌆 EVENING with time ranges. Include specific venues, addresses, durations, and relevant booking links ([Book Now] for hotels, [Book Entry Tickets]/[Buy Tickets]/[Book Experience] for attractions, [Map] for all locations). For restaurants use ONLY [Map] links.
 
 
 ## 🧳 Don't Forget List
@@ -1260,41 +1233,57 @@ app.post('/api/plan.pdf', async (req, res) => {
       <meta charset="utf-8">
       <title>Wayzo Trip Plan - ${escapeHtml(payload.destination || '')}</title>
       <style>
+        * {
+          box-sizing: border-box;
+        }
+
         body {
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
           -webkit-print-color-adjust: exact;
           print-color-adjust: exact;
-          line-height: 1.6;
-          color: #333;
+          line-height: 1.7;
+          color: #1a202c;
           max-width: 1200px;
           margin: 0 auto;
           padding: 20px;
+          background: #f7fafc;
         }
 
         h1 {
-          color: #2c5aa0;
-          font-size: 28px;
-          margin-bottom: 20px;
+          color: #2d3748;
+          font-size: 32px;
+          font-weight: 700;
+          margin-bottom: 24px;
           text-align: center;
-          border-bottom: 3px solid #2c5aa0;
-          padding-bottom: 15px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          padding-bottom: 16px;
+          border-bottom: 3px solid #667eea;
         }
 
         h2 {
-          color: #34495e;
-          font-size: 20px;
-          margin-top: 30px;
-          margin-bottom: 15px;
-          padding-left: 10px;
-          border-left: 4px solid #3498db;
+          color: #2d3748;
+          font-size: 24px;
+          font-weight: 600;
+          margin-top: 40px;
+          margin-bottom: 20px;
+          padding: 12px 16px;
+          background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+          border-left: 5px solid #667eea;
+          border-radius: 0 8px 8px 0;
           page-break-after: avoid;
         }
 
         h3 {
-          color: #2c3e50;
-          font-size: 16px;
-          margin-top: 20px;
-          margin-bottom: 10px;
+          color: #4a5568;
+          font-size: 18px;
+          font-weight: 600;
+          margin-top: 24px;
+          margin-bottom: 12px;
+          padding-left: 8px;
+          border-left: 3px solid #a0aec0;
           page-break-after: avoid;
         }
 
@@ -1454,13 +1443,65 @@ app.post('/api/plan.pdf', async (req, res) => {
         }
 
         a {
-          color: #3498db;
+          color: #667eea;
           text-decoration: none;
           font-weight: 500;
+          transition: all 0.3s ease;
         }
 
         a:hover {
-          text-decoration: underline;
+          color: #764ba2;
+          text-decoration: none;
+        }
+
+        /* Premium Button Styles */
+        a[href*="#hotel-widget"],
+        a[href*="#flight-widget"],
+        a[href*="#car-widget"],
+        a[href*="#airport-widget"],
+        a[href*="getyourguide.com"] {
+          display: inline-block;
+          padding: 10px 20px;
+          margin: 8px 4px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white !important;
+          border-radius: 8px;
+          font-weight: 600;
+          text-transform: uppercase;
+          font-size: 13px;
+          letter-spacing: 0.5px;
+          box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+          transition: all 0.3s ease;
+          text-decoration: none !important;
+        }
+
+        a[href*="#hotel-widget"]:hover,
+        a[href*="#flight-widget"]:hover,
+        a[href*="#car-widget"]:hover,
+        a[href*="#airport-widget"]:hover,
+        a[href*="getyourguide.com"]:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        /* Map Link Styling */
+        a[href*="google.com/maps"] {
+          display: inline-block;
+          padding: 6px 14px;
+          margin: 4px 0;
+          background: #f7fafc;
+          color: #4285f4 !important;
+          border: 2px solid #4285f4;
+          border-radius: 6px;
+          font-weight: 500;
+          font-size: 13px;
+          transition: all 0.2s ease;
+        }
+
+        a[href*="google.com/maps"]:hover {
+          background: #4285f4;
+          color: white !important;
+          transform: scale(1.05);
         }
 
         .day-section {
@@ -1481,15 +1522,252 @@ app.post('/api/plan.pdf', async (req, res) => {
           text-align: center;
         }
 
+        /* Mobile Responsive Design */
+        @media (max-width: 768px) {
+          body {
+            padding: 12px;
+            font-size: 15px;
+          }
+
+          h1 {
+            font-size: 24px;
+            margin-bottom: 16px;
+          }
+
+          h2 {
+            font-size: 20px;
+            margin-top: 28px;
+            margin-bottom: 14px;
+            padding: 10px 12px;
+          }
+
+          h3 {
+            font-size: 16px;
+            margin-top: 18px;
+          }
+
+          .trip-overview {
+            padding: 18px;
+            border-radius: 10px;
+          }
+
+          .overview-grid {
+            grid-template-columns: 1fr;
+            gap: 10px;
+          }
+
+          .overview-item {
+            padding: 12px;
+          }
+
+          a[href*="#hotel-widget"],
+          a[href*="#flight-widget"],
+          a[href*="#car-widget"],
+          a[href*="#airport-widget"],
+          a[href*="getyourguide.com"] {
+            display: block;
+            text-align: center;
+            margin: 8px 0;
+            padding: 12px 18px;
+            font-size: 12px;
+          }
+
+          a[href*="google.com/maps"] {
+            display: block;
+            text-align: center;
+            margin: 6px 0;
+          }
+
+          .section-widget {
+            padding: 16px;
+            margin: 16px 0;
+          }
+
+          table {
+            font-size: 13px;
+          }
+
+          th, td {
+            padding: 8px 10px;
+          }
+
+          .weather-table th,
+          .weather-table td {
+            padding: 10px 6px;
+            font-size: 12px;
+          }
+        }
+
+        /* Print Optimization */
         @media print {
-          body { font-size: 12px; }
-          h1 { font-size: 24px; }
-          h2 { font-size: 18px; }
-          h3 { font-size: 14px; }
-          .trip-overview { background: #2c5aa0 !important; }
-          .no-print { display: none; }
+          body {
+            background: white;
+            padding: 15px;
+            font-size: 11pt;
+            line-height: 1.5;
+          }
+
+          h1 {
+            font-size: 22pt;
+            color: #2d3748 !important;
+            -webkit-text-fill-color: #2d3748 !important;
+            page-break-after: avoid;
+          }
+
+          h2 {
+            font-size: 16pt;
+            background: #f7fafc !important;
+            color: #2d3748 !important;
+            page-break-after: avoid;
+          }
+
+          h3 {
+            font-size: 13pt;
+            page-break-after: avoid;
+          }
+
+          .trip-overview {
+            background: #667eea !important;
+            page-break-inside: avoid;
+          }
+
+          .day-section {
+            page-break-inside: avoid;
+          }
+
+          .section-widget {
+            page-break-inside: avoid;
+          }
+
+          a {
+            color: #667eea !important;
+            text-decoration: underline !important;
+          }
+
+          a[href*="#hotel-widget"],
+          a[href*="#flight-widget"],
+          a[href*="#car-widget"],
+          a[href*="#airport-widget"],
+          a[href*="getyourguide.com"] {
+            background: #667eea !important;
+            color: white !important;
+            box-shadow: none !important;
+            padding: 8px 14px;
+            margin: 4px 2px;
+            font-size: 10pt;
+          }
+
+          a[href*="google.com/maps"] {
+            border: 1px solid #4285f4 !important;
+            background: white !important;
+            padding: 4px 10px;
+            font-size: 10pt;
+          }
+
+          a[href]:after {
+            content: none !important;
+          }
+
+          .no-print,
+          .widget-content {
+            display: none !important;
+          }
+
+          .widget-header {
+            page-break-inside: avoid;
+          }
         }
       </style>
+      <script>
+        // Trip details for widget auto-fill
+        window.WAYZO_TRIP_DATA = {
+          destination: ${JSON.stringify((payload.destination || '').split(',')[0].trim())},
+          startDate: ${JSON.stringify(payload.start || '')},
+          endDate: ${JSON.stringify(payload.end || '')},
+          adults: ${payload.adults || 2},
+          children: ${payload.children || 0},
+          travelers: ${(payload.adults || 2) + (payload.children || 0)},
+          from: ${JSON.stringify(payload.from || '')}
+        };
+
+        // Auto-fill widgets when they load
+        document.addEventListener('DOMContentLoaded', function() {
+          // Wait for third-party widgets to load
+          setTimeout(function() {
+            // Try to fill flight widget
+            const flightWidget = document.querySelector('[data-flight-widget]');
+            if (flightWidget && window.WAYZO_TRIP_DATA.destination) {
+              try {
+                const destInput = flightWidget.querySelector('input[name*="destination"], input[placeholder*="destination" i], input[placeholder*="where" i]');
+                const originInput = flightWidget.querySelector('input[name*="origin"], input[placeholder*="from" i]');
+                const departInput = flightWidget.querySelector('input[name*="depart"], input[type="date"]:first-of-type');
+                const returnInput = flightWidget.querySelector('input[name*="return"], input[type="date"]:last-of-type');
+                const passengersInput = flightWidget.querySelector('input[name*="passenger"], select[name*="passenger"]');
+
+                if (destInput) destInput.value = window.WAYZO_TRIP_DATA.destination;
+                if (originInput && window.WAYZO_TRIP_DATA.from) originInput.value = window.WAYZO_TRIP_DATA.from;
+                if (departInput && window.WAYZO_TRIP_DATA.startDate) departInput.value = window.WAYZO_TRIP_DATA.startDate;
+                if (returnInput && window.WAYZO_TRIP_DATA.endDate) returnInput.value = window.WAYZO_TRIP_DATA.endDate;
+                if (passengersInput) passengersInput.value = window.WAYZO_TRIP_DATA.travelers;
+              } catch (e) {
+                console.log('Could not auto-fill flight widget:', e);
+              }
+            }
+
+            // Try to fill hotel widget
+            const hotelWidget = document.querySelector('[data-hotel-widget]');
+            if (hotelWidget && window.WAYZO_TRIP_DATA.destination) {
+              try {
+                const destInput = hotelWidget.querySelector('input[name*="destination"], input[placeholder*="where" i], input[placeholder*="city" i]');
+                const checkinInput = hotelWidget.querySelector('input[name*="checkin"], input[name*="check-in"], input[type="date"]:first-of-type');
+                const checkoutInput = hotelWidget.querySelector('input[name*="checkout"], input[name*="check-out"], input[type="date"]:last-of-type');
+                const guestsInput = hotelWidget.querySelector('input[name*="guest"], select[name*="guest"]');
+
+                if (destInput) destInput.value = window.WAYZO_TRIP_DATA.destination;
+                if (checkinInput && window.WAYZO_TRIP_DATA.startDate) checkinInput.value = window.WAYZO_TRIP_DATA.startDate;
+                if (checkoutInput && window.WAYZO_TRIP_DATA.endDate) checkoutInput.value = window.WAYZO_TRIP_DATA.endDate;
+                if (guestsInput) guestsInput.value = window.WAYZO_TRIP_DATA.travelers;
+              } catch (e) {
+                console.log('Could not auto-fill hotel widget:', e);
+              }
+            }
+
+            // Try to fill car rental widget
+            const carWidget = document.querySelector('[data-car-widget]');
+            if (carWidget && window.WAYZO_TRIP_DATA.destination) {
+              try {
+                const locationInput = carWidget.querySelector('input[name*="location"], input[name*="pickup"], input[placeholder*="where" i]');
+                const pickupInput = carWidget.querySelector('input[name*="pickup" i][type="date"], input[type="date"]:first-of-type');
+                const dropoffInput = carWidget.querySelector('input[name*="dropoff" i][type="date"], input[name*="return" i][type="date"], input[type="date"]:last-of-type');
+
+                if (locationInput) locationInput.value = window.WAYZO_TRIP_DATA.destination;
+                if (pickupInput && window.WAYZO_TRIP_DATA.startDate) pickupInput.value = window.WAYZO_TRIP_DATA.startDate;
+                if (dropoffInput && window.WAYZO_TRIP_DATA.endDate) dropoffInput.value = window.WAYZO_TRIP_DATA.endDate;
+              } catch (e) {
+                console.log('Could not auto-fill car widget:', e);
+              }
+            }
+
+            // Try to fill airport transfer widget
+            const airportWidget = document.querySelector('[data-airport-widget]');
+            if (airportWidget && window.WAYZO_TRIP_DATA.destination) {
+              try {
+                const destInput = airportWidget.querySelector('input[name*="destination"], input[placeholder*="where" i]');
+                const dateInput = airportWidget.querySelector('input[type="date"]');
+                const passengersInput = airportWidget.querySelector('input[name*="passenger"], select[name*="passenger"]');
+
+                if (destInput) destInput.value = window.WAYZO_TRIP_DATA.destination;
+                if (dateInput && window.WAYZO_TRIP_DATA.startDate) dateInput.value = window.WAYZO_TRIP_DATA.startDate;
+                if (passengersInput) passengersInput.value = window.WAYZO_TRIP_DATA.travelers;
+              } catch (e) {
+                console.log('Could not auto-fill airport transfer widget:', e);
+              }
+            }
+
+            console.log('Widget auto-fill attempted for:', window.WAYZO_TRIP_DATA.destination);
+          }, 2000); // Wait 2 seconds for widgets to fully load
+        });
+      </script>
     </head><body>
       <div class="trip-overview">
         <h1>🚀 ${escapeHtml(payload.destination || '')} Trip Plan</h1>
