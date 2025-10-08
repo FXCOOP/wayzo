@@ -760,10 +760,16 @@
         // Initialize widget rendering
         initializeWidgets();
 
-        // Initialize widget auto-fill
-        if (window.initializeWidgetAutoFill) {
-          window.initializeWidgetAutoFill();
-        }
+        // Initialize widget auto-fill (with delay to ensure widgets are loaded)
+        console.log('🔎 Checking for initializeWidgetAutoFill function...');
+        setTimeout(() => {
+          if (typeof window.initializeWidgetAutoFill === 'function') {
+            console.log('✅ Found initializeWidgetAutoFill, calling it now...');
+            window.initializeWidgetAutoFill();
+          } else {
+            console.error('❌ initializeWidgetAutoFill not found on window object!');
+          }
+        }, 1000);
         
         // Show all download buttons for test user
         show(pdfBtn);
@@ -1004,10 +1010,16 @@
               `;
               setAffiliates(destination);
 
-              // Initialize widget auto-fill
-              if (window.initializeWidgetAutoFill) {
-                window.initializeWidgetAutoFill();
-              }
+              // Initialize widget auto-fill (with delay to ensure widgets are loaded)
+              console.log('🔎 Checking for initializeWidgetAutoFill function (payment flow)...');
+              setTimeout(() => {
+                if (typeof window.initializeWidgetAutoFill === 'function') {
+                  console.log('✅ Found initializeWidgetAutoFill, calling it now...');
+                  window.initializeWidgetAutoFill();
+                } else {
+                  console.error('❌ initializeWidgetAutoFill not found on window object!');
+                }
+              }, 1000);
 
               // Save full plan for "Get Back" functionality
               saveFullPlan(fullPlanContent, destination);
