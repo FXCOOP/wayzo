@@ -1115,6 +1115,17 @@ app.post('/api/plan', async (req, res) => {
     
     // Add affiliate widgets integrated into appropriate sections
     const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
+
+    // Debug: Log trip data being passed to widgets
+    console.log('🎯 Widget Data:', {
+      destination: payload.destination,
+      start: payload.start,
+      end: payload.end,
+      adults: payload.adults,
+      children: payload.children,
+      from: payload.from
+    });
+
     let finalHTML;
     try {
       finalHTML = await injectWidgetsIntoSections(html, widgets, payload.destination, payload.start, payload.end, payload);

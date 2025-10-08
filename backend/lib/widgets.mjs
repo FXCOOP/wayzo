@@ -396,7 +396,16 @@ async function injectWidgetsIntoSections(html, widgets, destination = '', startD
   const adults = budgetData?.adults || 2;
   const children = budgetData?.children || 0;
   const totalTravelers = adults + children;
-  const origin = budgetData?.origin || ''; // Origin city if available
+  const origin = budgetData?.from || budgetData?.origin || ''; // Origin city if available
+
+  console.log('📊 injectWidgetsIntoSections called with:', {
+    destination,
+    startDate,
+    endDate,
+    totalTravelers,
+    origin,
+    budgetDataKeys: budgetData ? Object.keys(budgetData) : 'null'
+  });
 
   try {
     const dom = new JSDOM(html);
