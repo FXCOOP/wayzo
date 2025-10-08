@@ -583,44 +583,6 @@ Recommend 3-4 excellent hotels in ${destination} for ${level} travelers with the
 Recommend 3-4 local restaurants following this exact format. Include varied cuisine types and price ranges. Add ONLY [Map] links.
 
 ## 🎭 Daily Itineraries
-**CRITICAL FORMATTING REQUIREMENTS - You MUST follow this EXACT structure:**
-
-**EACH DAY MUST USE THIS EXACT FORMAT:**
-
-## Day 1 - 2025-10-09
-
-### 🌅 MORNING (9:00-12:00)
-- Activity name with specific venue
-- Address: Full street address with postal code
-- Duration: X hours
-- [Booking Button] | [Map](map:venue+${destination})
-- Pro tip: Relevant advice
-
-### 🌞 AFTERNOON (12:00-17:00)
-- Activity name with specific venue
-- Address: Full street address with postal code
-- Duration: X hours
-- [Booking Button] | [Map](map:venue+${destination})
-- Pro tip: Relevant advice
-
-### 🌆 EVENING (17:00-21:00)
-- Dinner at [SPECIFIC RESTAURANT NAME] (cuisine type, €X-Y)
-- Address: Full street address with postal code
-- Duration: 2 hours
-- [Map](map:restaurant+${destination})
-- Pro tip: Relevant advice
-
-**MANDATORY RULES:**
-1. Use ### (H3 heading) for EVERY time block
-2. Include emoji AND time range: "### 🌅 MORNING (9:00-12:00)"
-3. ALWAYS use these exact emojis: 🌅 🌞 🌆
-4. ALWAYS include time ranges in parentheses
-5. For restaurants: ONLY use [Map] link - NO reservation buttons
-6. For attractions: Use [Book Entry Tickets], [Buy Tickets], or [Book Experience]
-7. For hotels: Use [Book Now]
-8. EVERY activity must have a [Map] link with format: [Map](map:venue+${destination})
-
-**EXAMPLE OUTPUT (Follow this EXACTLY):**
 
 ## Day 1 - 2025-10-15
 
@@ -629,6 +591,7 @@ Recommend 3-4 local restaurants following this exact format. Include varied cuis
 - Address: Innrain 3, 6020 Innsbruck
 - Duration: 2 hours
 - [Book Now] | [Map](map:Hotel Innsbruck+${destination})
+- Pro tip: Arrive early to settle in before exploring
 
 ### 🌞 AFTERNOON (12:00-17:00)
 - Innsbruck Old Town walking tour
@@ -644,6 +607,8 @@ Recommend 3-4 local restaurants following this exact format. Include varied cuis
 - Duration: 2 hours
 - [Map](map:Stiftskeller Innsbruck+${destination})
 - Evening stroll along Inn River promenade
+
+Create ${nDays} days following this exact format. Use emojis 🌅 MORNING, 🌞 AFTERNOON, 🌆 EVENING with time ranges. Include specific venues, addresses, durations, and relevant booking links ([Book Now] for hotels, [Book Entry Tickets]/[Buy Tickets]/[Book Experience] for attractions, [Map] for all locations). For restaurants use ONLY [Map] links.
 
 
 ## 🧳 Don't Forget List
