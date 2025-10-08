@@ -1,1 +1,151 @@
-
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Wayzo — Back Office</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?
+family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{ --bg:#f7f7f8; --card:#fff; --ink:#111; --sub:#6b7280; --
+brand:#0ea5e9; }
+*{ box-sizing:border-box }
+body{ margin:0; font-family:Inter,system-ui,Segoe UI,Arial;
+background:var(--bg); color:var(--ink) }
+header{ display:flex; align-items:center; justify-content:space-between;
+padding:16px 20px; background:#fff; border-bottom:1px solid #e5e7eb }
+.brand{ display:flex; align-items:center; gap:10px; font-weight:700 }
+.wrap{ max-width:1000px; margin:24px auto; padding:0 16px }
+.card{ background:var(--card); border:1px solid #e5e7eb; border-radius:
+14px; padding:18px; box-shadow:0 1px 2px rgba(0,0,0,.03) }
+.grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,
+1fr)); gap:14px }
+button, .btn{ cursor:pointer; border:0; background:var(--brand);
+color:#fff; padding:10px 14px; border-radius:10px; font-weight:600 }
+input{ width:100%; padding:10px 12px; border:1px solid #e5e7eb; borderradius:10px }
+.muted{ color:var(--sub); font-size:13px }
+.plan{ display:flex; flex-direction:column; gap:8px }
+.plan h3{ margin:0; font-size:16px }
+.row{ display:flex; gap:8px; flex-wrap:wrap }
+.ghost{ background:#111; opacity:.06 }
+a.btn{ display:inline-block; text-decoration:none; text-align:center }
+</style>
+</head>
+<body>
+<header>
+<div class="brand">WZ <span>Wayzo Back Office</span></div>
+<div id="auth-area">
+<button id="signin-btn">Sign in</button>
+<button id="signout-btn" style="display:none">Sign out</button>
+</div>
+</header>
+<div class="wrap">
+<div id="signin-card" class="card" style="display:none">
+<h2>Sign in</h2>
+<p class="muted">We’ll send a magic link / OTP to your email</p>
+<div class="row">
+<input id="email" type="email" placeholder="you@example.com" />
+<button id="send-link">Send magic link</button>
+</div>
+<p id="sent" class="muted" style="display:none">Check your inbox. Keep
+this tab open.</p>
+</div>
+<div id="plans-card" class="card" style="display:none">
+<div style="display:flex; align-items:center; justify-content:spacebetween; gap:12px">
+<h2 style="margin:0">My Plans</h2>
+<a class="btn" href="/index.html">+ New Plan</a>
+</div>
+<div id="plans" class="grid" style="margin-top:12px"></div>
+<p id="empty" class="muted" style="display:none">No plans yet. Create your
+first plan on the homepage.</p>
+</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = '***PASTE_YOUR_SUPABASE_URL***'
+const SUPABASE_ANON_KEY = '***PASTE_YOUR_SUPABASE_ANON_KEY***'
+const supabaseClient = supabase.createClient(SUPABASE_URL,
+SUPABASE_ANON_KEY)
+const signinBtn = document.getElementById('signin-btn')
+const signoutBtn = document.getElementById('signout-btn')
+const signinCard = document.getElementById('signin-card')
+const plansCard = document.getElementById('plans-card')
+const plansEl = document.getElementById('plans')
+const emptyEl = document.getElementById('empty')
+async function refreshUI() {
+const { data: { user } } = await supabaseClient.auth.getUser()
+if (user) {
+signinCard.style.display = 'none'
+plansCard.style.display = 'block'
+signinBtn.style.display = 'none'
+signoutBtn.style.display = 'inline-block'
+loadPlans()
+const hash = new URL(location.href).hash
+if (hash.startsWith('#plan=')) {
+// Optional: auto-open a plan viewer page if you add one
+}
+} else {
+plansCard.style.display = 'none'
+signinCard.style.display = 'block'
+signinBtn.style.display = 'inline-block'
+signoutBtn.style.display = 'none'
+}
+}
+async function loadPlans() {
+plansEl.innerHTML = ''
+const { data, error } = await supabaseClient
+.from('plans')
+.select('id,title,destination,start_date,end_date,created_at,pdf_path')
+.order('created_at', { ascending: false })
+if (error) { console.error(error); return }
+if (!data || data.length === 0) { emptyEl.style.display = 'block';
+return }
+emptyEl.style.display = 'none'
+for (const p of data) {
+const el = document.createElement('div')
+el.className = 'card plan'
+el.innerHTML = `
+ <h3>${p.title}</h3>
+ <div class="muted">${p.destination || ''}</div>
+ <div class="muted">${(p.start_date||'').slice(0,10)} → $
+{(p.end_date||'').slice(0,10)}</div>
+ <div class="row">
+ <a class="btn" href="/plan.html?id=${p.id}">Open</a>
+ <a class="btn ghost" href="#" data-id="${p.id}" dataaction="pdf">Download PDF</a>
+ <a class="btn ghost" href="#" data-id="${p.id}" dataaction="share">Share (soon)</a>
+ </div>`
+plansEl.appendChild(el)
+}
+plansEl.addEventListener('click', async (e) => {
+const a = e.target.closest('a.btn')
+if (!a) return
+const action = a.dataset.action
+const id = a.dataset.id
+if (action === 'pdf') {
+e.preventDefault()
+const token = (await
+supabaseClient.auth.getSession()).data.session?.access_token
+const url = `/api/plan/${id}/pdf`
+const resp = await fetch(url, { headers: { 'Authorization': `Bearer $
+{token}` } })
+const data = await resp.json()
+if (data?.url) window.location = data.url
+}
+})
+}
+document.getElementById('send-link').onclick = async () => {
+const email = document.getElementById('email').value.trim()
+if (!email) return
+const { error } = await supabaseClient.auth.signInWithOtp({ email })
+if (error) { alert('Failed to send email'); return }
+document.getElementById('sent').style.display = 'block'
+}
+signinBtn.onclick = () => { signinCard.style.display = 'block' }
+signoutBtn.onclick = async () => { await supabaseClient.auth.signOut();
+location.reload() }
+supabaseClient.auth.onAuthStateChange((_event, _session) => { refreshUI() })
+refreshUI()
+</script>
+</body>
+</html>
