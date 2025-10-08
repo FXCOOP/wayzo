@@ -178,8 +178,12 @@ const AFFILIATE_WIDGETS = {
       if (arrivalDate) params.set('arrival_date', arrivalDate);
       if (travelers) params.set('passengers', travelers.toString());
 
+      const widgetUrl = `https://tpwdgt.com/content?${params.toString()}`;
+      console.log('🚖 Airport Transfer Widget URL:', widgetUrl);
+      console.log('📍 Destination:', dest, '| Date:', arrivalDate, '| Passengers:', travelers);
+
       return `<div data-airport-widget="transfer" id="airport-widget" ${dataAttrs}></div>
-<script async src="https://tpwdgt.com/content?${params.toString()}" charset="utf-8"></script>`;
+<script async src="${widgetUrl}" charset="utf-8"></script>`;
     },
     category: "transport",
     placement: "budget_breakdown"
@@ -230,8 +234,12 @@ const AFFILIATE_WIDGETS = {
       if (pickupDate) params.set('pickup_date', pickupDate);
       if (dropoffDate) params.set('dropoff_date', dropoffDate);
 
+      const widgetUrl = `https://tpwdgt.com/content?${params.toString()}`;
+      console.log('🚗 Car Rental Widget URL:', widgetUrl);
+      console.log('📍 Destination:', dest, '| Pickup:', pickupDate, '| Dropoff:', dropoffDate);
+
       return `<div data-car-widget="rental" id="car-widget" ${dataAttrs}></div>
-<script async src="https://tpwdgt.com/content?${params.toString()}" charset="utf-8"></script>`;
+<script async src="${widgetUrl}" charset="utf-8"></script>`;
     },
     category: "transport",
     placement: "budget_breakdown"
@@ -279,8 +287,12 @@ const AFFILIATE_WIDGETS = {
       if (returnDate) params.set('return_date', returnDate);
       if (travelers) params.set('passengers', travelers.toString());
 
+      const widgetUrl = `https://tpwdgt.com/content?${params.toString()}`;
+      console.log('✈️ Flight Widget URL:', widgetUrl);
+      console.log('📍 From:', origin, '| To:', dest, '| Depart:', departDate, '| Return:', returnDate, '| Passengers:', travelers);
+
       return `<div data-flight-widget="search" id="flight-widget" ${dataAttrs}></div>
-<script async src="https://tpwdgt.com/content?${params.toString()}" charset="utf-8"></script>`;
+<script async src="${widgetUrl}" charset="utf-8"></script>`;
     },
     category: "flights",
     placement: "budget_breakdown"
@@ -328,8 +340,12 @@ const AFFILIATE_WIDGETS = {
       if (checkoutDate) params.set('checkout_date', checkoutDate);
       if (travelers) params.set('guests', travelers.toString());
 
+      const widgetUrl = `https://tpwdgt.com/content?${params.toString()}`;
+      console.log('🏨 Hotel Widget URL:', widgetUrl);
+      console.log('📍 Destination:', dest, '| Check-in:', checkinDate, '| Check-out:', checkoutDate, '| Guests:', travelers);
+
       return `<div data-hotel-widget="search" id="hotel-widget" ${dataAttrs}></div>
-<script async src="https://tpwdgt.com/content?${params.toString()}" charset="utf-8"></script>`;
+<script async src="${widgetUrl}" charset="utf-8"></script>`;
     },
     category: "accommodation",
     placement: "budget_breakdown"
