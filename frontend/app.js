@@ -753,12 +753,17 @@
           </main>
         `;
         setAffiliates(data.destination);
-        
+
         // Initialize image handling
         initializeImageHandling();
-        
+
         // Initialize widget rendering
         initializeWidgets();
+
+        // Initialize widget auto-fill
+        if (window.initializeWidgetAutoFill) {
+          window.initializeWidgetAutoFill();
+        }
         
         // Show all download buttons for test user
         show(pdfBtn);
@@ -998,7 +1003,12 @@
                 </main>
               `;
               setAffiliates(destination);
-              
+
+              // Initialize widget auto-fill
+              if (window.initializeWidgetAutoFill) {
+                window.initializeWidgetAutoFill();
+              }
+
               // Save full plan for "Get Back" functionality
               saveFullPlan(fullPlanContent, destination);
               
@@ -3480,7 +3490,7 @@
   window.toggleBudgetItem = (checkbox) => {
     const row = checkbox.closest('tr');
     const statusCell = row.querySelector('td:last-child span');
-    
+
     if (checkbox.checked) {
       statusCell.textContent = 'Completed';
       statusCell.className = 'status-completed';
@@ -3493,6 +3503,198 @@
       showNotification('📝 Budget item marked as pending', 'info');
     }
   };
+
+  // Widget Auto-Fill Fallback System
+  window.initializeWidgetAutoFill = () => {
+    console.log('🎯 Initializing widget auto-fill fallback...');
+
+    // Wait for widgets to load before attempting to fill
+    setTimeout(() => {
+      fillFlightWidget();
+      fillHotelWidget();
+      fillCarWidget();
+      fillAirportWidget();
+    }, 3000);
+  };
+
+  function fillFlightWidget() {
+    const widget = document.querySelector('[data-flight-widget]');
+    if (!widget) return;
+
+    const data = {
+      destination: widget.getAttribute('data-destination'),
+      origin: widget.getAttribute('data-origin'),
+      departDate: widget.getAttribute('data-depart-date'),
+      returnDate: widget.getAttribute('data-return-date'),
+      passengers: widget.getAttribute('data-passengers')
+    };
+
+    console.log('✈️ Attempting to fill flight widget:', data);
+
+    // Try multiple selector strategies
+    tryFillInput(widget, [
+      'input[name*="destination" i]',
+      'input[placeholder*="to" i]',
+      'input[aria-label*="destination" i]'
+    ], data.destination);
+
+    tryFillInput(widget, [
+      'input[name*="origin" i]',
+      'input[placeholder*="from" i]',
+      'input[aria-label*="origin" i]'
+    ], data.origin);
+
+    tryFillInput(widget, [
+      'input[type="date"]:first-of-type',
+      'input[name*="depart" i]'
+    ], data.departDate);
+
+    tryFillInput(widget, [
+      'input[type="date"]:last-of-type',
+      'input[name*="return" i]'
+    ], data.returnDate);
+
+    tryFillInput(widget, [
+      'input[name*="passenger" i]',
+      'select[name*="passenger" i]'
+    ], data.passengers);
+  }
+
+  function fillHotelWidget() {
+    const widget = document.querySelector('[data-hotel-widget]');
+    if (!widget) return;
+
+    const data = {
+      destination: widget.getAttribute('data-destination'),
+      checkin: widget.getAttribute('data-checkin'),
+      checkout: widget.getAttribute('data-checkout'),
+      guests: widget.getAttribute('data-guests')
+    };
+
+    console.log('🏨 Attempting to fill hotel widget:', data);
+
+    tryFillInput(widget, [
+      'input[name*="destination" i]',
+      'input[placeholder*="where" i]',
+      'input[placeholder*="city" i]',
+      'input[aria-label*="destination" i]'
+    ], data.destination);
+
+    tryFillInput(widget, [
+      'input[name*="checkin" i]',
+      'input[name*="check-in" i]',
+      'input[type="date"]:first-of-type'
+    ], data.checkin);
+
+    tryFillInput(widget, [
+      'input[name*="checkout" i]',
+      'input[name*="check-out" i]',
+      'input[type="date"]:last-of-type'
+    ], data.checkout);
+
+    tryFillInput(widget, [
+      'input[name*="guest" i]',
+      'select[name*="guest" i]'
+    ], data.guests);
+  }
+
+  function fillCarWidget() {
+    const widget = document.querySelector('[data-car-widget]');
+    if (!widget) return;
+
+    const data = {
+      destination: widget.getAttribute('data-destination'),
+      pickupDate: widget.getAttribute('data-pickup-date'),
+      dropoffDate: widget.getAttribute('data-dropoff-date')
+    };
+
+    console.log('🚗 Attempting to fill car widget:', data);
+
+    tryFillInput(widget, [
+      'input[name*="location" i]',
+      'input[name*="destination" i]',
+      'input[placeholder*="location" i]'
+    ], data.destination);
+
+    tryFillInput(widget, [
+      'input[type="date"]:first-of-type',
+      'input[name*="pickup" i]'
+    ], data.pickupDate);
+
+    tryFillInput(widget, [
+      'input[type="date"]:last-of-type',
+      'input[name*="dropoff" i]',
+      'input[name*="drop-off" i]'
+    ], data.dropoffDate);
+  }
+
+  function fillAirportWidget() {
+    const widget = document.querySelector('[data-airport-widget]');
+    if (!widget) return;
+
+    const data = {
+      destination: widget.getAttribute('data-destination'),
+      arrivalDate: widget.getAttribute('data-arrival-date'),
+      passengers: widget.getAttribute('data-passengers')
+    };
+
+    console.log('🚖 Attempting to fill airport transfer widget:', data);
+
+    tryFillInput(widget, [
+      'input[name*="destination" i]',
+      'input[name*="location" i]',
+      'input[placeholder*="destination" i]'
+    ], data.destination);
+
+    tryFillInput(widget, [
+      'input[type="date"]',
+      'input[name*="arrival" i]',
+      'input[name*="date" i]'
+    ], data.arrivalDate);
+
+    tryFillInput(widget, [
+      'input[name*="passenger" i]',
+      'select[name*="passenger" i]'
+    ], data.passengers);
+  }
+
+  function tryFillInput(container, selectors, value) {
+    if (!value) return false;
+
+    for (const selector of selectors) {
+      try {
+        // Try direct children first
+        let input = container.querySelector(selector);
+
+        // If not found, try within iframe (if accessible)
+        if (!input && container.querySelector('iframe')) {
+          const iframe = container.querySelector('iframe');
+          try {
+            input = iframe.contentDocument?.querySelector(selector);
+          } catch (e) {
+            console.warn('Cannot access iframe (cross-origin):', e.message);
+          }
+        }
+
+        if (input) {
+          input.value = value;
+
+          // Trigger events to notify widget
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('blur', { bubbles: true }));
+
+          console.log(`✅ Filled ${selector} with: ${value}`);
+          return true;
+        }
+      } catch (e) {
+        console.warn(`Failed to fill ${selector}:`, e.message);
+      }
+    }
+
+    console.warn(`❌ Could not find input for:`, selectors);
+    return false;
+  }
 
   function shareTrip() {
     const formData = readForm();

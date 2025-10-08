@@ -163,8 +163,23 @@ const AFFILIATE_WIDGETS = {
       const dataAttrs = arrivalDate ?
         `data-destination="${dest}" data-arrival-date="${arrivalDate}" data-passengers="${travelers}"` : '';
 
+      // Build URL parameters for pre-fill
+      const params = new URLSearchParams({
+        trs: '455192',
+        shmarker: '634822',
+        locale: 'en',
+        show_header: 'true',
+        campaign_id: '627',
+        promo_id: '8951'
+      });
+
+      // Add pre-fill parameters if available
+      if (dest) params.set('destination', dest);
+      if (arrivalDate) params.set('arrival_date', arrivalDate);
+      if (travelers) params.set('passengers', travelers.toString());
+
       return `<div data-airport-widget="transfer" id="airport-widget" ${dataAttrs}></div>
-<script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&show_header=true&campaign_id=627&promo_id=8951" charset="utf-8"></script>`;
+<script async src="https://tpwdgt.com/content?${params.toString()}" charset="utf-8"></script>`;
     },
     category: "transport",
     placement: "budget_breakdown"
@@ -193,8 +208,30 @@ const AFFILIATE_WIDGETS = {
       const dataAttrs = pickupDate && dropoffDate ?
         `data-pickup-date="${pickupDate}" data-dropoff-date="${dropoffDate}" data-destination="${dest}"` : '';
 
+      // Build URL parameters for pre-fill
+      const params = new URLSearchParams({
+        trs: '455192',
+        shmarker: '634822',
+        locale: 'en',
+        border_radius: '5',
+        plain: 'true',
+        show_logo: 'true',
+        color_background: '#ffca28',
+        color_button: '#55a539',
+        color_text: '#000000',
+        color_input_text: '#000000',
+        color_button_text: '#ffffff',
+        promo_id: '4480',
+        campaign_id: '10'
+      });
+
+      // Add pre-fill parameters if available
+      if (dest) params.set('destination', dest);
+      if (pickupDate) params.set('pickup_date', pickupDate);
+      if (dropoffDate) params.set('dropoff_date', dropoffDate);
+
       return `<div data-car-widget="rental" id="car-widget" ${dataAttrs}></div>
-<script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&border_radius=5&plain=true&show_logo=true&color_background=%23ffca28&color_button=%2355a539&color_text=%23000000&color_input_text=%23000000&color_button_text=%23ffffff&promo_id=4480&campaign_id=10" charset="utf-8"></script>`;
+<script async src="https://tpwdgt.com/content?${params.toString()}" charset="utf-8"></script>`;
     },
     category: "transport",
     placement: "budget_breakdown"
@@ -213,8 +250,37 @@ const AFFILIATE_WIDGETS = {
       const dataAttrs = departDate && returnDate ?
         `data-destination="${dest}" data-origin="${origin}" data-depart-date="${departDate}" data-return-date="${returnDate}" data-passengers="${travelers}"` : '';
 
+      // Build URL parameters for pre-fill
+      const params = new URLSearchParams({
+        currency: 'usd',
+        trs: '455192',
+        shmarker: '634822',
+        show_hotels: 'true',
+        locale: 'en',
+        searchUrl: 'www.aviasales.com/search',
+        primary_override: '#32a8dd',
+        color_button: '#55a539',
+        color_icons: '#32a8dd',
+        dark: '#262626',
+        light: '#FFFFFF',
+        secondary: '#FFFFFF',
+        special: '#C4C4C4',
+        color_focused: '#32a8dd',
+        border_radius: '5',
+        plain: 'false',
+        promo_id: '7879',
+        campaign_id: '100'
+      });
+
+      // Add pre-fill parameters if available
+      if (dest) params.set('destination', dest);
+      if (origin) params.set('origin', origin);
+      if (departDate) params.set('depart_date', departDate);
+      if (returnDate) params.set('return_date', returnDate);
+      if (travelers) params.set('passengers', travelers.toString());
+
       return `<div data-flight-widget="search" id="flight-widget" ${dataAttrs}></div>
-<script async src="https://tpwdgt.com/content?currency=usd&trs=455192&shmarker=634822&show_hotels=true&locale=en&searchUrl=www.aviasales.com%2Fsearch&primary_override=%2332a8dd&color_button=%2355a539&color_icons=%2332a8dd&dark=%23262626&light=%23FFFFFF&secondary=%23FFFFFF&special=%23C4C4C4&color_focused=%2332a8dd&border_radius=5&plain=false&promo_id=7879&campaign_id=100" charset="utf-8"></script>`;
+<script async src="https://tpwdgt.com/content?${params.toString()}" charset="utf-8"></script>`;
     },
     category: "flights",
     placement: "budget_breakdown"
@@ -233,8 +299,37 @@ const AFFILIATE_WIDGETS = {
       const dataAttrs = checkinDate && checkoutDate ?
         `data-destination="${dest}" data-checkin="${checkinDate}" data-checkout="${checkoutDate}" data-guests="${travelers}"` : '';
 
+      // Build URL parameters for pre-fill
+      const params = new URLSearchParams({
+        currency: 'usd',
+        trs: '455192',
+        shmarker: '634822',
+        show_hotels: 'true',
+        locale: 'en',
+        powered_by: 'false',
+        searchUrl: 'www.aviasales.com/search',
+        primary_override: '#32a8dd',
+        color_button: '#55a539',
+        color_icons: '#32a8dd',
+        secondary: '#FFFFFF',
+        dark: '#262626',
+        light: '#FFFFFF',
+        special: '#C4C4C4',
+        color_focused: '#32a8dd',
+        border_radius: '5',
+        plain: 'false',
+        promo_id: '7873',
+        campaign_id: '101'
+      });
+
+      // Add pre-fill parameters if available
+      if (dest) params.set('destination', dest);
+      if (checkinDate) params.set('checkin_date', checkinDate);
+      if (checkoutDate) params.set('checkout_date', checkoutDate);
+      if (travelers) params.set('guests', travelers.toString());
+
       return `<div data-hotel-widget="search" id="hotel-widget" ${dataAttrs}></div>
-<script async src="https://tpwdgt.com/content?currency=usd&trs=455192&shmarker=634822&show_hotels=true&locale=en&powered_by=false&searchUrl=www.aviasales.com%2Fsearch&primary_override=%2332a8dd&color_button=%2355a539&color_icons=%2332a8dd&secondary=%23FFFFFF&dark=%23262626&light=%23FFFFFF&special=%23C4C4C4&color_focused=%2332a8dd&border_radius=5&plain=false&promo_id=7873&campaign_id=101" charset="utf-8"></script>`;
+<script async src="https://tpwdgt.com/content?${params.toString()}" charset="utf-8"></script>`;
     },
     category: "accommodation",
     placement: "budget_breakdown"
