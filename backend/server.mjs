@@ -1981,6 +1981,10 @@ app.get('/api/plan/:id/ics', (_req, res) => {
 // List all plans for authenticated user
 app.get('/api/user/plans', requireUser, async (req, res) => {
   try {
+    if (!supabaseAdmin) {
+      return res.status(503).json({ error: 'Supabase admin not configured' });
+    }
+
     const { data, error } = await supabaseAdmin
       .from('plans')
       .select('id,title,destination,start_date,end_date,created_at,pdf_path,budget_low,budget_high,travelers')
@@ -2003,6 +2007,10 @@ app.get('/api/user/plans', requireUser, async (req, res) => {
 // Get single plan for authenticated user
 app.get('/api/user/plan/:id', requireUser, async (req, res) => {
   try {
+    if (!supabaseAdmin) {
+      return res.status(503).json({ error: 'Supabase admin not configured' });
+    }
+
     const { id } = req.params;
     const { data, error } = await supabaseAdmin
       .from('plans')
@@ -2027,6 +2035,10 @@ app.get('/api/user/plan/:id', requireUser, async (req, res) => {
 // Create/save plan for authenticated user (replaces public /api/plan)
 app.post('/api/user/plan', requireUser, async (req, res) => {
   try {
+    if (!supabaseAdmin) {
+      return res.status(503).json({ error: 'Supabase admin not configured' });
+    }
+
     const { params, markdown, html, meta } = req.body || {};
 
     console.log(`📝 Creating plan for user ${req.user.email}`);
@@ -2075,6 +2087,10 @@ app.post('/api/user/plan', requireUser, async (req, res) => {
 // Get signed PDF URL for plan
 app.get('/api/user/plan/:id/pdf', requireUser, async (req, res) => {
   try {
+    if (!supabaseAdmin) {
+      return res.status(503).json({ error: 'Supabase admin not configured' });
+    }
+
     const { id } = req.params;
 
     // Verify ownership
