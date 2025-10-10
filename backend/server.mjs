@@ -12,7 +12,15 @@ import { fileURLToPath } from 'url';
 import morgan from 'morgan';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
-import Database from 'better-sqlite3';
+// Make better-sqlite3 optional (not available on all platforms)
+let Database;
+try {
+  const module = await import('better-sqlite3');
+  Database = module.default;
+} catch (e) {
+  console.warn('⚠️ better-sqlite3 not available - SQLite features disabled');
+  console.warn('   Using Supabase for all data storage');
+}
 import { normalizeBudget, computeBudget } from './lib/budget.mjs';
 import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
@@ -311,20 +319,34 @@ function removeImagesFromForbiddenSections(markdown, destination) {
 }
 
 /* DB */
-const db = new Database(path.join(ROOT, 'tripmaster.sqlite'));
-db.exec(`CREATE TABLE IF NOT EXISTS plans (id TEXT PRIMARY KEY, created_at TEXT NOT NULL, payload TEXT NOT NULL);`);
-db.exec(`CREATE TABLE IF NOT EXISTS events (id TEXT PRIMARY KEY, event_type TEXT NOT NULL, user_id TEXT, data TEXT, created_at TEXT NOT NULL);`);
-const savePlan = db.prepare('INSERT OR REPLACE INTO plans (id, created_at, payload) VALUES (?, ?, ?)');
-const getPlan = db.prepare('SELECT payload FROM plans WHERE id = ?');
+let db = null;
+let savePlan = null;
+let getPlan = null;
+
+if (Database) {
+  try {
+    db = new Database(path.join(ROOT, 'tripmaster.sqlite'));
+    db.exec(`CREATE TABLE IF NOT EXISTS plans (id TEXT PRIMARY KEY, created_at TEXT NOT NULL, payload TEXT NOT NULL);`);
+    db.exec(`CREATE TABLE IF NOT EXISTS events (id TEXT PRIMARY KEY, event_type TEXT NOT NULL, user_id TEXT, data TEXT, created_at TEXT NOT NULL);`);
+    savePlan = db.prepare('INSERT OR REPLACE INTO plans (id, created_at, payload) VALUES (?, ?, ?)');
+    getPlan = db.prepare('SELECT payload FROM plans WHERE id = ?');
+    console.log('✅ SQLite database initialized');
+  } catch (e) {
+    console.warn('⚠️ SQLite database failed to initialize:', e.message);
+    db = null;
+  }
+}
+
 const nowIso = () => new Date().toISOString();
 const uid = () => (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
 
 // Analytics tracking function
 const trackPlanGeneration = (payload) => {
+  if (!db) return; // Skip if SQLite not available
   try {
     const eventId = uid();
     db.prepare(`
-      INSERT INTO events (id, event_type, user_id, data, created_at) 
+      INSERT INTO events (id, event_type, user_id, data, created_at)
       VALUES (?, ?, ?, ?, ?)
     `).run(
       eventId,
@@ -1163,10 +1185,14 @@ app.post('/api/plan', async (req, res) => {
     
     // Save plan to database with error handling
     try {
-      const planData = { id, type: 'plan', data: payload, markdown: markdownWithMap };
-      console.log('Saving plan:', { id, destination: payload.destination, length: markdownWithMap.length });
-      savePlan.run(id, nowIso(), JSON.stringify(planData));
-      console.log(`Plan saved with ID: ${id}`);
+      if (savePlan) {
+        const planData = { id, type: 'plan', data: payload, markdown: markdownWithMap };
+        console.log('Saving plan:', { id, destination: payload.destination, length: markdownWithMap.length });
+        savePlan.run(id, nowIso(), JSON.stringify(planData));
+        console.log(`Plan saved with ID: ${id}`);
+      } else {
+        console.warn('⚠️ SQLite not available - plan not saved locally');
+      }
     } catch (dbError) {
       console.error('Failed to save plan to database:', dbError);
       // Continue execution - don't fail the request if DB save fails
@@ -1886,6 +1912,11 @@ app.post('/api/track', (req, res) => {
 });
 app.get('/api/plan/:id/pdf', (req, res) => {
   const { id } = req.params;
+
+  if (!getPlan) {
+    return res.status(503).json({ error: 'SQLite not available - use Supabase API endpoint instead' });
+  }
+
   const row = getPlan.get(id);
   if (!row) {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -1955,6 +1986,11 @@ app.get('/api/plan/:id/pdf', (req, res) => {
 });
 app.get('/api/plan/:id/ics', (_req, res) => {
   const { id } = req.params;
+
+  if (!getPlan) {
+    return res.status(503).json({ error: 'SQLite not available - use Supabase API endpoint instead' });
+  }
+
   const row = getPlan.get(id);
   if (!row) return res.status(404).json({ error: 'Plan not found' });
   const saved = JSON.parse(row.payload || '{}');
