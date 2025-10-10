@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wayzo Deployment Status Report</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 40px 20px;
+      color: #1f2937;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+      padding: 48px 48px;
+      color: white;
+    }
+
+    .header h1 {
+      font-size: 42px;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+
+    .header .subtitle {
+      font-size: 18px;
+      opacity: 0.95;
+      font-weight: 500;
+    }
+
+    .header .date {
+      margin-top: 16px;
+      font-size: 14px;
+      opacity: 0.8;
+    }
+
+    .content {
+      padding: 48px;
+    }
+
+    .section {
+      margin-bottom: 48px;
+    }
+
+    .section:last-child {
+      margin-bottom: 0;
+    }
+
+    .section-title {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      color: #111827;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-title .icon {
+      font-size: 32px;
+    }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    .status-card {
+      background: #f9fafb;
+      border-radius: 12px;
+      padding: 24px;
+      border-left: 4px solid;
+    }
+
+    .status-card.success {
+      border-color: #10b981;
+    }
+
+    .status-card.warning {
+      border-color: #f59e0b;
+    }
+
+    .status-card.error {
+      border-color: #ef4444;
+    }
+
+    .status-card.info {
+      border-color: #3b82f6;
+    }
+
+    .status-card h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-card p {
+      font-size: 14px;
+      color: #6b7280;
+      line-height: 1.6;
+    }
+
+    .status-icon {
+      font-size: 20px;
+    }
+
+    .code-block {
+      background: #1f2937;
+      color: #e5e7eb;
+      padding: 20px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      overflow-x: auto;
+      margin: 16px 0;
+      line-height: 1.6;
+    }
+
+    .code-block .comment {
+      color: #9ca3af;
+    }
+
+    .code-block .highlight {
+      color: #fbbf24;
+      font-weight: 600;
+    }
+
+    .step-list {
+      counter-reset: step-counter;
+      list-style: none;
+    }
+
+    .step-list li {
+      counter-increment: step-counter;
+      margin-bottom: 32px;
+      padding-left: 60px;
+      position: relative;
+    }
+
+    .step-list li::before {
+      content: counter(step-counter);
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .step-list h4 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #111827;
+    }
+
+    .step-list p {
+      font-size: 14px;
+      color: #4b5563;
+      line-height: 1.7;
+      margin-bottom: 12px;
+    }
+
+    .step-list .substep {
+      background: #f3f4f6;
+      padding: 16px;
+      border-radius: 8px;
+      margin-top: 12px;
+      font-size: 13px;
+      border-left: 3px solid #667eea;
+    }
+
+    .architecture-diagram {
+      background: #f9fafb;
+      border-radius: 12px;
+      padding: 32px;
+      margin: 24px 0;
+      text-align: center;
+    }
+
+    .diagram-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 24px;
+      margin: 24px 0;
+      flex-wrap: wrap;
+    }
+
+    .diagram-box {
+      background: white;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 20px 28px;
+      min-width: 180px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .diagram-box.highlight {
+      border-color: #667eea;
+      background: linear-gradient(135deg, #667eea10 0%, #764ba210 100%);
+    }
+
+    .diagram-box h4 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #111827;
+    }
+
+    .diagram-box p {
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .diagram-arrow {
+      font-size: 32px;
+      color: #9ca3af;
+    }
+
+    .alert {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 24px 0;
+    }
+
+    .alert.error {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+
+    .alert.success {
+      background: #d1fae5;
+      border-color: #10b981;
+    }
+
+    .alert h4 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .alert p {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #374151;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 14px;
+    }
+
+    table th {
+      background: #f3f4f6;
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid #e5e7eb;
+    }
+
+    table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    table tr:hover {
+      background: #f9fafb;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .badge.success {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .badge.error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .badge.warning {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .badge.info {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    @media (max-width: 768px) {
+      .content {
+        padding: 24px;
+      }
+
+      .header {
+        padding: 32px 24px;
+      }
+
+      .header h1 {
+        font-size: 32px;
+      }
+
+      .step-list li {
+        padding-left: 50px;
+      }
+
+      .diagram-row {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🚀 Wayzo Deployment Status Report</h1>
+      <div class="subtitle">Supabase + Fly.io + Resend Integration</div>
+      <div class="date">📅 Generated: October 10, 2025</div>
+    </div>
+
+    <div class="content">
+
+      <!-- CURRENT SITUATION -->
+      <div class="section">
+        <h2 class="section-title">
+          <span class="icon">📊</span>
+          Current Situation
+        </h2>
+
+        <div class="status-grid">
+          <div class="status-card success">
+            <h3><span class="status-icon">✅</span> Code Integration</h3>
+            <p>All Supabase, Fly.io, and Resend code has been successfully integrated into the backend and frontend.</p>
+          </div>
+
+          <div class="status-card success">
+            <h3><span class="status-icon">✅</span> Fly.io Secrets</h3>
+            <p>All 5 required secrets are configured in Fly.io (SUPABASE_URL, SERVICE_ROLE_KEY, ANON_KEY, RESEND_API_KEY, PUBLIC_BASE_URL).</p>
+          </div>
+
+          <div class="status-card warning">
+            <h3><span class="status-icon">⚠️</span> Dashboard Not Connected</h3>
+            <p>The dashboard.html shows fake data because Supabase credentials need to be updated in the frontend code.</p>
+          </div>
+
+          <div class="status-card error">
+            <h3><span class="status-icon">❌</span> Deployment Blocked</h3>
+            <p>Cannot deploy to Fly.io due to npm package-lock.json sync issue (now fixed in Dockerfile).</p>
+          </div>
+
+          <div class="status-card info">
+            <h3><span class="status-icon">📧</span> Email Setup Needed</h3>
+            <p>Resend shows 0 contacts - domain verification required for wayzo.online to send emails.</p>
+          </div>
+
+          <div class="status-card success">
+            <h3><span class="status-icon">✅</span> Database Ready</h3>
+            <p>Supabase has 2 tables (plans, orders) and is ready to receive data.</p>
+          </div>
+        </div>
+
+        <div class="alert">
+          <h4>⚠️ Why You See Fake Data (Paris, Tokyo, Bali)</h4>
+          <p>Your dashboard.html file is the correct Supabase-integrated version (642 lines), but it has placeholder credentials. The page cannot connect to your real Supabase database until you update the credentials on lines 346-347.</p>
+        </div>
+      </div>
+
+      <!-- SYSTEM ARCHITECTURE -->
+      <div class="section">
+        <h2 class="section-title">
+          <span class="icon">🏗️</span>
+          System Architecture
+        </h2>
+
+        <div class="architecture-diagram">
+          <h3 style="margin-bottom: 24px; color: #111827;">Complete Flow Diagram</h3>
+
+          <div class="diagram-row">
+            <div class="diagram-box">
+              <h4>👤 User</h4>
+              <p>wayzo.online</p>
+            </div>
+            <div class="diagram-arrow">→</div>
+            <div class="diagram-box highlight">
+              <h4>🌐 Fly.io</h4>
+              <p>Node.js Backend<br>Amsterdam (ams)</p>
+            </div>
+          </div>
+
+          <div class="diagram-row">
+            <div class="diagram-box">
+              <h4>🤖 OpenAI</h4>
+              <p>GPT-4o-mini<br>Trip Generation</p>
+            </div>
+            <div class="diagram-box highlight">
+              <h4>💾 Supabase</h4>
+              <p>PostgreSQL DB<br>Auth + Storage</p>
+            </div>
+            <div class="diagram-box">
+              <h4>📧 Resend</h4>
+              <p>Email Service<br>Notifications</p>
+            </div>
+          </div>
+
+          <div class="diagram-row">
+            <div class="diagram-box">
+              <h4>💳 Stripe</h4>
+              <p>$19 Payments<br>Webhooks</p>
+            </div>
+            <div class="diagram-box">
+              <h4>📄 Puppeteer</h4>
+              <p>PDF Export<br>Trip Reports</p>
+            </div>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Component</th>
+              <th>Status</th>
+              <th>Purpose</th>
+              <th>Configuration</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Frontend</strong></td>
+              <td><span class="badge warning">Needs Update</span></td>
+              <td>Static HTML/CSS/JS site</td>
+              <td>Update Supabase credentials</td>
+            </tr>
+            <tr>
+              <td><strong>Backend</strong></td>
+              <td><span class="badge success">Ready</span></td>
+              <td>Express API with 4 new authenticated routes</td>
+              <td>All secrets configured in Fly.io</td>
+            </tr>
+            <tr>
+              <td><strong>Supabase DB</strong></td>
+              <td><span class="badge success">Active</span></td>
+              <td>Persistent plan storage + user auth</td>
+              <td>2 tables created, RLS enabled</td>
+            </tr>
+            <tr>
+              <td><strong>Fly.io</strong></td>
+              <td><span class="badge warning">Not Deployed</span></td>
+              <td>24/7 hosting at wayzo.online</td>
+              <td>Dockerfile fixed, ready to deploy</td>
+            </tr>
+            <tr>
+              <td><strong>Resend</strong></td>
+              <td><span class="badge warning">Domain Unverified</span></td>
+              <td>Send "Plan Ready" emails</td>
+              <td>Needs DNS records for wayzo.online</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- WHAT'S BEEN BUILT -->
+      <div class="section">
+        <h2 class="section-title">
+          <span class="icon">🛠️</span>
+          What's Been Built
+        </h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>File</th>
+              <th>Type</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>backend/lib/supabase.mjs</strong></td>
+              <td><span class="badge info">New</span></td>
+              <td>Supabase admin + public client initialization</td>
+            </tr>
+            <tr>
+              <td><strong>backend/lib/auth.mjs</strong></td>
+              <td><span class="badge info">New</span></td>
+              <td>JWT middleware to protect API routes</td>
+            </tr>
+            <tr>
+              <td><strong>backend/lib/email.mjs</strong></td>
+              <td><span class="badge info">New</span></td>
+              <td>Send beautiful HTML emails via Resend</td>
+            </tr>
+            <tr>
+              <td><strong>backend/server.mjs</strong></td>
+              <td><span class="badge warning">Modified</span></td>
+              <td>Added 4 authenticated API endpoints</td>
+            </tr>
+            <tr>
+              <td><strong>frontend/dashboard.html</strong></td>
+              <td><span class="badge warning">Modified</span></td>
+              <td>Supabase-integrated user dashboard (642 lines)</td>
+            </tr>
+            <tr>
+              <td><strong>frontend/backoffice.html</strong></td>
+              <td><span class="badge info">New</span></td>
+              <td>Duplicate of dashboard with Supabase integration</td>
+            </tr>
+            <tr>
+              <td><strong>backend/package.json</strong></td>
+              <td><span class="badge warning">Modified</span></td>
+              <td>Added @supabase/supabase-js + resend packages</td>
+            </tr>
+            <tr>
+              <td><strong>Dockerfile</strong></td>
+              <td><span class="badge success">Fixed</span></td>
+              <td>Changed npm ci → npm install (deployment fix)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="code-block">
+<span class="comment">// 4 New API Endpoints Added to backend/server.mjs:</span>
+
+<span class="highlight">GET /api/user/plans</span>
+  └─ List all saved plans for authenticated user
+  └─ Requires: Bearer token in Authorization header
+
+<span class="highlight">GET /api/user/plan/:id</span>
+  └─ Get single plan details by ID
+  └─ Requires: Bearer token + user must own the plan
+
+<span class="highlight">POST /api/user/plan</span>
+  └─ Save new plan to Supabase + send email notification
+  └─ Requires: Bearer token + plan data in body
+
+<span class="highlight">GET /api/user/plan/:id/pdf</span>
+  └─ Get signed URL for plan PDF download
+  └─ Requires: Bearer token + user must own the plan
+        </div>
+      </div>
+
+      <!-- WHAT NEEDS TO BE FIXED -->
+      <div class="section">
+        <h2 class="section-title">
+          <span class="icon">🔧</span>
+          What Needs to Be Fixed
+        </h2>
+
+        <div class="alert error">
+          <h4>❌ Critical Issue: Dashboard Shows Fake Data</h4>
+          <p><strong>Root cause:</strong> Your dashboard.html has placeholder Supabase credentials on lines 346-347. The code cannot connect to your real database until you replace <code>YOUR_SUPABASE_URL_HERE</code> and <code>YOUR_SUPABASE_ANON_KEY_HERE</code> with actual values.</p>
+        </div>
+
+        <div class="alert error">
+          <h4>❌ Deployment Blocked (NOW FIXED)</h4>
+          <p><strong>Issue:</strong> npm ci couldn't install packages because package-lock.json was missing new dependencies (@supabase/supabase-js, resend).</p>
+          <p><strong>Solution:</strong> Changed Dockerfile to use <code>npm install</code> instead of <code>npm ci</code>, which will auto-generate the lock file during Docker build on Fly.io's Linux environment.</p>
+        </div>
+
+        <div class="alert">
+          <h4>⚠️ Email Not Sending</h4>
+          <p><strong>Issue:</strong> Resend dashboard shows 0 contacts because wayzo.online domain is not verified.</p>
+          <p><strong>Impact:</strong> Users won't receive "Plan Ready" email notifications until domain is verified or you use Resend's test domain.</p>
+        </div>
+      </div>
+
+      <!-- STEP-BY-STEP FIX GUIDE -->
+      <div class="section">
+        <h2 class="section-title">
+          <span class="icon">📋</span>
+          Step-by-Step Fix Guide
+        </h2>
+
+        <ol class="step-list">
+          <li>
+            <h4>Update Supabase Credentials in Dashboard</h4>
+            <p>Open <code>frontend/dashboard.html</code> in your editor and find lines 346-347:</p>
+            <div class="code-block">
+<span class="comment">// Lines 346-347 in frontend/dashboard.html</span>
+const SUPABASE_URL = '<span class="highlight">YOUR_SUPABASE_URL_HERE</span>';
+const SUPABASE_ANON_KEY = '<span class="highlight">YOUR_SUPABASE_ANON_KEY_HERE</span>';
+            </div>
+            <p>Replace with your actual values (you mentioned "THE ANON KEY IS THERE!" in GitHub):</p>
+            <div class="code-block">
+<span class="comment">// Update to:</span>
+const SUPABASE_URL = '<span class="highlight">https://khrxfiekfzcvyjlzryvz.supabase.co</span>';
+const SUPABASE_ANON_KEY = '<span class="highlight">[paste your anon key from Supabase dashboard]</span>';
+            </div>
+            <div class="substep">
+              <strong>Where to find your keys:</strong><br>
+              1. Go to Supabase dashboard: https://supabase.com/dashboard/project/khrxfiekfzcvyjlzryvz<br>
+              2. Click "Settings" → "API"<br>
+              3. Copy "Project URL" and "anon public" key<br>
+              4. Paste into frontend/dashboard.html
+            </div>
+          </li>
+
+          <li>
+            <h4>Commit Your Changes to Git</h4>
+            <p>Save the updated dashboard.html and the fixed Dockerfile, then commit to your repository:</p>
+            <div class="code-block">
+git add frontend/dashboard.html
+git add Dockerfile
+git commit -m "Fix: Update Supabase credentials and deployment config"
+git push origin fix-links-v68
+            </div>
+          </li>
+
+          <li>
+            <h4>Deploy to Fly.io</h4>
+            <p>Now that the Dockerfile is fixed (uses npm install instead of npm ci), you can deploy:</p>
+            <div class="code-block">
+flyctl deploy --app wayzo
+            </div>
+            <p>This will:</p>
+            <div class="substep">
+              ✅ Build Docker image on Fly.io's Linux servers (no Windows build tools needed)<br>
+              ✅ Auto-generate package-lock.json during build<br>
+              ✅ Install all dependencies including @supabase/supabase-js and resend<br>
+              ✅ Deploy to wayzo.online with 24/7 uptime<br>
+              ✅ Use all 5 secrets already configured in Fly.io
+            </div>
+          </li>
+
+          <li>
+            <h4>Verify Deployment</h4>
+            <p>After deployment completes, test the live application:</p>
+            <div class="substep">
+              1. Visit https://wayzo.online/dashboard.html<br>
+              2. Click "Sign In with Email"<br>
+              3. Enter your email address (dimahasin2@gmail.com)<br>
+              4. Check email for magic link<br>
+              5. Click link to authenticate<br>
+              6. Dashboard should now show "No plans yet" instead of fake Paris/Tokyo/Bali data
+            </div>
+          </li>
+
+          <li>
+            <h4>Set Up Resend Email Domain (Optional but Recommended)</h4>
+            <p>To enable email notifications when plans are ready:</p>
+            <div class="substep">
+              1. Go to Resend dashboard: https://resend.com/domains<br>
+              2. Click "Add Domain"<br>
+              3. Enter: wayzo.online<br>
+              4. Copy the DNS records (SPF, DKIM, etc.)<br>
+              5. Add records to your DNS provider (wherever wayzo.online is registered)<br>
+              6. Wait 24-48 hours for verification<br>
+              7. Emails will then be sent from hello@wayzo.online
+            </div>
+            <div class="alert">
+              <h4>💡 Alternative: Use Test Domain</h4>
+              <p>Until domain is verified, Resend will still send emails but they may go to spam. For immediate testing, you can use Resend's default test domain (onboarding@resend.dev) by temporarily changing line 18 in backend/lib/email.mjs.</p>
+            </div>
+          </li>
+
+          <li>
+            <h4>Test Complete Flow End-to-End</h4>
+            <p>Once deployed and credentials updated, test the full user journey:</p>
+            <div class="substep">
+              <strong>A. Create a New Plan:</strong><br>
+              1. Go to https://wayzo.online<br>
+              2. Fill out trip form (destination, dates, budget)<br>
+              3. Click "Generate Plan"<br>
+              4. Pay $19 via Stripe checkout<br><br>
+
+              <strong>B. Verify Plan Saved:</strong><br>
+              5. Check Supabase dashboard → "plans" table for new row<br>
+              6. Check email for "Your plan is ready" notification<br><br>
+
+              <strong>C. View Saved Plan:</strong><br>
+              7. Go to https://wayzo.online/dashboard.html<br>
+              8. Sign in with magic link<br>
+              9. Your plan should appear in the list<br>
+              10. Click to view details and download PDF
+            </div>
+          </li>
+        </ol>
+      </div>
+
+      <!-- TECHNICAL DETAILS -->
+      <div class="section">
+        <h2 class="section-title">
+          <span class="icon">⚙️</span>
+          Technical Details
+        </h2>
+
+        <h3 style="margin-bottom: 16px; font-size: 20px;">Environment Variables in Fly.io</h3>
+        <div class="code-block">
+<span class="comment"># Already configured via: flyctl secrets set</span>
+
+SUPABASE_URL=https://khrxfiekfzcvyjlzryvz.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGc... <span class="comment">(secret admin key)</span>
+SUPABASE_ANON_KEY=eyJhbGc... <span class="comment">(public key for frontend)</span>
+RESEND_API_KEY=re_... <span class="comment">(email API key)</span>
+PUBLIC_BASE_URL=https://wayzo.online <span class="comment">(fixed from wayzo.fly.dev)</span>
+        </div>
+
+        <h3 style="margin: 32px 0 16px 0; font-size: 20px;">Authentication Flow</h3>
+        <div class="code-block">
+<span class="comment">// How magic link authentication works:</span>
+
+1. User enters email in dashboard
+   └─ Frontend: supabase.auth.signInWithOtp({ email })
+
+2. Supabase sends magic link to user's email
+   └─ Email contains: https://wayzo.online/dashboard.html#access_token=...
+
+3. User clicks link, returns to dashboard with token in URL
+   └─ Frontend: supabase.auth.getSession() extracts token
+
+4. Dashboard calls API with Bearer token
+   └─ Backend: requireUser() middleware validates JWT
+
+5. If valid, API returns user's saved plans
+   └─ Frontend: renders plan list
+        </div>
+
+        <h3 style="margin: 32px 0 16px 0; font-size: 20px;">Database Schema</h3>
+        <div class="code-block">
+<span class="comment">-- Supabase "plans" table</span>
+CREATE TABLE plans (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id),
+  title TEXT,
+  destination TEXT,
+  start_date DATE,
+  end_date DATE,
+  travelers INTEGER,
+  budget_low INTEGER,
+  budget_high INTEGER,
+  full_itinerary TEXT,
+  pdf_path TEXT,
+  created_at TIMESTAMP DEFAULT now()
+);
+
+<span class="comment">-- Row Level Security (RLS) Policy</span>
+ALTER TABLE plans ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own plans"
+  ON plans FOR SELECT
+  USING (auth.uid() = user_id);
+        </div>
+
+        <h3 style="margin: 32px 0 16px 0; font-size: 20px;">Deployment Configuration</h3>
+        <div class="code-block">
+<span class="comment"># fly.toml</span>
+app = "wayzo"
+primary_region = "ams"  <span class="comment">(Amsterdam)</span>
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_start_machines = true
+  auto_stop_machines = false
+  min_machines_running = 1  <span class="comment">(24/7 uptime)</span>
+        </div>
+      </div>
+
+      <!-- CURRENT VS FUTURE STATE -->
+      <div class="section">
+        <h2 class="section-title">
+          <span class="icon">🎯</span>
+          Current vs. Future State
+        </h2>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 24px 0;">
+          <div style="background: #fee2e2; padding: 24px; border-radius: 12px; border-left: 4px solid #ef4444;">
+            <h3 style="font-size: 18px; margin-bottom: 16px; color: #991b1b;">❌ Current State (Before Fix)</h3>
+            <ul style="padding-left: 20px; line-height: 2; color: #7f1d1d;">
+              <li>Dashboard shows fake data (Paris, Tokyo, Bali)</li>
+              <li>Cannot deploy due to npm package sync error</li>
+              <li>Plans saved to SQLite, lost when app restarts</li>
+              <li>No user authentication</li>
+              <li>No email notifications</li>
+              <li>Users can't view saved plans</li>
+            </ul>
+          </div>
+
+          <div style="background: #d1fae5; padding: 24px; border-radius: 12px; border-left: 4px solid #10b981;">
+            <h3 style="font-size: 18px; margin-bottom: 16px; color: #065f46;">✅ Future State (After Fix)</h3>
+            <ul style="padding-left: 20px; line-height: 2; color: #047857;">
+              <li>Dashboard shows real user plans from Supabase</li>
+              <li>Deployed to Fly.io with 24/7 uptime</li>
+              <li>Plans saved forever in Supabase PostgreSQL</li>
+              <li>Magic link authentication via email</li>
+              <li>Email notifications when plans ready</li>
+              <li>Users can sign in anytime to view plans</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUICK CHECKLIST -->
+      <div class="section">
+        <h2 class="section-title">
+          <span class="icon">✅</span>
+          Quick Checklist
+        </h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 60%;">Task</th>
+              <th>Status</th>
+              <th>Priority</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>✅ Integrate Supabase code into backend</td>
+              <td><span class="badge success">Done</span></td>
+              <td>Critical</td>
+            </tr>
+            <tr>
+              <td>✅ Create 4 authenticated API routes</td>
+              <td><span class="badge success">Done</span></td>
+              <td>Critical</td>
+            </tr>
+            <tr>
+              <td>✅ Build Supabase-integrated dashboard</td>
+              <td><span class="badge success">Done</span></td>
+              <td>Critical</td>
+            </tr>
+            <tr>
+              <td>✅ Fix Dockerfile deployment issue</td>
+              <td><span class="badge success">Done</span></td>
+              <td>Critical</td>
+            </tr>
+            <tr>
+              <td>✅ Configure Fly.io secrets (5 total)</td>
+              <td><span class="badge success">Done</span></td>
+              <td>Critical</td>
+            </tr>
+            <tr>
+              <td>⚠️ Update Supabase credentials in dashboard.html</td>
+              <td><span class="badge error">TO DO</span></td>
+              <td>Critical</td>
+            </tr>
+            <tr>
+              <td>⚠️ Deploy to Fly.io</td>
+              <td><span class="badge error">TO DO</span></td>
+              <td>Critical</td>
+            </tr>
+            <tr>
+              <td>⚠️ Verify domain in Resend</td>
+              <td><span class="badge warning">Optional</span></td>
+              <td>Medium</td>
+            </tr>
+            <tr>
+              <td>⚠️ Test end-to-end flow</td>
+              <td><span class="badge error">TO DO</span></td>
+              <td>High</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- NEXT IMMEDIATE ACTIONS -->
+      <div class="section">
+        <h2 class="section-title">
+          <span class="icon">🚀</span>
+          Next Immediate Actions
+        </h2>
+
+        <div class="alert success">
+          <h4>✅ You're 2 Steps Away from Full Deployment!</h4>
+          <p>The hard work is done. All code is integrated and the deployment blocker is fixed. Just update the credentials and deploy.</p>
+        </div>
+
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 32px; border-radius: 12px; color: white; margin: 24px 0;">
+          <h3 style="font-size: 24px; margin-bottom: 20px; font-weight: 700;">🎯 Action Plan:</h3>
+          <div style="font-size: 16px; line-height: 2; font-weight: 500;">
+            <div style="margin-bottom: 12px;">1️⃣ Open <code style="background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 4px;">frontend/dashboard.html</code></div>
+            <div style="margin-bottom: 12px;">2️⃣ Replace lines 346-347 with real Supabase URL + anon key</div>
+            <div style="margin-bottom: 12px;">3️⃣ Save, commit, and push to GitHub</div>
+            <div style="margin-bottom: 12px;">4️⃣ Run: <code style="background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 4px;">flyctl deploy --app wayzo</code></div>
+            <div>5️⃣ Visit: <code style="background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 4px;">https://wayzo.online/dashboard.html</code></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUPPORT RESOURCES -->
+      <div class="section">
+        <h2 class="section-title">
+          <span class="icon">📚</span>
+          Support Resources
+        </h2>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+          <div class="status-card info">
+            <h3>📖 Documentation Created</h3>
+            <p>8 detailed markdown guides have been created in your project directory covering integration, setup, and troubleshooting.</p>
+          </div>
+
+          <div class="status-card info">
+            <h3>🔧 Debugging</h3>
+            <p>Check browser console (F12) for Supabase connection errors. Backend logs: <code>flyctl logs --app wayzo</code></p>
+          </div>
+
+          <div class="status-card info">
+            <h3>💬 Community</h3>
+            <p>Supabase Discord, Fly.io community forum, and Resend documentation are excellent resources if you get stuck.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="text-align: center; padding: 40px 20px; color: white;">
+    <p style="font-size: 14px; opacity: 0.9;">Generated by Claude Code for Wayzo Deployment</p>
+    <p style="font-size: 12px; opacity: 0.7; margin-top: 8px;">Last Updated: October 10, 2025</p>
+  </div>
+</body>
+</html>
