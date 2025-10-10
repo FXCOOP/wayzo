@@ -19,7 +19,10 @@ import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
 import { getWidgetsForDestination, generateWidgetHTML, injectWidgetsIntoSections } from './lib/widgets.mjs';
 import { generateBookingRecommendations, WEATHER_IMPACT, CROWD_PATTERNS } from './lib/smart-booking.mjs';
-const VERSION = 'staging-v64';
+import { supabaseAdmin } from './lib/supabase.mjs';
+import { requireUser } from './lib/auth.mjs';
+import { sendPlanReadyEmail } from './lib/email.mjs';
+const VERSION = 'staging-v65';
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
   try {
@@ -1970,6 +1973,142 @@ app.get('/api/plan/:id/ics', (_req, res) => {
   res.setHeader('Content-Disposition', `attachment; filename="wayzo-${id}.ics"`);
   res.send(ics);
 });
+
+// ========================================
+// SUPABASE-AUTHENTICATED ROUTES
+// ========================================
+
+// List all plans for authenticated user
+app.get('/api/user/plans', requireUser, async (req, res) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('plans')
+      .select('id,title,destination,start_date,end_date,created_at,pdf_path,budget_low,budget_high,travelers')
+      .eq('user_id', req.user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('List plans error:', error);
+      return res.status(500).json({ error: 'Failed to list plans' });
+    }
+
+    console.log(`📋 Listed ${data?.length || 0} plans for user ${req.user.email}`);
+    res.json(data || []);
+  } catch (e) {
+    console.error('GET /api/user/plans error:', e);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Get single plan for authenticated user
+app.get('/api/user/plan/:id', requireUser, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { data, error } = await supabaseAdmin
+      .from('plans')
+      .select('*')
+      .eq('id', id)
+      .eq('user_id', req.user.id)
+      .single();
+
+    if (error || !data) {
+      console.error('Get plan error:', error);
+      return res.status(404).json({ error: 'Plan not found' });
+    }
+
+    console.log(`📄 Plan ${id} fetched for user ${req.user.email}`);
+    res.json(data);
+  } catch (e) {
+    console.error('GET /api/user/plan/:id error:', e);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Create/save plan for authenticated user (replaces public /api/plan)
+app.post('/api/user/plan', requireUser, async (req, res) => {
+  try {
+    const { params, markdown, html, meta } = req.body || {};
+
+    console.log(`📝 Creating plan for user ${req.user.email}`);
+
+    // Build insert payload
+    const insertPayload = {
+      user_id: req.user.id,
+      title: meta?.title || (params?.destination ? `Trip to ${params.destination}` : 'My Trip Plan'),
+      destination: params?.destination || null,
+      start_date: params?.start || params?.startDate || null,
+      end_date: params?.end || params?.endDate || null,
+      budget_low: meta?.budgetLow || params?.budget || params?.budgetMin || null,
+      budget_high: meta?.budgetHigh || params?.budgetMax || null,
+      travelers: params?.adults || params?.travelers || null,
+      style: params?.level || params?.style || null,
+      params: params || null,
+      content: meta?.planJson || null,
+      markdown: markdown || null,
+      html: html || null,
+      created_at: new Date().toISOString()
+    };
+
+    const { data: row, error } = await supabaseAdmin
+      .from('plans')
+      .insert(insertPayload)
+      .select('id')
+      .single();
+
+    if (error) {
+      console.error('Insert plan error:', error);
+      return res.status(500).json({ error: 'Failed to create plan' });
+    }
+
+    // Send email notification
+    const planUrl = `${process.env.PUBLIC_BASE_URL || 'https://wayzo.online'}/backoffice.html#plan=${row.id}`;
+    await sendPlanReadyEmail(req.user.email, planUrl);
+
+    console.log(`✅ Plan ${row.id} created for user ${req.user.email}`);
+    res.json({ ok: true, id: row.id, url: planUrl });
+  } catch (e) {
+    console.error('POST /api/user/plan error:', e);
+    res.status(500).json({ error: 'Failed to create plan' });
+  }
+});
+
+// Get signed PDF URL for plan
+app.get('/api/user/plan/:id/pdf', requireUser, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Verify ownership
+    const { data: plan, error } = await supabaseAdmin
+      .from('plans')
+      .select('user_id,pdf_path')
+      .eq('id', id)
+      .single();
+
+    if (error || !plan || plan.user_id !== req.user.id) {
+      return res.status(404).json({ error: 'Plan not found' });
+    }
+
+    if (!plan.pdf_path) {
+      return res.status(404).json({ error: 'PDF not generated yet' });
+    }
+
+    // Create signed URL (60 seconds expiry)
+    const { data: signed, error: sErr } = await supabaseAdmin
+      .storage.from('plans')
+      .createSignedUrl(plan.pdf_path, 60);
+
+    if (sErr) {
+      console.error('PDF sign error:', sErr);
+      return res.status(500).json({ error: 'Failed to generate PDF URL' });
+    }
+
+    res.json({ url: signed.signedUrl });
+  } catch (e) {
+    console.error('GET /api/user/plan/:id/pdf error:', e);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Legal pages - must be defined before the catch-all route
 app.get('/privacy', (_req, res) => {
   const privacyFile = path.join(FRONTEND, 'privacy.html');
@@ -2133,8 +2272,8 @@ app.get('/api/location', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Wayzo backend running on :${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Wayzo backend running on 0.0.0.0:${PORT}`);
   console.log('Version:', VERSION);
   console.log('Index file:', INDEX);
   console.log('Frontend path:', FRONTEND);
