@@ -57,9 +57,13 @@ export function linkifyTokens(markdown = '', dest = '') {
     .replace(/\*\*\s*##\s*(Day \d+)/gi, '## $1');
 
   const processed = cleaned
-    // Maps - keep external link for Google Maps
-    .replace(/\[(Map)\]\(map:([^)]+)\)/gi,        (_m, _t, q) => `[Map](${aff.maps(q.trim())})`)
-    // Fix standalone [Map] without protocol (AI mistake)
+    // Maps - keep external link for Google Maps with specific location names
+    .replace(/\[(Map)\]\(map:([^)]+)\)/gi,        (_m, _t, q) => {
+      // Use the specific location from the token, don't just use dest
+      const specificLocation = q.trim();
+      return `[Map](${aff.maps(specificLocation)})`;
+    })
+    // Fix standalone [Map] without protocol (AI mistake) - use destination as fallback
     .replace(/\[Map\](?!\()/gi, `[Map](${aff.maps(dest)})`)
 
     // Hotel/Accommodation links → Hotel Widget
@@ -72,9 +76,19 @@ export function linkifyTokens(markdown = '', dest = '') {
     .replace(/\[(Book|Book Now|Flights|Flight)\]\(flights:([^)]+)\)/gi,     (_m, _t, q) => `[Book Flights](#flight-widget)`)
 
     // Activity/Ticket links → GetYourGuide with partner ID (process tokens with colons first)
-    .replace(/\[(Tickets|Book Tickets|Book Entry Tickets|Buy Tickets|Book Experience|Book|Book Now|Activities)\]\(tickets:([^)]+)\)/gi, (_m, _t, q) => `[Book Tickets](https://www.getyourguide.com/s/?q=${encodeURIComponent(dest + ' ' + q.trim())}&partner_id=PUHVJ53)`)
-    .replace(/\[(Tickets|Book Tickets|Book Entry Tickets|Buy Tickets|Book Experience|Book|Book Now|Activities)\]\(activity:([^)]+)\)/gi,(_m, _t, q) => `[Book Tickets](https://www.getyourguide.com/s/?q=${encodeURIComponent(dest + ' ' + q.trim())}&partner_id=PUHVJ53)`)
-    .replace(/\[(Tickets|Book Tickets|Book Entry Tickets|Buy Tickets|Book Experience|Book|Book Now|Activities)\]\(activities:([^)]+)\)/gi,(_m, _t, q) => `[Book Tickets](https://www.getyourguide.com/s/?q=${encodeURIComponent(dest + ' ' + q.trim())}&partner_id=PUHVJ53)`)
+    // Use specific activity name FIRST, then add destination for better search results
+    .replace(/\[(Tickets|Book Tickets|Book Entry Tickets|Buy Tickets|Book Experience|Book|Book Now|Activities)\]\(tickets:([^)]+)\)/gi, (_m, _t, q) => {
+      const specificActivity = q.trim();
+      return `[Book Tickets](https://www.getyourguide.com/s/?q=${encodeURIComponent(specificActivity + ' ' + dest)}&partner_id=PUHVJ53)`;
+    })
+    .replace(/\[(Tickets|Book Tickets|Book Entry Tickets|Buy Tickets|Book Experience|Book|Book Now|Activities)\]\(activity:([^)]+)\)/gi,(_m, _t, q) => {
+      const specificActivity = q.trim();
+      return `[Book Tickets](https://www.getyourguide.com/s/?q=${encodeURIComponent(specificActivity + ' ' + dest)}&partner_id=PUHVJ53)`;
+    })
+    .replace(/\[(Tickets|Book Tickets|Book Entry Tickets|Buy Tickets|Book Experience|Book|Book Now|Activities)\]\(activities:([^)]+)\)/gi,(_m, _t, q) => {
+      const specificActivity = q.trim();
+      return `[Book Tickets](https://www.getyourguide.com/s/?q=${encodeURIComponent(specificActivity + ' ' + dest)}&partner_id=PUHVJ53)`;
+    })
 
     // Standalone attraction booking tokens (no parentheses) → GetYourGuide
     .replace(/\[Book Entry Tickets\]/gi, `[Book Entry Tickets](https://www.getyourguide.com/s/?q=${encodeURIComponent(dest)}&partner_id=PUHVJ53)`)
