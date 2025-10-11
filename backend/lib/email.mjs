@@ -1,6 +1,13 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialize Resend only if API key is available
+let resend = null;
+if (process.env.RESEND_API_KEY) {
+  resend = new Resend(process.env.RESEND_API_KEY);
+  console.log('✅ Resend email client initialized');
+} else {
+  console.warn('⚠️ RESEND_API_KEY not set - email notifications disabled');
+}
 
 /**
  * Send email notification when a plan is ready
@@ -8,8 +15,8 @@ const resend = new Resend(process.env.RESEND_API_KEY);
  * @param {string} planUrl - URL to view the plan
  */
 export async function sendPlanReadyEmail(to, planUrl) {
-  if (!process.env.RESEND_API_KEY) {
-    console.log('⚠️  RESEND_API_KEY not set, skipping email');
+  if (!resend) {
+    console.log('⚠️  Resend not available, skipping email');
     return;
   }
 
