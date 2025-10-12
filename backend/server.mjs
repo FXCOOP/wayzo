@@ -527,90 +527,56 @@ Use these visual insights to personalize recommendations throughout the itinerar
 # ${destination} — ${start} → ${end}
 
 ## 🎯 Your Journey at a Glance
-Write a warm, personal welcome that makes the traveler excited about their upcoming adventure. Start with something like "Experience the magic of..." or "Your ${nDays}-day journey to..." Focus on what makes this destination special and what awaits them. Avoid AI-sounding language and make it feel like a knowledgeable friend is describing their trip.
+[Write 2-3 paragraphs describing the destination's magic and what makes this trip special]
 
 ## 💰 Budget Breakdown
 
-CRITICAL: You MUST generate REALISTIC numeric budget estimates based on actual ${destination} prices for ${level} travel style. DO NOT use placeholder text like "€X" or "€0". Calculate real numbers for ${adults + children} travelers over ${nDays} days.
-
-Research current ${destination} market prices:
-- ${level === 'luxury' ? 'High-end' : level === 'mid-range' ? 'Mid-range' : 'Budget-friendly'} accommodation costs per night
-- Typical meal prices for ${level} dining
-- Flight costs from major European cities to ${destination}
-- Local transportation and activity prices
-
-Format the budget breakdown as:
-
-**💰 Total Budget Estimate: €[calculated total low] - €[calculated total high]**
+**💰 Total Budget Estimate: €[LOW] - €[HIGH]**
 *For ${adults + children} travelers • ${nDays} days*
 
 | Category | Amount Range | Notes |
 |----------|-------------|--------|
-| ✈️ **Flights** | €[calculate realistic range] | Round-trip for ${adults + children} travelers |
-| 🏨 **Accommodation** | €[calculate: nights × rate × travelers] | (${nDays} nights, €[realistic rate] per night) |
-| 🍽️ **Food & Dining** | €[calculate: days × meals × travelers] | (€[realistic daily rate] per person/day, local restaurants) |
-| 🎫 **Activities** | €[calculate based on typical attraction prices] | (Museums, tours, attractions) |
-| 🚌 **Transportation** | €[calculate local transport costs] | (Local transit, airport transfers) |
-| 🛍️ **Miscellaneous** | €[calculate: 10-15% of subtotal] | (Souvenirs, tips, emergency fund) |
-
-EXAMPLE for context (adjust for your destination):
-- Budget style in Eastern Europe: €50-80/night accommodation, €25-35/day food
-- Mid-range in Western Europe: €120-180/night accommodation, €50-70/day food
-- Luxury anywhere: €250+/night accommodation, €100+/day food
-
-Make ALL numbers realistic and appropriate for ${destination}.${destination.toLowerCase().includes('ski') || destination.toLowerCase().includes('bansko') || destination.toLowerCase().includes('alps') || professional_brief?.toLowerCase().includes('ski') ? ' Include equipment rental costs for ski gear (€30-50/day), lessons (€50-100), and lift passes (€40-60/day).' : ''}
+| ✈️ **Flights** | €XXX - €XXX | Round-trip for ${adults + children} travelers |
+| 🏨 **Accommodation** | €XXX - €XXX | ${nDays} nights |
+| 🍽️ **Food & Dining** | €XXX - €XXX | Daily meals |
+| 🎫 **Activities** | €XXX - €XXX | Museums, tours, attractions |
+| 🚌 **Transportation** | €XXX - €XXX | Local transit |
+| 🛍️ **Miscellaneous** | €XXX - €XXX | Souvenirs, tips |
 
 ## 🗺️ Getting Around
-[transportation options, tips, getting from/to airport]
+[Describe how to get to/from airport and travel around the destination]
 
 ## 🏨 Where to Stay
-Recommend 3-4 excellent hotels in ${destination} for ${level} travelers with these details:
 
-**For EACH hotel include:**
-- Hotel name and type (e.g., "Hotel Goldener Adler - Historic boutique hotel")
-- Full address with postal code
-- Estimated rate: €X-€Y per night (total for ${nDays} nights: €XXX-€XXX)
-- **ALWAYS add just: [Book Now] with NO URL or anchor**
-- Why it's special: Location benefits, unique features, value proposition
-- Distance to main attractions
-
-**Example format:**
-**Hotel Central Innsbruck** (Traditional 3-star)
-- Address: Universitätsstraße 5, 6020 Innsbruck
-- Rate: €75-110/night (15 nights: €1,125-1,650 total)
+**[Hotel Name]** ([Type])
+- Address: [Full address with postal code]
+- Rate: €XX-€XX/night (${nDays} nights: €XXX-€XXX total)
 - [Book Now]
-- Perfect for: Walking distance to Old Town (5 min), great breakfast, family-run hospitality
+- Why it's special: [Brief description]
+- Distance to main attractions: [Walking time/transport info]
+
+[Provide 3-4 hotels in this format]
 
 ## 🎫 Must-See Attractions
-**CRITICAL LINK FORMATTING RULES:**
 
-**For Activity/Attraction Bookings:**
-- ALWAYS use format: **[Book Entry Tickets](activity:SPECIFIC_ACTIVITY_NAME)**
-- Example: [Book Entry Tickets](activity:Krimml Waterfalls)
-- NOT: [Book Entry Tickets] (too generic, will show wrong results)
+**[Attraction Name]**
+- Description: [What makes it special]
+- Address: [Full address]
+- Entry fee: [Price or "Free"]
+- Hours: [Opening hours]
+- [Book Entry Tickets](activity:[SPECIFIC NAME]) | [Map](map:[VENUE NAME, FULL ADDRESS])
 
-**For Map Links:**
-- ALWAYS use format: **[Map](map:SPECIFIC_VENUE_NAME_AND_ADDRESS)**
-- Example: [Map](map:Krimml Waterfalls, Krimml 1, 5730 Krimml)
-- NOT: [Map](map:Tyrol, Austria) (too generic, incorrect location)
-
-**For each attraction include:**
-- Attraction name and description
-- Address and location details
-- Entry fee or "Free"
-- Opening hours if relevant
-- **[Book Entry Tickets](activity:SPECIFIC_ATTRACTION_NAME)** for paid attractions
-- **[Map](map:SPECIFIC_VENUE_NAME, FULL_ADDRESS)** for location
+[List 8-12 attractions in this format]
 
 ## 🍽️ Dining Guide
 
-**Stiftskeller Innsbruck** (Traditional Tyrolean)
-- Address: Herzog-Friedrich-Straße 1, 6020 Innsbruck
-- Price: €18-€28 per person
-- Specialties: Wiener Schnitzel, Tiroler Gröstl, apple strudel
-- [Map]
+**[Restaurant Name]** ([Cuisine type])
+- Address: [Full address]
+- Price: €XX-€XX per person
+- Specialties: [Signature dishes]
+- [Map](map:[RESTAURANT NAME, FULL ADDRESS])
 
-Recommend 3-4 local restaurants following this exact format. Include varied cuisine types and price ranges. Add ONLY [Map] links.
+[Provide 3-4 restaurants]
 
 ## 🎭 Daily Itineraries
 
@@ -638,13 +604,7 @@ Recommend 3-4 local restaurants following this exact format. Include varied cuis
 - [Map](map:Stiftskeller Innsbruck, Herzog-Friedrich-Straße 1, 6020 Innsbruck)
 - Evening stroll along Inn River promenade
 
-**CRITICAL**: Create ${nDays} days following this EXACT format:
-- Use emojis 🌅 MORNING, 🌞 AFTERNOON, 🌆 EVENING with time ranges
-- Include specific venues, addresses, durations
-- For activities/attractions: [Book Entry Tickets](activity:SPECIFIC_ACTIVITY_NAME)
-- For all locations: [Map](map:SPECIFIC_VENUE_NAME, FULL_ADDRESS)
-- NEVER use generic destination names in booking/map links
-
+[Create ${nDays} days in this format with specific venues, addresses, and booking/map links]
 
 ## 🧳 Don't Forget List
 Essential items to pack for your ${destination} adventure.
@@ -666,15 +626,7 @@ Must-have mobile apps for navigating ${destination} and enhancing your travel ex
 - **Important Local Numbers**: Destination-specific emergency services
 
 ## ⚠️ Disclaimer
-*Prices and availability subject to change. Verify details before booking.*
-
-CRITICAL INSTRUCTIONS:
-- DO NOT add AI disclaimers or meta-commentary like "This itinerary was generated by AI" or "Please verify information"
-- DO NOT add duplicate disclaimers after sections
-- The single disclaimer above is sufficient
-- Focus on providing practical, actionable travel information
-
-Generate the complete travel itinerary now using all the sections listed above.`;
+*Prices and availability subject to change. Verify details before booking.*`;
 
   // Trip context appended to system prompt (single prompt approach)
   const user = `Create an AMAZING trip plan for:
