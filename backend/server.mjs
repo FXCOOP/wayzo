@@ -582,20 +582,25 @@ Recommend 3-4 excellent hotels in ${destination} for ${level} travelers with the
 - Perfect for: Walking distance to Old Town (5 min), great breakfast, family-run hospitality
 
 ## 🎫 Must-See Attractions
-**Attraction Booking Links - Use these EXACT tokens for paid attractions:**
-- For museums/attractions with entry fees: **[Book Entry Tickets]**
-- For tickets to events/shows: **[Buy Tickets]**
-- For tours/activities/experiences: **[Book Experience]**
+**CRITICAL LINK FORMATTING RULES:**
 
-**IMPORTANT**: These exact tokens will be automatically processed to add GetYourGuide partner links. DO NOT add URLs yourself.
+**For Activity/Attraction Bookings:**
+- ALWAYS use format: **[Book Entry Tickets](activity:SPECIFIC_ACTIVITY_NAME)**
+- Example: [Book Entry Tickets](activity:Krimml Waterfalls)
+- NOT: [Book Entry Tickets] (too generic, will show wrong results)
+
+**For Map Links:**
+- ALWAYS use format: **[Map](map:SPECIFIC_VENUE_NAME_AND_ADDRESS)**
+- Example: [Map](map:Krimml Waterfalls, Krimml 1, 5730 Krimml)
+- NOT: [Map](map:Tyrol, Austria) (too generic, incorrect location)
 
 **For each attraction include:**
 - Attraction name and description
 - Address and location details
 - Entry fee or "Free"
 - Opening hours if relevant
-- **Use the exact booking tokens above for paid attractions**
-- [Map] link for location
+- **[Book Entry Tickets](activity:SPECIFIC_ATTRACTION_NAME)** for paid attractions
+- **[Map](map:SPECIFIC_VENUE_NAME, FULL_ADDRESS)** for location
 
 ## 🍽️ Dining Guide
 
@@ -609,13 +614,13 @@ Recommend 3-4 local restaurants following this exact format. Include varied cuis
 
 ## 🎭 Daily Itineraries
 
-## Day 1 - 2025-10-15
+## Day 1 - ${start}
 
 ### 🌅 MORNING (9:00-12:00)
 - Arrival and hotel check-in at Hotel Innsbruck
 - Address: Innrain 3, 6020 Innsbruck
 - Duration: 2 hours
-- [Book Now] | [Map](map:Hotel Innsbruck+${destination})
+- [Book Now] | [Map](map:Hotel Innsbruck, Innrain 3, 6020 Innsbruck)
 - Pro tip: Arrive early to settle in before exploring
 
 ### 🌞 AFTERNOON (12:00-17:00)
@@ -623,17 +628,22 @@ Recommend 3-4 local restaurants following this exact format. Include varied cuis
 - Visit Golden Roof, Hofburg Palace, St. James Cathedral
 - Address: Herzog-Friedrich-Straße, 6020 Innsbruck
 - Duration: 3 hours
-- [Book Entry Tickets] | [Map](map:Innsbruck Old Town+${destination})
+- [Book Entry Tickets](activity:Innsbruck Old Town Walking Tour) | [Map](map:Innsbruck Old Town, Herzog-Friedrich-Straße, 6020 Innsbruck)
 - Pro tip: Visit before 3 PM to avoid tour groups
 
 ### 🌆 EVENING (17:00-21:00)
 - Dinner at Stiftskeller Restaurant (traditional Austrian, €20-35)
 - Address: Herzog-Friedrich-Straße 1, 6020 Innsbruck
 - Duration: 2 hours
-- [Map](map:Stiftskeller Innsbruck+${destination})
+- [Map](map:Stiftskeller Innsbruck, Herzog-Friedrich-Straße 1, 6020 Innsbruck)
 - Evening stroll along Inn River promenade
 
-Create ${nDays} days following this exact format. Use emojis 🌅 MORNING, 🌞 AFTERNOON, 🌆 EVENING with time ranges. Include specific venues, addresses, durations, and relevant booking links ([Book Now] for hotels, [Book Entry Tickets]/[Buy Tickets]/[Book Experience] for attractions, [Map] for all locations). For restaurants use ONLY [Map] links.
+**CRITICAL**: Create ${nDays} days following this EXACT format:
+- Use emojis 🌅 MORNING, 🌞 AFTERNOON, 🌆 EVENING with time ranges
+- Include specific venues, addresses, durations
+- For activities/attractions: [Book Entry Tickets](activity:SPECIFIC_ACTIVITY_NAME)
+- For all locations: [Map](map:SPECIFIC_VENUE_NAME, FULL_ADDRESS)
+- NEVER use generic destination names in booking/map links
 
 
 ## 🧳 Don't Forget List
