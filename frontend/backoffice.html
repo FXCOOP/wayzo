@@ -3,9 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
   <title>My Plans - Wayzo</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -357,7 +354,7 @@
       supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     } catch (e) {
       console.error('Failed to initialize Supabase:', e);
-      document.body.innerHTML = '<div class="auth-section"><h2>Configuration Error</h2><p>Please configure Supabase credentials in dashboard settings</p></div>';
+      document.body.innerHTML = '<div class="auth-section"><h2>Configuration Error</h2><p>Please configure Supabase credentials in backoffice.html</p></div>';
     }
 
     // Initialize app
@@ -438,7 +435,7 @@
         const { error } = await supabase.auth.signInWithOtp({
           email,
           options: {
-            emailRedirectTo: window.location.origin + '/dashboard'
+            emailRedirectTo: window.location.origin + '/backoffice.html'
           }
         });
 
@@ -624,7 +621,7 @@
     }
 
     function sharePlan(id) {
-      const shareUrl = `${window.location.origin}/dashboard#plan=${id}`;
+      const shareUrl = `${window.location.origin}/backoffice.html#plan=${id}`;
 
       if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(shareUrl).then(() => {

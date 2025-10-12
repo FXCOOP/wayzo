@@ -547,8 +547,9 @@
     }
   };
 
-  // Save full plan to localStorage for "Get Back" functionality
-  const saveFullPlan = (planHtml, destination) => {
+  // Save full plan to localStorage and database
+  const saveFullPlan = async (planHtml, destination) => {
+    // Save to localStorage for backward compatibility
     const planData = {
       html: planHtml,
       timestamp: new Date().toISOString(),
@@ -556,6 +557,44 @@
       type: 'full_plan'
     };
     localStorage.setItem('wayzo_last_full_plan', JSON.stringify(planData));
+
+    // Also save to Supabase database if user is authenticated
+    try {
+      if (window.supabase && currentUser) {
+        const { data: { session } } = await window.supabase.auth.getSession();
+        const token = session?.access_token;
+
+        if (token) {
+          const formData = readForm();
+          const response = await fetch('/api/user/plan', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              title: `${destination} Trip Plan`,
+              destination: destination,
+              start_date: formData.start,
+              end_date: formData.end,
+              budget_low: formData.budget,
+              travelers: (formData.adults || 1) + (formData.children || 0),
+              html: planHtml,
+              markdown: ''
+            })
+          });
+
+          if (response.ok) {
+            const savedPlan = await response.json();
+            console.log('✅ Plan saved to database:', savedPlan.id);
+            showNotification('✅ Plan saved to your dashboard!', 'success');
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Could not save plan to database:', e);
+      // Don't show error - localStorage save still worked
+    }
   };
 
   // Create professional trip overview wrapper
@@ -770,10 +809,10 @@
         
         // Hide paywall for test user
         hide($('#purchaseActions'));
-        
-        // Save full plan for "Get Back" functionality
-        saveFullPlan(result.html, data.destination);
-        
+
+        // Save full plan for "Get Back" functionality and database
+        await saveFullPlan(result.html, data.destination);
+
         showNotification('🧪 Test user: Full plan unlocked! All features available for testing.', 'info');
       } else {
         // Regular user - show paywall
