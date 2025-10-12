@@ -580,31 +580,36 @@ Use these visual insights to personalize recommendations throughout the itinerar
 
 ## 🎭 Daily Itineraries
 
+**IMPORTANT**: For EVERY day, you MUST use these exact emoji headers:
+- 🌅 MORNING (time range)
+- 🌞 AFTERNOON (time range)
+- 🌆 EVENING (time range)
+
 ## Day 1 - ${start}
 
 ### 🌅 MORNING (9:00-12:00)
-- Arrival and hotel check-in at Hotel Innsbruck
-- Address: Innrain 3, 6020 Innsbruck
-- Duration: 2 hours
-- [Book Now] | [Map](map:Hotel Innsbruck, Innrain 3, 6020 Innsbruck)
-- Pro tip: Arrive early to settle in before exploring
+- Arrival and hotel check-in
+- Address: [Full address]
+- Duration: [X hours]
+- [Book Now] | [Map](map:[Venue Name, Full Address])
+- Pro tip: [Helpful advice]
 
 ### 🌞 AFTERNOON (12:00-17:00)
-- Innsbruck Old Town walking tour
-- Visit Golden Roof, Hofburg Palace, St. James Cathedral
-- Address: Herzog-Friedrich-Straße, 6020 Innsbruck
-- Duration: 3 hours
-- [Book Entry Tickets](activity:Innsbruck Old Town Walking Tour) | [Map](map:Innsbruck Old Town, Herzog-Friedrich-Straße, 6020 Innsbruck)
-- Pro tip: Visit before 3 PM to avoid tour groups
+- [Activity name]
+- [Activity details]
+- Address: [Full address]
+- Duration: [X hours]
+- [Book Entry Tickets](activity:[Activity Name]) | [Map](map:[Venue Name, Full Address])
+- Pro tip: [Helpful advice]
 
 ### 🌆 EVENING (17:00-21:00)
-- Dinner at Stiftskeller Restaurant (traditional Austrian, €20-35)
-- Address: Herzog-Friedrich-Straße 1, 6020 Innsbruck
-- Duration: 2 hours
-- [Map](map:Stiftskeller Innsbruck, Herzog-Friedrich-Straße 1, 6020 Innsbruck)
-- Evening stroll along Inn River promenade
+- Dinner at [Restaurant]
+- Address: [Full address]
+- Duration: [X hours]
+- [Map](map:[Restaurant Name, Full Address])
+- [Optional evening activity]
 
-[Create ${nDays} days in this format with specific venues, addresses, and booking/map links]
+**Create ALL ${nDays} days using this EXACT format**. NEVER omit the emojis (🌅 🌞 🌆).
 
 ## 🧳 Don't Forget List
 Essential items to pack for your ${destination} adventure.
