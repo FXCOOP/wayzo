@@ -25,7 +25,7 @@ import { normalizeBudget, computeBudget } from './lib/budget.mjs';
 import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
-import { getWidgetsForDestination, generateWidgetHTML, injectWidgetsIntoSections } from './lib/widgets.mjs';
+import { getWidgetsForDestination, generateWidgetHTML, injectWidgetsIntoSections, processLinks } from './lib/widgets.mjs';
 import { generateBookingRecommendations, WEATHER_IMPACT, CROWD_PATTERNS } from './lib/smart-booking.mjs';
 import { supabaseAdmin } from './lib/supabase.mjs';
 import { requireUser } from './lib/auth.mjs';
@@ -2058,6 +2058,17 @@ app.get('/api/user/plan/:id', requireUser, async (req, res) => {
     if (error || !data) {
       console.error('Get plan error:', error);
       return res.status(404).json({ error: 'Plan not found' });
+    }
+
+    // FIX: Reprocess links in existing HTML to fix generic GetYourGuide/map links
+    if (data.html && data.destination) {
+      try {
+        data.html = processLinks(data.html, data.destination);
+        console.log(`🔧 Reprocessed links for plan ${id} (destination: ${data.destination})`);
+      } catch (linkError) {
+        console.warn('Failed to reprocess links:', linkError);
+        // Continue with original HTML if reprocessing fails
+      }
     }
 
     console.log(`📄 Plan ${id} fetched for user ${req.user.email}`);

@@ -836,14 +836,63 @@ function processLinks(html, destination = '') {
     doc.querySelectorAll('a[href*="booking.com"]').forEach(a => a.setAttribute('href', '#hotel-widget'));
     doc.querySelectorAll('a[href*="rentalcars.com"]').forEach(a => a.setAttribute('href', '#car-widget'));
     doc.querySelectorAll('a[href*="airport"]').forEach(a => a.setAttribute('href', '#airport-widget'));
+
+    // FIX GetYourGuide links: extract activity name from context and update query
     doc.querySelectorAll('a[href*="getyourguide.com"]').forEach(a => {
       const href = a.getAttribute('href');
       try {
         const url = new URL(href);
-        // Only add partner_id if it's not already present
+
+        // Check if this is a generic destination search that needs fixing
+        const currentQuery = url.searchParams.get('q') || '';
+        const isGenericSearch = currentQuery === destination ||
+                               currentQuery === destination.split(',')[0].trim() ||
+                               currentQuery.includes(destination.split(',')[0].trim() + ',');
+
+        if (isGenericSearch) {
+          // Try to extract specific activity name from surrounding context
+          const parentLI = a.closest('li');
+          const parentP = a.closest('p');
+          const context = parentLI || parentP;
+
+          if (context) {
+            const contextText = context.textContent || '';
+            // Extract activity name - typically appears before the link
+            // Look for patterns like "Krimml Waterfalls (optional day trip)" or "Visit XYZ"
+            const lines = contextText.split('\n').map(l => l.trim()).filter(Boolean);
+
+            for (const line of lines) {
+              // Skip lines that are just the link text itself
+              if (line === a.textContent.trim()) continue;
+
+              // Look for activity names in lines before/after the link
+              // Remove common prefixes and extract the core activity name
+              const cleanLine = line
+                .replace(/^[•\-\*]\s*/, '') // Remove bullet points
+                .replace(/\(.*?\)/g, '') // Remove parentheticals
+                .replace(/[📍🎫🎭🏛️⛪🌉🏰🎪🎨🖼️🎬].*$/g, '') // Remove emoji and text after
+                .replace(/Duration:.*$/gi, '')
+                .replace(/Address:.*$/gi, '')
+                .replace(/Entry fee:.*$/gi, '')
+                .replace(/Hours:.*$/gi, '')
+                .trim();
+
+              // If we found a meaningful activity name (more than 5 chars, not too long)
+              if (cleanLine.length > 5 && cleanLine.length < 100 && !cleanLine.toLowerCase().includes('book')) {
+                // Update the search query with specific activity + destination
+                url.searchParams.set('q', cleanLine + ' ' + destination);
+                console.log(`🔧 Fixed GetYourGuide link: "${currentQuery}" → "${cleanLine} ${destination}"`);
+                break;
+              }
+            }
+          }
+        }
+
+        // Ensure partner_id is present
         if (!url.searchParams.has('partner_id')) {
           url.searchParams.set('partner_id', 'PUHVJ53');
         }
+
         a.setAttribute('href', url.toString());
         a.setAttribute('target', '_blank');
       } catch (e) {
