@@ -357,7 +357,7 @@
       supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     } catch (e) {
       console.error('Failed to initialize Supabase:', e);
-      document.body.innerHTML = '<div class="auth-section"><h2>Configuration Error</h2><p>Please configure Supabase credentials in backoffice.html</p></div>';
+      document.body.innerHTML = '<div class="auth-section"><h2>Configuration Error</h2><p>Please configure Supabase credentials in dashboard settings</p></div>';
     }
 
     // Initialize app
@@ -438,7 +438,7 @@
         const { error } = await supabase.auth.signInWithOtp({
           email,
           options: {
-            emailRedirectTo: window.location.origin + '/backoffice.html'
+            emailRedirectTo: window.location.origin + '/dashboard'
           }
         });
 
