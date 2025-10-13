@@ -534,14 +534,19 @@ Use these visual insights to personalize recommendations throughout the itinerar
 **💰 Total Budget Estimate: €[LOW] - €[HIGH]**
 *For ${adults + children} travelers • ${nDays} days*
 
+Generate realistic budget estimates based on ${level} style travel (budget/mid-range/luxury) for ${destination}.
+${budget ? `User budget: ${budget} ${currency}. Ensure breakdown fits within this range.` : 'Estimate typical costs.'}
+
 | Category | Amount Range | Notes |
 |----------|-------------|--------|
-| ✈️ **Flights** | €XXX - €XXX | Round-trip for ${adults + children} travelers |
-| 🏨 **Accommodation** | €XXX - €XXX | ${nDays} nights |
-| 🍽️ **Food & Dining** | €XXX - €XXX | Daily meals |
-| 🎫 **Activities** | €XXX - €XXX | Museums, tours, attractions |
-| 🚌 **Transportation** | €XXX - €XXX | Local transit |
-| 🛍️ **Miscellaneous** | €XXX - €XXX | Souvenirs, tips |
+| ✈️ **Flights** | €XXX - €XXX | Round-trip for ${adults + children} travelers (realistic market prices) |
+| 🏨 **Accommodation** | €XXX - €XXX | ${nDays} nights (calculate: €XX-YY per night × ${nDays}) |
+| 🍽️ **Food & Dining** | €XXX - €XXX | Daily meals (calculate: €XX-YY per person per day × ${nDays} × ${adults + children}) |
+| 🎫 **Activities** | €XXX - €XXX | Museums, tours, attractions (based on destinations and ${level} level) |
+| 🚌 **Transportation** | €XXX - €XXX | Local transit (metro/bus passes for ${nDays} days) |
+| 🛍️ **Miscellaneous** | €XXX - €XXX | Souvenirs, tips (10-15% of total) |
+
+Use real market prices for ${destination} in 2025. Total should be realistic and match ${level} travel style.
 
 ## 🗺️ Getting Around
 [Describe how to get to/from airport and travel around the destination]
@@ -555,7 +560,7 @@ Use these visual insights to personalize recommendations throughout the itinerar
 - Why it's special: [Brief description]
 - Distance to main attractions: [Walking time/transport info]
 
-[Provide 3-4 hotels in this format]
+Recommend 3-4 hotels matching ${level} style. Use realistic 2025 prices for ${destination}.
 
 ## 🎫 Must-See Attractions
 
