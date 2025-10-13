@@ -696,20 +696,10 @@
           
           <div class="recent-plans">
             <h3>Recent Plans</h3>
-            <div class="plans-list">
-              <div class="plan-item">
-                <div class="plan-info">
-                  <h4>Paris Adventure</h4>
-                  <p>5 days • Mid-range • $2,000</p>
-                </div>
-                <div class="plan-status paid">Paid</div>
-              </div>
-              <div class="plan-item">
-                <div class="plan-info">
-                  <h4>Tokyo Explorer</h4>
-                  <p>7 days • Luxury • $3,500</p>
-                </div>
-                <div class="plan-status draft">Draft</div>
+            <div id="plansGrid" class="plans-list">
+              <!-- Plans will be populated dynamically from API -->
+              <div class="loading-plans" style="text-align: center; padding: 20px; color: #666;">
+                Loading your plans...
               </div>
             </div>
           </div>

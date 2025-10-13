@@ -221,38 +221,61 @@ function updateReferralStats(data) {
 // Load billing data
 async function loadBillingData() {
     try {
-        // Mock billing data - replace with real API call
-        const billingData = {
-            totalSpent: 57,
-            reportsPurchased: 3,
-            purchaseHistory: [
-                {
-                    date: '2025-08-25',
-                    description: 'Paris Trip Report',
+        // Check if user is authenticated
+        if (!window.supabase) {
+            console.warn('Supabase not initialized for billing');
+            showEmptyBilling();
+            return;
+        }
+
+        const { data: { session } } = await window.supabase.auth.getSession();
+        const token = session?.access_token;
+
+        if (!token) {
+            console.warn('User not authenticated for billing');
+            showEmptyBilling();
+            return;
+        }
+
+        // Calculate billing from user's actual plans
+        const response = await fetch('/api/user/plans', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            const plans = await response.json();
+
+            // Calculate billing from actual plans (assuming $19 per paid plan)
+            const paidPlans = plans.filter(p => p.status === 'paid' || p.status === 'completed');
+            const billingData = {
+                totalSpent: paidPlans.length * 19,
+                reportsPurchased: paidPlans.length,
+                purchaseHistory: paidPlans.map(plan => ({
+                    date: plan.created_at,
+                    description: `${plan.destination || 'Trip'} Plan`,
                     amount: 19,
                     status: 'completed'
-                },
-                {
-                    date: '2025-08-20',
-                    description: 'Tokyo Trip Report',
-                    amount: 19,
-                    status: 'completed'
-                },
-                {
-                    date: '2025-08-15',
-                    description: 'Bali Trip Report',
-                    amount: 19,
-                    status: 'completed'
-                }
-            ]
-        };
-        
-        updateBillingStats(billingData);
-        displayPurchaseHistory(billingData.purchaseHistory);
-        
+                }))
+            };
+
+            updateBillingStats(billingData);
+            displayPurchaseHistory(billingData.purchaseHistory);
+        } else {
+            showEmptyBilling();
+        }
+
     } catch (error) {
         console.error('Failed to load billing data:', error);
+        showEmptyBilling();
     }
+}
+
+// Show empty billing state
+function showEmptyBilling() {
+    updateBillingStats({ totalSpent: 0, reportsPurchased: 0 });
+    displayPurchaseHistory([]);
 }
 
 // Update billing statistics
