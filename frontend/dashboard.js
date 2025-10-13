@@ -82,59 +82,112 @@ function updateDashboardStats(data) {
 // Load user plans
 async function loadUserPlans() {
     try {
-        // For now, we'll use mock data since we need to implement user-specific plan loading
-        const mockPlans = [
-            {
-                id: '1',
-                destination: 'Paris, France',
-                duration: '5 days',
-                style: 'Mid-range',
-                budget: '$2,500',
-                status: 'paid',
-                created: '2025-08-25'
-            },
-            {
-                id: '2',
-                destination: 'Tokyo, Japan',
-                duration: '7 days',
-                style: 'Luxury',
-                budget: '$4,000',
-                status: 'paid',
-                created: '2025-08-20'
-            },
-            {
-                id: '3',
-                destination: 'Bali, Indonesia',
-                duration: '10 days',
-                style: 'Budget',
-                budget: '$1,800',
-                status: 'pending',
-                created: '2025-08-15'
+        // Check if user is authenticated
+        if (!window.supabase) {
+            console.warn('Supabase not initialized');
+            displayUserPlans([]);
+            return;
+        }
+
+        const { data: { session } } = await window.supabase.auth.getSession();
+        const token = session?.access_token;
+
+        if (!token) {
+            console.warn('User not authenticated');
+            displayUserPlans([]);
+            return;
+        }
+
+        // Fetch real plans from API
+        const response = await fetch('/api/user/plans', {
+            headers: {
+                'Authorization': `Bearer ${token}`
             }
-        ];
-        
-        displayUserPlans(mockPlans);
-        
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch plans');
+        }
+
+        const plans = await response.json();
+
+        // Transform API data to dashboard format
+        const formattedPlans = plans.map(plan => ({
+            id: plan.id,
+            destination: plan.destination || 'Unknown Destination',
+            duration: calculateDuration(plan.start_date, plan.end_date),
+            style: plan.style || 'Not specified',
+            budget: plan.budget_low ? `$${plan.budget_low}${plan.budget_high ? '-$' + plan.budget_high : ''}` : 'Not specified',
+            status: plan.status || 'draft',
+            created: plan.created_at
+        }));
+
+        displayUserPlans(formattedPlans);
+
     } catch (error) {
         console.error('Failed to load user plans:', error);
+        displayUserPlans([]);
     }
+}
+
+// Calculate trip duration
+function calculateDuration(startDate, endDate) {
+    if (!startDate || !endDate) return 'Duration not specified';
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+    return `${days} day${days !== 1 ? 's' : ''}`;
 }
 
 // Display user plans in the grid
 function displayUserPlans(plans) {
     const plansGrid = document.getElementById('plansGrid');
     if (!plansGrid) return;
-    
+
+    if (plans.length === 0) {
+        plansGrid.innerHTML = `
+            <div class="empty-state">
+                <p>📋 No plans yet</p>
+                <p style="font-size: 14px; color: #666;">Create your first trip plan to get started!</p>
+                <button onclick="scrollToForm()" style="margin-top: 16px; padding: 12px 24px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                    Create New Plan
+                </button>
+            </div>
+        `;
+        return;
+    }
+
     plansGrid.innerHTML = plans.map(plan => `
-        <div class="plan-item">
+        <div class="plan-item" onclick="viewPlanDetails('${plan.id}')" style="cursor: pointer;">
             <div class="plan-info">
-                <h4>${plan.destination}</h4>
+                <h4>${escapeHtml(plan.destination)}</h4>
                 <p>${plan.duration} • ${plan.style} • ${plan.budget}</p>
                 <p class="plan-date">Created: ${new Date(plan.created).toLocaleDateString()}</p>
             </div>
             <div class="plan-status ${plan.status}">${plan.status.charAt(0).toUpperCase() + plan.status.slice(1)}</div>
         </div>
     `).join('');
+}
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// View plan details (redirect to separate dashboard page or show modal)
+function viewPlanDetails(planId) {
+    // Redirect to dashboard.html with plan ID
+    window.location.href = `/dashboard#plan=${planId}`;
+}
+
+// Scroll to form when "Create New Plan" clicked
+function scrollToForm() {
+    const formSection = document.querySelector('#tripForm') || document.querySelector('form');
+    if (formSection) {
+        formSection.scrollIntoView({ behavior: 'smooth' });
+    }
 }
 
 // Load referral data
