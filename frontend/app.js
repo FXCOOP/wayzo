@@ -573,14 +573,22 @@
               'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({
-              title: `${destination} Trip Plan`,
-              destination: destination,
-              start_date: formData.start,
-              end_date: formData.end,
-              budget_low: formData.budget,
-              travelers: (formData.adults || 1) + (formData.children || 0),
+              params: {
+                destination: destination,
+                start: formData.start,
+                end: formData.end,
+                budget: formData.budget,
+                adults: formData.adults || 1,
+                children: formData.children || 0,
+                level: formData.level || 'mid',
+                prefs: formData.prefs || ''
+              },
               html: planHtml,
-              markdown: ''
+              markdown: '',
+              meta: {
+                title: `Trip to ${destination}`,
+                budgetLow: formData.budget
+              }
             })
           });
 
