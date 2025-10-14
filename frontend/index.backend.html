@@ -49,11 +49,13 @@
             <option value="ko">🇰🇷 한국어</option>
           </select>
         </div>
-        <a href="/dashboard" class="btn btn-ghost">My Plans</a>
+        <a href="#cabinet" id="myTripsBtn" class="btn" style="display: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; font-size: 16px; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
+          <i class="fas fa-suitcase"></i> My Trips
+        </a>
         <button id="loginBtn" class="btn btn-ghost">Sign In</button>
-        <div id="userMenuBtn" class="user-menu-btn hidden">
-          <img id="userMenuAvatar" src="/frontend/assets/default-avatar.svg" alt="User" />
-        </div>
+        <button id="signOutBtn" class="btn btn-ghost" style="display: none;" onclick="signOut()">
+          <i class="fas fa-sign-out-alt"></i> Sign Out
+        </button>
         <a class="btn btn-cta" href="#planner">Start planning</a>
       </div>
     </div>
@@ -619,17 +621,8 @@
       </div>
     </div>
     <div class="user-menu-actions">
-      <a href="/dashboard" class="menu-btn" target="_blank">
-        <i class="fas fa-chart-line"></i> Dashboard
-      </a>
-      <a href="/dashboard/plans" class="menu-btn" target="_blank">
-        <i class="fas fa-map"></i> My Plans
-      </a>
-      <a href="/dashboard/referrals" class="menu-btn" target="_blank">
-        <i class="fas fa-share-alt"></i> Refer Friends
-      </a>
-      <a href="/dashboard/billing" class="menu-btn" target="_blank">
-        <i class="fas fa-credit-card"></i> Billing
+      <a href="#cabinet" class="menu-btn" onclick="showCabinet(); return false;">
+        <i class="fas fa-suitcase"></i> My Trips
       </a>
       <button class="menu-btn admin-only" onclick="accessAdminPanel()" style="display: none;">
         <i class="fas fa-cog"></i> Admin Panel
