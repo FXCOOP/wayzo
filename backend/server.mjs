@@ -585,11 +585,6 @@ Recommend 3-4 hotels matching ${level} style. Use realistic 2025 prices for ${de
 
 ## 🎭 Daily Itineraries
 
-**IMPORTANT**: For EVERY day, you MUST use these exact emoji headers:
-- 🌅 MORNING (time range)
-- 🌞 AFTERNOON (time range)
-- 🌆 EVENING (time range)
-
 ## Day 1 - ${start}
 
 ### 🌅 MORNING (9:00-12:00)
@@ -614,7 +609,6 @@ Recommend 3-4 hotels matching ${level} style. Use realistic 2025 prices for ${de
 - [Map](map:[Restaurant Name, Full Address])
 - [Optional evening activity]
 
-**Create ALL ${nDays} days using this EXACT format**. NEVER omit the emojis (🌅 🌞 🌆).
 
 ## 🧳 Don't Forget List
 Essential items to pack for your ${destination} adventure.
