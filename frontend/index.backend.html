@@ -800,5 +800,81 @@
   
   <!-- Google OAuth Script -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <!-- Dashboard Plans Loader (inline to avoid conflicts) -->
+  <script>
+  (async function loadDashboardPlans() {
+    const plansGrid = document.getElementById('plansGrid');
+    if (!plansGrid) return; // Element doesn't exist, skip
+
+    try {
+      // Check if user is authenticated
+      if (!window.supabase) {
+        console.log('Supabase not loaded yet for dashboard plans');
+        return;
+      }
+
+      const { data: { session } } = await window.supabase.auth.getSession();
+      if (!session?.access_token) {
+        plansGrid.innerHTML = '<p style="text-align:center;padding:20px;color:#999;">Sign in to view your plans</p>';
+        return;
+      }
+
+      // Fetch real plans
+      const resp = await fetch('/api/user/plans', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      });
+
+      if (!resp.ok) {
+        plansGrid.innerHTML = '<p style="text-align:center;padding:20px;color:#999;">📋 No plans yet</p>';
+        return;
+      }
+
+      const plans = await resp.json();
+
+      if (plans.length === 0) {
+        plansGrid.innerHTML = `
+          <div style="text-align:center;padding:40px 20px;">
+            <p style="font-size:18px;margin-bottom:12px;">📋 No plans yet</p>
+            <p style="color:#666;margin-bottom:20px;">Create your first trip plan to get started!</p>
+            <button onclick="document.querySelector('#tripForm').scrollIntoView({behavior:'smooth'})"
+                    style="padding:12px 24px;background:#667eea;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;">
+              Create New Plan
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      // Display plans
+      plansGrid.innerHTML = plans.map(plan => {
+        const days = plan.start_date && plan.end_date
+          ? Math.ceil((new Date(plan.end_date) - new Date(plan.start_date)) / 86400000)
+          : '?';
+
+        return `
+          <div class="plan-item" onclick="window.location.href='/dashboard#plan=${plan.id}'" style="cursor:pointer;">
+            <div class="plan-info">
+              <h4>${escapeHTML(plan.destination || plan.title || 'Untitled')}</h4>
+              <p>${days} days • ${plan.budget_low ? '$' + plan.budget_low : 'Budget not set'}</p>
+              <p style="font-size:12px;color:#999;margin-top:4px;">Created ${new Date(plan.created_at).toLocaleDateString()}</p>
+            </div>
+            <div class="plan-status ${plan.status || 'draft'}">${(plan.status || 'draft').toUpperCase()}</div>
+          </div>
+        `;
+      }).join('');
+
+    } catch (error) {
+      console.error('Failed to load dashboard plans:', error);
+      plansGrid.innerHTML = '<p style="text-align:center;padding:20px;color:#999;">Failed to load plans</p>';
+    }
+
+    function escapeHTML(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+  })();
+  </script>
 </body>
 </html>
