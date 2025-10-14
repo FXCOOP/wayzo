@@ -1714,7 +1714,11 @@
   }
 
   function updateUIForAuthenticatedUser() {
+    // Hide login button, show authenticated user elements
     if (loginBtn) loginBtn.classList.add('hidden');
+    if ($('#myTripsBtn')) $('#myTripsBtn').style.display = 'inline-block';
+    if ($('#signOutBtn')) $('#signOutBtn').style.display = 'inline-block';
+
     if ($('#userMenuBtn')) {
       $('#userMenuBtn').classList.remove('hidden');
       $('#userMenuAvatar').src = currentUser.avatar;
@@ -1722,19 +1726,19 @@
     if ($('#userName')) $('#userName').textContent = currentUser.name;
     if ($('#userEmail')) $('#userEmail').textContent = currentUser.email;
     if ($('#userAvatar')) $('#userAvatar').src = currentUser.avatar;
-    
+
     // Show admin button if user is admin
     const adminBtn = document.querySelector('.admin-only');
     if (adminBtn) {
       adminBtn.style.display = currentUser.isAdmin ? 'block' : 'none';
     }
-    
+
     // Test users get immediate access to all features
     if (isTestUser()) {
       unlockAllFeaturesForTestUser();
       showNotification('🎉 Test user signed in! All premium features are now unlocked for testing!', 'success');
     }
-    
+
     // Cabinet is now available but doesn't auto-open
     // User can access it via the user menu when they want to
   }
@@ -1752,11 +1756,22 @@
     // Clear authentication from localStorage
     localStorage.removeItem('wayzo_authenticated');
     localStorage.removeItem('wayzo_user');
+
+    // Update UI - show login, hide authenticated elements
     if (loginBtn) loginBtn.classList.remove('hidden');
+    if ($('#myTripsBtn')) $('#myTripsBtn').style.display = 'none';
+    if ($('#signOutBtn')) $('#signOutBtn').style.display = 'none';
     if ($('#userMenuBtn')) $('#userMenuBtn').classList.add('hidden');
     if ($('#userMenu')) $('#userMenu').classList.add('hidden');
     if ($('#personalCabinet')) $('#personalCabinet').classList.add('hidden');
+
+    // Sign out from Supabase if available
+    if (window.supabase) {
+      window.supabase.auth.signOut();
+    }
+
     showNotification('Signed out successfully', 'info');
+    setTimeout(() => window.location.reload(), 500);
   }
 
   // Personal Cabinet Management

@@ -711,6 +711,26 @@
   <!-- Google OAuth Script -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
+  <!-- Supabase Client Initialization -->
+  <script>
+    // Initialize Supabase client for authentication and database
+    (function initSupabase() {
+      const SUPABASE_URL = 'https://khrxfjekfzcvyjlzryyz.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtocnhmamVrZnpjdnlqbHpyeXl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4NzA3ODEsImV4cCI6MjA3NTQ0Njc4MX0.Uc4Nd9Wxt1TZNoq_nto0vYCdPAG1tI8alhx8ENSv8HA';
+
+      try {
+        if (window.supabase && typeof window.supabase.createClient === 'function') {
+          window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+          console.log('✅ Supabase client initialized');
+        } else {
+          console.warn('⚠️ Supabase library not loaded yet');
+        }
+      } catch (error) {
+        console.error('❌ Failed to initialize Supabase:', error);
+      }
+    })();
+  </script>
+
   <!-- Dashboard View Switcher and Plans Loader (inline to avoid conflicts) -->
   <script>
   // Switch between dashboard views
@@ -747,12 +767,12 @@
 
     try {
       // Check if user is authenticated
-      if (!window.supabase) {
+      if (!window.supabaseClient) {
         console.log('Supabase not loaded yet for dashboard plans');
         return;
       }
 
-      const { data: { session } } = await window.supabase.auth.getSession();
+      const { data: { session } } = await window.supabaseClient.auth.getSession();
       if (!session?.access_token) {
         plansGrid.innerHTML = '<p style="text-align:center;padding:20px;color:#999;">Sign in to view your plans</p>';
         if (planCount) planCount.textContent = '0';
@@ -823,9 +843,9 @@
   // Load user profile data
   async function loadUserProfile() {
     try {
-      if (!window.supabase) return;
+      if (!window.supabaseClient) return;
 
-      const { data: { session } } = await window.supabase.auth.getSession();
+      const { data: { session } } = await window.supabaseClient.auth.getSession();
       if (!session) return;
 
       const profileEmail = document.getElementById('profileEmail');
@@ -845,12 +865,12 @@
   async function updateProfile(event) {
     event.preventDefault();
     try {
-      if (!window.supabase) return;
+      if (!window.supabaseClient) return;
 
       const name = document.getElementById('profileName').value;
       const phone = document.getElementById('profilePhone').value;
 
-      const { error } = await window.supabase.auth.updateUser({
+      const { error } = await window.supabaseClient.auth.updateUser({
         data: { name, phone }
       });
 
