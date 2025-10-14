@@ -1424,6 +1424,7 @@
   window.toggleUserMenu = toggleUserMenu;
   window.signOut = signOut;
   window.showDashboard = showDashboard;
+  window.showCabinet = showDashboard; // Alias for My Trips button
   window.showMyPlans = showMyPlans;
   window.showReferrals = showReferrals;
   window.showBilling = showBilling;

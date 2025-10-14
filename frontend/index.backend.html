@@ -49,14 +49,14 @@
             <option value="ko">🇰🇷 한국어</option>
           </select>
         </div>
-        <a href="#cabinet" id="myTripsBtn" class="btn" style="display: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; font-size: 16px; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
+        <button id="myTripsBtn" class="btn" style="display: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; font-size: 15px; font-weight: 600; border-radius: 8px; border: none; cursor: pointer; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3); transition: all 0.3s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(102, 126, 234, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(102, 126, 234, 0.3)'" onclick="showCabinet()">
           <i class="fas fa-suitcase"></i> My Trips
-        </a>
-        <button id="loginBtn" class="btn btn-ghost">Sign In</button>
-        <button id="signOutBtn" class="btn btn-ghost" style="display: none;" onclick="signOut()">
+        </button>
+        <button id="loginBtn" class="btn btn-ghost" style="padding: 10px 20px; font-size: 15px; font-weight: 500;">Sign In</button>
+        <button id="signOutBtn" class="btn btn-ghost" style="display: none; padding: 10px 20px; font-size: 15px; font-weight: 500; color: #666;" onclick="if(confirm('Are you sure you want to sign out?')) signOut()">
           <i class="fas fa-sign-out-alt"></i> Sign Out
         </button>
-        <a class="btn btn-cta" href="#planner">Start planning</a>
+        <a class="btn btn-cta" href="#planner" style="padding: 12px 24px; font-size: 15px; font-weight: 600;">Start planning</a>
       </div>
     </div>
   </header>
