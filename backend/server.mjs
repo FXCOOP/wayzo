@@ -664,6 +664,13 @@ ${(() => {
   }
 })()}
 
+**FORMATTING REQUIREMENTS:**
+- **Daily Itinerary Emojis**: For EVERY day, MUST use these exact emoji headers:
+  - 🌅 MORNING (time range)
+  - 🌞 AFTERNOON (time range)
+  - 🌆 EVENING (time range)
+- Generate ALL ${nDays} days using this consistent format
+
 **SPECIAL CONSIDERATIONS:**
 ${children > 0 ? `- **Family-Friendly Focus**: Include activities suitable for children, family-friendly accommodations, and consider child safety and entertainment
 - **Age-Appropriate Activities**: Tailor activities to the children's ages (${childrenAges.join(', ')})
