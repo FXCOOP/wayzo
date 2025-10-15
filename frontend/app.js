@@ -560,8 +560,8 @@
 
     // Also save to Supabase database if user is authenticated
     try {
-      if (window.supabase && currentUser) {
-        const { data: { session } } = await window.supabase.auth.getSession();
+      if (window.supabaseClient) {
+        const { data: { session } } = await window.supabaseClient.auth.getSession();
         const token = session?.access_token;
 
         if (token) {
