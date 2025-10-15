@@ -549,7 +549,7 @@
 
   // Save full plan to localStorage and database
   const saveFullPlan = async (planHtml, destination) => {
-    // Save to localStorage for backward compatibility
+    // Always save to localStorage first
     const planData = {
       html: planHtml,
       timestamp: new Date().toISOString(),
@@ -557,52 +557,87 @@
       type: 'full_plan'
     };
     localStorage.setItem('wayzo_last_full_plan', JSON.stringify(planData));
+    localStorage.setItem('wayzo_pending_plan_save', JSON.stringify(planData)); // For later save
 
-    // Also save to Supabase database if user is authenticated
+    // Check if user is authenticated
     try {
       if (window.supabaseClient) {
         const { data: { session } } = await window.supabaseClient.auth.getSession();
         const token = session?.access_token;
 
         if (token) {
-          const formData = readForm();
-          const response = await fetch('/api/user/plan', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-              params: {
-                destination: destination,
-                start: formData.start,
-                end: formData.end,
-                budget: formData.budget,
-                adults: formData.adults || 1,
-                children: formData.children || 0,
-                level: formData.level || 'mid',
-                prefs: formData.prefs || ''
-              },
-              html: planHtml,
-              markdown: '',
-              meta: {
-                title: `Trip to ${destination}`,
-                budgetLow: formData.budget
-              }
-            })
-          });
-
-          if (response.ok) {
-            const savedPlan = await response.json();
-            console.log('✅ Plan saved to database:', savedPlan.id);
-            showNotification('✅ Plan saved to your dashboard!', 'success');
-          }
+          // User is signed in - save immediately
+          await savePlanToDatabase(planHtml, destination, token);
+        } else {
+          // User is NOT signed in - show optional save prompt
+          showSaveToDashboardPrompt();
         }
+      } else {
+        // Supabase not available - show sign-in prompt
+        showSaveToDashboardPrompt();
       }
     } catch (e) {
-      console.warn('Could not save plan to database:', e);
-      // Don't show error - localStorage save still worked
+      console.warn('Could not check authentication:', e);
     }
+  };
+
+  // Helper function to save plan to database
+  const savePlanToDatabase = async (planHtml, destination, token) => {
+    try {
+      const formData = readForm();
+      const response = await fetch('/api/user/plan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          params: {
+            destination: destination,
+            start: formData.start,
+            end: formData.end,
+            budget: formData.budget,
+            adults: formData.adults || 1,
+            children: formData.children || 0,
+            level: formData.level || 'mid',
+            prefs: formData.prefs || ''
+          },
+          html: planHtml,
+          markdown: '',
+          meta: {
+            title: `Trip to ${destination}`,
+            budgetLow: formData.budget
+          }
+        })
+      });
+
+      if (response.ok) {
+        const savedPlan = await response.json();
+        console.log('✅ Plan saved to database:', savedPlan.id);
+        localStorage.removeItem('wayzo_pending_plan_save'); // Clear pending
+        showNotification('✅ Plan saved to your dashboard!', 'success');
+        return savedPlan;
+      }
+    } catch (e) {
+      console.error('Failed to save plan to database:', e);
+      throw e;
+    }
+  };
+
+  // Show prompt to save plan to dashboard
+  const showSaveToDashboardPrompt = () => {
+    // Don't show if already dismissed
+    if (localStorage.getItem('wayzo_save_prompt_dismissed')) return;
+
+    setTimeout(() => {
+      const shouldSave = confirm('💾 Want to save this plan to your dashboard?\n\nSign in now to:\n✅ Access your plans from any device\n✅ Get back to them anytime\n✅ Download PDF later\n\nClick OK to sign in, or Cancel to continue without saving.');
+
+      if (shouldSave) {
+        showAuthModal(); // Open sign-in modal
+      } else {
+        localStorage.setItem('wayzo_save_prompt_dismissed', 'true');
+      }
+    }, 2000); // Show 2 seconds after plan is ready
   };
 
   // Create professional trip overview wrapper
@@ -1740,8 +1775,30 @@
       showNotification('🎉 Test user signed in! All premium features are now unlocked for testing!', 'success');
     }
 
+    // Check for pending plan to save
+    savePendingPlanIfExists();
+
     // Cabinet is now available but doesn't auto-open
     // User can access it via the user menu when they want to
+  }
+
+  // Save pending plan after user signs in
+  async function savePendingPlanIfExists() {
+    const pendingPlan = localStorage.getItem('wayzo_pending_plan_save');
+    if (!pendingPlan) return;
+
+    try {
+      const planData = JSON.parse(pendingPlan);
+      if (window.supabaseClient) {
+        const { data: { session } } = await window.supabaseClient.auth.getSession();
+        if (session?.access_token) {
+          await savePlanToDatabase(planData.html, planData.destination, session.access_token);
+          showNotification('✅ Your plan has been saved to your dashboard!', 'success');
+        }
+      }
+    } catch (e) {
+      console.error('Failed to save pending plan:', e);
+    }
   }
 
   function toggleUserMenu() {
