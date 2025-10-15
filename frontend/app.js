@@ -1777,38 +1777,50 @@
 
   // Personal Cabinet Management
   function showDashboard() {
-    $('#personalCabinet').classList.remove('hidden');
-    switchCabinetTab('overview');
+    const cabinet = $('#personalCabinet');
+    if (cabinet) {
+      cabinet.classList.remove('hidden');
+      // Use the new dashboard view switcher if available
+      if (typeof window.switchDashboardView === 'function') {
+        window.switchDashboardView('plans');
+      }
+    }
   }
 
   function showMyPlans() {
-    $('#personalCabinet').classList.remove('hidden');
-    switchCabinetTab('plans');
+    showDashboard(); // Redirect to main dashboard
   }
 
   function showReferrals() {
-    $('#personalCabinet').classList.remove('hidden');
-    switchCabinetTab('referrals');
+    showDashboard(); // Referrals removed, show main dashboard
   }
 
   function showBilling() {
-    $('#personalCabinet').classList.remove('hidden');
-    switchCabinetTab('billing');
+    showDashboard(); // Billing removed, show main dashboard
   }
 
   function showProfile() {
-    $('#personalCabinet').classList.remove('hidden');
-    switchCabinetTab('profile');
+    const cabinet = $('#personalCabinet');
+    if (cabinet) {
+      cabinet.classList.remove('hidden');
+      // Use the new dashboard view switcher if available
+      if (typeof window.switchDashboardView === 'function') {
+        window.switchDashboardView('profile');
+      }
+    }
   }
 
   function switchCabinetTab(tab) {
-    // Hide all tabs
-    $$('.cabinet-tab').forEach(tabContent => tabContent.classList.remove('active'));
-    $$('.sidebar-item').forEach(item => item.classList.remove('active'));
-    
-    // Show selected tab
-    $(`#${tab}Tab`).classList.add('active');
-    event.target.classList.add('active');
+    // Legacy function - now uses new dashboard view switcher
+    if (typeof window.switchDashboardView === 'function') {
+      if (tab === 'overview') {
+        window.switchDashboardView('plans');
+      } else if (tab === 'profile') {
+        window.switchDashboardView('profile');
+      } else {
+        window.switchDashboardView('plans'); // Default to plans
+      }
+    }
   }
 
   function showPlanningForm() {
