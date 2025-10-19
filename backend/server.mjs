@@ -161,6 +161,16 @@ app.get('/admin', adminBasicAuth, (_req, res) => {
   res.status(404).send('Admin UI not found');
 });
 
+// Backoffice route (Supabase authentication)
+app.get('/backoffice.html', (_req, res) => {
+  const backofficeFile = path.join(FRONTEND, 'backoffice.html');
+  if (fs.existsSync(backofficeFile)) {
+    console.log('Serving backoffice.html');
+    return res.sendFile(backofficeFile);
+  }
+  res.status(404).send('Backoffice not found');
+});
+
 // Dashboard routes
 app.get('/dashboard', (req, res) => {
   res.setHeader('X-Wayzo-Version', VERSION);
