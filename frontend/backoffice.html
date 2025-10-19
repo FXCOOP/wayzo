@@ -645,6 +645,9 @@
       const container = document.getElementById('plansContainer');
       container.innerHTML = '<div class="loading">Loading your plans...</div>';
 
+      // Show header and stats when viewing list
+      document.querySelector('.header').style.display = 'flex';
+
       try {
         const token = (await supabase.auth.getSession()).data.session?.access_token;
 
@@ -756,30 +759,19 @@
 
         const plan = await resp.json();
 
-        // Create plan detail container matching main page structure
+        // Hide header and stats when viewing a plan
+        document.querySelector('.header').style.display = 'none';
+        document.getElementById('statsSection').style.display = 'none';
+
+        // Create plan detail container matching main page structure EXACTLY
         container.innerHTML = `
-          <div class="container">
-            <div class="card">
-              <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
-                <button class="btn btn-ghost" onclick="loadPlans();window.location.hash=''" style="padding:8px 16px;">
-                  ← Back to Plans
-                </button>
-                <div style="display:flex;gap:8px;">
-                  <button class="btn btn-ghost" onclick="downloadPDF('${plan.id}')">
-                    📄 PDF
-                  </button>
-                  <button class="btn btn-ghost" onclick="window.print()">
-                    🖨️ Print
-                  </button>
-                  <button class="btn btn-ghost" onclick="downloadExcel('${plan.id}', '${escapeHtml(plan.destination || '')}')">
-                    📊 Excel
-                  </button>
-                </div>
-              </div>
-              <div id="preview" class="preview-content trip-report">
-                ${plan.html || plan.markdown || '<p>Plan content not available</p>'}
-              </div>
-            </div>
+          <div style="margin-bottom:20px;">
+            <button class="btn btn-ghost" onclick="loadPlans();window.location.hash=''" style="padding:12px 24px;">
+              ← Back to My Plans
+            </button>
+          </div>
+          <div id="preview" class="trip-report" style="background:white;border-radius:16px;padding:40px;box-shadow:0 4px 12px rgba(0,0,0,0.1);margin-bottom:20px;">
+            ${plan.html || plan.markdown || '<p>Plan content not available</p>'}
           </div>
         `;
 
