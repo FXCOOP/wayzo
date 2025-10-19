@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Plans - Wayzo</title>
+  <link rel="stylesheet" href="/frontend/style.css" />
   <link rel="stylesheet" href="/frontend/mobile-responsive.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -558,36 +559,35 @@
 
         const plan = await resp.json();
 
+        // Create plan detail container matching main page structure
         container.innerHTML = `
-          <div class="plan-detail">
-            <button class="btn btn-ghost" onclick="loadPlans();window.location.hash=''">
-              ← Back to Plans
-            </button>
-
-            <h2 style="margin-top:24px">${escapeHtml(plan.title || 'Untitled Plan')}</h2>
-
-            ${plan.destination ? `<p style="color:#6b7280;margin-bottom:24px">📍 ${escapeHtml(plan.destination)}</p>` : ''}
-
-            <div class="plan-actions" style="margin-bottom:32px">
-              <button class="btn btn-primary" onclick="downloadPDF('${plan.id}')">
-                📄 Download PDF
-              </button>
-              <button class="btn btn-ghost" onclick="window.print()">
-                🖨️ Print
-              </button>
-              <button class="btn btn-ghost" onclick="sharePlan('${plan.id}')">
-                📤 Share Link
-              </button>
-              <button class="btn btn-ghost" onclick="downloadExcel('${plan.id}', '${escapeHtml(plan.destination || '')}')">
-                📊 Excel
-              </button>
-            </div>
-
-            <div class="plan-html">
-              ${plan.html || plan.markdown || '<p>Plan content not available</p>'}
+          <div class="container">
+            <div class="card">
+              <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+                <button class="btn btn-ghost" onclick="loadPlans();window.location.hash=''" style="padding:8px 16px;">
+                  ← Back to Plans
+                </button>
+                <div style="display:flex;gap:8px;">
+                  <button class="btn btn-ghost" onclick="downloadPDF('${plan.id}')">
+                    📄 PDF
+                  </button>
+                  <button class="btn btn-ghost" onclick="window.print()">
+                    🖨️ Print
+                  </button>
+                  <button class="btn btn-ghost" onclick="downloadExcel('${plan.id}', '${escapeHtml(plan.destination || '')}')">
+                    📊 Excel
+                  </button>
+                </div>
+              </div>
+              <div id="preview" class="preview-content trip-report">
+                ${plan.html || plan.markdown || '<p>Plan content not available</p>'}
+              </div>
             </div>
           </div>
         `;
+
+        // Initialize trip report features (from app.js)
+        initializeTripReportFeatures();
       } catch (e) {
         console.error('Load single plan error:', e);
         container.innerHTML = `
@@ -690,6 +690,28 @@
         });
       } catch {
         return dateStr;
+      }
+    }
+
+    // Initialize trip report features (matching app.js functionality)
+    function initializeTripReportFeatures() {
+      // This function matches the trip report initialization from app.js
+      // It ensures widgets load correctly and the display matches the main page
+
+      console.log('🎯 Trip report loaded in backoffice');
+
+      // Initialize any interactive elements if needed
+      const preview = document.getElementById('preview');
+      if (preview) {
+        // Find and initialize any widget scripts
+        const scripts = preview.querySelectorAll('script[src*="tpwdgt.com"]');
+        scripts.forEach(script => {
+          const newScript = document.createElement('script');
+          newScript.src = script.src;
+          newScript.async = true;
+          document.body.appendChild(newScript);
+          console.log('✅ Widget script loaded:', script.src);
+        });
       }
     }
 
