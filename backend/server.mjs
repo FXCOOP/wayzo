@@ -2069,25 +2069,50 @@ app.post('/api/user/plan', requireUser, async (req, res) => {
       return res.status(503).json({ error: 'Supabase admin not configured' });
     }
 
-    const { params, markdown, html, meta } = req.body || {};
+    const { params } = req.body || {};
 
-    console.log(`📝 Creating plan for user ${req.user.email}`);
+    if (!params || !params.destination) {
+      return res.status(400).json({ error: 'Missing required parameters' });
+    }
+
+    console.log(`📝 Generating plan for user ${req.user.email}, destination: ${params.destination}`);
+
+    // Normalize parameters (same as /api/plan)
+    const payload = { ...params };
+    payload.currency = payload.currency || 'USD';
+    payload.budget = normalizeBudget(payload.budget, payload.currency);
+    payload.mode = 'full'; // Full reports with 16384 tokens
+
+    // Generate plan using AI (same as /api/plan)
+    const planId = uid();
+    const markdown = await generatePlanWithAI(payload);
+    const processedMarkdown = linkifyTokens(markdown, payload.destination);
+    const cleanedMarkdown = removeImagesFromForbiddenSections(processedMarkdown, payload.destination);
+    const html = marked.parse(cleanedMarkdown);
+
+    // Add widgets
+    const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
+    let finalHTML;
+    try {
+      finalHTML = await injectWidgetsIntoSections(html, widgets, payload.destination, payload.start, payload.end, payload);
+    } catch (widgetError) {
+      console.error('Widget injection failed:', widgetError);
+      finalHTML = html;
+    }
 
     // Build insert payload
     const insertPayload = {
       user_id: req.user.id,
-      title: meta?.title || (params?.destination ? `Trip to ${params.destination}` : 'My Trip Plan'),
-      destination: params?.destination || null,
-      start_date: params?.start || params?.startDate || null,
-      end_date: params?.end || params?.endDate || null,
-      budget_low: meta?.budgetLow || params?.budget || params?.budgetMin || null,
-      budget_high: meta?.budgetHigh || params?.budgetMax || null,
-      travelers: params?.adults || params?.travelers || null,
-      style: params?.level || params?.style || null,
-      params: params || null,
-      content: meta?.planJson || null,
-      markdown: markdown || null,
-      html: html || null,
+      title: `Trip to ${params.destination}`,
+      destination: params.destination,
+      start_date: params.start || params.startDate || null,
+      end_date: params.end || params.endDate || null,
+      budget_low: params.budget || params.budgetMin || null,
+      budget_high: params.budgetMax || null,
+      travelers: params.adults || params.travelers || null,
+      style: params.level || params.style || null,
+      markdown: markdown,
+      html: finalHTML,
       created_at: new Date().toISOString()
     };
 
@@ -2099,18 +2124,24 @@ app.post('/api/user/plan', requireUser, async (req, res) => {
 
     if (error) {
       console.error('Insert plan error:', error);
-      return res.status(500).json({ error: 'Failed to create plan' });
+      return res.status(500).json({ error: 'Failed to create plan', details: error.message });
     }
 
-    // Send email notification
-    const planUrl = `${process.env.PUBLIC_BASE_URL || 'https://wayzo.online'}/backoffice.html#plan=${row.id}`;
-    await sendPlanReadyEmail(req.user.email, planUrl);
+    console.log(`✅ Plan ${row.id} created and saved for user ${req.user.email}`);
 
-    console.log(`✅ Plan ${row.id} created for user ${req.user.email}`);
-    res.json({ ok: true, id: row.id, url: planUrl });
+    // Return plan data (same format as /api/plan)
+    const aff = affiliatesFor(payload.destination);
+    res.json({
+      ok: true,
+      id: row.id,
+      markdown,
+      html: finalHTML,
+      affiliates: aff,
+      version: VERSION
+    });
   } catch (e) {
     console.error('POST /api/user/plan error:', e);
-    res.status(500).json({ error: 'Failed to create plan' });
+    res.status(500).json({ error: 'Failed to create plan', details: e.message });
   }
 });
 
