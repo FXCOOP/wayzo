@@ -803,31 +803,84 @@
     `;
     
     try {
-      // Call plan API
-      const response = await fetch('/api/plan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      
-      const result = await response.json();
-      console.log('Full plan result:', result);
-      
-      // Check if user is a test user - bypass payment
+      // Check if user is authenticated
+      let isAuthenticated = false;
+      let authToken = null;
+
+      if (window.supabaseClient) {
+        const { data: { session } } = await window.supabaseClient.auth.getSession();
+        authToken = session?.access_token;
+        isAuthenticated = !!authToken;
+      }
+
+      console.log('User authenticated:', isAuthenticated);
       console.log('Current user:', currentUser);
-      console.log('Is test user?', currentUser && currentUser.isTestUser);
-      console.log('User object details:', JSON.stringify(currentUser, null, 2));
-      
-      if (true) {
-        console.log('🎉 Free access enabled - bypassing payment!');
-        // Test user or staging - show full plan immediately without payment
+
+      // Call the appropriate plan API endpoint
+      let response, result;
+
+      if (isAuthenticated) {
+        // Authenticated user - use /api/user/plan (saves to database)
+        console.log('✅ Calling authenticated endpoint /api/user/plan');
+        response = await fetch('/api/user/plan', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            params: data,
+            html: '',  // Backend will generate this
+            markdown: '',
+            meta: {
+              title: `Trip to ${data.destination}`,
+              budgetLow: data.budget
+            }
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(`HTTP ${response.status}: ${errorData.error || 'Failed to save plan'}`);
+        }
+
+        result = await response.json();
+        console.log('✅ Plan saved to database:', result);
+
+        // Fetch the saved plan to get the HTML
+        const planResponse = await fetch(`/api/user/plan/${result.id}`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+
+        if (planResponse.ok) {
+          const planData = await planResponse.json();
+          result.html = planData.html || planData.markdown || '';
+        }
+
+      } else {
+        // Not authenticated - use public endpoint (doesn't save)
+        console.log('⚠️ User not authenticated - using public endpoint');
+        response = await fetch('/api/plan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        result = await response.json();
+      }
+
+      console.log('Full plan result:', result);
+
+      // For authenticated users or staging, show full plan immediately
+      if (isAuthenticated || window.location.hostname.includes('staging') || window.location.hostname.includes('localhost')) {
+        console.log('🎉 Showing full plan - user authenticated or staging environment');
+
         const tripOverview = createTripOverview(data, data.destination);
         previewEl.innerHTML = `
           <div class="test-user-notice">
             <h3>✨ Your Complete Travel Guide is Ready!</h3>
-            <p>Curated by Wayzo Travel Intelligence - Everything you need for an amazing trip.</p>
+            <p>${isAuthenticated ? 'Saved to your account - Access anytime from My Trips' : 'Sign in to save this plan to your dashboard'}</p>
           </div>
           ${tripOverview}
           <main class="content trip-report">
@@ -835,28 +888,40 @@
           </main>
         `;
         setAffiliates(data.destination);
-        
+
         // Initialize image handling
         initializeImageHandling();
-        
+
         // Initialize widget rendering
         initializeWidgets();
-        
-        // Show all download buttons for test user
+
+        // Show all download buttons
         show(pdfBtn);
         show(icsBtn);
         show($('#excelBtn'));
         show($('#customizeBtn'));
         show($('#shareSection'));
         updateShareDestination();
-        
-        // Hide paywall for test user
+
+        // Hide paywall
         hide($('#purchaseActions'));
 
-        // Save full plan for "Get Back" functionality and database
-        await saveFullPlan(result.html, data.destination);
+        // Save full plan to localStorage for "Get Back" functionality
+        const planData = {
+          html: result.html,
+          timestamp: new Date().toISOString(),
+          destination: data.destination,
+          type: 'full_plan'
+        };
+        localStorage.setItem('wayzo_last_full_plan', JSON.stringify(planData));
 
-        showNotification('🧪 Test user: Full plan unlocked! All features available for testing.', 'info');
+        // If not authenticated, save for later and show prompt
+        if (!isAuthenticated) {
+          localStorage.setItem('wayzo_pending_plan_save', JSON.stringify(planData));
+          showSaveToDashboardPrompt();
+        }
+
+        showNotification(isAuthenticated ? '✅ Plan saved to your dashboard!' : '🎉 Plan generated! Sign in to save it.', 'success');
       } else {
         // Regular user - show paywall
         previewEl.innerHTML = `
