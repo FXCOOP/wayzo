@@ -803,7 +803,7 @@
     `;
     
     try {
-      // Check if user is authenticated
+      // Check if user is authenticated with Supabase
       let isAuthenticated = false;
       let authToken = null;
 
@@ -815,6 +815,20 @@
 
       console.log('User authenticated:', isAuthenticated);
       console.log('Current user:', currentUser);
+      console.log('Supabase session:', authToken ? 'EXISTS' : 'NONE');
+
+      // If user has localStorage auth but NO Supabase session, prompt them
+      if (!isAuthenticated && currentUser && currentUser.email) {
+        console.warn('⚠️ You are signed in with localStorage but NOT Supabase!');
+        console.warn('📧 Your email:', currentUser.email);
+        console.warn('👉 To save plans, please go to: /backoffice.html and sign in with Supabase');
+
+        showNotification(
+          `⚠️ To save your plans, please <a href="/backoffice.html" style="color: #fff; text-decoration: underline;">sign in with Supabase here</a>`,
+          'warning',
+          10000
+        );
+      }
 
       // Call the appropriate plan API endpoint
       let response, result;
