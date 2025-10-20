@@ -7227,3 +7227,146 @@ a:hover { text-decoration: underline; color: #FFC107; }
   .step-text { font-size: 11px; }
   .quote-text { font-size: 17px; }
 }
+
+/* ==== Mobile Responsive Fixes ==== */
+
+/* Topbar Actions */
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .topbar {
+    padding: 8px 0;
+  }
+
+  .topbar-inner {
+    min-height: auto;
+    padding: 8px 12px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .topbar-actions {
+    width: 100%;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .language-selector {
+    flex: 0 1 auto;
+  }
+
+  .language-selector select {
+    padding: 8px 10px;
+    font-size: 13px;
+    min-width: 120px;
+  }
+
+  .topbar-actions .btn {
+    padding: 8px 14px !important;
+    font-size: 13px !important;
+    min-height: 36px;
+    white-space: nowrap;
+  }
+
+  .topbar-actions .btn i {
+    display: none; /* Hide icons on mobile for space */
+  }
+
+  /* Hero Section Mobile */
+  .hero {
+    padding: 16px 0 32px;
+  }
+
+  .hero-left {
+    padding: 20px;
+    min-height: auto !important;
+  }
+
+  .hero-left h1 {
+    font-size: 1.75rem !important;
+    line-height: 1.2;
+  }
+
+  .hero-left p {
+    font-size: 1rem;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .hero-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .hero-right {
+    min-height: 280px !important;
+  }
+
+  /* Container padding */
+  .container {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .topbar-actions {
+    gap: 4px;
+  }
+
+  .topbar-actions .btn {
+    padding: 6px 10px !important;
+    font-size: 12px !important;
+    min-height: 32px;
+  }
+
+  .language-selector select {
+    padding: 6px 8px;
+    font-size: 12px;
+    min-width: 100px;
+  }
+
+  .hero-left h1 {
+    font-size: 1.5rem !important;
+  }
+
+  .hero-left {
+    padding: 16px;
+  }
+
+  .container {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}
+
+/* Fix button text wrapping */
+.btn {
+  white-space: nowrap;
+}
+
+@media (max-width: 380px) {
+  .topbar-actions .btn span {
+    display: none;
+  }
+
+  .topbar-actions .btn i {
+    display: inline-block !important;
+    margin: 0 !important;
+  }
+
+  /* Show only icons on very small screens */
+  .topbar-actions .btn::after {
+    content: attr(data-mobile-text);
+    display: none;
+  }
+}
