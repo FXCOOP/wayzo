@@ -7700,3 +7700,152 @@ a:hover { text-decoration: underline; color: #FFC107; }
   content: '✓ ';
   font-weight: bold;
 }
+
+/* ==== Footer Mobile Responsive Fixes ==== */
+@media (max-width: 768px) {
+  .footer {
+    padding: 40px 0 20px;
+  }
+
+  .footer-content {
+    grid-template-columns: 1fr !important;
+    gap: 32px !important;
+  }
+
+  .footer-section {
+    text-align: center;
+  }
+
+  .footer-section.main-section {
+    text-align: center;
+  }
+
+  .footer-brand {
+    justify-content: center !important;
+  }
+
+  .footer-description {
+    text-align: center;
+  }
+
+  .footer-social {
+    justify-content: center !important;
+  }
+
+  .footer-links {
+    align-items: center !important;
+  }
+
+  .footer-bottom {
+    padding: 20px 0 !important;
+  }
+
+  .footer-bottom-content {
+    flex-direction: column !important;
+    gap: 20px !important;
+    text-align: center;
+  }
+
+  .footer-bottom-left,
+  .footer-bottom-right {
+    width: 100%;
+    justify-content: center !important;
+  }
+
+  .footer-bottom-links {
+    justify-content: center !important;
+    flex-wrap: wrap;
+  }
+
+  .footer-badges {
+    justify-content: center !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .footer {
+    padding: 32px 0 16px;
+  }
+
+  .footer-content {
+    gap: 24px !important;
+  }
+
+  .footer-section h4 {
+    font-size: 16px;
+  }
+
+  .footer-links li {
+    font-size: 14px;
+  }
+
+  .copyright {
+    font-size: 13px;
+  }
+
+  .footer-badges .badge {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+}
+
+/* ==== Save Plan Modal Mobile Fixes ==== */
+@media (max-width: 768px) {
+  .save-plan-content {
+    max-width: 90% !important;
+    margin: 20px !important;
+    padding: 32px 20px !important;
+  }
+
+  .save-plan-title {
+    font-size: 24px !important;
+  }
+
+  .save-plan-subtitle {
+    font-size: 15px !important;
+  }
+
+  .benefit-item {
+    flex-direction: column !important;
+    text-align: center !important;
+    padding: 16px !important;
+  }
+
+  .benefit-icon {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .benefit-text strong {
+    font-size: 15px !important;
+  }
+
+  .benefit-text span {
+    font-size: 13px !important;
+  }
+
+  .btn-save-primary,
+  .btn-save-secondary {
+    font-size: 15px !important;
+    padding: 14px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .save-plan-content {
+    padding: 24px 16px !important;
+  }
+
+  .save-plan-title {
+    font-size: 20px !important;
+  }
+
+  .save-plan-icon svg {
+    width: 64px !important;
+    height: 64px !important;
+  }
+
+  .benefit-item {
+    padding: 12px !important;
+  }
+}

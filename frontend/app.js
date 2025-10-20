@@ -145,10 +145,13 @@
     data.duration = Number(data.duration || 5);
     data.currency = data.currency || 'USD';
 
-    // Handle multiple preferences checkboxes
-    const prefsCheckboxes = formData.getAll('prefs');
-    if (prefsCheckboxes && prefsCheckboxes.length > 0) {
-      data.prefs = prefsCheckboxes.join(', ');
+    // Handle multiple preferences from multi-select dropdown
+    const prefsSelect = document.getElementById('preferences');
+    if (prefsSelect) {
+      const selectedOptions = Array.from(prefsSelect.selectedOptions).map(opt => opt.value);
+      if (selectedOptions && selectedOptions.length > 0) {
+        data.prefs = selectedOptions.join(', ');
+      }
     }
 
     // Add autocomplete functionality for destination fields
@@ -1767,10 +1770,10 @@
 
       // Display plans
       plansGrid.innerHTML = plans.map(plan => `
-        <div class="plan-card" style="background: white; border-radius: 16px; padding: 24px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); transition: all 0.3s; cursor: pointer;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 24px rgba(0, 0, 0, 0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0, 0, 0, 0.08)'" onclick="window.location.href='/api/plan/${plan.id}'">
+        <div class="plan-card" style="background: white; border-radius: 16px; padding: 24px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); transition: all 0.3s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 24px rgba(0, 0, 0, 0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0, 0, 0, 0.08)'">
           <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
             <div>
-              <h3 style="font-size: 20px; font-weight: 700; color: #111827; margin: 0 0 8px 0;">${plan.destination || 'Your Trip'}</h3>
+              <h3 style="font-size: 20px; font-weight: 700; color: #111827; margin: 0 0 8px 0;">${plan.destination || plan.destinations || plan.form_data?.destination || 'Your Trip'}</h3>
               <p style="font-size: 14px; color: #6b7280; margin: 0;">${formatPlanDate(plan.created_at)}</p>
             </div>
             <span class="plan-status ${plan.status}" style="padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; ${plan.status === 'completed' ? 'background: #ecfdf5; color: #059669;' : 'background: #fef3c7; color: #d97706;'}">${plan.status === 'completed' ? '✓ Ready' : '⏳ Processing'}</span>
