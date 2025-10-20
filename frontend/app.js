@@ -978,7 +978,7 @@
       }, 300);
     }, 4000);
 
-    // Animate steps
+    // Animate steps - slower and more realistic
     let currentStep = 1;
     const stepInterval = setInterval(() => {
       if (currentStep <= 5) {
@@ -988,18 +988,24 @@
           document.getElementById(`step${currentStep}`)?.classList.add('step-active');
         }
       }
-    }, 1500);
+    }, 3000); // Changed from 1500ms to 3000ms for more realistic timing
 
-    // Animate progress bar
+    // Animate progress bar - more realistic with slower increments
     let progress = 0;
     const progressFill = document.getElementById('loaderProgressFill');
     const progressText = document.getElementById('progressText');
     const progressInterval = setInterval(() => {
-      progress += Math.random() * 3;
-      if (progress > 95) progress = 95;
+      // Slow down as we approach completion
+      const increment = progress < 30 ? Math.random() * 2 + 1 :
+                       progress < 60 ? Math.random() * 1.5 + 0.5 :
+                       progress < 80 ? Math.random() * 1 + 0.3 :
+                       Math.random() * 0.5 + 0.1;
+
+      progress += increment;
+      if (progress > 92) progress = 92; // Stop at 92% until completion
       progressFill.style.width = `${progress}%`;
       progressText.textContent = `${Math.floor(progress)}%`;
-    }, 200);
+    }, 400); // Changed from 200ms to 400ms for slower, more realistic progress
 
     // Function to hide loader
     window.hideFullScreenLoader = () => {
@@ -1651,6 +1657,10 @@
             handleSuccessfulAuth(session);
             hideAuthModal();
             showNotification('✨ Successfully signed in!', 'success');
+            // Show Personal Cabinet after sign in
+            setTimeout(() => {
+              showPersonalCabinet();
+            }, 500);
           } else if (event === 'SIGNED_OUT') {
             handleSignOut();
           }
@@ -1770,11 +1780,7 @@
             ${plan.budget ? `<div style="display: flex; align-items: center; gap: 6px; font-size: 14px; color: #6b7280;"><svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20"><path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z"/></svg>$${plan.budget}</div>` : ''}
           </div>
           <div style="display: flex; gap: 8px; margin-top: 16px;">
-            <button class="btn-action" onclick="event.stopPropagation(); window.open('/api/plan/${plan.id}/pdf', '_blank')" style="flex: 1; padding: 10px; background: #f3f4f6; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; color: #374151; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">
-              <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20" style="display: inline; vertical-align: middle; margin-right: 4px;"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z"/></svg>
-              PDF
-            </button>
-            <button class="btn-action" onclick="event.stopPropagation(); viewPlan('${plan.id}')" style="flex: 1; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 8px; font-size: 14px; font-weight: 600; color: white; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+            <button class="btn-action" onclick="event.stopPropagation(); viewPlan('${plan.id}')" style="width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 10px; font-size: 15px; font-weight: 700; color: white; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(102, 126, 234, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(102, 126, 234, 0.3)'">
               View Plan →
             </button>
           </div>
@@ -1814,9 +1820,65 @@
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
-  function viewPlan(planId) {
-    window.location.href = `/api/plan/${planId}`;
+  async function viewPlan(planId) {
+    try {
+      const token = localStorage.getItem('wayzo_supabase_token');
+      if (!token) {
+        showNotification('Please sign in to view your plan', 'error');
+        return;
+      }
+
+      // Fetch the plan HTML
+      const response = await fetch(`/api/plan/${planId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to load plan: ${response.status}`);
+      }
+
+      const planData = await response.json();
+
+      // Hide personal cabinet
+      const cabinet = $('#personalCabinet');
+      if (cabinet) cabinet.classList.add('hidden');
+
+      // Show the plan in the preview area
+      const previewEl = $('#preview');
+      if (previewEl) {
+        previewEl.innerHTML = `
+          <div class="plan-view-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+            <button onclick="showPersonalCabinet()" style="display: flex; align-items: center; gap: 8px; padding: 12px 20px; background: #f3f4f6; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; color: #374151; transition: all 0.2s;" onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"/></svg>
+              Back to My Plans
+            </button>
+            <button onclick="window.open('/api/plan/${planId}/pdf', '_blank')" style="display: flex; align-items: center; gap: 8px; padding: 12px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 8px; cursor: pointer; font-weight: 600; color: white; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z"/></svg>
+              Download PDF
+            </button>
+          </div>
+          <main class="content trip-report">
+            ${planData.html || planData.markdown || '<p>Plan not available</p>'}
+          </main>
+        `;
+
+        // Initialize features
+        initializeImageHandling();
+        initializeWidgets();
+
+        // Show preview
+        show(previewEl);
+      }
+    } catch (error) {
+      console.error('❌ Error loading plan:', error);
+      showNotification('Failed to load plan', 'error');
+    }
   }
+
+  // Make it globally available
+  window.viewPlan = viewPlan;
 
   // Setup children ages functionality
   const setupChildrenAges = () => {
@@ -2425,6 +2487,15 @@
   }
 
   // Personal Cabinet Management
+  function showPersonalCabinet() {
+    showDashboard();
+    // Load plans
+    loadUserPlans();
+  }
+
+  // Make it globally available
+  window.showPersonalCabinet = showPersonalCabinet;
+
   function showDashboard() {
     const cabinet = $('#personalCabinet');
     if (cabinet) {
