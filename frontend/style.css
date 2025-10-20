@@ -7545,3 +7545,158 @@ a:hover { text-decoration: underline; color: #FFC107; }
     width: 100% !important;
   }
 }
+
+/* ==== Modern Select Dropdowns ==== */
+.modern-select {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 15px;
+  font-family: inherit;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%236b7280' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 40px;
+}
+
+.modern-select:hover {
+  border-color: #d1d5db;
+  background-color: #fafafa;
+}
+
+.modern-select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+  background-color: white;
+}
+
+/* Multi-select styling */
+.modern-select[multiple] {
+  padding-right: 16px;
+  background-image: none;
+  min-height: 180px;
+  overflow-y: auto;
+}
+
+.modern-select[multiple]::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modern-select[multiple]::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 4px;
+}
+
+.modern-select[multiple]::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+.modern-select[multiple]::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Option styling */
+.modern-select option {
+  padding: 12px 16px;
+  font-size: 15px;
+  cursor: pointer;
+  border-radius: 8px;
+  margin: 4px;
+  transition: all 0.2s;
+}
+
+.modern-select option:hover {
+  background: #f3f4f6;
+}
+
+.modern-select[multiple] option:checked {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 600;
+}
+
+.modern-select:not([multiple]) option:checked {
+  background: #667eea;
+  color: white;
+}
+
+/* Field help text */
+.field-help {
+  display: block;
+  margin-top: 8px;
+  color: #6b7280;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .modern-select {
+    padding: 12px 14px;
+    font-size: 14px;
+    border-radius: 10px;
+  }
+
+  .modern-select[multiple] {
+    min-height: 150px;
+  }
+
+  .modern-select option {
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+
+  .field-help {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .modern-select {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .modern-select[multiple] {
+    min-height: 130px;
+  }
+
+  .modern-select option {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+}
+
+/* Enhanced option appearance for multi-select */
+.modern-select[multiple] option {
+  background: white;
+  margin: 2px 4px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+}
+
+.modern-select[multiple] option:hover {
+  background: #f8f9ff;
+  border-color: #667eea;
+}
+
+/* Selected state with gradient */
+.modern-select[multiple] option:checked {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: transparent;
+  position: relative;
+}
+
+.modern-select[multiple] option:checked::before {
+  content: '✓ ';
+  font-weight: bold;
+}

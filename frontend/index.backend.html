@@ -269,37 +269,35 @@
             <label class="chip"><input type="radio" name="level" value="luxury" /> Luxury</label>
           </fieldset>
 
-          <div class="field preferences-field">
-            <span>Preferences <small>(Select multiple interests)</small></span>
-            <div class="preferences-container">
-              <div class="preference-tags">
-                <label class="preference-tag"><input type="checkbox" name="prefs" value="museums" /> Museums & Culture</label>
-                <label class="preference-tag"><input type="checkbox" name="prefs" value="beaches" /> Beaches & Water</label>
-                <label class="preference-tag"><input type="checkbox" name="prefs" value="hiking" /> Hiking & Nature</label>
-                <label class="preference-tag"><input type="checkbox" name="prefs" value="kid-friendly" /> Kid-Friendly</label>
-                <label class="preference-tag"><input type="checkbox" name="prefs" value="nightlife" /> Nightlife & Entertainment</label>
-                <label class="preference-tag"><input type="checkbox" name="prefs" value="food" /> Food & Dining</label>
-                <label class="preference-tag"><input type="checkbox" name="prefs" value="shopping" /> Shopping</label>
-                <label class="preference-tag"><input type="checkbox" name="prefs" value="adventure" /> Adventure Sports</label>
-                <label class="preference-tag"><input type="checkbox" name="prefs" value="relaxation" /> Relaxation & Spa</label>
-                <label class="preference-tag"><input type="checkbox" name="prefs" value="history" /> Historical Sites</label>
-                <label class="preference-tag"><input type="checkbox" name="prefs" value="photography" /> Photography</label>
-                <label class="preference-tag"><input type="checkbox" name="prefs" value="local-culture" /> Local Culture</label>
-              </div>
-              <div class="preferences-help">💡 Click multiple tags to personalize your trip experience</div>
-            </div>
+          <div class="field">
+            <label for="preferences">Preferences <small>(Select multiple interests)</small></label>
+            <select id="preferences" name="prefs" multiple size="6" class="modern-select">
+              <option value="museums">🏛️ Museums & Culture</option>
+              <option value="beaches">🏖️ Beaches & Water</option>
+              <option value="hiking">🥾 Hiking & Nature</option>
+              <option value="kid-friendly">👶 Kid-Friendly</option>
+              <option value="nightlife">🎉 Nightlife & Entertainment</option>
+              <option value="food">🍽️ Food & Dining</option>
+              <option value="shopping">🛍️ Shopping</option>
+              <option value="adventure">🏄 Adventure Sports</option>
+              <option value="relaxation">💆 Relaxation & Spa</option>
+              <option value="history">🏰 Historical Sites</option>
+              <option value="photography">📸 Photography</option>
+              <option value="local-culture">🌍 Local Culture</option>
+            </select>
+            <small class="field-help">💡 Hold Ctrl (Windows) or Cmd (Mac) to select multiple options</small>
           </div>
 
           <div class="field">
-            <span>Dietary needs (optional)</span>
-            <div class="dietary-options">
-              <label class="chip"><input type="checkbox" name="dietary" value="vegetarian" /> Vegetarian</label>
-              <label class="chip"><input type="checkbox" name="dietary" value="vegan" /> Vegan</label>
-              <label class="chip"><input type="checkbox" name="dietary" value="gluten-free" /> Gluten-free</label>
-              <label class="chip"><input type="checkbox" name="dietary" value="halal" /> Halal</label>
-              <label class="chip"><input type="checkbox" name="dietary" value="kosher" /> Kosher</label>
-              <label class="chip"><input type="checkbox" name="dietary" value="none" checked /> No restrictions</label>
-            </div>
+            <label for="dietary">Dietary needs (optional)</label>
+            <select id="dietary" name="dietary" class="modern-select">
+              <option value="none" selected>🍽️ No restrictions</option>
+              <option value="vegetarian">🥗 Vegetarian</option>
+              <option value="vegan">🌱 Vegan</option>
+              <option value="gluten-free">🌾 Gluten-free</option>
+              <option value="halal">🕌 Halal</option>
+              <option value="kosher">✡️ Kosher</option>
+            </select>
           </div>
 
           <div class="field">
