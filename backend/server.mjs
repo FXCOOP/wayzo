@@ -1241,9 +1241,16 @@ app.post('/api/plan.pdf', async (req, res) => {
       finalHTML = html; // Fallback to HTML without widgets
     }
 
+    // Read frontend CSS for consistent styling
+    const frontendCSS = fs.readFileSync(path.join(FRONTEND, 'style.css'), 'utf-8');
+
     const fullHtml = `<!doctype html><html><head>
       <meta charset="utf-8">
       <title>Wayzo Trip Plan - ${escapeHtml(payload.destination || '')}</title>
+      <style>
+        /* Frontend styles for consistent look */
+        ${frontendCSS}
+      </style>
       <style>
         * {
           box-sizing: border-box;
