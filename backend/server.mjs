@@ -1917,9 +1917,26 @@ app.get('/api/user/plans', requireUser, async (req, res) => {
       const payload = typeof plan.payload === 'string' ? JSON.parse(plan.payload) : plan.payload;
       const data = payload?.data || {};
 
+      // Try multiple sources for destination
+      const destination = plan.destination ||
+                         data.destination ||
+                         data.destinations ||
+                         payload?.destination ||
+                         'Unknown Destination';
+
+      // Debug log for first plan to see structure
+      if (transformedPlans.length === 0) {
+        console.log('🔍 Plan structure debug:');
+        console.log('  - plan.destination:', plan.destination);
+        console.log('  - data.destination:', data.destination);
+        console.log('  - data.destinations:', data.destinations);
+        console.log('  - payload.destination:', payload?.destination);
+        console.log('  - Full data keys:', Object.keys(data));
+      }
+
       return {
         id: plan.id,
-        destination: data.destination || 'Unknown Destination',
+        destination: destination,
         days: data.days || daysBetween(data.start, data.end) || null,
         budget: data.budget || null,
         currency: data.currency || 'USD',
@@ -2042,7 +2059,9 @@ app.get('/api/plan/:id/ics', (_req, res) => {
 // SUPABASE-AUTHENTICATED ROUTES
 // ========================================
 
+// DUPLICATE ENDPOINT - Commented out (first endpoint at line 1898 is used)
 // List all plans for authenticated user
+/*
 app.get('/api/user/plans', requireUser, async (req, res) => {
   try {
     if (!supabaseAdmin) {
@@ -2067,6 +2086,7 @@ app.get('/api/user/plans', requireUser, async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+*/
 
 // Get single plan for authenticated user
 app.get('/api/user/plan/:id', requireUser, async (req, res) => {
