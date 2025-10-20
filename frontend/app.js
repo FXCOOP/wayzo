@@ -2041,45 +2041,91 @@
 
   // Language Management
   function changeLanguage(language) {
+    console.log('🌍 Changing language to:', language);
+
     // Use the translations from translations.js
-    if (window.WayzoTranslations && window.WayzoTranslations[language]) {
-      const translations = window.WayzoTranslations[language];
-      
-      // Update form labels
-      const labelMappings = [
-        { selector: 'span:contains("Traveling from (optional)")', key: 'travelingFrom' },
-        { selector: 'span:contains("Destination")', key: 'destination' },
-        { selector: 'span:contains("Budget")', key: 'budget' },
-        { selector: 'span:contains("Travelers")', key: 'travelers' },
-        { selector: 'span:contains("Generate preview")', key: 'generatePreview' },
-        { selector: 'span:contains("Generate full plan")', key: 'generateFullPlan' },
-        { selector: 'span:contains("Trip Type")', key: 'tripType' },
-        { selector: 'span:contains("Single Destination")', key: 'singleDestination' },
-        { selector: 'span:contains("Multi-Destination")', key: 'multiDestination' }
-      ];
-      
-      labelMappings.forEach(mapping => {
-        const elements = document.querySelectorAll(mapping.selector);
-        elements.forEach(el => {
-          if (el.textContent && translations[mapping.key]) {
-            el.textContent = translations[mapping.key];
-          }
-        });
-      });
-      
-      // Update button texts
-      const previewBtn = document.getElementById('previewBtn');
-      const fullPlanBtn = document.getElementById('fullPlanBtn');
-      if (previewBtn && translations.generatePreview) {
-        previewBtn.textContent = translations.generatePreview;
-      }
-      if (fullPlanBtn && translations.generateFullPlan) {
-        fullPlanBtn.textContent = translations.generateFullPlan;
-      }
+    if (!window.WayzoTranslations || !window.WayzoTranslations[language]) {
+      console.error('Translation not found for language:', language);
+      showNotification(`Translation not available for ${language}`, 'error');
+      return;
     }
-    
-    showNotification(`Language changed to ${language}`, 'success');
+
+    const t = window.WayzoTranslations[language];
+
+    // Update all elements with data-i18n attribute
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (t[key]) {
+        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') {
+          if (el.placeholder !== undefined) {
+            el.placeholder = t[key];
+          }
+        } else {
+          el.textContent = t[key];
+        }
+      }
+    });
+
+    // Update specific form elements by ID
+    const elementUpdates = {
+      'previewBtn': 'generatePreview',
+      'fullPlanBtn': 'generateFullPlan',
+      'paymentBtn': 'payNow',
+      'downloadPdfBtn': 'downloadPdf',
+      'downloadExcelBtn': 'downloadExcel',
+      'shareBtn': 'share',
+      'copyBtn': 'copyToClipboard'
+    };
+
+    Object.entries(elementUpdates).forEach(([id, key]) => {
+      const el = document.getElementById(id);
+      if (el && t[key]) {
+        if (el.tagName === 'BUTTON' || el.tagName === 'A') {
+          el.textContent = t[key];
+        }
+      }
+    });
+
+    // Update form labels that don't have data-i18n yet
+    const labels = document.querySelectorAll('label');
+    labels.forEach(label => {
+      const text = label.textContent.trim();
+      // Try to find matching translation
+      Object.entries(t).forEach(([key, value]) => {
+        if (label.querySelector('input, select, textarea') && !label.hasAttribute('data-i18n')) {
+          // Skip labels with nested inputs without data-i18n
+        }
+      });
+    });
+
+    // Store preference
     localStorage.setItem('wayzo_language', language);
+
+    // Update HTML lang attribute
+    document.documentElement.lang = language;
+
+    showNotification(t.languageChanged || `Language changed to ${language}`, 'success');
+    console.log('✅ Language changed successfully');
+  }
+
+  // Initialize language on page load
+  function initLanguage() {
+    const savedLanguage = localStorage.getItem('wayzo_language') || 'en';
+    const langSelect = document.getElementById('languageSelect');
+
+    if (langSelect) {
+      langSelect.value = savedLanguage;
+      // Don't call changeLanguage here to avoid notification on page load
+      // Just set the HTML lang attribute
+      document.documentElement.lang = savedLanguage;
+    }
+  }
+
+  // Call init on page load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initLanguage);
+  } else {
+    initLanguage();
   }
 
   // Download and Export Functions
