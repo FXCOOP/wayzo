@@ -2129,6 +2129,10 @@ app.post('/api/user/plan', requireUser, async (req, res) => {
 
     console.log(`✅ Plan ${row.id} created and saved for user ${req.user.email}`);
 
+    // Send email notification
+    const planUrl = `${process.env.PUBLIC_BASE_URL || 'https://wayzo.online'}/backoffice.html#plan=${row.id}`;
+    await sendPlanReadyEmail(req.user.email, planUrl);
+
     // Return plan data (same format as /api/plan)
     const aff = affiliatesFor(payload.destination);
     res.json({

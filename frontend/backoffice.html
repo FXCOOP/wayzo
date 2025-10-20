@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <title>My Plans - Wayzo</title>
   <link rel="stylesheet" href="/frontend/style.css" />
   <link rel="stylesheet" href="/frontend/mobile-responsive.css" />
@@ -121,6 +123,9 @@
       display: inline-block;
       position: relative;
       overflow: hidden;
+      min-height: 44px; /* iOS minimum touch target */
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .btn::before {
@@ -152,6 +157,11 @@
       box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
     }
 
+    .btn-primary:active {
+      transform: scale(0.97);
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
     .btn-ghost {
       background: rgba(255, 255, 255, 0.9);
       color: #667eea;
@@ -164,6 +174,11 @@
       border-color: #667eea;
       transform: translateY(-2px);
       box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+    }
+
+    .btn-ghost:active {
+      transform: scale(0.97);
+      background: rgba(255, 255, 255, 0.95);
     }
 
     .auth-section {
@@ -219,6 +234,8 @@
       transition: all 0.3s ease;
       background: rgba(255, 255, 255, 0.8);
       backdrop-filter: blur(10px);
+      -webkit-appearance: none;
+      appearance: none;
     }
 
     .input:focus {
@@ -227,6 +244,13 @@
       background: white;
       box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
       transform: translateY(-2px);
+    }
+
+    /* Prevent iOS zoom on focus */
+    @media (max-width: 768px) {
+      .input {
+        font-size: 16px; /* Prevents iOS auto-zoom */
+      }
     }
 
     .main-section {
@@ -252,6 +276,9 @@
       cursor: pointer;
       position: relative;
       overflow: hidden;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
     }
 
     .plan-card::before {
@@ -275,6 +302,13 @@
       transform: translateY(-8px) scale(1.02);
       box-shadow:
         0 20px 60px rgba(0, 0, 0, 0.15),
+        0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+    }
+
+    .plan-card:active {
+      transform: scale(0.98);
+      box-shadow:
+        0 5px 20px rgba(0, 0, 0, 0.1),
         0 0 0 1px rgba(255, 255, 255, 0.5) inset;
     }
 
@@ -448,18 +482,169 @@
     }
 
     @media (max-width: 768px) {
+      body {
+        padding: 12px;
+      }
+
       .header {
         flex-direction: column;
         gap: 16px;
+        padding: 24px 20px;
+        border-radius: 16px;
+      }
+
+      .header-left h1 {
+        font-size: 24px;
+        text-align: center;
+      }
+
+      .header-left p {
+        font-size: 14px;
+        text-align: center;
+        justify-content: center;
       }
 
       .header-right {
         width: 100%;
-        justify-content: center;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .header-right .btn {
+        width: 100%;
+        padding: 12px 20px;
+      }
+
+      .auth-section {
+        padding: 40px 24px;
+        margin: 40px auto;
+        border-radius: 20px;
+      }
+
+      .auth-section h2 {
+        font-size: 28px;
+      }
+
+      .auth-section p {
+        font-size: 15px;
       }
 
       .plans-grid {
         grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .plan-card {
+        padding: 20px;
+        border-radius: 16px;
+      }
+
+      .plan-card h3 {
+        font-size: 18px;
+      }
+
+      .plan-meta {
+        font-size: 13px;
+      }
+
+      .empty-state,
+      .loading {
+        padding: 60px 24px;
+        border-radius: 20px;
+      }
+
+      .empty-state h2 {
+        font-size: 24px;
+      }
+
+      .empty-state p {
+        font-size: 15px;
+      }
+
+      .plan-detail {
+        padding: 24px 16px;
+        border-radius: 12px;
+      }
+
+      .plan-detail h2 {
+        font-size: 24px;
+      }
+
+      #statsSection > div {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+      }
+
+      #statsSection > div > div {
+        padding: 20px !important;
+        border-radius: 16px !important;
+      }
+
+      #statsSection #totalPlans,
+      #statsSection #totalDestinations {
+        font-size: 28px !important;
+      }
+
+      #statsSection #lastCreated {
+        font-size: 16px !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 8px;
+      }
+
+      .header {
+        padding: 20px 16px;
+        margin-bottom: 20px;
+      }
+
+      .header-left h1 {
+        font-size: 22px;
+      }
+
+      .btn {
+        padding: 12px 20px;
+        font-size: 13px;
+      }
+
+      .auth-section {
+        padding: 32px 20px;
+        margin: 20px auto;
+      }
+
+      .auth-section h2 {
+        font-size: 24px;
+      }
+
+      .plan-card {
+        padding: 16px;
+      }
+
+      .plan-card h3 {
+        font-size: 16px;
+      }
+
+      .plan-meta {
+        font-size: 12px;
+        gap: 8px;
+      }
+
+      .plan-meta span:first-child {
+        font-size: 16px;
+      }
+
+      .plan-detail {
+        padding: 20px 12px;
+      }
+
+      .plan-detail h2 {
+        font-size: 20px;
+      }
+
+      .plan-detail .plan-html {
+        font-size: 15px;
       }
     }
   </style>
