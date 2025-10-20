@@ -1700,7 +1700,12 @@
   }
 
   // Handle sign out
-  function handleSignOut() {
+  async function handleSignOut() {
+    // Sign out from Supabase
+    if (window.supabaseClient) {
+      await window.supabaseClient.auth.signOut();
+    }
+
     currentUser = null;
     isAuthenticated = false;
 
@@ -1708,10 +1713,20 @@
     localStorage.removeItem('wayzo_user');
     localStorage.removeItem('wayzo_supabase_token');
 
-    // Update UI
-    if (loginBtn) loginBtn.style.display = 'block';
+    // Update UI - show login button, hide user menu
+    if (loginBtn) {
+      loginBtn.style.display = 'inline-flex';
+      loginBtn.style.visibility = 'visible';
+    }
     if ($('#signOutBtn')) $('#signOutBtn').style.display = 'none';
     if ($('#myTripsBtn')) $('#myTripsBtn').style.display = 'none';
+
+    // Hide user dropdown if visible
+    const userDropdown = $('#userDropdown');
+    if (userDropdown) userDropdown.classList.remove('active');
+
+    // Redirect to home
+    window.location.href = '/';
 
     showNotification('Signed out successfully', 'info');
   }
@@ -1730,10 +1745,19 @@
     `;
 
     try {
-      const token = localStorage.getItem('wayzo_supabase_token');
-      if (!token) {
-        throw new Error('No authentication token');
+      // Get fresh session from Supabase instead of localStorage
+      if (!window.supabaseClient) {
+        throw new Error('Supabase not initialized');
       }
+
+      const { data: { session }, error: sessionError } = await window.supabaseClient.auth.getSession();
+
+      if (sessionError || !session) {
+        console.error('Session error:', sessionError);
+        throw new Error('No active session - please sign in again');
+      }
+
+      const token = session.access_token;
 
       // Fetch user's plans from backend
       const response = await fetch('/api/user/plans', {
@@ -1825,11 +1849,20 @@
 
   async function viewPlan(planId) {
     try {
-      const token = localStorage.getItem('wayzo_supabase_token');
-      if (!token) {
+      // Get fresh session from Supabase
+      if (!window.supabaseClient) {
         showNotification('Please sign in to view your plan', 'error');
         return;
       }
+
+      const { data: { session }, error: sessionError } = await window.supabaseClient.auth.getSession();
+
+      if (sessionError || !session) {
+        showNotification('Please sign in to view your plan', 'error');
+        return;
+      }
+
+      const token = session.access_token;
 
       // Fetch the plan HTML
       const response = await fetch(`/api/plan/${planId}`, {
