@@ -1828,17 +1828,31 @@ fieldset.field .chip {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%),
+              rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: fadeIn 0.25s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .auth-modal-content {
   position: relative;
-  animation: modalSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  border-radius: 24px;
+  animation: modalSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 30px 60px -12px rgba(102, 126, 234, 0.3),
+              0 10px 25px -5px rgba(0, 0, 0, 0.15);
+  border-radius: 28px;
   padding: 48px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(to bottom, #ffffff 0%, #fefefe 100%);
 }
 
 @keyframes modalSlideIn {
@@ -1891,17 +1905,56 @@ fieldset.field .chip {
 }
 
 .auth-logo .brand-badge {
-  width: 64px;
-  height: 64px;
+  width: 72px;
+  height: 72px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   font-weight: 800;
-  font-size: 24px;
-  border-radius: 16px;
-  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+  font-size: 26px;
+  border-radius: 20px;
+  box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4),
+              0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+  animation: brandPulse 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-logo .brand-badge::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transform: rotate(45deg);
+  animation: shimmer 3s infinite;
+}
+
+@keyframes brandPulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%) rotate(45deg);
+  }
+  100% {
+    transform: translateX(100%) rotate(45deg);
+  }
 }
 
 .auth-header {
@@ -1943,15 +1996,24 @@ fieldset.field .chip {
   font-size: 16px;
   border: 2px solid #e5e7eb;
   border-radius: 12px;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   font-family: inherit;
   box-sizing: border-box;
+  background: #fafafa;
+}
+
+.form-input:hover {
+  border-color: #d1d5db;
+  background: #ffffff;
 }
 
 .form-input:focus {
   outline: none;
   border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.12),
+              0 2px 8px rgba(102, 126, 234, 0.1);
+  background: #ffffff;
+  transform: translateY(-1px);
 }
 
 .btn-auth-primary {
@@ -1964,21 +2026,44 @@ fieldset.field .chip {
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-auth-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.6s;
 }
 
 .btn-auth-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.45);
+}
+
+.btn-auth-primary:hover::before {
+  left: 100%;
 }
 
 .btn-auth-primary:active {
-  transform: translateY(0);
+  transform: translateY(-1px);
+}
+
+.btn-auth-primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none !important;
 }
 
 .btn-auth-primary .btn-text {
@@ -2044,17 +2129,23 @@ fieldset.field .chip {
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
   color: #374151;
+  position: relative;
 }
 
 .btn-social:hover {
-  border-color: #d1d5db;
-  background: #f9fafb;
+  border-color: #667eea;
+  background: #f8f9ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.btn-social:active {
   transform: translateY(-1px);
 }
 
@@ -2107,20 +2198,24 @@ fieldset.field .chip {
   display: flex;
   justify-content: center;
   margin-bottom: 24px;
-  animation: successPop 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: successPop 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.auth-success-icon svg {
+  filter: drop-shadow(0 4px 12px rgba(16, 185, 129, 0.3));
 }
 
 @keyframes successPop {
   0% {
     opacity: 0;
-    transform: scale(0);
+    transform: scale(0) rotate(-180deg);
   }
   50% {
-    transform: scale(1.1);
+    transform: scale(1.15) rotate(10deg);
   }
   100% {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) rotate(0deg);
   }
 }
 
@@ -2130,6 +2225,18 @@ fieldset.field .chip {
   font-weight: 700;
   color: #111827;
   margin: 0 0 16px 0;
+  animation: slideInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .auth-success-message {
@@ -2138,11 +2245,16 @@ fieldset.field .chip {
   color: #374151;
   margin: 0 0 12px 0;
   line-height: 1.6;
+  animation: slideInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
 }
 
 .auth-success-message strong {
   color: #667eea;
   font-weight: 600;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .auth-success-submessage {
@@ -2151,20 +2263,32 @@ fieldset.field .chip {
   color: #6b7280;
   margin: 0 0 32px 0;
   line-height: 1.6;
+  animation: slideInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
 }
 
 .auth-success-features {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 20px;
-  background: #ecfdf5;
-  border-radius: 12px;
+  padding: 24px;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border-radius: 16px;
   margin-bottom: 24px;
+  animation: slideInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both;
+  border: 1px solid rgba(16, 185, 129, 0.1);
 }
 
 .auth-success-features .feature-item {
   color: #059669;
+  animation: slideInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.auth-success-features .feature-item:nth-child(1) {
+  animation-delay: 0.6s;
+}
+
+.auth-success-features .feature-item:nth-child(2) {
+  animation-delay: 0.7s;
 }
 
 .auth-back-btn {

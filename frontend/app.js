@@ -1411,17 +1411,13 @@
   // Initialize Supabase and listen for auth changes
   async function initializeSupabaseAuth() {
     try {
-      // Initialize Supabase client
-      if (!window.supabase && window.supabase?.createClient) {
-        const { createClient } = window.supabase;
-        window.supabase = createClient(
-          window.SUPABASE_URL || 'https://gohfflxuadcfkfqgqtwa.supabase.co',
-          window.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvaGZmbHh1YWRjZmtmcWdxdHdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjc5MDAxNTcsImV4cCI6MjA0MzQ3NjE1N30.tXOFTm1H5RKJcwHl--b_Kf-m_C9nrjZ2Vdyq-rEwlsk'
-        );
+      // Use the supabaseClient initialized in index.backend.html
+      if (window.supabaseClient) {
+        window.supabase = window.supabaseClient;
       }
 
       // Check for existing session
-      if (window.supabase) {
+      if (window.supabase && window.supabase.auth) {
         const { data: { session } } = await window.supabase.auth.getSession();
 
         if (session) {
@@ -1930,12 +1926,13 @@
 
     try {
       // Initialize Supabase if not already done
-      if (!window.supabase) {
-        const { createClient } = window.supabase;
-        window.supabase = createClient(
-          window.SUPABASE_URL || 'https://gohfflxuadcfkfqgqtwa.supabase.co',
-          window.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvaGZmbHh1YWRjZmtmcWdxdHdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjc5MDAxNTcsImV4cCI6MjA0MzQ3NjE1N30.tXOFTm1H5RKJcwHl--b_Kf-m_C9nrjZ2Vdyq-rEwlsk'
-        );
+      // Use the supabaseClient initialized in index.backend.html
+      if (window.supabaseClient && !window.supabase) {
+        window.supabase = window.supabaseClient;
+      }
+
+      if (!window.supabase || !window.supabase.auth) {
+        throw new Error('Supabase client not initialized');
       }
 
       // Send magic link using Supabase
@@ -1969,12 +1966,13 @@
   // Handle Google Sign-In
   async function handleGoogleSignIn() {
     try {
-      if (!window.supabase) {
-        const { createClient } = window.supabase;
-        window.supabase = createClient(
-          window.SUPABASE_URL || 'https://gohfflxuadcfkfqgqtwa.supabase.co',
-          window.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvaGZmbHh1YWRjZmtmcWdxdHdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjc5MDAxNTcsImV4cCI6MjA0MzQ3NjE1N30.tXOFTm1H5RKJcwHl--b_Kf-m_C9nrjZ2Vdyq-rEwlsk'
-        );
+      // Use the supabaseClient initialized in index.backend.html
+      if (window.supabaseClient && !window.supabase) {
+        window.supabase = window.supabaseClient;
+      }
+
+      if (!window.supabase || !window.supabase.auth) {
+        throw new Error('Supabase client not initialized');
       }
 
       const { data, error } = await window.supabase.auth.signInWithOAuth({
