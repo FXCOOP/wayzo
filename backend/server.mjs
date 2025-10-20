@@ -1913,7 +1913,7 @@ app.get('/api/user/plans', requireUser, async (req, res) => {
     }
 
     // Transform plans for frontend
-    const transformedPlans = (plans || []).map(plan => {
+    const transformedPlans = (plans || []).map((plan, index) => {
       const payload = typeof plan.payload === 'string' ? JSON.parse(plan.payload) : plan.payload;
       const data = payload?.data || {};
 
@@ -1925,8 +1925,8 @@ app.get('/api/user/plans', requireUser, async (req, res) => {
                          'Unknown Destination';
 
       // Debug log for first plan to see structure
-      if (transformedPlans.length === 0) {
-        console.log('🔍 Plan structure debug:');
+      if (index === 0 && plans.length > 0) {
+        console.log('🔍 Plan structure debug (first plan):');
         console.log('  - plan.destination:', plan.destination);
         console.log('  - data.destination:', data.destination);
         console.log('  - data.destinations:', data.destinations);
