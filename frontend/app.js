@@ -624,20 +624,122 @@
     }
   };
 
-  // Show prompt to save plan to dashboard
+  // Show prompt to save plan to dashboard with beautiful modal
   const showSaveToDashboardPrompt = () => {
     // Don't show if already dismissed
     if (localStorage.getItem('wayzo_save_prompt_dismissed')) return;
 
     setTimeout(() => {
-      const shouldSave = confirm('💾 Want to save this plan to your dashboard?\n\nSign in now to:\n✅ Access your plans from any device\n✅ Get back to them anytime\n✅ Download PDF later\n\nClick OK to sign in, or Cancel to continue without saving.');
+      // Create beautiful save prompt modal
+      const modalHTML = `
+        <div id="savePlanModal" class="save-plan-modal" style="display: flex;">
+          <div class="save-plan-overlay" onclick="dismissSavePlanModal()"></div>
+          <div class="save-plan-content">
+            <button class="save-plan-close" onclick="dismissSavePlanModal()">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
 
-      if (shouldSave) {
-        showAuthModal(); // Open sign-in modal
-      } else {
+            <div class="save-plan-icon">
+              <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                <circle cx="40" cy="40" r="38" fill="url(#saveGradient)" opacity="0.1"/>
+                <path d="M40 20v24m0 0l-8-8m8 8l8-8M26 52h28a4 4 0 004-4V28a4 4 0 00-4-4H26a4 4 0 00-4 4v20a4 4 0 004 4z"
+                      stroke="url(#saveGradient)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                <defs>
+                  <linearGradient id="saveGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#667eea"/>
+                    <stop offset="100%" style="stop-color:#764ba2"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+
+            <h2 class="save-plan-title">Save Your Perfect Trip Plan?</h2>
+            <p class="save-plan-subtitle">Don't lose this amazing itinerary! Sign in to unlock all benefits:</p>
+
+            <div class="save-plan-benefits">
+              <div class="benefit-item">
+                <div class="benefit-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+                <div class="benefit-text">
+                  <strong>Access Anywhere</strong>
+                  <span>View your plans from any device, anytime</span>
+                </div>
+              </div>
+
+              <div class="benefit-item">
+                <div class="benefit-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+                <div class="benefit-text">
+                  <strong>Download PDF</strong>
+                  <span>Get a beautiful PDF version to print or share</span>
+                </div>
+              </div>
+
+              <div class="benefit-item">
+                <div class="benefit-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+                <div class="benefit-text">
+                  <strong>Never Lose It</strong>
+                  <span>Your plan is safely stored in your dashboard</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="save-plan-actions">
+              <button class="btn-save-primary" onclick="acceptSavePlan()">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/>
+                </svg>
+                Sign In to Save
+              </button>
+              <button class="btn-save-secondary" onclick="dismissSavePlanModal()">
+                Continue Without Saving
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Add modal to page
+      const modalContainer = document.createElement('div');
+      modalContainer.innerHTML = modalHTML;
+      document.body.appendChild(modalContainer.firstElementChild);
+
+      // Add animation class after render
+      setTimeout(() => {
+        document.querySelector('.save-plan-content').classList.add('show');
+      }, 10);
+    }, 2000);
+  };
+
+  // Accept save plan - open auth modal
+  window.acceptSavePlan = () => {
+    dismissSavePlanModal();
+    showAuthModal();
+  };
+
+  // Dismiss save plan modal
+  window.dismissSavePlanModal = () => {
+    const modal = document.getElementById('savePlanModal');
+    if (modal) {
+      modal.querySelector('.save-plan-content').classList.remove('show');
+      setTimeout(() => {
+        modal.remove();
         localStorage.setItem('wayzo_save_prompt_dismissed', 'true');
-      }
-    }, 2000); // Show 2 seconds after plan is ready
+      }, 300);
+    }
   };
 
   // Create professional trip overview wrapper
@@ -771,36 +873,147 @@
     const data = readForm();
     console.log('Generating full plan for:', data);
     
-    // Show cool loading animation for full plan
+    // Show beautiful full-screen loading animation
     hide(previewEl);
-    show(loadingEl);
-    
-    // Show cool trip planning animation
-    loadingEl.innerHTML = `
-      <div class="trip-planning-animation">
-        <div class="animation-container">
-          <div class="plane-flying">✈️</div>
-          <div class="hotel-building">🏨</div>
-          <div class="restaurant-icon">🍽️</div>
-          <div class="activity-icon">🎫</div>
-          <div class="loading-text">
-            <h3>🎯 Creating Your Amazing Trip Plan!</h3>
-            <p>Our AI is crafting the perfect itinerary for your ${data.destination} adventure...</p>
-            <div class="progress-bar">
-              <div class="progress-fill"></div>
-            </div>
-            <div class="loading-steps">
-              <span class="step active">📍 Planning routes</span>
-              <span class="step">🏨 Finding hotels</span>
-              <span class="step">🍽️ Selecting restaurants</span>
-              <span class="step">🎫 Booking activities</span>
-              <span class="step">💰 Calculating budget</span>
-              <span class="step">🖼️ Generating images</span>
-            </div>
+
+    // Create full-screen loading overlay
+    const fullScreenLoader = document.createElement('div');
+    fullScreenLoader.id = 'fullScreenLoader';
+    fullScreenLoader.className = 'fullscreen-loader';
+    fullScreenLoader.innerHTML = `
+      <div class="loader-background"></div>
+      <div class="loader-content">
+        <!-- Animated Globe -->
+        <div class="loader-globe">
+          <div class="globe-ring globe-ring-1"></div>
+          <div class="globe-ring globe-ring-2"></div>
+          <div class="globe-ring globe-ring-3"></div>
+          <div class="globe-core">
+            <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+              <circle cx="60" cy="60" r="58" stroke="url(#globeGradient)" stroke-width="2" opacity="0.3"/>
+              <path d="M60 10 Q80 30 60 50 Q40 70 60 90 Q80 70 60 50 Q40 30 60 10"
+                    stroke="url(#globeGradient)" stroke-width="2" fill="none" opacity="0.5"/>
+              <circle cx="60" cy="60" r="35" fill="url(#globeGradient)" opacity="0.1"/>
+              <text x="60" y="70" text-anchor="middle" font-size="48" fill="url(#globeGradient)">✈️</text>
+              <defs>
+                <linearGradient id="globeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#667eea"/>
+                  <stop offset="100%" style="stop-color:#764ba2"/>
+                </linearGradient>
+              </defs>
+            </svg>
           </div>
+        </div>
+
+        <!-- Main Title -->
+        <h2 class="loader-title">✨ Crafting Your Perfect Journey ✨</h2>
+        <p class="loader-subtitle">Our AI is creating a personalized itinerary for your ${data.destination} adventure...</p>
+
+        <!-- Inspirational Quote -->
+        <div class="loader-quote">
+          <div class="quote-icon">"</div>
+          <p class="quote-text" id="inspirationalQuote">The world is a book, and those who do not travel read only one page.</p>
+          <p class="quote-author" id="quoteAuthor">— Saint Augustine</p>
+        </div>
+
+        <!-- Progress Steps -->
+        <div class="loader-steps">
+          <div class="step-item step-active" id="step1">
+            <div class="step-icon">📍</div>
+            <span class="step-text">Planning routes</span>
+          </div>
+          <div class="step-item" id="step2">
+            <div class="step-icon">🏨</div>
+            <span class="step-text">Finding hotels</span>
+          </div>
+          <div class="step-item" id="step3">
+            <div class="step-icon">🍽️</div>
+            <span class="step-text">Selecting restaurants</span>
+          </div>
+          <div class="step-item" id="step4">
+            <div class="step-icon">🎫</div>
+            <span class="step-text">Booking activities</span>
+          </div>
+          <div class="step-item" id="step5">
+            <div class="step-icon">💰</div>
+            <span class="step-text">Calculating budget</span>
+          </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="loader-progress">
+          <div class="progress-track">
+            <div class="progress-fill" id="loaderProgressFill"></div>
+          </div>
+          <span class="progress-text" id="progressText">0%</span>
         </div>
       </div>
     `;
+
+    document.body.appendChild(fullScreenLoader);
+
+    // Animate progress and steps
+    const quotes = [
+      { text: "The world is a book, and those who do not travel read only one page.", author: "Saint Augustine" },
+      { text: "Travel is the only thing you buy that makes you richer.", author: "Anonymous" },
+      { text: "Adventure is worthwhile.", author: "Aesop" },
+      { text: "Life is either a daring adventure or nothing at all.", author: "Helen Keller" },
+      { text: "To travel is to live.", author: "Hans Christian Andersen" }
+    ];
+
+    let currentQuote = Math.floor(Math.random() * quotes.length);
+    const quoteEl = document.getElementById('inspirationalQuote');
+    const authorEl = document.getElementById('quoteAuthor');
+
+    // Change quote every 4 seconds
+    setInterval(() => {
+      currentQuote = (currentQuote + 1) % quotes.length;
+      quoteEl.style.opacity = '0';
+      authorEl.style.opacity = '0';
+      setTimeout(() => {
+        quoteEl.textContent = quotes[currentQuote].text;
+        authorEl.textContent = `— ${quotes[currentQuote].author}`;
+        quoteEl.style.opacity = '1';
+        authorEl.style.opacity = '1';
+      }, 300);
+    }, 4000);
+
+    // Animate steps
+    let currentStep = 1;
+    const stepInterval = setInterval(() => {
+      if (currentStep <= 5) {
+        document.getElementById(`step${currentStep}`)?.classList.add('step-active', 'step-completed');
+        currentStep++;
+        if (currentStep <= 5) {
+          document.getElementById(`step${currentStep}`)?.classList.add('step-active');
+        }
+      }
+    }, 1500);
+
+    // Animate progress bar
+    let progress = 0;
+    const progressFill = document.getElementById('loaderProgressFill');
+    const progressText = document.getElementById('progressText');
+    const progressInterval = setInterval(() => {
+      progress += Math.random() * 3;
+      if (progress > 95) progress = 95;
+      progressFill.style.width = `${progress}%`;
+      progressText.textContent = `${Math.floor(progress)}%`;
+    }, 200);
+
+    // Function to hide loader
+    window.hideFullScreenLoader = () => {
+      clearInterval(stepInterval);
+      clearInterval(progressInterval);
+      progressFill.style.width = '100%';
+      progressText.textContent = '100%';
+      setTimeout(() => {
+        fullScreenLoader.classList.add('fade-out');
+        setTimeout(() => {
+          fullScreenLoader.remove();
+        }, 500);
+      }, 300);
+    };
     
     try {
       // Check if user is authenticated with Supabase
@@ -885,6 +1098,11 @@
       }
 
       console.log('Full plan result:', result);
+
+      // Hide full-screen loader
+      if (window.hideFullScreenLoader) {
+        window.hideFullScreenLoader();
+      }
 
       // For authenticated users or staging, show full plan immediately
       if (isAuthenticated || window.location.hostname.includes('staging') || window.location.hostname.includes('localhost')) {
