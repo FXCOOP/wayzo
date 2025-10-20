@@ -7370,3 +7370,178 @@ a:hover { text-decoration: underline; color: #FFC107; }
     display: none;
   }
 }
+
+/* ==== Weather Forecast Widget Mobile Fixes ==== */
+.weather-info {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 16px;
+  margin: 20px 0;
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+}
+
+.weather-info h2 {
+  color: white !important;
+  font-size: 20px;
+  margin: 0 0 16px 0;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.weather-day {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.weather-day:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.weather-day-date {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: white;
+  opacity: 0.95;
+}
+
+.weather-day-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.weather-day-details div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.weather-day-details a {
+  color: #ffd93d !important;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 6px 12px;
+  background: rgba(255, 217, 61, 0.2);
+  border-radius: 6px;
+  display: inline-block;
+  margin-top: 4px;
+  transition: all 0.2s;
+}
+
+.weather-day-details a:hover {
+  background: rgba(255, 217, 61, 0.3);
+  transform: translateX(4px);
+}
+
+@media (max-width: 768px) {
+  .weather-info {
+    padding: 16px;
+    margin: 16px 0;
+    border-radius: 12px;
+  }
+
+  .weather-info h2 {
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+
+  .weather-day {
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+
+  .weather-day-date {
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+
+  .weather-day-details {
+    gap: 6px;
+  }
+
+  .weather-day-details div {
+    font-size: 13px;
+  }
+
+  .weather-day-details a {
+    font-size: 12px;
+    padding: 5px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .weather-info {
+    padding: 12px;
+    border-radius: 10px;
+  }
+
+  .weather-info h2 {
+    font-size: 16px;
+  }
+
+  .weather-day {
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+
+  .weather-day-date {
+    font-size: 13px;
+  }
+
+  .weather-day-details div {
+    font-size: 12px;
+    flex-wrap: wrap;
+  }
+}
+
+/* ==== Fix Plan Display Issues ==== */
+#preview {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.trip-report {
+  display: block !important;
+  visibility: visible !important;
+}
+
+/* Ensure content is visible */
+.content {
+  display: block !important;
+}
+
+/* Fix hidden elements */
+.hidden {
+  display: none !important;
+}
+
+/* Make sure plan container is visible */
+.plan-view-header {
+  display: flex !important;
+}
+
+@media (max-width: 768px) {
+  .plan-view-header {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  .plan-view-header button {
+    width: 100% !important;
+  }
+}
