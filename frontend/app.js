@@ -1395,15 +1395,214 @@
 
     // Initialize cookie consent
     initializeCookieConsent();
-    
+
     // Ensure login is visible
     ensureLoginVisible();
-    
+
+    // Initialize Supabase authentication listener
+    initializeSupabaseAuth();
+
     // Restore authentication state if user was previously signed in
     if (isAuthenticated && currentUser) {
       updateUIForAuthenticatedUser();
     }
   };
+
+  // Initialize Supabase and listen for auth changes
+  async function initializeSupabaseAuth() {
+    try {
+      // Initialize Supabase client
+      if (!window.supabase && window.supabase?.createClient) {
+        const { createClient } = window.supabase;
+        window.supabase = createClient(
+          window.SUPABASE_URL || 'https://gohfflxuadcfkfqgqtwa.supabase.co',
+          window.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvaGZmbHh1YWRjZmtmcWdxdHdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjc5MDAxNTcsImV4cCI6MjA0MzQ3NjE1N30.tXOFTm1H5RKJcwHl--b_Kf-m_C9nrjZ2Vdyq-rEwlsk'
+        );
+      }
+
+      // Check for existing session
+      if (window.supabase) {
+        const { data: { session } } = await window.supabase.auth.getSession();
+
+        if (session) {
+          console.log('✅ User authenticated via Supabase:', session.user.email);
+          handleSuccessfulAuth(session);
+        }
+
+        // Listen for auth changes (magic link, OAuth redirects)
+        window.supabase.auth.onAuthStateChange((event, session) => {
+          console.log('🔄 Auth state changed:', event);
+
+          if (event === 'SIGNED_IN' && session) {
+            handleSuccessfulAuth(session);
+            hideAuthModal();
+            showNotification('✨ Successfully signed in!', 'success');
+          } else if (event === 'SIGNED_OUT') {
+            handleSignOut();
+          }
+        });
+      }
+    } catch (error) {
+      console.error('❌ Supabase initialization error:', error);
+    }
+  }
+
+  // Handle successful authentication
+  function handleSuccessfulAuth(session) {
+    currentUser = {
+      id: session.user.id,
+      email: session.user.email,
+      name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
+      avatar: session.user.user_metadata?.avatar_url || '/frontend/assets/default-avatar.svg'
+    };
+
+    isAuthenticated = true;
+
+    // Store user info and session
+    localStorage.setItem('wayzo_authenticated', 'true');
+    localStorage.setItem('wayzo_user', JSON.stringify(currentUser));
+    localStorage.setItem('wayzo_supabase_token', session.access_token);
+
+    // Update UI
+    updateUIForAuthenticatedUser();
+
+    // Load user's plans if on the main page
+    if (window.location.pathname.includes('index') || window.location.pathname === '/') {
+      loadUserPlans();
+    }
+  }
+
+  // Handle sign out
+  function handleSignOut() {
+    currentUser = null;
+    isAuthenticated = false;
+
+    localStorage.removeItem('wayzo_authenticated');
+    localStorage.removeItem('wayzo_user');
+    localStorage.removeItem('wayzo_supabase_token');
+
+    // Update UI
+    if (loginBtn) loginBtn.style.display = 'block';
+    if ($('#signOutBtn')) $('#signOutBtn').style.display = 'none';
+    if ($('#myTripsBtn')) $('#myTripsBtn').style.display = 'none';
+
+    showNotification('Signed out successfully', 'info');
+  }
+
+  // Load user's travel plans
+  async function loadUserPlans() {
+    const plansGrid = $('#plansGrid');
+    if (!plansGrid) return;
+
+    // Show loading state
+    plansGrid.innerHTML = `
+      <div class="loading-plans" style="text-align: center; padding: 40px; color: #666;">
+        <i class="fas fa-spinner fa-spin" style="font-size: 24px; margin-bottom: 10px;"></i>
+        <p>Loading your plans...</p>
+      </div>
+    `;
+
+    try {
+      const token = localStorage.getItem('wayzo_supabase_token');
+      if (!token) {
+        throw new Error('No authentication token');
+      }
+
+      // Fetch user's plans from backend
+      const response = await fetch('/api/user/plans', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to load plans: ${response.status}`);
+      }
+
+      const plans = await response.json();
+
+      if (!plans || plans.length === 0) {
+        plansGrid.innerHTML = `
+          <div class="no-plans" style="text-align: center; padding: 60px 20px; color: #9ca3af;">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" style="margin: 0 auto 20px; opacity: 0.5;">
+              <path stroke="currentColor" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+            <h3 style="font-size: 20px; color: #374151; margin-bottom: 12px;">No plans yet</h3>
+            <p style="font-size: 16px; margin-bottom: 24px;">Start planning your first amazing trip!</p>
+            <button class="btn btn-primary" onclick="showPlanningForm()" style="padding: 14px 28px; font-size: 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 600;">
+              Create Your First Plan
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      // Update plan count
+      const planCount = $('#planCount');
+      if (planCount) planCount.textContent = plans.length;
+
+      // Display plans
+      plansGrid.innerHTML = plans.map(plan => `
+        <div class="plan-card" style="background: white; border-radius: 16px; padding: 24px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); transition: all 0.3s; cursor: pointer;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 24px rgba(0, 0, 0, 0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0, 0, 0, 0.08)'" onclick="window.location.href='/api/plan/${plan.id}'">
+          <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+            <div>
+              <h3 style="font-size: 20px; font-weight: 700; color: #111827; margin: 0 0 8px 0;">${plan.destination || 'Your Trip'}</h3>
+              <p style="font-size: 14px; color: #6b7280; margin: 0;">${formatPlanDate(plan.created_at)}</p>
+            </div>
+            <span class="plan-status ${plan.status}" style="padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; ${plan.status === 'completed' ? 'background: #ecfdf5; color: #059669;' : 'background: #fef3c7; color: #d97706;'}">${plan.status === 'completed' ? '✓ Ready' : '⏳ Processing'}</span>
+          </div>
+          <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
+            ${plan.days ? `<div style="display: flex; align-items: center; gap: 6px; font-size: 14px; color: #6b7280;"><svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"/></svg>${plan.days} days</div>` : ''}
+            ${plan.budget ? `<div style="display: flex; align-items: center; gap: 6px; font-size: 14px; color: #6b7280;"><svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20"><path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z"/></svg>$${plan.budget}</div>` : ''}
+          </div>
+          <div style="display: flex; gap: 8px; margin-top: 16px;">
+            <button class="btn-action" onclick="event.stopPropagation(); window.open('/api/plan/${plan.id}/pdf', '_blank')" style="flex: 1; padding: 10px; background: #f3f4f6; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; color: #374151; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">
+              <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20" style="display: inline; vertical-align: middle; margin-right: 4px;"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z"/></svg>
+              PDF
+            </button>
+            <button class="btn-action" onclick="event.stopPropagation(); viewPlan('${plan.id}')" style="flex: 1; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 8px; font-size: 14px; font-weight: 600; color: white; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+              View Plan →
+            </button>
+          </div>
+        </div>
+      `).join('');
+
+    } catch (error) {
+      console.error('❌ Error loading plans:', error);
+      plansGrid.innerHTML = `
+        <div class="error-state" style="text-align: center; padding: 40px; color: #ef4444;">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" style="margin: 0 auto 16px; color: #ef4444;">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+            <path d="M12 8v4m0 4h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <p style="font-size: 16px; margin-bottom: 20px;">Failed to load your plans</p>
+          <button class="btn" onclick="loadUserPlans()" style="padding: 12px 24px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+            Try Again
+          </button>
+        </div>
+      `;
+    }
+  }
+
+  function formatPlanDate(dateString) {
+    if (!dateString) return 'Recently created';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMs = now - date;
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function viewPlan(planId) {
+    window.location.href = `/api/plan/${planId}`;
+  }
 
   // Setup children ages functionality
   const setupChildrenAges = () => {
@@ -1538,6 +1737,19 @@
   window.toggleUserMenu = toggleUserMenu;
   window.signOut = signOut;
   window.showDashboard = showDashboard;
+  // Make functions globally accessible from HTML
+  window.handleMagicLinkAuth = handleMagicLinkAuth;
+  window.handleGoogleSignIn = handleGoogleSignIn;
+  window.resetAuthModal = resetAuthModal;
+  window.hideAuthModal = hideAuthModal;
+  window.showAuthModal = showAuthModal;
+  window.signOut = async function() {
+    if (window.supabase) {
+      await window.supabase.auth.signOut();
+    }
+    handleSignOut();
+  };
+
   window.showCabinet = showDashboard; // Alias for My Trips button
   window.showMyPlans = showMyPlans;
   window.showReferrals = showReferrals;
@@ -1681,22 +1893,107 @@
   
   console.log('🔍 User initialization:', { isAuthenticated, currentUser });
 
+  // ==== Magic Link Authentication Functions ====
   function showAuthModal() {
     $('#authModal').classList.remove('hidden');
+    resetAuthModal();
   }
 
   function hideAuthModal() {
     $('#authModal').classList.add('hidden');
   }
 
+  function resetAuthModal() {
+    // Show main state, hide success state
+    $('#authMainState').classList.remove('hidden');
+    $('#authSuccessState').classList.add('hidden');
+
+    // Reset form
+    const form = $('#magicLinkForm');
+    if (form) form.reset();
+  }
+
+  async function handleMagicLinkAuth(event) {
+    event.preventDefault();
+
+    const email = $('#authEmail').value.trim();
+    if (!email) return;
+
+    const btn = $('#magicLinkBtn');
+    const btnText = btn.querySelector('.btn-text');
+    const btnLoading = btn.querySelector('.btn-loading');
+
+    // Show loading state
+    btnText.classList.add('hidden');
+    btnLoading.classList.remove('hidden');
+    btn.disabled = true;
+
+    try {
+      // Initialize Supabase if not already done
+      if (!window.supabase) {
+        const { createClient } = window.supabase;
+        window.supabase = createClient(
+          window.SUPABASE_URL || 'https://gohfflxuadcfkfqgqtwa.supabase.co',
+          window.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvaGZmbHh1YWRjZmtmcWdxdHdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjc5MDAxNTcsImV4cCI6MjA0MzQ3NjE1N30.tXOFTm1H5RKJcwHl--b_Kf-m_C9nrjZ2Vdyq-rEwlsk'
+        );
+      }
+
+      // Send magic link using Supabase
+      const { data, error } = await window.supabase.auth.signInWithOtp({
+        email: email,
+        options: {
+          emailRedirectTo: window.location.origin + window.location.pathname
+        }
+      });
+
+      if (error) throw error;
+
+      console.log('✅ Magic link sent successfully');
+
+      // Show success state
+      $('#authMainState').classList.add('hidden');
+      $('#authSuccessState').classList.remove('hidden');
+      $('#sentToEmail').textContent = email;
+
+    } catch (error) {
+      console.error('❌ Magic link error:', error);
+      showNotification('Failed to send magic link. Please try again.', 'error');
+    } finally {
+      // Reset button state
+      btnText.classList.remove('hidden');
+      btnLoading.classList.add('hidden');
+      btn.disabled = false;
+    }
+  }
+
+  // Handle Google Sign-In
+  async function handleGoogleSignIn() {
+    try {
+      if (!window.supabase) {
+        const { createClient } = window.supabase;
+        window.supabase = createClient(
+          window.SUPABASE_URL || 'https://gohfflxuadcfkfqgqtwa.supabase.co',
+          window.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvaGZmbHh1YWRjZmtmcWdxdHdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjc5MDAxNTcsImV4cCI6MjA0MzQ3NjE1N30.tXOFTm1H5RKJcwHl--b_Kf-m_C9nrjZ2Vdyq-rEwlsk'
+        );
+      }
+
+      const { data, error } = await window.supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + window.location.pathname
+        }
+      });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('❌ Google sign-in error:', error);
+      showNotification('Failed to sign in with Google. Please try again.', 'error');
+    }
+  }
+
   function switchAuthTab(tab) {
-    // Hide all tabs
-    $$('.auth-tab-content').forEach(content => content.classList.remove('active'));
-    $$('.auth-tab').forEach(tabBtn => tabBtn.classList.remove('active'));
-    
-    // Show selected tab
-    $(`#${tab}Tab`).classList.add('active');
-    event.target.classList.add('active');
+    // Keep for compatibility
+    console.log('Auth tab switch:', tab);
   }
 
   function handleManualSignIn(event) {

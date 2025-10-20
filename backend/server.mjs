@@ -1893,6 +1893,51 @@ app.post('/api/track', (req, res) => {
     res.status(500).json({ error: 'Failed to track event' });
   }
 });
+
+// Get user's plans - requires authentication
+app.get('/api/user/plans', requireUser, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    console.log('📋 Fetching plans for user:', userId);
+
+    // Fetch plans from Supabase
+    const { data: plans, error } = await supabaseAdmin
+      .from('plans')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('❌ Supabase error fetching plans:', error);
+      throw error;
+    }
+
+    // Transform plans for frontend
+    const transformedPlans = (plans || []).map(plan => {
+      const payload = typeof plan.payload === 'string' ? JSON.parse(plan.payload) : plan.payload;
+      const data = payload?.data || {};
+
+      return {
+        id: plan.id,
+        destination: data.destination || 'Unknown Destination',
+        days: data.days || daysBetween(data.start, data.end) || null,
+        budget: data.budget || null,
+        currency: data.currency || 'USD',
+        status: plan.status || 'pending',
+        created_at: plan.created_at,
+        start_date: data.start,
+        end_date: data.end
+      };
+    });
+
+    console.log(`✅ Found ${transformedPlans.length} plans for user ${userId}`);
+    res.json(transformedPlans);
+  } catch (error) {
+    console.error('❌ Error fetching user plans:', error);
+    res.status(500).json({ error: 'Failed to fetch plans' });
+  }
+});
+
 app.get('/api/plan/:id/pdf', (req, res) => {
   const { id } = req.params;
 
