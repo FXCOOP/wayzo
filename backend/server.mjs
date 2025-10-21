@@ -1997,9 +1997,6 @@ app.get('/api/plan/:id', requireUser, async (req, res) => {
     // Convert markdown to HTML
     const htmlBody = marked.parse(markdown);
 
-    // Read frontend CSS for consistent styling
-    const frontendCSS = fs.readFileSync(path.join(FRONTEND, 'style.css'), 'utf-8');
-
     // Prepare plan metadata
     const destination = plan.destination || data.destination || 'Your Trip';
     const style = data.level === "luxury" ? "Luxury" : data.level === "budget" ? "Budget" : "Mid-range";
