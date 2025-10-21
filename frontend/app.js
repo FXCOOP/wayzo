@@ -1884,21 +1884,9 @@
       // Show the plan in the preview area
       const previewEl = $('#preview');
       if (previewEl) {
-        previewEl.innerHTML = `
-          <div class="plan-view-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-            <button onclick="showPersonalCabinet()" style="display: flex; align-items: center; gap: 8px; padding: 12px 20px; background: #f3f4f6; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; color: #374151; transition: all 0.2s;" onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">
-              <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"/></svg>
-              Back to My Plans
-            </button>
-            <button onclick="window.open('/api/plan/${planId}/pdf', '_blank')" style="display: flex; align-items: center; gap: 8px; padding: 12px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 8px; cursor: pointer; font-weight: 600; color: white; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-              <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z"/></svg>
-              Download PDF
-            </button>
-          </div>
-          <main class="content trip-report">
-            ${planData.html || planData.markdown || '<p>Plan not available</p>'}
-          </main>
-        `;
+        // Backend already provides complete HTML with header and trip-report
+        // Just use it directly to avoid duplication
+        previewEl.innerHTML = planData.html || planData.markdown || '<p>Plan not available</p>';
 
         // Initialize features
         initializeImageHandling();

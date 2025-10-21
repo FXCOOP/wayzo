@@ -2009,129 +2009,33 @@ app.get('/api/plan/:id', requireUser, async (req, res) => {
     const pdfUrl = `${base}/api/plan/${id}/pdf`;
     const icsUrl = `${base}/api/plan/${id}/ics`;
 
-    // Generate full HTML with frontend styling
-    const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wayzo Trip Plan - ${escapeHtml(destination)}</title>
-    <style>
-        /* Frontend styles for consistent look */
-        ${frontendCSS}
-    </style>
-    <style>
-        /* Print-specific overrides */
-        @media print {
-            .print-actions {
-                display: none !important;
-            }
-        }
-
-        /* Plan view header */
-        .plan-view-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 12px;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        .plan-view-header h1 {
-            margin: 0;
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: white;
-            -webkit-text-fill-color: white;
-            background: none;
-            border: none;
-            padding: 0;
-        }
-
-        .plan-view-actions {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .plan-view-actions button {
-            padding: 8px 16px;
-            border: 1px solid rgba(255,255,255,0.3);
-            background: rgba(255,255,255,0.15);
-            color: white;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .plan-view-actions button:hover {
-            background: rgba(255,255,255,0.25);
-        }
-
-        /* Trip report styling */
-        .trip-report {
-            background: white;
-            border-radius: 12px;
-            padding: 32px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        @media (max-width: 768px) {
-            .plan-view-header {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .plan-view-actions {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .plan-view-actions button {
-                flex: 1;
-                min-width: 120px;
-            }
-
-            .trip-report {
-                padding: 20px 16px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="plan-view-header print-actions">
+    // Generate HTML body for embedding in the app
+    const htmlContent = `
+      <div class="plan-view-header">
         <h1>${escapeHtml(destination)}</h1>
         <div class="plan-view-actions">
-            <button onclick="window.print()">🖨️ Print</button>
-            <button onclick="window.location.href='${pdfUrl}'">📥 Download PDF</button>
-            <button onclick="window.location.href='${icsUrl}'">📅 Add to Calendar</button>
-            <button onclick="window.history.back()">🔙 Back</button>
+          <button onclick="window.print()">🖨️ Print</button>
+          <button onclick="window.location.href='${pdfUrl}'">📥 Download PDF</button>
+          <button onclick="window.location.href='${icsUrl}'">📅 Add to Calendar</button>
+          <button onclick="showPersonalCabinet()">🔙 Back to Cabinet</button>
         </div>
-    </div>
-
-    <div class="trip-report">
+      </div>
+      <div class="trip-report">
         ${htmlBody}
-    </div>
+      </div>
+    `;
 
-    <script>
-        // Handle print button
-        function printPlan() {
-            window.print();
-        }
-    </script>
-</body>
-</html>`;
-
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.send(html);
+    // Return JSON response for the frontend
+    res.json({
+      id: plan.id,
+      destination: destination,
+      html: htmlContent,
+      markdown: markdown,
+      style: style,
+      traveler: traveler,
+      currency: currency,
+      data: data
+    });
 
   } catch (error) {
     console.error('❌ Error fetching plan:', error);
