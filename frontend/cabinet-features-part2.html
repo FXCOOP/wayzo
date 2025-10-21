@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wayzo Personal Cabinet - Advanced Features Part 2</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 16px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 32px;
+            padding: 24px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 12px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        .category-section {
+            margin-bottom: 40px;
+        }
+
+        .category-title {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            padding-left: 12px;
+            border-left: 4px solid rgba(255,255,255,0.5);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .features-grid {
+                grid-template-columns: 1fr !important;
+                gap: 16px !important;
+            }
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .feature-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .feature-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1a202c;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .status-coming-soon {
+            background: #fed7d7;
+            color: #c53030;
+        }
+
+        .status-beta {
+            background: #feebc8;
+            color: #c05621;
+        }
+
+        .status-premium {
+            background: #faf089;
+            color: #744210;
+        }
+
+        .feature-description {
+            color: #4a5568;
+            line-height: 1.6;
+            margin-bottom: 16px;
+            font-size: 0.95rem;
+        }
+
+        .feature-highlights {
+            margin: 16px 0;
+        }
+
+        .feature-highlights h4 {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .highlights-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .highlights-list li {
+            padding: 6px 0 6px 24px;
+            position: relative;
+            color: #2d3748;
+            font-size: 0.9rem;
+        }
+
+        .highlights-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #48bb78;
+            font-weight: bold;
+        }
+
+        .feature-value {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 12px 0;
+            border-left: 3px solid #667eea;
+        }
+
+        .feature-value h4 {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        .feature-value p {
+            font-size: 0.85rem;
+            color: #4a5568;
+            line-height: 1.5;
+        }
+
+        .feature-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #f7fafc;
+        }
+
+        .revenue-tag {
+            display: inline-block;
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .example-box {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 12px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #2d3748;
+            overflow-x: auto;
+        }
+
+        .priority-high {
+            border-left: 4px solid #f56565;
+        }
+
+        .priority-medium {
+            border-left: 4px solid #ed8936;
+        }
+
+        .priority-low {
+            border-left: 4px solid #48bb78;
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.5rem !important;
+            }
+
+            .header p {
+                font-size: 0.95rem !important;
+            }
+
+            .feature-card {
+                padding: 20px !important;
+            }
+
+            .feature-icon {
+                font-size: 2.5rem !important;
+            }
+
+            .feature-title {
+                font-size: 1.1rem !important;
+            }
+
+            .btn {
+                min-width: 100% !important;
+            }
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            padding: 32px 16px;
+            margin-top: 40px;
+        }
+
+        .footer-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .footer-btn {
+            background: white;
+            color: #667eea;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s;
+            display: inline-block;
+        }
+
+        .footer-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Personal Cabinet - Advanced Features</h1>
+            <p>Part 2: Financial Integration, Safety, Health, Content & Analytics</p>
+        </div>
+
+        <!-- Financial & Booking Management -->
+        <div class="category-section">
+            <h2 class="category-title">💰 Financial & Booking Management</h2>
+
+            <div class="features-grid">
+                <!-- Payment & Booking Integration Hub -->
+                <div class="feature-card priority-high">
+                    <span class="feature-icon">💳</span>
+                    <div class="feature-header">
+                        <h3 class="feature-title">Payment & Booking Hub</h3>
+                        <span class="status-badge status-coming-soon">Coming Soon</span>
+                    </div>
+                    <p class="feature-description">
+                        Centralized booking system that compares prices across platforms and books everything with price drop alerts and flexible date optimization.
+                    </p>
+
+                    <div class="feature-highlights">
+                        <h4>Key Features</h4>
+                        <ul class="highlights-list">
+                            <li>Price comparison across Booking.com, Expedia, Hotels.com, Agoda</li>
+                            <li>Price drop alerts after booking (auto-rebook suggestions)</li>
+                            <li>Flexible dates optimizer ("Save €130 by shifting 1 day")</li>
+                            <li>Bundle savings (flight + hotel packages)</li>
+                            <li>Payment options: installments, pay later, multi-currency</li>
+                            <li>Price freeze ($10 to lock price for 48h)</li>
+                        </ul>
+                    </div>
+
+                    <div class="example-box">
+Hotel in Berlin, Oct 23-30:
+- Booking.com: €650
+- Hotels.com: €645 ✅ BEST
+- Expedia: €680
+
+💡 Save €55 by booking on Hotels.com
+📅 Shift to Oct 22-29 → Save €130!
+                    </div>
+
+                    <div class="feature-value">
+                        <h4>Revenue Model</h4>
+                        <p>Affiliate commission: 5-15% per booking | Price monitoring: $5/month premium | Insurance upsell: 10% commission</p>
+                    </div>
+
+                    <span class="revenue-tag">💰 High Revenue Potential</span>
+
+                    <div class="feature-actions">
+                        <button class="btn btn-primary">See Demo</button>
+                        <button class="btn btn-secondary">Technical Specs</button>
+                    </div>
+                </div>
+
+                <!-- Loyalty Program Aggregator -->
+                <div class="feature-card priority-medium">
+                    <span class="feature-icon">🎁</span>
+                    <div class="feature-header">
+                        <h3 class="feature-title">Loyalty Program Aggregator</h3>
+                        <span class="status-badge status-beta">Beta</span>
+                    </div>
+                    <p class="feature-description">
+                        Track and optimize ALL your travel points/miles across airlines, hotels, credit cards, and rental cars with smart redemption suggestions.
+                    </p>
+
+                    <div class="feature-highlights">
+                        <h4>Connected Accounts</h4>
+                        <ul class="highlights-list">
+                            <li>Airlines: United, Delta, Lufthansa MileagePlus</li>
+                            <li>Hotels: Marriott Bonvoy, Hilton Honors, IHG Rewards</li>
+                            <li>Credit Cards: Chase UR, Amex MR, Capital One</li>
+                            <li>Car Rentals: Hertz, Enterprise, Avis</li>
+                            <li>Others: Airbnb Superguest, Uber rewards</li>
+                        </ul>
+                    </div>
+
+                    <div class="example-box">
+YOUR TRAVEL POINTS:
+
+United MileagePlus: 45,000 miles
+Marriott Bonvoy: 120,000 points
+Chase UR: 85,000 points
+Total Value: ~$2,150
+
+💡 Transfer 60k Chase → United
+   for first-class upgrade
+   Worth: $1,200 (2x value!)
+                    </div>
+
+                    <div class="feature-highlights">
+                        <h4>Smart Features</h4>
+                        <ul class="highlights-list">
+                            <li>Best redemption calculator (maximize point value)</li>
+                            <li>Expiry tracking with 90/30/7 day alerts</li>
+                            <li>Status tracking ("2 flights to United Silver")</li>
+                            <li>Points transfer optimizer (find best rates)</li>
+                            <li>Earning opportunities per booking</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-value">
+                        <h4>Why It's Valuable</h4>
+                        <p>Most travelers waste 30-40% of their points value. This solves the complex problem of optimizing across multiple programs.</p>
+                    </div>
+
+                    <span class="revenue-tag">💎 Premium Feature $10/mo</span>
+
+                    <div class="feature-actions">
+                        <button class="btn btn-primary">Connect Accounts</button>
+                        <button class="btn btn-secondary">Learn More</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Safety & Emergency -->
+        <div class="category-section">
+            <h2 class="category-title">🚨 Safety & Emergency</h2>
+
+            <div class="features-grid">
+                <!-- Emergency SOS & Safety Hub -->
+                <div class="feature-card priority-high">
+                    <span class="feature-icon">🚨</span>
+                    <div class="feature-header">
+                        <h3 class="feature-title">Emergency SOS & Safety Hub</h3>
+                        <span class="status-badge status-premium">Premium</span>
+                    </div>
+                    <p class="feature-description">
+                        Comprehensive emergency assistance with one-tap SOS, auto-generated emergency contacts, live location sharing, and safety alerts.
+                    </p>
+
+                    <div class="example-box">
+📍 BERLIN, GERMANY
+
+🚓 Police: 110
+🚑 Ambulance: 112
+🔥 Fire: 112
+🏛️ US Embassy: +49 30 8305-0
+
+🏥 Nearest Hospital: Charité (2.3 km)
+💊 24h Pharmacy: Europa-Apotheke (800m)
+                    </div>
+
+                    <div class="feature-highlights">
+                        <h4>Emergency Features</h4>
+                        <ul class="highlights-list">
+                            <li>One-tap SOS button (sends location + calls local emergency)</li>
+                            <li>Live location sharing with family/friends</li>
+                            <li>Auto-alert if no check-in for 24h</li>
+                            <li>Safety alerts (crime, weather, political unrest)</li>
+                            <li>Emergency info card (allergies, medications, insurance)</li>
+                            <li>Lost/stolen management (passport, cards, phone)</li>
+                            <li>Legal help (lawyer contacts, embassy protocol)</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-value">
+                        <h4>Peace of Mind</h4>
+                        <p>Perfect for families, solo travelers, and concerned parents. Legal liability protection and differentiation from competitors.</p>
+                    </div>
+
+                    <div class="feature-actions">
+                        <button class="btn btn-primary">Set Up SOS</button>
+                        <button class="btn btn-secondary">Test Safety Check</button>
+                    </div>
+                </div>
+
+                <!-- Health & Medical Assistant -->
+                <div class="feature-card priority-medium">
+                    <span class="feature-icon">🏥</span>
+                    <div class="feature-header">
+                        <h3 class="feature-title">Health & Medical Assistant</h3>
+                        <span class="status-badge status-coming-soon">Coming Soon</span>
+                    </div>
+                    <p class="feature-description">
+                        Complete health tracking and medical assistance abroad with pre-trip health checks, medication reminders, and AI symptom checker.
+                    </p>
+
+                    <div class="feature-highlights">
+                        <h4>Health Features</h4>
+                        <ul class="highlights-list">
+                            <li>Pre-trip health requirements (vaccinations, COVID rules)</li>
+                            <li>Medication tracker with dosage reminders</li>
+                            <li>Nearest medical facilities (English-speaking doctors)</li>
+                            <li>AI symptom checker with urgency assessment</li>
+                            <li>Medical phrases in local language</li>
+                            <li>Insurance helper (claims filing assistance)</li>
+                            <li>Telemedicine integration (speak to doctor remotely)</li>
+                        </ul>
+                    </div>
+
+                    <div class="example-box">
+BERLIN HEALTH REQUIREMENTS:
+
+✅ No vaccinations required
+✅ EU health insurance accepted
+⚠️  Consider: Travel medical insurance
+
+PHARMACY NOTES:
+- Most meds available OTC
+- Closed Sundays (plan ahead)
+- Bring Rx for controlled substances
+                    </div>
+
+                    <div class="feature-value">
+                        <h4>Reduces Travel Anxiety</h4>
+                        <p>Health concerns are a top travel worry. Partner with insurance companies and telemedicine providers for premium upsell opportunities.</p>
+                    </div>
+
+                    <span class="revenue-tag">🤝 Partnership Revenue</span>
+
+                    <div class="feature-actions">
+                        <button class="btn btn-primary">Health Profile</button>
+                        <button class="btn btn-secondary">Find Doctors</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content & Memories -->
+        <div class="category-section">
+            <h2 class="category-title">📸 Content & Memories</h2>
+
+            <div class="features-grid">
+                <!-- AI-Powered Trip Journal -->
+                <div class="feature-card priority-high">
+                    <span class="feature-icon">📝</span>
+                    <div class="feature-header">
+                        <h3 class="feature-title">AI-Powered Trip Journal</h3>
+                        <span class="status-badge status-beta">Beta</span>
+                    </div>
+                    <p class="feature-description">
+                        Automatically creates beautiful trip memories with AI-generated daily summaries, photo organization, and end-of-trip memory books.
+                    </p>
+
+                    <div class="example-box">
+DAY 3 - OCTOBER 25, 2025
+📍 Berlin, Germany
+
+TODAY'S HIGHLIGHTS:
+✓ Brandenburg Gate (10:30 AM)
+✓ Museum Island (2 PM - 5 PM)
+✓ Dinner at Zur letzten Instanz (€68)
+
+📸 12 photos | ⭐ 4 places rated
+💰 €165 spent | 👟 18,547 steps
+
+AI SUMMARY:
+"Culture-filled day exploring
+historic sites. You loved the
+DDR Museum based on time spent."
+                    </div>
+
+                    <div class="feature-highlights">
+                        <h4>Journal Features</h4>
+                        <ul class="highlights-list">
+                            <li>Auto-generated daily summaries with activities</li>
+                            <li>Photo organization (auto-tagged by location)</li>
+                            <li>Voice notes (auto-transcribed and searchable)</li>
+                            <li>Receipt scanning (auto-added to budget)</li>
+                            <li>Social post generator (captions + hashtags)</li>
+                            <li>End-of-trip summary with stats and highlights</li>
+                            <li>Memory book export (beautiful PDF, printable)</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-value">
+                        <h4>Emotional Connection</h4>
+                        <p>Creates lasting memories and shareable content. Premium upsell for photo books ($25) and keeps users engaged post-trip.</p>
+                    </div>
+
+                    <span class="revenue-tag">📚 Photo Book Revenue</span>
+
+                    <div class="feature-actions">
+                        <button class="btn btn-primary">Start Journal</button>
+                        <button class="btn btn-secondary">View Sample</button>
+                    </div>
+                </div>
+
+                <!-- Destination Experience Enhancer -->
+                <div class="feature-card priority-low">
+                    <span class="feature-icon">🎵</span>
+                    <div class="feature-header">
+                        <h3 class="feature-title">Destination Experience Enhancer</h3>
+                        <span class="status-badge status-coming-soon">Coming Soon</span>
+                    </div>
+                    <p class="feature-description">
+                        Immerse yourself in destination culture with curated playlists, language learning, food guides, and cultural insights.
+                    </p>
+
+                    <div class="feature-highlights">
+                        <h4>Cultural Features</h4>
+                        <ul class="highlights-list">
+                            <li>Destination playlists (local artists, classical, ambient)</li>
+                            <li>Language learning (essential phrases + pronunciation)</li>
+                            <li>Cultural insights (etiquette, tipping, customs)</li>
+                            <li>Food guide (must-try foods + recommended spots)</li>
+                            <li>History lessons with audio guides</li>
+                            <li>Local slang and conversation starters</li>
+                        </ul>
+                    </div>
+
+                    <div class="example-box">
+🎵 BERLIN SOUNDSCAPE
+
+LOCAL ARTISTS:
+- Rammstein - Du Hast
+- Paul Kalkbrenner - Sky and Sand
+- Seeed - Dickes B
+
+MUST-TRY FOODS:
+🥨 Currywurst - #1 street food
+🍺 Berliner Weisse - Local beer
+🥐 Berliner Pfannkuchen
+                    </div>
+
+                    <div class="feature-value">
+                        <h4>Pre-Trip Engagement</h4>
+                        <p>Builds excitement before the trip. Partnership opportunities with Spotify, Duolingo. Premium content for deep cultural dives.</p>
+                    </div>
+
+                    <span class="revenue-tag">🤝 Partnership Opportunities</span>
+
+                    <div class="feature-actions">
+                        <button class="btn btn-primary">Explore Culture</button>
+                        <button class="btn btn-secondary">Start Learning</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Analytics -->
+        <div class="category-section">
+            <h2 class="category-title">📊 Advanced Analytics & Insights</h2>
+
+            <div class="features-grid">
+                <!-- Travel Analytics Dashboard -->
+                <div class="feature-card priority-medium">
+                    <span class="feature-icon">📊</span>
+                    <div class="feature-header">
+                        <h3 class="feature-title">Travel Analytics Dashboard</h3>
+                        <span class="status-badge status-beta">Beta</span>
+                    </div>
+                    <p class="feature-description">
+                        Comprehensive travel analytics with lifetime stats, year-in-review, spending breakdowns, carbon footprint, and gamified achievements.
+                    </p>
+
+                    <div class="example-box">
+YOUR TRAVEL PROFILE
+
+🌍 Countries: 18 | 🏙️ Cities: 47
+✈️ Miles Flown: 142,350
+💰 Total Spent: $24,680
+
+FAVORITE TYPE: Culture & History
+TRAVEL STYLE: Mid-range ($158/day)
+
+2025 YEAR IN REVIEW:
+🎯 6 trips (↑50% vs 2024)
+📍 3 new countries
+⭐ Top rated: Berlin (4.9/5)
+                    </div>
+
+                    <div class="feature-highlights">
+                        <h4>Analytics Features</h4>
+                        <ul class="highlights-list">
+                            <li>Lifetime travel stats (countries, cities, miles, spending)</li>
+                            <li>Year in review with comparisons vs previous years</li>
+                            <li>Interactive world map of places visited</li>
+                            <li>Spending breakdown by category with insights</li>
+                            <li>Carbon footprint calculator with offset suggestions</li>
+                            <li>Achievements & badges (gamification)</li>
+                            <li>Comparison vs average Wayzo user</li>
+                            <li>Personalized recommendations based on patterns</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-value">
+                        <h4>Gamification & Retention</h4>
+                        <p>Users love stats and achievements. Highly shareable on social media for marketing. Data-driven insights improve future trips.</p>
+                    </div>
+
+                    <span class="revenue-tag">🎮 High Engagement</span>
+
+                    <div class="feature-actions">
+                        <button class="btn btn-primary">View Dashboard</button>
+                        <button class="btn btn-secondary">Share Stats</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <h2 style="margin-bottom: 16px;">Ready to Build These Features?</h2>
+            <p style="max-width: 600px; margin: 0 auto 24px;">
+                These 6 advanced features will transform Wayzo from a trip planner into a complete travel companion.
+                Pick your favorites and let's start implementing!
+            </p>
+
+            <div class="footer-actions">
+                <a href="cabinet-features.html" class="footer-btn">← Part 1 Features</a>
+                <a href="#" class="footer-btn" onclick="alert('Select features you want to implement and we\'ll create a development roadmap!'); return false;">📋 Create Roadmap</a>
+                <a href="#" class="footer-btn" onclick="alert('Coming soon: Integration strategies, monetization guide, and technical implementation details!'); return false;">Part 3 Coming Soon →</a>
+            </div>
+
+            <div style="margin-top: 32px; opacity: 0.9;">
+                <p><strong>Implementation Priority Recommendations:</strong></p>
+                <p style="margin-top: 12px;">
+                    🔴 High: Payment Hub, Emergency SOS, Trip Journal<br>
+                    🟠 Medium: Loyalty Aggregator, Health Assistant, Analytics<br>
+                    🟢 Low: Destination Enhancer
+                </p>
+            </div>
+
+            <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.3);">
+                <p style="font-size: 0.9rem; opacity: 0.8;">
+                    💡 <strong>Revenue Potential:</strong> $5-15K/month from affiliate commissions + $10-50/month premium subscriptions
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add smooth scroll and interactivity
+        document.querySelectorAll('.feature-card').forEach(card => {
+            card.addEventListener('click', function(e) {
+                if (!e.target.classList.contains('btn')) {
+                    this.style.transform = 'scale(0.98)';
+                    setTimeout(() => {
+                        this.style.transform = '';
+                    }, 100);
+                }
+            });
+        });
+
+        // Button interactions
+        document.querySelectorAll('.btn-primary').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const featureTitle = this.closest('.feature-card').querySelector('.feature-title').textContent;
+                alert(`🚀 "${featureTitle}" demo coming soon!\n\nThis feature is in our development roadmap. Would you like to see the technical implementation details?`);
+            });
+        });
+
+        document.querySelectorAll('.btn-secondary').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const featureTitle = this.closest('.feature-card').querySelector('.feature-title').textContent;
+                alert(`📋 Technical specs for "${featureTitle}":\n\n✓ API endpoints documented\n✓ Database schemas ready\n✓ Integration guides available\n✓ Revenue models defined\n\nReady to start implementation?`);
+            });
+        });
+
+        // Mobile-friendly viewport adjustments
+        function adjustForMobile() {
+            if (window.innerWidth <= 768) {
+                document.querySelectorAll('.feature-card').forEach(card => {
+                    card.style.transition = 'all 0.2s ease';
+                });
+            }
+        }
+
+        window.addEventListener('resize', adjustForMobile);
+        adjustForMobile();
+    </script>
+</body>
+</html>

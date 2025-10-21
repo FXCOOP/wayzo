@@ -1962,8 +1962,185 @@ app.get('/api/user/plans', requireUser, async (req, res) => {
   }
 });
 
+// Get a specific plan HTML (authenticated)
+app.get('/api/plan/:id', requireUser, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    console.log(`📋 Fetching plan ${id} for user ${userId}`);
+
+    if (!supabaseAdmin) {
+      return res.status(503).json({ error: 'Supabase admin not configured' });
+    }
+
+    // Fetch the plan from Supabase
+    const { data: plan, error } = await supabaseAdmin
+      .from('plans')
+      .select('*')
+      .eq('id', id)
+      .eq('user_id', userId)
+      .single();
+
+    if (error || !plan) {
+      console.log(`❌ Plan not found: ${id}`);
+      return res.status(404).json({ error: 'Plan not found' });
+    }
+
+    console.log(`✅ Found plan: ${plan.id} - ${plan.destination || 'Unknown'}`);
+
+    // Parse the plan payload
+    const payload = typeof plan.payload === 'string' ? JSON.parse(plan.payload) : plan.payload;
+    const data = payload?.data || {};
+    const markdown = payload?.markdown || '';
+
+    // Convert markdown to HTML
+    const htmlBody = marked.parse(markdown);
+
+    // Read frontend CSS for consistent styling
+    const frontendCSS = fs.readFileSync(path.join(FRONTEND, 'style.css'), 'utf-8');
+
+    // Prepare plan metadata
+    const destination = plan.destination || data.destination || 'Your Trip';
+    const style = data.level === "luxury" ? "Luxury" : data.level === "budget" ? "Budget" : "Mid-range";
+    const traveler = travelerLabel(data.adults || 0, data.children || 0);
+    const currency = data.currency || 'USD';
+    const base = `${req.protocol}://${req.get('host')}`;
+    const pdfUrl = `${base}/api/plan/${id}/pdf`;
+    const icsUrl = `${base}/api/plan/${id}/ics`;
+
+    // Generate full HTML with frontend styling
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wayzo Trip Plan - ${escapeHtml(destination)}</title>
+    <style>
+        /* Frontend styles for consistent look */
+        ${frontendCSS}
+    </style>
+    <style>
+        /* Print-specific overrides */
+        @media print {
+            .print-actions {
+                display: none !important;
+            }
+        }
+
+        /* Plan view header */
+        .plan-view-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .plan-view-header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            -webkit-text-fill-color: white;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+
+        .plan-view-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .plan-view-actions button {
+            padding: 8px 16px;
+            border: 1px solid rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .plan-view-actions button:hover {
+            background: rgba(255,255,255,0.25);
+        }
+
+        /* Trip report styling */
+        .trip-report {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 768px) {
+            .plan-view-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .plan-view-actions {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .plan-view-actions button {
+                flex: 1;
+                min-width: 120px;
+            }
+
+            .trip-report {
+                padding: 20px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="plan-view-header print-actions">
+        <h1>${escapeHtml(destination)}</h1>
+        <div class="plan-view-actions">
+            <button onclick="window.print()">🖨️ Print</button>
+            <button onclick="window.location.href='${pdfUrl}'">📥 Download PDF</button>
+            <button onclick="window.location.href='${icsUrl}'">📅 Add to Calendar</button>
+            <button onclick="window.history.back()">🔙 Back</button>
+        </div>
+    </div>
+
+    <div class="trip-report">
+        ${htmlBody}
+    </div>
+
+    <script>
+        // Handle print button
+        function printPlan() {
+            window.print();
+        }
+    </script>
+</body>
+</html>`;
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+
+  } catch (error) {
+    console.error('❌ Error fetching plan:', error);
+    res.status(500).json({ error: 'Failed to fetch plan' });
+  }
+});
+
 app.get('/api/plan/:id/pdf', (req, res) => {
-  const { id } = req.params;
+  const { id} = req.params;
 
   if (!getPlan) {
     return res.status(503).json({ error: 'SQLite not available - use Supabase API endpoint instead' });
@@ -1989,50 +2166,144 @@ app.get('/api/plan/:id/pdf', (req, res) => {
   const pdfUrl = `${base}/api/plan/${id}/pdf`;
   const icsUrl = `${base}/api/plan/${id}/ics`;
   const shareX = `https://twitter.com/intent/tweet?text=${encodeURIComponent(`My ${d.destination} plan by Wayzo`)}&url=${encodeURIComponent(pdfUrl)}`;
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Wayzo Trip Report</title>
-<style>
-  :root{--ink:#0f172a; --muted:#475569; --brand:#6366f1; --bg:#ffffff; --accent:#eef2ff; --border:#e2e8f0;}
-  body{font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--ink);margin:24px;background:var(--bg)}
-  header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid var(--border);flex-wrap:wrap}
-  .logo{display:flex;gap:10px;align-items:center}
-  .badge{width:28px;height:28px;border-radius:8px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:700}
-  .pill{border:1px solid var(--border);background:var(--accent);padding:.25rem .6rem;border-radius:999px;font-size:12px}
-  .summary{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 10px 0}
-  .summary .chip{border:1px solid var(--border);background:#fff;border-radius:999px;padding:.25rem .6rem;font-size:12px}
-  .actions{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 14px}
-  .actions a{color:#0f172a;text-decoration:none;border-bottom:1px dotted rgba(2,6,23,.25)}
-  .facts{background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px;margin:8px 0}
-  img{max-width:100%;height:auto;border-radius:10px}
-  table{border-collapse:collapse;width:100%}
-  th,td{border:1px solid var(--border);padding:.45rem .55rem;text-align:left}
-  thead th{background:var(--accent)}
-  footer{margin-top:24px;color:var(--muted);font-size:12px}
-  article{margin-top:16px}
-</style>
-</head><body>
-<header>
-  <div class="logo"><div class="badge">WZ</div><strong>Wayzo Trip Report</strong></div>
-  <div class="summary">
-    <span class="chip"><b>Destination:</b> ${escapeHtml(d.destination || 'Trip')}</span>
-    <span class="chip"><b>Travelers:</b> ${traveler}</span>
-    <span class="chip"><b>Style:</b> ${style}${d.prefs ? ` · ${escapeHtml(d.prefs)}` : ""}</span>
-    <span class="chip"><b>Budget:</b> ${normalizeBudget(d.budget, cur)} ${cur} (${pppd}/day/person)</span>
-    <span class="chip"><b>Season:</b> ${season}</span>
-  </div>
-</header>
-<div class="actions">
-  <a href="${icsUrl}">Add to Calendar (ICS)</a>
-  <a href="${shareX}" target="_blank" rel="noopener">Share</a>
-</div>
-<article>
-  ${htmlBody || '<p class="muted">No content.</p>'}
-</article>
-<footer>
-  <p>Generated by Wayzo — ${new Date().toLocaleString()}</p>
-</footer>
-</body></html>`;
+  const destination = d.destination || 'Trip';
+
+  // Read frontend CSS for consistent styling
+  const frontendCSS = fs.readFileSync(path.join(FRONTEND, 'style.css'), 'utf-8');
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wayzo Trip Plan - ${escapeHtml(destination)}</title>
+    <style>
+        /* Frontend styles for consistent look */
+        ${frontendCSS}
+    </style>
+    <style>
+        /* Print-specific styles */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background: white !important;
+            }
+            .trip-report {
+                box-shadow: none !important;
+                border: none !important;
+            }
+        }
+
+        /* Plan header styling */
+        .plan-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+
+        .plan-header h1 {
+            margin: 0 0 12px 0;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: white;
+            -webkit-text-fill-color: white;
+            background: none;
+            border: none;
+        }
+
+        .plan-summary {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        .plan-chip {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            color: white;
+        }
+
+        .plan-actions {
+            display: flex;
+            gap: 12px;
+            margin: 16px 0;
+            flex-wrap: wrap;
+        }
+
+        .plan-actions a {
+            color: #667eea;
+            text-decoration: none;
+            padding: 8px 16px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .plan-actions a:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        /* Trip report styling */
+        .trip-report {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 768px) {
+            .plan-header {
+                padding: 16px;
+            }
+
+            .plan-header h1 {
+                font-size: 1.5rem;
+            }
+
+            .trip-report {
+                padding: 20px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="plan-header">
+        <h1>🚀 ${escapeHtml(destination)}</h1>
+        <div class="plan-summary">
+            <span class="plan-chip"><strong>Travelers:</strong> ${traveler}</span>
+            <span class="plan-chip"><strong>Style:</strong> ${style}${d.prefs ? ` · ${escapeHtml(d.prefs)}` : ""}</span>
+            <span class="plan-chip"><strong>Budget:</strong> ${normalizeBudget(d.budget, cur)} ${cur} (${pppd}/day/person)</span>
+            <span class="plan-chip"><strong>Season:</strong> ${season}</span>
+        </div>
+    </div>
+
+    <div class="plan-actions no-print">
+        <a href="${icsUrl}">📅 Add to Calendar</a>
+        <a href="${shareX}" target="_blank" rel="noopener">🔗 Share on X</a>
+        <a href="javascript:window.print()">🖨️ Print</a>
+        <a href="javascript:window.close()">✖️ Close</a>
+    </div>
+
+    <div class="trip-report">
+        ${htmlBody || '<p style="color: #64748b;">No content available.</p>'}
+    </div>
+
+    <footer style="text-align: center; color: #64748b; font-size: 0.85rem; margin-top: 32px;">
+        <p>Generated by Wayzo — ${new Date().toLocaleString()}</p>
+    </footer>
+</body>
+</html>`;
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(html);
 });

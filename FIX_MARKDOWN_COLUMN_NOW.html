@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix Missing Markdown Column - Step by Step</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .alert {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+
+        .alert h3 {
+            color: #856404;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .alert p {
+            color: #856404;
+            line-height: 1.6;
+        }
+
+        .step {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 25px;
+            border-left: 5px solid #667eea;
+            transition: all 0.3s ease;
+        }
+
+        .step:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .step-number {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-right: 15px;
+            box-shadow: 0 4px 10px rgba(102, 126, 234, 0.4);
+        }
+
+        .step h3 {
+            display: inline-block;
+            color: #2d3748;
+            font-size: 1.4em;
+            vertical-align: middle;
+            margin-bottom: 15px;
+        }
+
+        .step-content {
+            margin-top: 20px;
+            padding-left: 55px;
+        }
+
+        .step-content p {
+            line-height: 1.8;
+            color: #4a5568;
+            margin-bottom: 15px;
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 15px 0;
+            border: 1px solid #333;
+        }
+
+        .code-block code {
+            color: #4ec9b0;
+        }
+
+        .success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        .success h4 {
+            color: #155724;
+            margin-bottom: 10px;
+        }
+
+        .success p {
+            color: #155724;
+            line-height: 1.6;
+        }
+
+        .screenshot {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 2px dashed #6c757d;
+        }
+
+        .screenshot p {
+            color: #495057;
+            font-style: italic;
+        }
+
+        .checklist {
+            margin: 20px 0;
+            padding-left: 55px;
+        }
+
+        .checklist-item {
+            padding: 12px;
+            margin: 10px 0;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .checklist-item:hover {
+            border-color: #667eea;
+            transform: translateX(5px);
+        }
+
+        .checklist-item input[type="checkbox"] {
+            margin-right: 12px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .checklist-item label {
+            cursor: pointer;
+            font-size: 1.05em;
+            color: #2d3748;
+        }
+
+        .error-explanation {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        .error-explanation h4 {
+            color: #721c24;
+            margin-bottom: 10px;
+        }
+
+        .error-explanation code {
+            background: #fff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #e83e8c;
+            font-family: 'Courier New', monospace;
+        }
+
+        .footer {
+            background: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            color: #6c757d;
+            border-top: 3px solid #667eea;
+        }
+
+        a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Fix Missing Markdown Column</h1>
+            <p>Complete Guide to Resolve Database Schema Error</p>
+        </div>
+
+        <div class="content">
+            <div class="alert">
+                <h3>⚠️ Current Issue</h3>
+                <p><strong>Your authentication is working perfectly!</strong> However, plans can't be saved because the Supabase <code>plans</code> table is missing the <code>markdown</code> column.</p>
+                <p style="margin-top: 10px;"><strong>Error:</strong> "Could not find the 'markdown' column of 'plans' in the schema cache"</p>
+            </div>
+
+            <div class="error-explanation">
+                <h4>🐛 What's Happening:</h4>
+                <p>When you generate a plan, the backend tries to save this data:</p>
+                <div class="code-block">
+{
+  user_id: "your-user-id",
+  title: "Trip to Paris",
+  destination: "Paris",
+  <code>markdown: "# Day 1\n## Morning\n..."</code>,  ← This column doesn't exist!
+  html: "&lt;h1&gt;Day 1&lt;/h1&gt;...",
+  created_at: "2025-10-19T..."
+}
+                </div>
+                <p>But the <code>plans</code> table schema doesn't have a <code>markdown</code> column, so PostgreSQL rejects the insert with error code <code>PGRST204</code>.</p>
+            </div>
+
+            <!-- STEP 1 -->
+            <div class="step">
+                <span class="step-number">1</span>
+                <h3>Open Supabase SQL Editor</h3>
+                <div class="step-content">
+                    <p>Go to your Supabase project dashboard:</p>
+                    <div class="code-block">
+https://supabase.com/dashboard/project/khrxfjekfzcvyjlzryyz
+                    </div>
+                    <p>Then click on <strong>"SQL Editor"</strong> in the left sidebar.</p>
+                    <div class="screenshot">
+                        <p>📸 You should see: Sidebar → SQL Editor (with a terminal icon)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 2 -->
+            <div class="step">
+                <span class="step-number">2</span>
+                <h3>Add the Missing Column</h3>
+                <div class="step-content">
+                    <p>Click <strong>"New query"</strong> button (or use existing editor), then paste this SQL:</p>
+                    <div class="code-block">
+-- Add missing markdown column to plans table
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS markdown TEXT;
+
+-- Verify the column was added
+SELECT column_name, data_type
+FROM information_schema.columns
+WHERE table_name = 'plans';
+                    </div>
+                    <p><strong>Click the "RUN" button</strong> (or press Ctrl+Enter / Cmd+Enter)</p>
+                </div>
+            </div>
+
+            <!-- STEP 3 -->
+            <div class="step">
+                <span class="step-number">3</span>
+                <h3>Verify Column Was Added</h3>
+                <div class="step-content">
+                    <div class="success">
+                        <h4>✅ Success Looks Like This:</h4>
+                        <p>The query results should show all columns including:</p>
+                        <div class="code-block">
+column_name       | data_type
+------------------|-----------
+id                | uuid
+user_id           | uuid
+title             | text
+destination       | text
+start_date        | date
+end_date          | date
+budget_low        | numeric
+budget_high       | numeric
+travelers         | integer
+style             | text
+<code>markdown           | text</code>  ← THIS IS THE NEW ONE!
+html              | text
+created_at        | timestamp
+                        </div>
+                    </div>
+                    <p>If you see <code>markdown | text</code> in the results, you're good! ✅</p>
+                </div>
+            </div>
+
+            <!-- STEP 4 -->
+            <div class="step">
+                <span class="step-number">4</span>
+                <h3>Test Plan Generation</h3>
+                <div class="step-content">
+                    <p>Now let's test if plans save correctly:</p>
+                    <div class="checklist">
+                        <div class="checklist-item">
+                            <input type="checkbox" id="test1">
+                            <label for="test1">Open <a href="https://wayzo-staging.onrender.com/backoffice.html" target="_blank">wayzo-staging.onrender.com/backoffice.html</a></label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="test2">
+                            <label for="test2">Make sure you're signed in (should show "Personal Cabinet" at top)</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="test3">
+                            <label for="test3">Click "Start planning" or go to main site</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="test4">
+                            <label for="test4">Fill out the trip planning form (destination: "Paris", dates, budget, etc.)</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="test5">
+                            <label for="test5">Click "Generate My Plan"</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="test6">
+                            <label for="test6">Open browser console (F12) and watch for logs</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 5 -->
+            <div class="step">
+                <span class="step-number">5</span>
+                <h3>Check Console Logs</h3>
+                <div class="step-content">
+                    <div class="success">
+                        <h4>✅ Success Console Output:</h4>
+                        <div class="code-block">
+User authenticated: true
+Current user: {email: "dimahasin2@gmail.com", ...}
+Supabase session: EXISTS
+✅ Calling authenticated endpoint /api/user/plan
+
+Response from /api/user/plan:
+{
+  "ok": true,
+  "id": "abc123-def456-...",
+  "markdown": "# Day 1\n## Morning\n...",
+  "html": "&lt;h1&gt;Day 1&lt;/h1&gt;...",
+  "affiliates": {...}
+}
+
+<code>✅ Plan saved to database</code>  ← YOU SHOULD SEE THIS!
+                        </div>
+                    </div>
+                    <p><strong>No 500 error!</strong> If you see the plan content appear on screen, it worked!</p>
+                </div>
+            </div>
+
+            <!-- STEP 6 -->
+            <div class="step">
+                <span class="step-number">6</span>
+                <h3>Verify Plan Shows in Backoffice</h3>
+                <div class="step-content">
+                    <p>Go back to <a href="https://wayzo-staging.onrender.com/backoffice.html" target="_blank">backoffice.html</a></p>
+                    <div class="success">
+                        <h4>✅ You Should See:</h4>
+                        <p>Under "Your Travel Plans" section:</p>
+                        <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                            <li>A card showing your trip (e.g., "Trip to Paris")</li>
+                            <li>The date you created it</li>
+                            <li>Budget range</li>
+                            <li>Buttons: "View Plan", "Download PDF", "Delete"</li>
+                        </ul>
+                    </div>
+                    <p style="margin-top: 15px;">Click <strong>"View Plan"</strong> to see the full itinerary!</p>
+                </div>
+            </div>
+
+            <!-- STEP 7 -->
+            <div class="step">
+                <span class="step-number">7</span>
+                <h3>Double-Check Database (Optional)</h3>
+                <div class="step-content">
+                    <p>If you want to verify the data was saved correctly:</p>
+                    <ol style="margin-left: 20px; line-height: 1.8;">
+                        <li>Go to Supabase → Table Editor</li>
+                        <li>Click on <strong>"plans"</strong> table</li>
+                        <li>You should see a new row with:
+                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                <li>Your user_id</li>
+                                <li>destination = "Paris" (or whatever you entered)</li>
+                                <li><strong>markdown column filled with content!</strong></li>
+                                <li>html column filled with HTML content</li>
+                            </ul>
+                        </li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="alert" style="background: #d1ecf1; border-left-color: #0c5460; margin-top: 40px;">
+                <h3 style="color: #0c5460;">📋 Quick Troubleshooting</h3>
+                <p style="color: #0c5460;"><strong>If you still get a 500 error:</strong></p>
+                <ol style="margin-left: 20px; margin-top: 10px; line-height: 1.8; color: #0c5460;">
+                    <li>Make sure the SQL query ran successfully (no error messages in Supabase)</li>
+                    <li>Check Render logs: <a href="https://dashboard.render.com" target="_blank" style="color: #0c5460; text-decoration: underline;">dashboard.render.com</a> → wayzo-staging → Logs</li>
+                    <li>Look for a different error message (if it's not the markdown column anymore)</li>
+                    <li>Take a screenshot of the new error and we'll fix it!</li>
+                </ol>
+            </div>
+
+            <div class="success" style="margin-top: 40px; background: #d4edda;">
+                <h4>🎉 What We Fixed:</h4>
+                <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                    <li>✅ Authentication flow (Supabase magic link) - WORKING</li>
+                    <li>✅ Frontend sends requests to authenticated endpoint - WORKING</li>
+                    <li>✅ Backend validates JWT token - WORKING</li>
+                    <li>✅ Backend generates AI itinerary - WORKING</li>
+                    <li>✅ Database schema has all required columns - FIXED NOW!</li>
+                </ul>
+                <p style="margin-top: 15px;"><strong>After this fix, the entire flow should work end-to-end!</strong></p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>Need Help?</strong> Take screenshots of:</p>
+            <p>1️⃣ SQL query results from Step 3</p>
+            <p>2️⃣ Browser console after generating a plan (Step 5)</p>
+            <p>3️⃣ Backoffice.html showing your plans (Step 6)</p>
+            <p style="margin-top: 20px;">This will confirm everything is working! 🚀</p>
+        </div>
+    </div>
+
+    <script>
+        // Make checklist items clickable
+        document.querySelectorAll('.checklist-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'A') {
+                    const checkbox = this.querySelector('input[type="checkbox"]');
+                    checkbox.checked = !checkbox.checked;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

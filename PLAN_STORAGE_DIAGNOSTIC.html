@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wayzo Plan Storage Diagnostic Guide</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 40px 20px;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    h1 {
+      color: #667eea;
+      font-size: 32px;
+      margin-bottom: 10px;
+      padding-bottom: 20px;
+      border-bottom: 3px solid #667eea;
+    }
+
+    h2 {
+      color: #5568d3;
+      font-size: 24px;
+      margin-top: 40px;
+      margin-bottom: 16px;
+      padding-left: 12px;
+      border-left: 4px solid #667eea;
+    }
+
+    h3 {
+      color: #444;
+      font-size: 18px;
+      margin-top: 24px;
+      margin-bottom: 12px;
+    }
+
+    .issue-box {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+    }
+
+    .issue-box h3 {
+      color: #856404;
+      margin-top: 0;
+    }
+
+    .success-box {
+      background: #d4edda;
+      border-left: 4px solid #28a745;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+    }
+
+    .success-box h3 {
+      color: #155724;
+      margin-top: 0;
+    }
+
+    .error-box {
+      background: #f8d7da;
+      border-left: 4px solid #dc3545;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+    }
+
+    .error-box h3 {
+      color: #721c24;
+      margin-top: 0;
+    }
+
+    .code-box {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 16px 0;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      overflow-x: auto;
+    }
+
+    .step {
+      background: #e7f3ff;
+      border-left: 4px solid #2196F3;
+      padding: 20px;
+      margin: 16px 0;
+      border-radius: 8px;
+    }
+
+    .step h3 {
+      color: #0d47a1;
+      margin-top: 0;
+    }
+
+    ul, ol {
+      margin-left: 24px;
+      margin-top: 12px;
+      margin-bottom: 12px;
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    strong {
+      color: #667eea;
+      font-weight: 600;
+    }
+
+    .checklist {
+      list-style: none;
+      margin-left: 0;
+    }
+
+    .checklist li {
+      padding: 12px;
+      background: #f8f9fa;
+      margin-bottom: 8px;
+      border-radius: 6px;
+      border-left: 3px solid #667eea;
+    }
+
+    .checklist li:before {
+      content: "☐ ";
+      color: #667eea;
+      font-weight: bold;
+      font-size: 20px;
+      margin-right: 8px;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      background: #667eea;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      margin-top: 16px;
+      transition: all 0.3s;
+    }
+
+    .btn:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+
+    .info-table th {
+      background: #667eea;
+      color: white;
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    .info-table td {
+      padding: 12px;
+      border-bottom: 1px solid #dee2e6;
+    }
+
+    .info-table tr:nth-child(even) {
+      background: #f8f9fa;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-right: 8px;
+    }
+
+    .badge-frontend {
+      background: #e7f3ff;
+      color: #0d47a1;
+    }
+
+    .badge-backend {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .badge-database {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+      .container {
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 Wayzo Plan Storage Diagnostic Guide</h1>
+    <p style="font-size: 18px; color: #666; margin-bottom: 30px;">
+      Complete step-by-step guide to diagnose and fix why your trip plans aren't being saved or displayed.
+    </p>
+
+    <!-- CURRENT ISSUE -->
+    <div class="error-box">
+      <h3>❌ Current Issue</h3>
+      <p><strong>Problem:</strong> When you sign in and generate a trip report, the plan doesn't show up in "My Plans" section.</p>
+      <p><strong>Expected Behavior:</strong> After generating a plan while signed in, it should automatically save to your account and appear in the backoffice.html "My Plans" page.</p>
+    </div>
+
+    <!-- SYSTEM OVERVIEW -->
+    <h2>📊 How Your System Works</h2>
+
+    <table class="info-table">
+      <thead>
+        <tr>
+          <th>Component</th>
+          <th>Purpose</th>
+          <th>Location</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge badge-frontend">Frontend</span> Main App</td>
+          <td>User fills form and generates plans</td>
+          <td><code>frontend/index.backend.html</code><br><code>frontend/app.js</code></td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-frontend">Frontend</span> Backoffice</td>
+          <td>Displays saved plans for signed-in users</td>
+          <td><code>frontend/backoffice.html</code></td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-backend">Backend</span> API Server</td>
+          <td>Handles plan generation and storage</td>
+          <td><code>backend/server.mjs</code></td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-database">Database</span> Supabase</td>
+          <td>Stores user plans in "plans" table</td>
+          <td>Cloud database at <code>khrxfjekfzcvyjlzryyz.supabase.co</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- DIAGNOSTIC STEPS -->
+    <h2>🔎 Step-by-Step Diagnostic</h2>
+
+    <div class="step">
+      <h3>Step 1: Verify You're Signed In</h3>
+      <ol>
+        <li>Open your main app at <code>wayzo-staging.onrender.com</code></li>
+        <li>Look at the top-right corner - do you see your email address or profile?</li>
+        <li>If not signed in, click "Sign In" and complete authentication</li>
+        <li><strong>Open browser console</strong> (F12 or Right-click → Inspect → Console tab)</li>
+        <li>Type this command and press Enter:</li>
+      </ol>
+      <div class="code-box">
+// Check if user is signed in
+if (window.supabaseClient) {
+  window.supabaseClient.auth.getSession().then(({data}) => {
+    if (data.session) {
+      console.log('✅ SIGNED IN as:', data.session.user.email);
+      console.log('User ID:', data.session.user.id);
+    } else {
+      console.log('❌ NOT SIGNED IN');
+    }
+  });
+} else {
+  console.log('❌ Supabase not initialized');
+}
+      </div>
+      <p><strong>Expected Result:</strong> Should show "✅ SIGNED IN as: your@email.com"</p>
+      <p><strong>If it shows "❌ NOT SIGNED IN":</strong> Sign in first before generating plans!</p>
+    </div>
+
+    <div class="step">
+      <h3>Step 2: Generate a Plan While Signed In</h3>
+      <ol>
+        <li>Make sure you're signed in (verified in Step 1)</li>
+        <li>Fill out the trip planning form:
+          <ul>
+            <li>Destination: e.g., "Tokyo, Japan"</li>
+            <li>Start Date: Any future date</li>
+            <li>End Date: A few days later</li>
+            <li>Budget, travelers, etc.</li>
+          </ul>
+        </li>
+        <li>Click "Generate My Plan"</li>
+        <li><strong>Keep the browser console open</strong> (F12)</li>
+        <li>Watch for these log messages:</li>
+      </ol>
+      <div class="code-box">
+📝 Creating plan for user your@email.com
+✅ Plan [some-id] created for user your@email.com
+      </div>
+      <p><strong>What to look for:</strong></p>
+      <ul class="checklist">
+        <li>Check console for "Creating plan for user" message</li>
+        <li>Check console for "Plan [id] created" message</li>
+        <li>Check console for any error messages (red text)</li>
+        <li>Note the Plan ID if shown</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <h3>Step 3: Check if Plan Was Saved to Database</h3>
+      <ol>
+        <li>Go to <a href="https://supabase.com/dashboard" target="_blank">Supabase Dashboard</a></li>
+        <li>Sign in to your Supabase account</li>
+        <li>Select your project: <strong>wayzo-prod</strong></li>
+        <li>Click "Table Editor" in the left sidebar</li>
+        <li>Select the <strong>"plans"</strong> table</li>
+        <li>Look for recently created entries</li>
+      </ol>
+      <p><strong>What to check:</strong></p>
+      <ul class="checklist">
+        <li>Are there any rows in the "plans" table?</li>
+        <li>Do you see your test plan with your user_id?</li>
+        <li>Check the "created_at" timestamp - is it recent?</li>
+        <li>Check if "html" column has content (not NULL)</li>
+        <li>Check if "destination" matches what you entered</li>
+      </ul>
+      <div class="success-box">
+        <h3>✅ If you see your plan in Supabase:</h3>
+        <p>Great! The plan is being saved. The issue is with <strong>displaying</strong> plans. Continue to Step 4.</p>
+      </div>
+      <div class="error-box">
+        <h3>❌ If you DON'T see your plan in Supabase:</h3>
+        <p>The plan is not being saved. The issue is with <strong>saving</strong> plans. See "Common Issues" section below.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <h3>Step 4: Check Backend API Connection</h3>
+      <ol>
+        <li>Open browser console (F12)</li>
+        <li>Go to the Network tab</li>
+        <li>Generate a new plan while watching the Network tab</li>
+        <li>Look for a request to <code>/api/user/plan</code> (POST method)</li>
+        <li>Click on the request to see details</li>
+      </ol>
+      <p><strong>What to check:</strong></p>
+      <ul class="checklist">
+        <li>Status Code: Should be <strong>200 OK</strong></li>
+        <li>Request Headers: Should include "Authorization: Bearer [token]"</li>
+        <li>Request Payload: Should include your form data (destination, dates, etc.)</li>
+        <li>Response: Should include <code>{"ok": true, "id": "...", "url": "..."}</code></li>
+      </ul>
+      <div class="code-box">
+// Good response example:
+{
+  "ok": true,
+  "id": "abc123-def456-ghi789",
+  "url": "https://wayzo.online/backoffice.html#plan=abc123-def456-ghi789"
+}
+      </div>
+      <div class="error-box">
+        <h3>❌ Common Error Responses:</h3>
+        <ul>
+          <li><strong>401 Unauthorized:</strong> Not signed in or token expired</li>
+          <li><strong>500 Internal Server Error:</strong> Backend or database error</li>
+          <li><strong>503 Service Unavailable:</strong> Supabase not configured on backend</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step">
+      <h3>Step 5: Check Backoffice Page for Plans</h3>
+      <ol>
+        <li>Navigate to: <code>https://wayzo-staging.onrender.com/backoffice.html</code></li>
+        <li>Make sure you're signed in (if not, sign in with magic link)</li>
+        <li>Open browser console (F12)</li>
+        <li>Watch for these console messages:</li>
+      </ol>
+      <div class="code-box">
+Auth state changed: SIGNED_IN
+Loading your plans...
+📋 Listed X plans for user your@email.com
+      </div>
+      <p><strong>What to check:</strong></p>
+      <ul class="checklist">
+        <li>Page shows "Loading your plans..." initially</li>
+        <li>After loading, shows your plans OR "No plans yet" message</li>
+        <li>Console shows "Listed X plans" message</li>
+        <li>Network tab shows <code>/api/user/plans</code> request with 200 OK status</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <h3>Step 6: Manual API Test</h3>
+      <p>Test the API directly from browser console:</p>
+      <div class="code-box">
+// Run this in browser console on backoffice.html page
+async function testAPI() {
+  try {
+    const session = await supabase.auth.getSession();
+    const token = session.data.session?.access_token;
+
+    if (!token) {
+      console.error('❌ No auth token - not signed in');
+      return;
+    }
+
+    console.log('✅ Got auth token:', token.substring(0, 20) + '...');
+
+    // Test fetching plans
+    const response = await fetch('/api/user/plans', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    console.log('📡 Response status:', response.status);
+
+    const data = await response.json();
+    console.log('📋 Plans returned:', data);
+
+    if (data.length === 0) {
+      console.warn('⚠️ No plans found in database');
+    } else {
+      console.log('✅ Found', data.length, 'plan(s)');
+      data.forEach(plan => {
+        console.log('  - Plan:', plan.id, '|', plan.destination, '|', plan.created_at);
+      });
+    }
+  } catch (error) {
+    console.error('❌ API test failed:', error);
+  }
+}
+
+testAPI();
+      </div>
+      <p><strong>Copy and paste this entire code block into your browser console on the backoffice.html page, then press Enter.</strong></p>
+    </div>
+
+    <!-- COMMON ISSUES -->
+    <h2>⚠️ Common Issues & Solutions</h2>
+
+    <div class="issue-box">
+      <h3>Issue 1: Plans Not Saving at All</h3>
+      <p><strong>Symptoms:</strong> No plans appear in Supabase database</p>
+      <p><strong>Possible Causes:</strong></p>
+      <ul>
+        <li>User not signed in when generating plan</li>
+        <li>Backend environment variables not set (SUPABASE_URL, SUPABASE_SERVICE_KEY)</li>
+        <li>Supabase service key has wrong permissions</li>
+        <li>Network error between backend and Supabase</li>
+      </ul>
+      <p><strong>Solutions:</strong></p>
+      <ol>
+        <li>Verify you're signed in before generating plans (Step 1)</li>
+        <li>Check backend logs on Render.com for errors</li>
+        <li>Verify environment variables on Render.com:
+          <ul>
+            <li>Go to Render Dashboard → Your Service → Environment</li>
+            <li>Check <code>SUPABASE_URL</code> is set to: <code>https://khrxfjekfzcvyjlzryyz.supabase.co</code></li>
+            <li>Check <code>SUPABASE_SERVICE_KEY</code> is set (should be a long JWT token)</li>
+          </ul>
+        </li>
+        <li>Test backend health: <code>https://wayzo-staging.onrender.com/health</code></li>
+      </ol>
+    </div>
+
+    <div class="issue-box">
+      <h3>Issue 2: Plans Saved But Not Displaying</h3>
+      <p><strong>Symptoms:</strong> Plans exist in Supabase but backoffice.html shows "No plans yet"</p>
+      <p><strong>Possible Causes:</strong></p>
+      <ul>
+        <li>User ID mismatch (plans saved under different user ID)</li>
+        <li>Frontend auth token not being sent correctly</li>
+        <li>Backend filtering plans by wrong user ID</li>
+        <li>CORS or authentication middleware blocking requests</li>
+      </ul>
+      <p><strong>Solutions:</strong></p>
+      <ol>
+        <li>Check Supabase "plans" table - verify <code>user_id</code> column matches your auth user ID</li>
+        <li>Run the manual API test (Step 6) and check console output</li>
+        <li>In Supabase Dashboard:
+          <ul>
+            <li>Go to Authentication → Users</li>
+            <li>Find your email and copy the User ID</li>
+            <li>Go to Table Editor → plans table</li>
+            <li>Filter where <code>user_id = [your-user-id]</code></li>
+            <li>If no results, the plans are being saved to wrong user ID</li>
+          </ul>
+        </li>
+        <li>Check browser console on backoffice.html for any JavaScript errors</li>
+      </ol>
+    </div>
+
+    <div class="issue-box">
+      <h3>Issue 3: Authentication Token Expired</h3>
+      <p><strong>Symptoms:</strong> 401 Unauthorized errors in Network tab</p>
+      <p><strong>Solutions:</strong></p>
+      <ol>
+        <li>Sign out completely and sign back in</li>
+        <li>Clear browser cookies and localStorage</li>
+        <li>Request a new magic link</li>
+      </ol>
+      <div class="code-box">
+// Run in console to clear auth and reload
+localStorage.clear();
+sessionStorage.clear();
+window.location.reload();
+      </div>
+    </div>
+
+    <div class="issue-box">
+      <h3>Issue 4: Wrong Supabase Credentials</h3>
+      <p><strong>Symptoms:</strong> 503 errors or "Supabase admin not configured" errors</p>
+      <p><strong>Solutions:</strong></p>
+      <ol>
+        <li>Check backend environment variables on Render.com</li>
+        <li>Verify Supabase project settings:
+          <ul>
+            <li>Go to Supabase Dashboard → Project Settings → API</li>
+            <li>Copy the correct URL and service role key</li>
+            <li>Update environment variables on Render.com</li>
+            <li>Restart your backend service</li>
+          </ul>
+        </li>
+      </ol>
+    </div>
+
+    <!-- CHECKLIST -->
+    <h2>✅ Pre-Flight Checklist</h2>
+    <p>Before generating a plan, make sure all these are true:</p>
+
+    <ul class="checklist">
+      <li>I am signed in (check top-right corner shows my email)</li>
+      <li>Browser console shows "✅ SIGNED IN as: my@email.com"</li>
+      <li>Backend is running at wayzo-staging.onrender.com</li>
+      <li>Supabase environment variables are set on Render.com</li>
+      <li>I have cleared browser cache if I changed anything</li>
+      <li>Browser console has no red errors on page load</li>
+    </ul>
+
+    <!-- BACKEND CHECKLIST -->
+    <h2>🔧 Backend Configuration Checklist</h2>
+    <p>Verify these on your Render.com dashboard:</p>
+
+    <table class="info-table">
+      <thead>
+        <tr>
+          <th>Environment Variable</th>
+          <th>Expected Value</th>
+          <th>Where to Get It</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>SUPABASE_URL</code></td>
+          <td><code>https://khrxfjekfzcvyjlzryyz.supabase.co</code></td>
+          <td>Supabase Dashboard → Project Settings → API → Project URL</td>
+        </tr>
+        <tr>
+          <td><code>SUPABASE_SERVICE_KEY</code></td>
+          <td>Long JWT token starting with <code>eyJ...</code></td>
+          <td>Supabase Dashboard → Project Settings → API → service_role key (secret)</td>
+        </tr>
+        <tr>
+          <td><code>SUPABASE_ANON_KEY</code></td>
+          <td>Long JWT token starting with <code>eyJ...</code></td>
+          <td>Supabase Dashboard → Project Settings → API → anon public key</td>
+        </tr>
+        <tr>
+          <td><code>PUBLIC_BASE_URL</code></td>
+          <td><code>https://wayzo-staging.onrender.com</code></td>
+          <td>Your Render.com app URL</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- QUICK FIXES -->
+    <h2>⚡ Quick Fixes to Try</h2>
+
+    <div class="success-box">
+      <h3>Fix 1: Clear Everything and Start Fresh</h3>
+      <ol>
+        <li>Open browser console (F12)</li>
+        <li>Run this code:</li>
+      </ol>
+      <div class="code-box">
+// Clear all stored data
+localStorage.clear();
+sessionStorage.clear();
+      </div>
+      <ol start="3">
+        <li>Refresh the page (F5)</li>
+        <li>Sign in again</li>
+        <li>Try generating a plan</li>
+      </ol>
+    </div>
+
+    <div class="success-box">
+      <h3>Fix 2: Force Reload All Assets</h3>
+      <ol>
+        <li>Hold <strong>Ctrl + Shift + R</strong> (Windows) or <strong>Cmd + Shift + R</strong> (Mac)</li>
+        <li>This clears browser cache and reloads fresh</li>
+        <li>Sign in and try again</li>
+      </ol>
+    </div>
+
+    <div class="success-box">
+      <h3>Fix 3: Restart Backend Service</h3>
+      <ol>
+        <li>Go to Render.com dashboard</li>
+        <li>Find your "wayzo" service</li>
+        <li>Click "Manual Deploy" → "Clear build cache & deploy"</li>
+        <li>Wait for deployment to complete</li>
+        <li>Try again</li>
+      </ol>
+    </div>
+
+    <!-- WHAT TO SEND ME -->
+    <h2>📨 What to Send for Help</h2>
+    <p>If you're still having issues, please provide:</p>
+
+    <ol>
+      <li><strong>Console Output:</strong>
+        <ul>
+          <li>Open browser console (F12) on main page</li>
+          <li>Run the Step 1 authentication check</li>
+          <li>Take a screenshot of the output</li>
+        </ul>
+      </li>
+      <li><strong>Network Tab:</strong>
+        <ul>
+          <li>Open Network tab (F12 → Network)</li>
+          <li>Generate a plan</li>
+          <li>Filter by "user/plan"</li>
+          <li>Click the request and screenshot Headers + Response</li>
+        </ul>
+      </li>
+      <li><strong>Backoffice Console:</strong>
+        <ul>
+          <li>Open backoffice.html</li>
+          <li>Run the Step 6 manual API test</li>
+          <li>Screenshot the console output</li>
+        </ul>
+      </li>
+      <li><strong>Supabase Screenshot:</strong>
+        <ul>
+          <li>Go to Supabase → Table Editor → plans table</li>
+          <li>Screenshot the table (showing if plans exist or not)</li>
+        </ul>
+      </li>
+      <li><strong>Backend Logs:</strong>
+        <ul>
+          <li>Go to Render.com → Your Service → Logs</li>
+          <li>Copy the last 50 lines of logs</li>
+        </ul>
+      </li>
+    </ol>
+
+    <!-- EXPECTED FLOW -->
+    <h2>📋 Expected Flow (How It Should Work)</h2>
+
+    <div style="background: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <ol style="margin-left: 0; padding-left: 20px;">
+        <li style="margin-bottom: 16px;">
+          <strong>User signs in</strong>
+          <ul>
+            <li>Frontend calls Supabase auth with email</li>
+            <li>User clicks magic link in email</li>
+            <li>Redirected back with auth token</li>
+            <li>Token stored in browser</li>
+          </ul>
+        </li>
+        <li style="margin-bottom: 16px;">
+          <strong>User fills trip form</strong>
+          <ul>
+            <li>Enters destination, dates, budget, etc.</li>
+            <li>Clicks "Generate My Plan"</li>
+          </ul>
+        </li>
+        <li style="margin-bottom: 16px;">
+          <strong>Frontend sends request</strong>
+          <ul>
+            <li>POST to <code>/api/user/plan</code></li>
+            <li>Includes auth token in headers</li>
+            <li>Includes all form data in body</li>
+          </ul>
+        </li>
+        <li style="margin-bottom: 16px;">
+          <strong>Backend processes request</strong>
+          <ul>
+            <li>Verifies auth token with Supabase</li>
+            <li>Extracts user ID from token</li>
+            <li>Generates trip plan using OpenAI</li>
+            <li>Inserts plan into Supabase "plans" table</li>
+            <li>Links plan to user via user_id column</li>
+          </ul>
+        </li>
+        <li style="margin-bottom: 16px;">
+          <strong>Plan saved to database</strong>
+          <ul>
+            <li>Row inserted in "plans" table</li>
+            <li>user_id matches authenticated user</li>
+            <li>HTML content stored</li>
+            <li>Metadata saved (destination, dates, etc.)</li>
+          </ul>
+        </li>
+        <li style="margin-bottom: 16px;">
+          <strong>Frontend receives response</strong>
+          <ul>
+            <li>Gets plan ID from backend</li>
+            <li>Displays plan on page</li>
+            <li>Shows "Save to Dashboard" prompt (if needed)</li>
+          </ul>
+        </li>
+        <li style="margin-bottom: 16px;">
+          <strong>User opens backoffice.html</strong>
+          <ul>
+            <li>Page loads and checks auth</li>
+            <li>Calls GET <code>/api/user/plans</code></li>
+            <li>Backend queries Supabase for plans where user_id = current user</li>
+            <li>Returns array of plans</li>
+            <li>Frontend displays plans in grid</li>
+          </ul>
+        </li>
+      </ol>
+    </div>
+
+    <!-- CONTACT -->
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 12px; padding: 30px; margin-top: 40px; text-align: center;">
+      <h2 style="color: white; margin-top: 0;">Need More Help?</h2>
+      <p style="font-size: 16px; margin-bottom: 20px;">
+        Follow the steps above and collect the diagnostic information. If you're still stuck, send me the screenshots and logs mentioned in the "What to Send for Help" section.
+      </p>
+      <p style="font-size: 14px; opacity: 0.9;">
+        📧 Include: Console screenshots, Network tab, Supabase table view, and backend logs
+      </p>
+    </div>
+
+    <!-- FOOTER -->
+    <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #dee2e6; text-align: center; color: #666;">
+      <p>Generated: <script>document.write(new Date().toLocaleString())</script></p>
+      <p>Wayzo Plan Storage Diagnostic v1.0</p>
+    </div>
+  </div>
+
+  <script>
+    // Auto-run some diagnostics if on the actual site
+    if (window.location.hostname.includes('wayzo') || window.location.hostname.includes('render')) {
+      console.log('🔍 Wayzo Diagnostic Script Loaded');
+      console.log('📄 Open this guide: PLAN_STORAGE_DIAGNOSTIC.html');
+      console.log('💡 To run diagnostics, follow the steps in the guide');
+    }
+  </script>
+</body>
+</html>

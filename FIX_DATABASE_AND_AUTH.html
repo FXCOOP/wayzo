@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fix Database & Auth - Wayzo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+      padding: 40px 20px;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    h1 {
+      color: #dc2626;
+      font-size: 32px;
+      margin-bottom: 10px;
+      padding-bottom: 20px;
+      border-bottom: 3px solid #dc2626;
+    }
+
+    h2 {
+      color: #991b1b;
+      font-size: 24px;
+      margin-top: 40px;
+      margin-bottom: 16px;
+      padding-left: 12px;
+      border-left: 4px solid #dc2626;
+    }
+
+    h3 {
+      color: #444;
+      font-size: 18px;
+      margin-top: 24px;
+      margin-bottom: 12px;
+    }
+
+    .critical-box {
+      background: #fee2e2;
+      border: 3px solid #dc2626;
+      border-radius: 12px;
+      padding: 24px;
+      margin: 24px 0;
+    }
+
+    .critical-box h3 {
+      color: #991b1b;
+      margin-top: 0;
+      font-size: 20px;
+    }
+
+    .success-box {
+      background: #d4edda;
+      border-left: 4px solid #28a745;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+    }
+
+    .success-box h3 {
+      color: #155724;
+      margin-top: 0;
+    }
+
+    .warning-box {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+    }
+
+    .step {
+      background: #e7f3ff;
+      border-left: 4px solid #2196F3;
+      padding: 24px;
+      margin: 20px 0;
+      border-radius: 8px;
+    }
+
+    .step h3 {
+      color: #0d47a1;
+      margin-top: 0;
+      font-size: 20px;
+    }
+
+    .step-number {
+      display: inline-block;
+      width: 36px;
+      height: 36px;
+      background: #2196F3;
+      color: white;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 36px;
+      font-weight: bold;
+      margin-right: 12px;
+      font-size: 18px;
+    }
+
+    .code-box {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 16px 0;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      overflow-x: auto;
+      line-height: 1.5;
+    }
+
+    ul, ol {
+      margin-left: 24px;
+      margin-top: 12px;
+      margin-bottom: 12px;
+    }
+
+    li {
+      margin-bottom: 12px;
+    }
+
+    strong {
+      color: #dc2626;
+      font-weight: 600;
+    }
+
+    .highlight {
+      background: yellow;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-weight: bold;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      background: #667eea;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      margin: 8px 4px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background: #5568d3;
+    }
+
+    .screenshot {
+      border: 2px solid #dee2e6;
+      border-radius: 8px;
+      padding: 12px;
+      margin: 16px 0;
+      background: #f8f9fa;
+    }
+
+    .screenshot img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚨 URGENT: Fix Database & Authentication</h1>
+
+    <div class="critical-box">
+      <h3>❌ The REAL Problems</h3>
+      <ol style="font-size: 16px; line-height: 2;">
+        <li><strong>Your SQL schema is NOT executed</strong> - You're viewing it, not running it!</li>
+        <li><strong>The "plans" table might not exist</strong> in your database</li>
+        <li><strong>Supabase auth isn't working</strong> - keeps asking to sign in</li>
+        <li><strong>No plans showing</strong> - because they can't be saved (no table!)</li>
+      </ol>
+    </div>
+
+    <h2>✅ SOLUTION: 3 Steps to Fix Everything</h2>
+
+    <!-- STEP 1 -->
+    <div class="step">
+      <h3><span class="step-number">1</span>Execute SQL Schema in Supabase</h3>
+
+      <p><strong>You need to RUN that SQL code, not just view it!</strong></p>
+
+      <ol style="font-size: 15px;">
+        <li>Go to <a href="https://supabase.com/dashboard" target="_blank">Supabase Dashboard</a></li>
+        <li>Open your <strong>wayzo-prod</strong> project</li>
+        <li>Click <strong>"SQL Editor"</strong> in the left sidebar (you're already there!)</li>
+        <li><strong>IMPORTANT:</strong> Click the <strong>RUN</strong> button (▶ icon) or press <code>Ctrl+Enter</code></li>
+        <li>You should see a success message: <code>"Success. No rows returned"</code></li>
+      </ol>
+
+      <div class="warning-box">
+        <h3>⚠️ Common Mistake</h3>
+        <p>Just having the SQL open <strong>does NOT run it</strong>!</p>
+        <p>You MUST click the green <strong>RUN</strong> button (▶) at the top!</p>
+      </div>
+
+      <p style="margin-top: 20px;"><strong>After running, verify the tables exist:</strong></p>
+      <ol>
+        <li>Click <strong>"Table Editor"</strong> in the left sidebar</li>
+        <li>You should now see <strong>TWO tables</strong>:
+          <ul>
+            <li><code>profiles</code></li>
+            <li><code>plans</code></li>
+          </ul>
+        </li>
+        <li>If you see these tables, ✅ Step 1 is complete!</li>
+      </ol>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="step">
+      <h3><span class="step-number">2</span>Create Your Supabase Account</h3>
+
+      <p><strong>You need to create an account IN Supabase, not just the app!</strong></p>
+
+      <ol style="font-size: 15px;">
+        <li>Go to: <a href="https://wayzo-staging.onrender.com/backoffice.html" target="_blank">wayzo-staging.onrender.com/backoffice.html</a></li>
+        <li>You'll see a <strong>"Sign in to Wayzo"</strong> page</li>
+        <li>Enter your email: <code>dimahasin2@gmail.com</code></li>
+        <li>Click <strong>"Sign In with Magic Link"</strong></li>
+        <li><strong>Check your email inbox</strong></li>
+        <li>Click the magic link in the email from Supabase</li>
+        <li>You'll be redirected back and signed in!</li>
+      </ol>
+
+      <div class="success-box">
+        <h3>✅ How to Know You're Signed In</h3>
+        <ul>
+          <li>The page should show "My Trip Plans" header</li>
+          <li>Your email shows in the top-right</li>
+          <li>You see a "Sign Out" button</li>
+          <li>Console shows: <code>Auth state changed: SIGNED_IN</code></li>
+        </ul>
+      </div>
+
+      <p style="margin-top: 20px;"><strong>Verify in Console:</strong></p>
+      <div class="code-box">
+<span style="color: #6a9955;">// Press F12 → Console tab → Paste this:</span>
+<span style="color: #569cd6;">async function</span> <span style="color: #dcdcaa;">checkSupabaseAuth</span>() {
+  <span style="color: #569cd6;">const</span> { data } = <span style="color: #569cd6;">await</span> supabase.auth.<span style="color: #dcdcaa;">getSession</span>();
+
+  <span style="color: #569cd6;">if</span> (data.session) {
+    console.<span style="color: #dcdcaa;">log</span>(<span style="color: #4ec9b0;">'✅ SIGNED IN with Supabase'</span>);
+    console.<span style="color: #dcdcaa;">log</span>(<span style="color: #4ec9b0;">'Email:'</span>, data.session.user.email);
+    console.<span style="color: #dcdcaa;">log</span>(<span style="color: #4ec9b0;">'User ID:'</span>, data.session.user.id);
+  } <span style="color: #569cd6;">else</span> {
+    console.<span style="color: #dcdcaa;">error</span>(<span style="color: #f48771;">'❌ NOT SIGNED IN'</span>);
+  }
+}
+
+<span style="color: #dcdcaa;">checkSupabaseAuth</span>();
+      </div>
+
+      <p><strong>Expected output:</strong></p>
+      <div class="code-box">
+<span style="color: #4ec9b0;">✅ SIGNED IN with Supabase</span>
+<span style="color: #4ec9b0;">Email: dimahasin2@gmail.com</span>
+<span style="color: #4ec9b0;">User ID: abc123-def456-ghi789</span>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="step">
+      <h3><span class="step-number">3</span>Generate a Plan (While Signed In!)</h3>
+
+      <ol style="font-size: 15px;">
+        <li><strong>Make sure</strong> you're signed in (verified in Step 2)</li>
+        <li>Go to the main page: <a href="https://wayzo-staging.onrender.com" target="_blank">wayzo-staging.onrender.com</a></li>
+        <li><strong>IMPORTANT:</strong> Check if you're still signed in on this page:
+          <ul>
+            <li>Open Console (F12)</li>
+            <li>Look for: <code>✅ Supabase client initialized</code></li>
+            <li>Run the <code>checkSupabaseAuth()</code> function from Step 2</li>
+          </ul>
+        </li>
+        <li>If signed in, generate a test plan:
+          <ul>
+            <li>Destination: <strong>"Tokyo, Japan"</strong></li>
+            <li>Dates: Any future dates</li>
+            <li>Click <strong>"Generate My Plan"</strong></li>
+          </ul>
+        </li>
+        <li><strong>Watch the console for:</strong></li>
+      </ol>
+
+      <div class="code-box">
+<span style="color: #4ec9b0;">User authenticated: true</span>
+<span style="color: #4ec9b0;">✅ Calling authenticated endpoint /api/user/plan</span>
+<span style="color: #4ec9b0;">✅ Plan saved to database: {id: '...', ok: true}</span>
+      </div>
+
+      <p style="margin-top: 20px;"><strong>If you see these messages:</strong></p>
+      <ul>
+        <li>✅ Plan is being saved to Supabase!</li>
+        <li>✅ Check Table Editor → plans table → You'll see a new row!</li>
+        <li>✅ Check backoffice.html → You'll see the plan listed!</li>
+      </ul>
+    </div>
+
+    <!-- TROUBLESHOOTING -->
+    <h2>🔧 Troubleshooting</h2>
+
+    <div class="warning-box">
+      <h3>❌ Problem: Still asks to sign in after generating plan</h3>
+      <p><strong>Cause:</strong> You're signed in on <code>backoffice.html</code> but NOT on main page</p>
+      <p><strong>Solution:</strong></p>
+      <ol>
+        <li>Sign in on <code>backoffice.html</code> first</li>
+        <li>Keep that tab open</li>
+        <li>Open main page in <strong>same browser</strong> (new tab)</li>
+        <li>Supabase session should carry over</li>
+        <li>If not, we need to add sign-in button to main page</li>
+      </ol>
+    </div>
+
+    <div class="warning-box">
+      <h3>❌ Problem: Console shows "User authenticated: false"</h3>
+      <p><strong>Cause:</strong> Not signed in with Supabase on that page</p>
+      <p><strong>Solution:</strong></p>
+      <ol>
+        <li>Go to <code>backoffice.html</code></li>
+        <li>Sign in there</li>
+        <li>Come back to main page and try again</li>
+        <li>Run <code>checkSupabaseAuth()</code> to verify</li>
+      </ol>
+    </div>
+
+    <div class="warning-box">
+      <h3>❌ Problem: Error "Failed to save plan" or 500 error</h3>
+      <p><strong>Cause:</strong> Database schema not created (Step 1 not completed)</p>
+      <p><strong>Solution:</strong></p>
+      <ol>
+        <li>Go back to Supabase SQL Editor</li>
+        <li><strong>RUN</strong> the SQL code (click ▶ button)</li>
+        <li>Verify tables exist in Table Editor</li>
+        <li>Try generating plan again</li>
+      </ol>
+    </div>
+
+    <div class="warning-box">
+      <h3>❌ Problem: Error "Table 'plans' does not exist"</h3>
+      <p><strong>Cause:</strong> SQL schema definitely not executed</p>
+      <p><strong>Solution:</strong></p>
+      <ol>
+        <li>In Supabase SQL Editor</li>
+        <li>Make sure the SQL code is selected/highlighted</li>
+        <li>Click the green <strong>RUN</strong> button (▶)</li>
+        <li>Wait for "Success" message</li>
+        <li>Refresh Table Editor to see new tables</li>
+      </ol>
+    </div>
+
+    <!-- FINAL VERIFICATION -->
+    <h2>✅ Final Verification Checklist</h2>
+
+    <div class="success-box">
+      <h3>Complete These in Order</h3>
+      <ol style="font-size: 16px; line-height: 2;">
+        <li>☐ SQL schema executed in Supabase (RUN button clicked)</li>
+        <li>☐ Tables visible in Table Editor: <code>profiles</code> and <code>plans</code></li>
+        <li>☐ Signed in on <code>backoffice.html</code> via magic link</li>
+        <li>☐ Console on backoffice shows: <code>Auth state changed: SIGNED_IN</code></li>
+        <li>☐ Verified with <code>checkSupabaseAuth()</code> - shows email</li>
+        <li>☐ Main page console shows: <code>User authenticated: true</code></li>
+        <li>☐ Generated test plan - console shows: <code>✅ Plan saved to database</code></li>
+        <li>☐ Supabase Table Editor shows new row in <code>plans</code> table</li>
+        <li>☐ <code>backoffice.html</code> displays the plan in "My Trip Plans"</li>
+      </ol>
+
+      <p style="margin-top: 20px; font-size: 18px; font-weight: bold; color: #155724;">
+        If ALL checked ✅ - Everything is working!
+      </p>
+    </div>
+
+    <!-- NEXT STEPS -->
+    <div class="critical-box" style="background: #d4edda; border-color: #28a745;">
+      <h3 style="color: #155724;">🎯 What to Do Right Now</h3>
+      <ol style="font-size: 16px; line-height: 2;">
+        <li><strong>First:</strong> Go to Supabase SQL Editor and click RUN (▶)</li>
+        <li><strong>Second:</strong> Go to backoffice.html and sign in with magic link</li>
+        <li><strong>Third:</strong> Generate a test plan on main page</li>
+        <li><strong>Fourth:</strong> Check if plan appears in Supabase table</li>
+        <li><strong>Fifth:</strong> Send me screenshots of any errors if it fails</li>
+      </ol>
+    </div>
+
+    <!-- QUICK LINKS -->
+    <div style="margin-top: 40px; text-align: center; padding: 30px; background: #f8f9fa; border-radius: 12px;">
+      <h3 style="margin-bottom: 20px;">🔗 Quick Links</h3>
+      <a href="https://supabase.com/dashboard" class="btn" target="_blank" style="background: #3ecf8e;">
+        Open Supabase Dashboard
+      </a>
+      <a href="https://wayzo-staging.onrender.com/backoffice.html" class="btn" target="_blank">
+        Sign In (Backoffice)
+      </a>
+      <a href="https://wayzo-staging.onrender.com" class="btn" target="_blank">
+        Main Site
+      </a>
+    </div>
+
+    <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #dee2e6; text-align: center; color: #666;">
+      <p><strong>Still stuck?</strong> Send me screenshots of:</p>
+      <ul style="list-style: none; margin-top: 12px; line-height: 2;">
+        <li>1. Supabase Table Editor (showing tables)</li>
+        <li>2. Console output when generating plan</li>
+        <li>3. Any error messages</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

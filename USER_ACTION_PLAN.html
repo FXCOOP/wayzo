@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wayzo - What You Need To Do Now</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 40px 20px;
+      color: #1f2937;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      padding: 48px 48px;
+      color: white;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 48px;
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+
+    .header .subtitle {
+      font-size: 20px;
+      opacity: 0.95;
+      font-weight: 500;
+    }
+
+    .content {
+      padding: 48px;
+    }
+
+    .success-banner {
+      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+      border-left: 6px solid #10b981;
+      padding: 24px 32px;
+      border-radius: 12px;
+      margin-bottom: 40px;
+    }
+
+    .success-banner h2 {
+      font-size: 28px;
+      color: #065f46;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .success-banner p {
+      font-size: 16px;
+      color: #047857;
+      line-height: 1.8;
+    }
+
+    .step-container {
+      margin-bottom: 48px;
+    }
+
+    .step {
+      background: #f9fafb;
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 24px;
+      position: relative;
+      border-left: 6px solid #667eea;
+      transition: all 0.3s ease;
+    }
+
+    .step:hover {
+      box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+      transform: translateY(-2px);
+    }
+
+    .step-number {
+      position: absolute;
+      left: -3px;
+      top: -3px;
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 24px;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .step-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 16px;
+      margin-left: 60px;
+    }
+
+    .step-description {
+      font-size: 16px;
+      color: #4b5563;
+      margin-bottom: 20px;
+      line-height: 1.8;
+    }
+
+    .step-action {
+      background: white;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 16px;
+    }
+
+    .step-action h4 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #6b7280;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .code-box {
+      background: #1f2937;
+      color: #e5e7eb;
+      padding: 16px 20px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      overflow-x: auto;
+      margin: 12px 0;
+      position: relative;
+    }
+
+    .code-box .highlight {
+      color: #fbbf24;
+      font-weight: 600;
+    }
+
+    .code-box .comment {
+      color: #9ca3af;
+      font-style: italic;
+    }
+
+    .screenshot-placeholder {
+      background: #f3f4f6;
+      border: 2px dashed #d1d5db;
+      border-radius: 8px;
+      padding: 40px;
+      text-align: center;
+      color: #6b7280;
+      font-size: 14px;
+      margin: 16px 0;
+    }
+
+    .warning-box {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 16px 20px;
+      border-radius: 8px;
+      margin: 16px 0;
+    }
+
+    .warning-box strong {
+      color: #92400e;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .warning-box p {
+      color: #78350f;
+      font-size: 14px;
+    }
+
+    .info-box {
+      background: #dbeafe;
+      border-left: 4px solid #3b82f6;
+      padding: 16px 20px;
+      border-radius: 8px;
+      margin: 16px 0;
+    }
+
+    .info-box strong {
+      color: #1e40af;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .info-box p {
+      color: #1e3a8a;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .checklist {
+      list-style: none;
+      margin: 20px 0;
+    }
+
+    .checklist li {
+      padding: 12px 16px;
+      background: white;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .checklist li::before {
+      content: "✅";
+      font-size: 20px;
+    }
+
+    .link-button {
+      display: inline-block;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 14px 28px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      margin: 8px 8px 8px 0;
+    }
+
+    .link-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .link-button.secondary {
+      background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+      color: #374151;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 14px;
+    }
+
+    table th {
+      background: #f3f4f6;
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid #e5e7eb;
+    }
+
+    table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-badge.done {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .status-badge.todo {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .status-badge.optional {
+      background: #e0e7ff;
+      color: #3730a3;
+    }
+
+    .final-cta {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 40px;
+      border-radius: 16px;
+      text-align: center;
+      margin-top: 48px;
+    }
+
+    .final-cta h2 {
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+
+    .final-cta p {
+      font-size: 18px;
+      margin-bottom: 24px;
+      opacity: 0.95;
+    }
+
+    .final-cta .big-button {
+      display: inline-block;
+      background: white;
+      color: #667eea;
+      padding: 18px 48px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .final-cta .big-button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.2);
+    }
+
+    @media (max-width: 768px) {
+      .content {
+        padding: 24px;
+      }
+
+      .header {
+        padding: 32px 24px;
+      }
+
+      .header h1 {
+        font-size: 36px;
+      }
+
+      .step {
+        padding: 24px;
+      }
+
+      .step-title {
+        font-size: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎉 You're Almost There!</h1>
+      <div class="subtitle">Your Wayzo app is deployed and running 24/7</div>
+    </div>
+
+    <div class="content">
+
+      <div class="success-banner">
+        <h2>
+          <span>✅</span>
+          Deployment Successful!
+        </h2>
+        <p>
+          Your Wayzo application is now live at <strong>https://wayzo.online</strong> with Supabase integration,
+          authentication, persistent database storage, and email notifications. The server is running on Fly.io
+          with 24/7 uptime in Amsterdam (ams region).
+        </p>
+      </div>
+
+      <h2 style="font-size: 32px; margin-bottom: 32px; color: #111827;">📋 What You Need To Do Now</h2>
+
+      <div class="step-container">
+
+        <!-- STEP 1 -->
+        <div class="step">
+          <div class="step-number">1</div>
+          <h3 class="step-title">Test the Dashboard Sign-In Flow</h3>
+          <p class="step-description">
+            Your dashboard is now connected to Supabase with real credentials. Let's verify the authentication works.
+          </p>
+
+          <div class="step-action">
+            <h4>🎯 Action Required:</h4>
+
+            <p style="margin: 16px 0;"><strong>1. Open your dashboard:</strong></p>
+            <a href="https://wayzo.online/dashboard.html" class="link-button" target="_blank">
+              Open Dashboard
+            </a>
+
+            <p style="margin: 24px 0 12px 0;"><strong>2. You should see the sign-in page (not the fake Paris/Tokyo/Bali data)</strong></p>
+
+            <p style="margin: 16px 0;"><strong>3. Click "Sign In with Email"</strong></p>
+
+            <p style="margin: 16px 0;"><strong>4. Enter your email:</strong></p>
+            <div class="code-box">
+dimahasin2@gmail.com
+            </div>
+
+            <p style="margin: 16px 0;"><strong>5. Check your email inbox for a magic link from Supabase</strong></p>
+
+            <div class="info-box">
+              <strong>📧 What to expect:</strong>
+              <p>
+                You'll receive an email with subject "Confirm your signup" or "Magic Link" from Supabase.
+                Click the link in the email to authenticate. You'll be redirected back to the dashboard,
+                now logged in.
+              </p>
+            </div>
+
+            <p style="margin: 16px 0;"><strong>6. After clicking the magic link, you should see:</strong></p>
+            <ul class="checklist">
+              <li>Your email (dimahasin2@gmail.com) displayed in the top-right corner</li>
+              <li>"No plans yet" message (because you haven't created any plans through the new system)</li>
+              <li>A clean, modern dashboard interface</li>
+            </ul>
+          </div>
+
+          <div class="warning-box">
+            <strong>⚠️ Troubleshooting:</strong>
+            <p>
+              If you still see fake data (Paris, Tokyo, Bali), clear your browser cache and hard reload the page
+              (Ctrl+Shift+R on Windows, Cmd+Shift+R on Mac). The credentials have been updated in the code.
+            </p>
+          </div>
+        </div>
+
+        <!-- STEP 2 -->
+        <div class="step">
+          <div class="step-number">2</div>
+          <h3 class="step-title">Verify Fly.io Deployment</h3>
+          <p class="step-description">
+            Confirm that your app is running correctly on Fly.io and all services are operational.
+          </p>
+
+          <div class="step-action">
+            <h4>🎯 Action Required:</h4>
+
+            <p style="margin: 16px 0;"><strong>1. Check deployment status:</strong></p>
+            <div class="code-box">
+flyctl status --app wayzo
+            </div>
+
+            <p style="margin: 16px 0;"><strong>Expected output:</strong></p>
+            <div class="code-box">
+<span class="comment"># You should see:</span>
+App
+  Name     = wayzo
+  Status   = <span class="highlight">running</span>
+  Version  = <span class="highlight">deployment-01K76HS...</span>
+
+Machines
+  ID            STATE     REGION  HEALTH  CHECKS
+  e286ed97...   <span class="highlight">started</span>   ams     passing
+  d8d4523f...   <span class="highlight">started</span>   ams     passing
+            </div>
+
+            <p style="margin: 24px 0 12px 0;"><strong>2. View live logs:</strong></p>
+            <div class="code-box">
+flyctl logs --app wayzo
+            </div>
+
+            <p style="margin: 16px 0;"><strong>You should see:</strong></p>
+            <ul class="checklist">
+              <li>✅ Supabase clients initialized</li>
+              <li>Wayzo backend running on 0.0.0.0:8080</li>
+              <li>Version: staging-v65</li>
+            </ul>
+
+            <p style="margin: 24px 0 12px 0;"><strong>3. Test the main app:</strong></p>
+            <a href="https://wayzo.online" class="link-button" target="_blank">
+              Open Main App
+            </a>
+
+            <div class="info-box">
+              <strong>💡 What to check:</strong>
+              <p>
+                The main application at wayzo.online should load normally. You can fill out the trip planning
+                form as before. The backend is now integrated with Supabase, but the main flow (preview → payment → plan)
+                still uses the old SQLite for now. The dashboard uses the new Supabase system.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 3 -->
+        <div class="step">
+          <div class="step-number">3</div>
+          <h3 class="step-title">[Optional] Set Up Resend Email Domain</h3>
+          <p class="step-description">
+            Enable email notifications for when trip plans are ready. This step is optional but recommended for production use.
+          </p>
+
+          <div class="step-action">
+            <h4>🎯 Action Required:</h4>
+
+            <p style="margin: 16px 0;"><strong>1. Log in to Resend dashboard:</strong></p>
+            <a href="https://resend.com/domains" class="link-button secondary" target="_blank">
+              Open Resend Domains
+            </a>
+
+            <p style="margin: 24px 0 12px 0;"><strong>2. Click "Add Domain" and enter:</strong></p>
+            <div class="code-box">
+wayzo.online
+            </div>
+
+            <p style="margin: 24px 0 12px 0;"><strong>3. Resend will provide DNS records. You'll need to add these to your domain registrar:</strong></p>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Name</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>TXT</strong></td>
+                  <td>@</td>
+                  <td>v=spf1 include:_spf.resend.com ~all</td>
+                </tr>
+                <tr>
+                  <td><strong>CNAME</strong></td>
+                  <td>resend._domainkey</td>
+                  <td>[Resend will provide this value]</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <p style="margin: 24px 0 12px 0;"><strong>4. Wait 24-48 hours for DNS propagation</strong></p>
+
+            <p style="margin: 24px 0 12px 0;"><strong>5. Once verified, emails will be sent from:</strong></p>
+            <div class="code-box">
+hello@wayzo.online
+            </div>
+          </div>
+
+          <div class="info-box">
+            <strong>💡 Alternative Option:</strong>
+            <p>
+              Until the domain is verified, Resend will still send emails but they may go to spam.
+              For immediate testing, emails will use Resend's default domain. The email functionality
+              is already coded and ready—domain verification just improves deliverability.
+            </p>
+          </div>
+
+          <div class="warning-box">
+            <strong>⚠️ Current Status:</strong>
+            <p>
+              Your Resend dashboard shows "0 contacts" because no emails have been sent yet. Once you start
+              saving plans through the authenticated API (Step 4), you'll see email activity here.
+            </p>
+          </div>
+        </div>
+
+        <!-- STEP 4 -->
+        <div class="step">
+          <div class="step-number">4</div>
+          <h3 class="step-title">[Future] Integrate Main App with Supabase</h3>
+          <p class="step-description">
+            Currently, the dashboard uses Supabase, but the main app still uses SQLite. This step outlines how to migrate the full app to Supabase.
+          </p>
+
+          <div class="step-action">
+            <h4>📚 Technical Overview:</h4>
+
+            <p style="margin: 16px 0;"><strong>Current Architecture:</strong></p>
+            <ul class="checklist">
+              <li>Main app (index.backend.html) → SQLite database</li>
+              <li>Dashboard (dashboard.html) → Supabase database</li>
+              <li>These are separate systems right now</li>
+            </ul>
+
+            <p style="margin: 24px 0 12px 0;"><strong>To fully integrate, you need to:</strong></p>
+
+            <div class="info-box">
+              <strong>Option A: Require authentication before generating plans</strong>
+              <p>
+                1. Add Supabase auth to main app (index.backend.html)<br>
+                2. User must sign in before filling trip form<br>
+                3. After payment, save plan using POST /api/user/plan (sends email)<br>
+                4. User can view saved plan in dashboard
+              </p>
+            </div>
+
+            <div class="info-box">
+              <strong>Option B: Anonymous plans with optional account linking</strong>
+              <p>
+                1. Allow users to generate plans without signing in (as now)<br>
+                2. After payment, offer "Create account to save this plan"<br>
+                3. If user creates account, migrate plan to Supabase<br>
+                4. Otherwise, plan stays in SQLite (temporary)
+              </p>
+            </div>
+
+            <div class="info-box">
+              <strong>Option C: Dual storage (current approach)</strong>
+              <p>
+                1. Keep main app using SQLite for anonymous users<br>
+                2. Dashboard uses Supabase for authenticated users<br>
+                3. Manually create plans in dashboard after payment<br>
+                4. Migrate fully to Option A or B later
+              </p>
+            </div>
+
+            <p style="margin: 24px 0 12px 0;"><strong>For now, Option C is active by default.</strong> The infrastructure is ready whenever you want to migrate.</p>
+          </div>
+        </div>
+
+        <!-- STEP 5 -->
+        <div class="step">
+          <div class="step-number">5</div>
+          <h3 class="step-title">Monitor Your Application</h3>
+          <p class="step-description">
+            Keep track of your app's health, usage, and any issues that arise.
+          </p>
+
+          <div class="step-action">
+            <h4>🎯 Monitoring Tools:</h4>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Service</th>
+                  <th>Purpose</th>
+                  <th>Link</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Fly.io Dashboard</strong></td>
+                  <td>Server status, metrics, logs</td>
+                  <td><a href="https://fly.io/apps/wayzo" target="_blank" class="link-button secondary" style="padding: 8px 16px; margin: 0; font-size: 14px;">View</a></td>
+                </tr>
+                <tr>
+                  <td><strong>Supabase Dashboard</strong></td>
+                  <td>Database, auth, storage</td>
+                  <td><a href="https://supabase.com/dashboard/project/khrxfjekfzcvyjlzryyz" target="_blank" class="link-button secondary" style="padding: 8px 16px; margin: 0; font-size: 14px;">View</a></td>
+                </tr>
+                <tr>
+                  <td><strong>Resend Dashboard</strong></td>
+                  <td>Email activity, deliverability</td>
+                  <td><a href="https://resend.com/emails" target="_blank" class="link-button secondary" style="padding: 8px 16px; margin: 0; font-size: 14px;">View</a></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <p style="margin: 24px 0 12px 0;"><strong>Useful Commands:</strong></p>
+
+            <div class="code-box">
+<span class="comment"># View real-time logs</span>
+flyctl logs --app wayzo
+
+<span class="comment"># Check app status</span>
+flyctl status --app wayzo
+
+<span class="comment"># View all secrets (masked)</span>
+flyctl secrets list --app wayzo
+
+<span class="comment"># SSH into running machine</span>
+flyctl ssh console --app wayzo
+            </div>
+
+            <div class="info-box">
+              <strong>💡 Pro Tip:</strong>
+              <p>
+                Set up Fly.io monitoring alerts to get notified if your app goes down. Go to
+                https://fly.io/apps/wayzo/monitoring and configure email or Slack notifications.
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- WHAT'S ALREADY DONE -->
+      <h2 style="font-size: 28px; margin: 48px 0 24px 0; color: #111827;">✅ What's Already Done For You</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Task</th>
+            <th>Status</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Supabase Integration</strong></td>
+            <td><span class="status-badge done">Done</span></td>
+            <td>Backend code, clients, auth middleware all integrated</td>
+          </tr>
+          <tr>
+            <td><strong>Dashboard Credentials</strong></td>
+            <td><span class="status-badge done">Done</span></td>
+            <td>Real Supabase URL + anon key configured in dashboard.html</td>
+          </tr>
+          <tr>
+            <td><strong>API Routes</strong></td>
+            <td><span class="status-badge done">Done</span></td>
+            <td>4 authenticated endpoints for plan management</td>
+          </tr>
+          <tr>
+            <td><strong>Email System</strong></td>
+            <td><span class="status-badge done">Done</span></td>
+            <td>Resend integration with beautiful HTML templates</td>
+          </tr>
+          <tr>
+            <td><strong>Fly.io Deployment</strong></td>
+            <td><span class="status-badge done">Done</span></td>
+            <td>Live at wayzo.online with 24/7 uptime, 2 machines</td>
+          </tr>
+          <tr>
+            <td><strong>Environment Variables</strong></td>
+            <td><span class="status-badge done">Done</span></td>
+            <td>All 5 secrets configured in Fly.io</td>
+          </tr>
+          <tr>
+            <td><strong>Docker Configuration</strong></td>
+            <td><span class="status-badge done">Done</span></td>
+            <td>Fixed to use npm install (no Windows build tools needed)</td>
+          </tr>
+          <tr>
+            <td><strong>Server Configuration</strong></td>
+            <td><span class="status-badge done">Done</span></td>
+            <td>Listening on 0.0.0.0:8080 for Fly.io proxy</td>
+          </tr>
+          <tr>
+            <td><strong>Database Schema</strong></td>
+            <td><span class="status-badge done">Done</span></td>
+            <td>Plans and orders tables created in Supabase</td>
+          </tr>
+          <tr>
+            <td><strong>Git Repository</strong></td>
+            <td><span class="status-badge done">Done</span></td>
+            <td>All changes committed and pushed to GitHub</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- WHAT YOU NEED TO DO -->
+      <h2 style="font-size: 28px; margin: 48px 0 24px 0; color: #111827;">📝 Your Action Checklist</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Task</th>
+            <th>Status</th>
+            <th>Priority</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Test dashboard sign-in flow</strong></td>
+            <td><span class="status-badge todo">To Do</span></td>
+            <td>Critical</td>
+          </tr>
+          <tr>
+            <td><strong>Verify Fly.io deployment</strong></td>
+            <td><span class="status-badge todo">To Do</span></td>
+            <td>Critical</td>
+          </tr>
+          <tr>
+            <td><strong>Set up Resend email domain</strong></td>
+            <td><span class="status-badge optional">Optional</span></td>
+            <td>Medium</td>
+          </tr>
+          <tr>
+            <td><strong>Plan main app integration strategy</strong></td>
+            <td><span class="status-badge optional">Future</span></td>
+            <td>Low</td>
+          </tr>
+          <tr>
+            <td><strong>Set up monitoring alerts</strong></td>
+            <td><span class="status-badge optional">Optional</span></td>
+            <td>Medium</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- FINAL CTA -->
+      <div class="final-cta">
+        <h2>🚀 Ready to Test?</h2>
+        <p>Your Wayzo app is live and ready. Open the dashboard to see the new Supabase integration in action!</p>
+        <a href="https://wayzo.online/dashboard.html" class="big-button" target="_blank">
+          Test Dashboard Now →
+        </a>
+        <p style="margin-top: 24px; font-size: 14px; opacity: 0.9;">
+          Main app: <a href="https://wayzo.online" style="color: white; text-decoration: underline;">wayzo.online</a>
+        </p>
+      </div>
+
+      <!-- TROUBLESHOOTING -->
+      <h2 style="font-size: 28px; margin: 48px 0 24px 0; color: #111827;">🔧 Troubleshooting</h2>
+
+      <div class="warning-box">
+        <strong>Problem: Dashboard still shows fake data (Paris, Tokyo, Bali)</strong>
+        <p>
+          <strong>Solution:</strong> Clear your browser cache and hard reload (Ctrl+Shift+R). The Supabase credentials
+          have been updated in the latest deployment. If the issue persists, check the browser console (F12) for errors.
+        </p>
+      </div>
+
+      <div class="warning-box">
+        <strong>Problem: Can't receive magic link email</strong>
+        <p>
+          <strong>Solution:</strong> Check your spam folder. If still not receiving, verify your email in Supabase dashboard
+          → Authentication → Settings. Make sure email confirmation is enabled and the email provider is configured.
+        </p>
+      </div>
+
+      <div class="warning-box">
+        <strong>Problem: Dashboard shows "No plans yet" but I created plans before</strong>
+        <p>
+          <strong>Explanation:</strong> The old plans are in SQLite (local database on Fly.io). The new dashboard connects
+          to Supabase (cloud database). These are separate systems. Old plans are not migrated automatically. You can
+          manually copy data from SQLite to Supabase if needed.
+        </p>
+      </div>
+
+      <div class="warning-box">
+        <strong>Problem: Emails not sending from hello@wayzo.online</strong>
+        <p>
+          <strong>Solution:</strong> Complete Step 3 (Resend domain verification). Until the domain is verified,
+          emails will send from Resend's default domain and may go to spam.
+        </p>
+      </div>
+
+      <div class="info-box">
+        <strong>💬 Need Help?</strong>
+        <p>
+          Check the detailed technical documentation in <strong>DEPLOYMENT_STATUS_REPORT.html</strong> for architecture
+          diagrams, API documentation, and advanced troubleshooting. All 8 markdown documentation files are also available
+          in the project root directory.
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="text-align: center; padding: 40px 20px; color: white;">
+    <p style="font-size: 14px; opacity: 0.9;">Created for Wayzo Deployment</p>
+    <p style="font-size: 12px; opacity: 0.7; margin-top: 8px;">Last Updated: October 10, 2025</p>
+  </div>
+</body>
+</html>

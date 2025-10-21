@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In Test - Wayzo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 40px 20px;
+      color: #333;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    h1 {
+      color: #667eea;
+      margin-bottom: 20px;
+    }
+
+    .step {
+      background: #f8f9fa;
+      border-left: 4px solid #667eea;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+    }
+
+    .step h2 {
+      color: #5568d3;
+      margin-bottom: 12px;
+      font-size: 20px;
+    }
+
+    .code-box {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 16px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      margin: 12px 0;
+      overflow-x: auto;
+    }
+
+    .success {
+      color: #4ec9b0;
+    }
+
+    .warning {
+      color: #dcdcaa;
+    }
+
+    .error {
+      color: #f48771;
+    }
+
+    .btn {
+      background: #667eea;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin: 8px 4px;
+    }
+
+    .btn:hover {
+      background: #5568d3;
+    }
+
+    .critical {
+      background: #fee2e2;
+      border-left: 4px solid #dc2626;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+    }
+
+    .critical h2 {
+      color: #991b1b;
+      margin-bottom: 12px;
+    }
+
+    ol {
+      margin-left: 20px;
+      line-height: 1.8;
+    }
+
+    li {
+      margin: 8px 0;
+    }
+
+    strong {
+      color: #667eea;
+    }
+
+    .highlight {
+      background: yellow;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔑 Sign In Test - Why Your Plans Aren't Saving</h1>
+
+    <div class="critical">
+      <h2>❌ The Problem</h2>
+      <p><strong>You generated a plan while NOT signed in!</strong></p>
+      <p style="margin-top: 12px;">Looking at your console logs:</p>
+      <div class="code-box">
+<span class="error">app.js:816 User authenticated: false</span>
+<span class="error">app.js:817 Current user: null</span>
+<span class="warning">app.js:862 ⚠️ User not authenticated - using public endpoint</span>
+      </div>
+      <p style="margin-top: 12px;">
+        This means the app correctly detected you're NOT signed in, so it used the public endpoint
+        which <strong class="highlight">does NOT save to database</strong>.
+      </p>
+    </div>
+
+    <div class="step">
+      <h2>✅ The Solution - Sign In BEFORE Generating Plans</h2>
+      <p>Follow these steps IN ORDER:</p>
+      <ol>
+        <li><strong>Go to wayzo-staging.onrender.com</strong></li>
+        <li><strong>Click "Sign In" button</strong> (top-right corner)</li>
+        <li><strong>Use one of these methods:</strong>
+          <ul style="margin-top: 8px;">
+            <li><strong>Option 1 - Magic Link (Recommended):</strong>
+              <ul>
+                <li>Enter your email: <code>dimahasin2@gmail.com</code></li>
+                <li>Click "Sign in with magic link"</li>
+                <li>Check your email for the magic link</li>
+                <li>Click the link to complete sign-in</li>
+              </ul>
+            </li>
+            <li><strong>Option 2 - Google Sign-In:</strong>
+              <ul>
+                <li>Click "Continue with Google"</li>
+                <li>Select your Google account</li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li><strong>Verify you're signed in:</strong>
+          <ul>
+            <li>Top-right corner should show your email or profile picture</li>
+            <li>"Sign In" button should change to "Sign Out"</li>
+            <li>"My Trips" button should appear</li>
+          </ul>
+        </li>
+        <li><strong>Open browser console (F12)</strong></li>
+        <li><strong>Run this test:</strong></li>
+      </ol>
+      <div class="code-box">
+<span class="comment">// Test if signed in</span>
+<span class="keyword">async function</span> <span class="function">checkAuth</span>() {
+  if (!window.supabaseClient) {
+    console.<span class="function">error</span>(<span class="string">'❌ Supabase not initialized'</span>);
+    return;
+  }
+
+  const { data: { session } } = await window.supabaseClient.auth.<span class="function">getSession</span>();
+
+  if (session?.user) {
+    console.<span class="function">log</span>(<span class="success">'✅ SIGNED IN'</span>);
+    console.<span class="function">log</span>(<span class="success">'Email:', session.user.email</span>);
+    console.<span class="function">log</span>(<span class="success">'User ID:', session.user.id</span>);
+    console.<span class="function">log</span>(<span class="success">'Token:', session.access_token.substring(0, 30) + '...'</span>);
+    return true;
+  } else {
+    console.<span class="function">error</span>(<span class="error">'❌ NOT SIGNED IN'</span>);
+    console.<span class="function">log</span>(<span class="warning">'Please sign in first!'</span>);
+    return false;
+  }
+}
+
+<span class="function">checkAuth</span>();
+      </div>
+      <p style="margin-top: 12px;"><strong>Expected output if signed in correctly:</strong></p>
+      <div class="code-box">
+<span class="success">✅ SIGNED IN</span>
+<span class="success">Email: dimahasin2@gmail.com</span>
+<span class="success">User ID: abc123-def456-...</span>
+<span class="success">Token: eyJhbGciOiJIUzI1NiIsInR5cCI6...</span>
+      </div>
+    </div>
+
+    <div class="step">
+      <h2>🧪 Test Plan Generation (After Signing In)</h2>
+      <ol>
+        <li><strong>Make sure</strong> the console shows "✅ SIGNED IN" from above test</li>
+        <li><strong>Generate a test plan:</strong>
+          <ul>
+            <li>Destination: "Paris, France"</li>
+            <li>Start Date: Any future date</li>
+            <li>End Date: A few days later</li>
+            <li>Click "Generate My Plan"</li>
+          </ul>
+        </li>
+        <li><strong>Watch console for these messages:</strong></li>
+      </ol>
+      <div class="code-box">
+<span class="success">app.js:816 User authenticated: true</span>
+<span class="success">✅ Calling authenticated endpoint /api/user/plan</span>
+<span class="success">✅ Plan saved to database: {id: '...', ok: true, url: '...'}</span>
+<span class="success">✅ Plan saved to your dashboard!</span>
+      </div>
+      <p style="margin-top: 12px;"><strong>If you see these messages, the plan IS being saved!</strong></p>
+    </div>
+
+    <div class="step">
+      <h2>📊 Verify Plan in Database</h2>
+      <ol>
+        <li>Go to <a href="https://supabase.com/dashboard" target="_blank">Supabase Dashboard</a></li>
+        <li>Open <strong>wayzo-prod</strong> project</li>
+        <li>Click <strong>Table Editor</strong> → <strong>plans</strong> table</li>
+        <li>You should now see a row with:
+          <ul>
+            <li><code>destination</code> = "Paris, France"</li>
+            <li><code>user_id</code> = your user ID</li>
+            <li><code>html</code> = (plan content)</li>
+            <li><code>created_at</code> = recent timestamp</li>
+          </ul>
+        </li>
+      </ol>
+    </div>
+
+    <div class="step">
+      <h2>🗂️ View in My Trips</h2>
+      <ol>
+        <li>Go to <strong>wayzo-staging.onrender.com/backoffice.html</strong></li>
+        <li>Make sure you're signed in (same email)</li>
+        <li>You should see your "Paris, France" plan in the grid</li>
+        <li>Click on it to view the full plan</li>
+      </ol>
+    </div>
+
+    <div class="critical">
+      <h2>⚠️ Why You Weren't Signed In</h2>
+      <p>Looking at your screenshots, I can see:</p>
+      <ul style="margin-left: 20px; margin-top: 12px;">
+        <li>You got a popup asking "Want to save this plan to your dashboard?"</li>
+        <li>This popup ONLY appears when you're <strong>NOT signed in</strong></li>
+        <li>The console showed <code>Current user: null</code></li>
+      </ul>
+      <p style="margin-top: 12px;">
+        <strong>The fix is working perfectly!</strong> It just needs you to be signed in first.
+      </p>
+    </div>
+
+    <div class="step" style="background: #d4edda; border-color: #28a745;">
+      <h2 style="color: #155724;">✅ Quick Checklist</h2>
+      <p><strong>Before generating a plan, verify:</strong></p>
+      <div style="margin-top: 12px; font-size: 16px; line-height: 2;">
+        ☐ Top-right shows my email or profile<br>
+        ☐ "My Trips" button is visible<br>
+        ☐ Console test shows "✅ SIGNED IN"<br>
+        ☐ No "Sign In" button (changed to "Sign Out")<br>
+      </div>
+      <p style="margin-top: 16px;"><strong>If ALL checked, you're ready to generate plans!</strong></p>
+    </div>
+
+    <div style="margin-top: 40px; padding: 20px; background: #e7f3ff; border-radius: 8px; border-left: 4px solid #2196F3;">
+      <h2 style="color: #0d47a1; margin-bottom: 12px;">💡 Pro Tip</h2>
+      <p>The code is working correctly! Here's what happens:</p>
+      <ul style="margin-left: 20px; margin-top: 12px; line-height: 1.8;">
+        <li><strong>Signed In:</strong> Plan saves to database → visible in My Trips ✅</li>
+        <li><strong>Not Signed In:</strong> Plan generated but NOT saved → shows popup to sign in ⚠️</li>
+      </ul>
+    </div>
+
+    <div style="margin-top: 40px; text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+      <p style="font-size: 18px; margin-bottom: 16px;"><strong>Try It Now:</strong></p>
+      <a href="https://wayzo-staging.onrender.com" class="btn" target="_blank">
+        Go to Wayzo Staging
+      </a>
+      <a href="https://supabase.com/dashboard" class="btn" target="_blank" style="background: #3ecf8e;">
+        Open Supabase Dashboard
+      </a>
+    </div>
+  </div>
+</body>
+</html>
