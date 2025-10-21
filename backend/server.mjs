@@ -1875,16 +1875,17 @@ app.get('/api/analytics', (req, res) => {
   }
 });
 
-// Event tracking endpoint
+// DUPLICATE REMOVED - Event tracking endpoint is at line 2617 (better version with || {} fallback)
+/*
 app.post('/api/track', (req, res) => {
   try {
     const eventData = req.body;
     console.log('Event tracked:', eventData);
-    
+
     // Store event in database for analytics
     const eventId = uid();
     db.prepare(`
-      INSERT INTO events (id, event_type, user_id, data, created_at) 
+      INSERT INTO events (id, event_type, user_id, data, created_at)
       VALUES (?, ?, ?, ?, ?)
     `).run(
       eventId,
@@ -1893,13 +1894,14 @@ app.post('/api/track', (req, res) => {
       JSON.stringify(eventData),
       new Date().toISOString()
     );
-    
+
     res.json({ success: true, eventId });
   } catch (e) {
     console.error('Event tracking error:', e);
     res.status(500).json({ error: 'Failed to track event' });
   }
 });
+*/
 
 // Get user's plans - requires authentication
 app.get('/api/user/plans', requireUser, async (req, res) => {
