@@ -7,6 +7,8 @@
 
   <link rel="icon" type="image/svg+xml" href="/frontend/favicon.svg" />
   <link rel="stylesheet" href="/frontend/style.css" />
+  <link rel="stylesheet" href="/frontend/mobile-responsive.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/config.js"></script>
   <script src="/frontend/translations.js"></script>
   <script src="/frontend/app.js" defer></script>
@@ -47,11 +49,14 @@
             <option value="ko">🇰🇷 한국어</option>
           </select>
         </div>
-        <button id="loginBtn" class="btn btn-ghost">Sign In</button>
-        <div id="userMenuBtn" class="user-menu-btn hidden">
-          <img id="userMenuAvatar" src="/frontend/assets/default-avatar.svg" alt="User" />
-        </div>
-        <a class="btn btn-cta" href="#planner">Start planning</a>
+        <button id="myTripsBtn" class="btn" style="display: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; font-size: 15px; font-weight: 600; border-radius: 8px; border: none; cursor: pointer; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3); transition: all 0.3s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(102, 126, 234, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(102, 126, 234, 0.3)'" onclick="showCabinet()">
+          <i class="fas fa-suitcase"></i> My Trips
+        </button>
+        <button id="loginBtn" class="btn btn-ghost" style="padding: 10px 20px; font-size: 15px; font-weight: 500;">Sign In</button>
+        <button id="signOutBtn" class="btn btn-ghost" style="display: none; padding: 10px 20px; font-size: 15px; font-weight: 500; color: #666;" onclick="if(confirm('Are you sure you want to sign out?')) signOut()">
+          <i class="fas fa-sign-out-alt"></i> Sign Out
+        </button>
+        <a class="btn btn-cta" href="#planner" style="padding: 12px 24px; font-size: 15px; font-weight: 600;">Start planning</a>
       </div>
     </div>
   </header>
@@ -264,37 +269,35 @@
             <label class="chip"><input type="radio" name="level" value="luxury" /> Luxury</label>
           </fieldset>
 
-          <div class="field preferences-field">
-            <span>Preferences <small>(Select multiple interests)</small></span>
-            <div class="preferences-container">
-              <div class="preference-tags">
-                <label class="preference-tag"><input type="checkbox" name="prefs" value="museums" /> Museums & Culture</label>
-                <label class="preference-tag"><input type="checkbox" name="prefs" value="beaches" /> Beaches & Water</label>
-                <label class="preference-tag"><input type="checkbox" name="prefs" value="hiking" /> Hiking & Nature</label>
-                <label class="preference-tag"><input type="checkbox" name="prefs" value="kid-friendly" /> Kid-Friendly</label>
-                <label class="preference-tag"><input type="checkbox" name="prefs" value="nightlife" /> Nightlife & Entertainment</label>
-                <label class="preference-tag"><input type="checkbox" name="prefs" value="food" /> Food & Dining</label>
-                <label class="preference-tag"><input type="checkbox" name="prefs" value="shopping" /> Shopping</label>
-                <label class="preference-tag"><input type="checkbox" name="prefs" value="adventure" /> Adventure Sports</label>
-                <label class="preference-tag"><input type="checkbox" name="prefs" value="relaxation" /> Relaxation & Spa</label>
-                <label class="preference-tag"><input type="checkbox" name="prefs" value="history" /> Historical Sites</label>
-                <label class="preference-tag"><input type="checkbox" name="prefs" value="photography" /> Photography</label>
-                <label class="preference-tag"><input type="checkbox" name="prefs" value="local-culture" /> Local Culture</label>
-              </div>
-              <div class="preferences-help">💡 Click multiple tags to personalize your trip experience</div>
-            </div>
+          <div class="field">
+            <label for="preferences">Preferences <small>(Select multiple interests)</small></label>
+            <select id="preferences" name="prefs" multiple size="6" class="modern-select">
+              <option value="museums">🏛️ Museums & Culture</option>
+              <option value="beaches">🏖️ Beaches & Water</option>
+              <option value="hiking">🥾 Hiking & Nature</option>
+              <option value="kid-friendly">👶 Kid-Friendly</option>
+              <option value="nightlife">🎉 Nightlife & Entertainment</option>
+              <option value="food">🍽️ Food & Dining</option>
+              <option value="shopping">🛍️ Shopping</option>
+              <option value="adventure">🏄 Adventure Sports</option>
+              <option value="relaxation">💆 Relaxation & Spa</option>
+              <option value="history">🏰 Historical Sites</option>
+              <option value="photography">📸 Photography</option>
+              <option value="local-culture">🌍 Local Culture</option>
+            </select>
+            <small class="field-help">💡 Hold Ctrl (Windows) or Cmd (Mac) to select multiple options</small>
           </div>
 
           <div class="field">
-            <span>Dietary needs (optional)</span>
-            <div class="dietary-options">
-              <label class="chip"><input type="checkbox" name="dietary" value="vegetarian" /> Vegetarian</label>
-              <label class="chip"><input type="checkbox" name="dietary" value="vegan" /> Vegan</label>
-              <label class="chip"><input type="checkbox" name="dietary" value="gluten-free" /> Gluten-free</label>
-              <label class="chip"><input type="checkbox" name="dietary" value="halal" /> Halal</label>
-              <label class="chip"><input type="checkbox" name="dietary" value="kosher" /> Kosher</label>
-              <label class="chip"><input type="checkbox" name="dietary" value="none" checked /> No restrictions</label>
-            </div>
+            <label for="dietary">Dietary needs (optional)</label>
+            <select id="dietary" name="dietary" class="modern-select">
+              <option value="none" selected>🍽️ No restrictions</option>
+              <option value="vegetarian">🥗 Vegetarian</option>
+              <option value="vegan">🌱 Vegan</option>
+              <option value="gluten-free">🌾 Gluten-free</option>
+              <option value="halal">🕌 Halal</option>
+              <option value="kosher">✡️ Kosher</option>
+            </select>
           </div>
 
           <div class="field">
@@ -525,81 +528,136 @@
     </div>
   </div>
 
-  <!-- Authentication Modal -->
+  <!-- Authentication Modal - Professional Magic Link Design -->
   <div id="authModal" class="auth-modal hidden">
+    <div class="auth-modal-overlay" onclick="hideAuthModal()"></div>
     <div class="auth-modal-content">
-      <div class="auth-header">
-        <h3>Welcome to Wayzo</h3>
-        <button class="btn-close" onclick="hideAuthModal()">×</button>
-      </div>
-      
-      <div class="auth-tabs">
-        <button class="auth-tab active" onclick="switchAuthTab('signin')">Sign In</button>
-        <button class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button>
-      </div>
-      
-      <div id="signinTab" class="auth-tab-content active">
-        <div class="social-auth">
-          <div id="gsiSignInContainer"></div>
-          <button class="btn btn-google" onclick="handleGoogleSignIn()">
-            <i class="fab fa-google"></i> Continue with Google
-          </button>
-          <button class="btn btn-facebook" onclick="handleFacebookSignIn()">
-            <i class="fab fa-facebook"></i> Continue with Facebook
-          </button>
-          <button class="btn btn-apple" onclick="handleAppleSignIn()">
-            <i class="fab fa-apple"></i> Continue with Apple
-          </button>
+      <!-- Close Button -->
+      <button class="auth-close-btn" onclick="hideAuthModal()" aria-label="Close">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+
+      <!-- Success State (initially hidden) -->
+      <div id="authSuccessState" class="auth-state hidden">
+        <div class="auth-success-icon">
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+            <circle cx="32" cy="32" r="30" stroke="#10b981" stroke-width="4" fill="#ecfdf5"/>
+            <path d="M20 32L28 40L44 24" stroke="#10b981" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </div>
-        
-        <div class="auth-divider">
-          <span>or</span>
+        <h2 class="auth-success-title">Check your email!</h2>
+        <p class="auth-success-message">
+          We've sent a magic link to <strong id="sentToEmail"></strong>
+        </p>
+        <p class="auth-success-submessage">
+          Click the link in the email to sign in instantly. No password needed!
+        </p>
+        <div class="auth-success-features">
+          <div class="feature-item">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/>
+            </svg>
+            <span>Secure & encrypted</span>
+          </div>
+          <div class="feature-item">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/>
+            </svg>
+            <span>Link expires in 15 minutes</span>
+          </div>
         </div>
-        
-        <form class="auth-form" onsubmit="handleManualSignIn(event)">
-          <input type="email" placeholder="Email" required />
-          <input type="password" placeholder="Password" required />
-          <button type="submit" class="btn btn-primary">Sign In</button>
+        <button class="auth-back-btn" onclick="resetAuthModal()">
+          ← Back to sign in
+        </button>
+      </div>
+
+      <!-- Main Auth State -->
+      <div id="authMainState" class="auth-state">
+        <!-- Header -->
+        <div class="auth-header">
+          <div class="auth-logo">
+            <div class="brand-badge">WZ</div>
+          </div>
+          <h2 class="auth-title">Welcome to Wayzo</h2>
+          <p class="auth-subtitle">Sign in to access your personalized travel plans</p>
+        </div>
+
+        <!-- Magic Link Form -->
+        <form id="magicLinkForm" class="auth-form" onsubmit="handleMagicLinkAuth(event)">
+          <div class="form-group">
+            <label for="authEmail" class="form-label">Email address</label>
+            <input
+              type="email"
+              id="authEmail"
+              class="form-input"
+              placeholder="your@email.com"
+              required
+              autocomplete="email"
+            />
+          </div>
+
+          <button type="submit" class="btn-auth-primary" id="magicLinkBtn">
+            <span class="btn-text">Continue with Email</span>
+            <span class="btn-loading hidden">
+              <svg class="spinner" width="20" height="20" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" opacity="0.25"/>
+                <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" opacity="0.75"/>
+              </svg>
+              Sending...
+            </span>
+          </button>
         </form>
-        
-        <div class="auth-links">
-          <a href="#" onclick="showForgotPassword()">Forgot password?</a>
-        </div>
-      </div>
-      
-      <div id="signupTab" class="auth-tab-content">
-        <div class="social-auth">
-          <div id="gsiSignUpContainer"></div>
-          <button class="btn btn-google" onclick="handleGoogleSignUp()">
-            <i class="fab fa-google"></i> Continue with Google
-          </button>
-          <button class="btn btn-facebook" onclick="handleFacebookSignUp()">
-            <i class="fab fa-facebook"></i> Continue with Facebook
-          </button>
-          <button class="btn btn-apple" onclick="handleAppleSignUp()">
-            <i class="fab fa-apple"></i> Continue with Apple
-          </button>
-        </div>
-        
+
+        <!-- Divider -->
         <div class="auth-divider">
-          <span>or</span>
+          <span>or continue with</span>
         </div>
-        
-        <form class="auth-form" onsubmit="handleManualSignUp(event)">
-          <input type="text" placeholder="Full Name" required />
-          <input type="email" placeholder="Email" required />
-          <input type="password" placeholder="Password" required />
-          <input type="password" placeholder="Confirm Password" required />
-          <label class="checkbox-group">
-            <input type="checkbox" required />
-            <span>I agree to the <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a></span>
-          </label>
-          <button type="submit" class="btn btn-primary">Create Account</button>
-        </form>
-      </div>
-      
-      <div class="auth-actions">
-        <button class="btn btn-outline" onclick="showQuickSignup()">Quick signup with Email</button>
+
+        <!-- Social Auth -->
+        <div class="social-auth-buttons">
+          <button class="btn-social btn-google" onclick="handleGoogleSignIn()">
+            <svg width="20" height="20" viewBox="0 0 24 24">
+              <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Google
+          </button>
+        </div>
+
+        <!-- Features -->
+        <div class="auth-features">
+          <div class="feature-item">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M8 1a2 2 0 012 2v4H6V3a2 2 0 012-2zm3 6V3a3 3 0 00-6 0v4a2 2 0 00-2 2v5a2 2 0 002 2h6a2 2 0 002-2V9a2 2 0 00-2-2z"/>
+            </svg>
+            <span>No password required</span>
+          </div>
+          <div class="feature-item">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path fill-rule="evenodd" d="M8 0a8 8 0 100 16A8 8 0 008 0zM6.5 5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm6 0a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM8 13a5.5 5.5 0 01-4.546-2.436A3.5 3.5 0 008 9.5a3.5 3.5 0 004.546 1.064A5.5 5.5 0 018 13z"/>
+            </svg>
+            <span>Instant access</span>
+          </div>
+          <div class="feature-item">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path fill-rule="evenodd" d="M5 11.5a.5.5 0 01.5-.5h9a.5.5 0 010 1h-9a.5.5 0 01-.5-.5zm0-4a.5.5 0 01.5-.5h9a.5.5 0 010 1h-9a.5.5 0 01-.5-.5zm0-4a.5.5 0 01.5-.5h9a.5.5 0 010 1h-9a.5.5 0 01-.5-.5z"/>
+              <path d="M1.5 0A1.5 1.5 0 000 1.5v13A1.5 1.5 0 001.5 16h13a1.5 1.5 0 001.5-1.5v-13A1.5 1.5 0 0014.5 0h-13z"/>
+            </svg>
+            <span>All your plans in one place</span>
+          </div>
+        </div>
+
+        <!-- Terms -->
+        <p class="auth-terms">
+          By continuing, you agree to our
+          <a href="/terms" target="_blank">Terms of Service</a> and
+          <a href="/privacy" target="_blank">Privacy Policy</a>
+        </p>
       </div>
     </div>
   </div>
@@ -616,17 +674,8 @@
       </div>
     </div>
     <div class="user-menu-actions">
-      <a href="/dashboard" class="menu-btn" target="_blank">
-        <i class="fas fa-chart-line"></i> Dashboard
-      </a>
-      <a href="/dashboard/plans" class="menu-btn" target="_blank">
-        <i class="fas fa-map"></i> My Plans
-      </a>
-      <a href="/dashboard/referrals" class="menu-btn" target="_blank">
-        <i class="fas fa-share-alt"></i> Refer Friends
-      </a>
-      <a href="/dashboard/billing" class="menu-btn" target="_blank">
-        <i class="fas fa-credit-card"></i> Billing
+      <a href="#cabinet" class="menu-btn" onclick="showCabinet(); return false;">
+        <i class="fas fa-suitcase"></i> My Trips
       </a>
       <button class="menu-btn admin-only" onclick="accessAdminPanel()" style="display: none;">
         <i class="fas fa-cog"></i> Admin Panel
@@ -645,155 +694,62 @@
     </div>
     
     <div class="cabinet-content">
-      <div class="cabinet-sidebar">
-        <nav class="sidebar-menu">
-          <button class="sidebar-item active" onclick="switchCabinetTab('overview')">
-            <i class="fas fa-home"></i> Overview
-          </button>
-          <button class="sidebar-item" onclick="switchCabinetTab('plans')">
-            <i class="fas fa-map"></i> My Plans
-          </button>
-          <button class="sidebar-item" onclick="switchCabinetTab('referrals')">
-            <i class="fas fa-share-alt"></i> Referrals
-          </button>
-          <button class="sidebar-item" onclick="switchCabinetTab('billing')">
-            <i class="fas fa-credit-card"></i> Billing
-          </button>
-          <button class="sidebar-item" onclick="switchCabinetTab('profile')">
-            <i class="fas fa-user"></i> Profile
-          </button>
-        </nav>
+      <!-- Simple top navigation -->
+      <div class="dashboard-nav" style="display: flex; gap: 20px; margin-bottom: 30px; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px;">
+        <button class="nav-tab active" onclick="switchDashboardView('plans')" style="padding: 10px 20px; background: none; border: none; font-size: 16px; font-weight: 600; cursor: pointer; border-bottom: 3px solid #667eea; color: #667eea;">
+          <i class="fas fa-map"></i> My Plans
+        </button>
+        <button class="nav-tab" onclick="switchDashboardView('profile')" style="padding: 10px 20px; background: none; border: none; font-size: 16px; font-weight: 600; cursor: pointer; color: #666;">
+          <i class="fas fa-user"></i> Profile
+        </button>
+        <button onclick="window.supabase?.auth.signOut(); window.location.reload();" style="padding: 10px 20px; background: none; border: none; font-size: 16px; font-weight: 600; cursor: pointer; color: #666; margin-left: auto;">
+          <i class="fas fa-sign-out-alt"></i> Sign Out
+        </button>
       </div>
-      
+
       <div class="cabinet-main">
-        <div id="overviewTab" class="cabinet-tab active">
-          <div class="overview-stats">
-            <div class="stat-card">
-              <div class="stat-icon">📊</div>
+        <!-- Plans View (default) -->
+        <div id="plansView" class="dashboard-view active">
+          <div class="overview-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
+            <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 12px; color: white; text-align: center;">
+              <div class="stat-icon" style="font-size: 40px; margin-bottom: 10px;">📊</div>
               <div class="stat-content">
-                <div class="stat-number">12</div>
-                <div class="stat-label">Plans Created</div>
-              </div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon">💰</div>
-              <div class="stat-content">
-                <div class="stat-number">$45</div>
-                <div class="stat-label">Total Saved</div>
-              </div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon">👥</div>
-              <div class="stat-content">
-                <div class="stat-number">8</div>
-                <div class="stat-label">Referrals</div>
+                <div class="stat-number" style="font-size: 36px; font-weight: bold; margin-bottom: 5px;" id="planCount">0</div>
+                <div class="stat-label" style="font-size: 14px; opacity: 0.9;">Plans Created</div>
               </div>
             </div>
           </div>
-          
+
           <div class="recent-plans">
-            <h3>Recent Plans</h3>
-            <div class="plans-list">
-              <div class="plan-item">
-                <div class="plan-info">
-                  <h4>Paris Adventure</h4>
-                  <p>5 days • Mid-range • $2,000</p>
-                </div>
-                <div class="plan-status paid">Paid</div>
-              </div>
-              <div class="plan-item">
-                <div class="plan-info">
-                  <h4>Tokyo Explorer</h4>
-                  <p>7 days • Luxury • $3,500</p>
-                </div>
-                <div class="plan-status draft">Draft</div>
+            <h3 style="margin-bottom: 20px; font-size: 24px; color: #333;">Your Travel Plans</h3>
+            <div id="plansGrid" class="plans-list">
+              <!-- Plans will be populated dynamically from API -->
+              <div class="loading-plans" style="text-align: center; padding: 40px; color: #666;">
+                <i class="fas fa-spinner fa-spin" style="font-size: 24px; margin-bottom: 10px;"></i>
+                <p>Loading your plans...</p>
               </div>
             </div>
           </div>
         </div>
-        
-        <div id="plansTab" class="cabinet-tab">
-          <h3>My Travel Plans</h3>
-          <div class="plans-list">
-            <!-- Plans will be populated dynamically -->
-          </div>
-        </div>
-        
-        <div id="referralsTab" class="cabinet-tab">
-          <div class="referral-content">
-            <div class="referral-stats">
-              <div class="referral-stat">
-                <div class="stat-number">8</div>
-                <div class="stat-label">Total Referrals</div>
-              </div>
-              <div class="referral-stat">
-                <div class="stat-number">$40</div>
-                <div class="stat-label">Earnings</div>
-              </div>
-            </div>
-            
-            <div class="referral-link-section">
-              <h4>Share Your Referral Code</h4>
-              <div class="referral-link-input">
-                <input type="text" id="referralLink" readonly value="https://wayzo.online?ref=WAYZO123" />
-                <button class="btn btn-primary" onclick="copyReferralLink()">Copy Link</button>
-              </div>
-              
-              <div class="share-buttons">
-                <button class="share-btn" onclick="shareReferral('twitter')">
-                  <i class="fab fa-twitter"></i> Twitter
-                </button>
-                <button class="share-btn" onclick="shareReferral('facebook')">
-                  <i class="fab fa-facebook"></i> Facebook
-                </button>
-                <button class="share-btn" onclick="shareReferral('email')">
-                  <i class="fas fa-envelope"></i> Email
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div id="billingTab" class="cabinet-tab">
-          <h3>Billing & Payments</h3>
-          <div class="billing-summary">
-            <div class="billing-card">
-              <h4>Current Plan</h4>
-              <p>Free Plan</p>
-              <button class="btn btn-primary">Upgrade</button>
-            </div>
-          </div>
-          
-          <div class="payment-list">
-            <h4>Payment History</h4>
-            <div class="no-payments">
-              <p>No payments yet</p>
-            </div>
-          </div>
-          
-          <div class="credits-display">
-            <h4>Available Credits</h4>
-            <div class="credits-amount">$0.00</div>
-          </div>
-        </div>
-        
-        <div id="profileTab" class="cabinet-tab">
-          <h3>Profile Settings</h3>
+
+        <!-- Profile View -->
+        <div id="profileView" class="dashboard-view" style="display: none;">
+          <h3 style="margin-bottom: 20px; font-size: 24px; color: #333;">Profile Settings</h3>
           <div class="profile-content">
-            <form class="profile-form" onsubmit="updateProfile(event)">
-              <div class="field">
-                <label>Full Name</label>
-                <input type="text" id="profileName" value="John Doe" />
+            <form class="profile-form" onsubmit="updateProfile(event)" style="max-width: 500px;">
+              <div class="field" style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Full Name</label>
+                <input type="text" id="profileName" placeholder="Enter your name" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px;" />
               </div>
-              <div class="field">
-                <label>Email</label>
-                <input type="email" id="profileEmail" value="john@example.com" readonly />
+              <div class="field" style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Email</label>
+                <input type="email" id="profileEmail" readonly style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; background: #f5f5f5;" />
               </div>
-              <div class="field">
-                <label>Phone</label>
-                <input type="tel" id="profilePhone" placeholder="+1 (555) 123-4567" />
+              <div class="field" style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Phone</label>
+                <input type="tel" id="profilePhone" placeholder="+1 (555) 123-4567" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px;" />
               </div>
-              <button type="submit" class="btn btn-primary">Update Profile</button>
+              <button type="submit" class="btn btn-primary" style="padding: 12px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Update Profile</button>
             </form>
           </div>
         </div>
@@ -807,5 +763,185 @@
   
   <!-- Google OAuth Script -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <!-- Supabase Client Initialization -->
+  <script>
+    // Initialize Supabase client for authentication and database
+    (function initSupabase() {
+      const SUPABASE_URL = 'https://khrxfjekfzcvyjlzryyz.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtocnhmamVrZnpjdnlqbHpyeXl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4NzA3ODEsImV4cCI6MjA3NTQ0Njc4MX0.Uc4Nd9Wxt1TZNoq_nto0vYCdPAG1tI8alhx8ENSv8HA';
+
+      try {
+        if (window.supabase && typeof window.supabase.createClient === 'function') {
+          window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+          console.log('✅ Supabase client initialized');
+        } else {
+          console.warn('⚠️ Supabase library not loaded yet');
+        }
+      } catch (error) {
+        console.error('❌ Failed to initialize Supabase:', error);
+      }
+    })();
+  </script>
+
+  <!-- Dashboard View Switcher and Plans Loader (inline to avoid conflicts) -->
+  <script>
+  // Switch between dashboard views
+  function switchDashboardView(view) {
+    // Hide all views
+    document.querySelectorAll('.dashboard-view').forEach(v => v.style.display = 'none');
+
+    // Remove active class from all tabs
+    document.querySelectorAll('.nav-tab').forEach(t => {
+      t.classList.remove('active');
+      t.style.borderBottom = 'none';
+      t.style.color = '#666';
+    });
+
+    // Show selected view and mark tab as active
+    if (view === 'plans') {
+      document.getElementById('plansView').style.display = 'block';
+      document.querySelectorAll('.nav-tab')[0].classList.add('active');
+      document.querySelectorAll('.nav-tab')[0].style.borderBottom = '3px solid #667eea';
+      document.querySelectorAll('.nav-tab')[0].style.color = '#667eea';
+    } else if (view === 'profile') {
+      document.getElementById('profileView').style.display = 'block';
+      document.querySelectorAll('.nav-tab')[1].classList.add('active');
+      document.querySelectorAll('.nav-tab')[1].style.borderBottom = '3px solid #667eea';
+      document.querySelectorAll('.nav-tab')[1].style.color = '#667eea';
+    }
+  }
+
+  // Load dashboard plans from API
+  (async function loadDashboardPlans() {
+    const plansGrid = document.getElementById('plansGrid');
+    const planCount = document.getElementById('planCount');
+    if (!plansGrid) return; // Element doesn't exist, skip
+
+    try {
+      // Check if user is authenticated
+      if (!window.supabaseClient) {
+        console.log('Supabase not loaded yet for dashboard plans');
+        return;
+      }
+
+      const { data: { session } } = await window.supabaseClient.auth.getSession();
+      if (!session?.access_token) {
+        plansGrid.innerHTML = '<p style="text-align:center;padding:20px;color:#999;">Sign in to view your plans</p>';
+        if (planCount) planCount.textContent = '0';
+        return;
+      }
+
+      // Fetch real plans
+      const resp = await fetch('/api/user/plans', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      });
+
+      if (!resp.ok) {
+        plansGrid.innerHTML = '<p style="text-align:center;padding:20px;color:#999;">📋 No plans yet</p>';
+        if (planCount) planCount.textContent = '0';
+        return;
+      }
+
+      const plans = await resp.json();
+
+      // Update plan count
+      if (planCount) planCount.textContent = plans.length;
+
+      if (plans.length === 0) {
+        plansGrid.innerHTML = `
+          <div style="text-align:center;padding:40px 20px;">
+            <p style="font-size:18px;margin-bottom:12px;">📋 No plans yet</p>
+            <p style="color:#666;margin-bottom:20px;">Create your first trip plan to get started!</p>
+            <button onclick="document.querySelector('#tripForm').scrollIntoView({behavior:'smooth'})"
+                    style="padding:12px 24px;background:#667eea;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;">
+              Create New Plan
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      // Display plans
+      plansGrid.innerHTML = plans.map(plan => {
+        const days = plan.start_date && plan.end_date
+          ? Math.ceil((new Date(plan.end_date) - new Date(plan.start_date)) / 86400000)
+          : '?';
+
+        return `
+          <div class="plan-item" onclick="window.location.href='/dashboard#plan=${plan.id}'" style="cursor:pointer;padding:20px;border:1px solid #e0e0e0;border-radius:12px;margin-bottom:15px;transition:all 0.3s;background:white;" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)'" onmouseout="this.style.boxShadow='none'">
+            <div class="plan-info">
+              <h4 style="margin:0 0 8px 0;font-size:18px;color:#333;">${escapeHTML(plan.destination || plan.title || 'Untitled')}</h4>
+              <p style="margin:4px 0;color:#666;font-size:14px;"><i class="fas fa-calendar"></i> ${days} days • <i class="fas fa-dollar-sign"></i> ${plan.budget_low ? '$' + plan.budget_low : 'Budget not set'}</p>
+              <p style="font-size:12px;color:#999;margin:8px 0 0 0;"><i class="far fa-clock"></i> Created ${new Date(plan.created_at).toLocaleDateString()}</p>
+            </div>
+            <div class="plan-status" style="display:inline-block;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;margin-top:10px;background:${plan.status === 'complete' ? '#4caf50' : '#ff9800'};color:white;">${(plan.status || 'draft').toUpperCase()}</div>
+          </div>
+        `;
+      }).join('');
+
+    } catch (error) {
+      console.error('Failed to load dashboard plans:', error);
+      plansGrid.innerHTML = '<p style="text-align:center;padding:20px;color:#999;">Failed to load plans</p>';
+      if (planCount) planCount.textContent = '0';
+    }
+
+    function escapeHTML(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+  })();
+
+  // Load user profile data
+  async function loadUserProfile() {
+    try {
+      if (!window.supabaseClient) return;
+
+      const { data: { session } } = await window.supabaseClient.auth.getSession();
+      if (!session) return;
+
+      const profileEmail = document.getElementById('profileEmail');
+      if (profileEmail) profileEmail.value = session.user.email || '';
+
+      // Load additional profile data if available
+      const profileName = document.getElementById('profileName');
+      if (profileName && session.user.user_metadata?.name) {
+        profileName.value = session.user.user_metadata.name;
+      }
+    } catch (error) {
+      console.error('Failed to load profile:', error);
+    }
+  }
+
+  // Update profile function
+  async function updateProfile(event) {
+    event.preventDefault();
+    try {
+      if (!window.supabaseClient) return;
+
+      const name = document.getElementById('profileName').value;
+      const phone = document.getElementById('profilePhone').value;
+
+      const { error } = await window.supabaseClient.auth.updateUser({
+        data: { name, phone }
+      });
+
+      if (error) throw error;
+
+      alert('Profile updated successfully!');
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+      alert('Failed to update profile: ' + error.message);
+    }
+  }
+
+  // Load profile when page loads
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadUserProfile);
+  } else {
+    loadUserProfile();
+  }
+  </script>
 </body>
 </html>

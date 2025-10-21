@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wayzo - Two Environment Setup Guide</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 40px 20px;
+      color: #1f2937;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+    .header {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      padding: 48px;
+      color: white;
+      text-align: center;
+    }
+    .header h1 { font-size: 42px; font-weight: 800; margin-bottom: 16px; }
+    .content { padding: 48px; }
+    .section { margin-bottom: 48px; }
+    h2 { font-size: 28px; font-weight: 700; margin-bottom: 24px; color: #111827; }
+    h3 { font-size: 20px; font-weight: 600; margin: 24px 0 16px; color: #374151; }
+    .option-box {
+      background: #f9fafb;
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 24px;
+      border-left: 6px solid #667eea;
+    }
+    .option-box h3 { margin-top: 0; }
+    .pros-cons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin: 20px 0;
+    }
+    .pros, .cons {
+      padding: 20px;
+      border-radius: 8px;
+    }
+    .pros { background: #d1fae5; border-left: 4px solid #10b981; }
+    .cons { background: #fee2e2; border-left: 4px solid #ef4444; }
+    .code-box {
+      background: #1f2937;
+      color: #e5e7eb;
+      padding: 20px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      overflow-x: auto;
+      margin: 16px 0;
+    }
+    .highlight { color: #fbbf24; font-weight: 600; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+    table th {
+      background: #f3f4f6;
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid #e5e7eb;
+    }
+    table td {
+      padding: 12px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .step-list {
+      counter-reset: step;
+      list-style: none;
+    }
+    .step-list li {
+      counter-increment: step;
+      margin-bottom: 24px;
+      padding-left: 50px;
+      position: relative;
+    }
+    .step-list li::before {
+      content: counter(step);
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+    .alert {
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      border-left: 4px solid;
+    }
+    .alert.info { background: #dbeafe; border-color: #3b82f6; }
+    .alert.warning { background: #fef3c7; border-color: #f59e0b; }
+    .alert.success { background: #d1fae5; border-color: #10b981; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🚀 Two Environment Setup Guide</h1>
+      <p style="font-size: 18px; opacity: 0.95;">Staging + Production for Wayzo</p>
+    </div>
+
+    <div class="content">
+
+      <div class="section">
+        <h2>📊 Current Situation</h2>
+
+        <div class="alert warning">
+          <strong>Problem:</strong> You need 2 environments (staging for testing + production for live), but Render free tier is giving dependency issues due to Windows build tools.
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>What You Have</th>
+              <th>Status</th>
+              <th>Issue</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Fly.io Production</strong><br>wayzo.online</td>
+              <td>✅ Working</td>
+              <td>Currently on old code without Supabase</td>
+            </tr>
+            <tr>
+              <td><strong>Render Staging</strong><br>wayzo-staging.onrender.com</td>
+              <td>❌ Failing</td>
+              <td>Can't install dependencies (Windows build issue)</td>
+            </tr>
+            <tr>
+              <td><strong>Fly.io Staging</strong><br>wayzo-staging.fly.dev</td>
+              <td>⚠️ Just Created</td>
+              <td>Needs proper setup</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section">
+        <h2>🎯 Three Options for You</h2>
+
+        <div class="option-box">
+          <h3>Option 1: Fly.io Only (RECOMMENDED)</h3>
+          <p><strong>Use Fly.io for both staging and production</strong></p>
+
+          <div class="pros-cons">
+            <div class="pros">
+              <strong>✅ Pros:</strong>
+              <ul>
+                <li>Both environments work the same way</li>
+                <li>No dependency issues</li>
+                <li>Same Dockerfile for both</li>
+                <li>Free tier: 3 apps included</li>
+                <li>Easy to deploy</li>
+              </ul>
+            </div>
+            <div class="cons">
+              <strong>❌ Cons:</strong>
+              <ul>
+                <li>Costs ~$5-10/month total for both</li>
+                <li>Not completely free</li>
+              </ul>
+            </div>
+          </div>
+
+          <h4>Setup Steps:</h4>
+          <ol class="step-list">
+            <li>
+              <strong>Staging: wayzo-staging (already created)</strong>
+              <div class="code-box">
+flyctl deploy --app wayzo-staging --config fly.staging.toml
+              </div>
+              <p>URL: <strong>https://wayzo-staging.fly.dev</strong></p>
+            </li>
+            <li>
+              <strong>Production: wayzo</strong>
+              <div class="code-box">
+flyctl deploy --app wayzo --config fly.toml
+              </div>
+              <p>URL: <strong>https://wayzo.online</strong></p>
+            </li>
+          </ol>
+
+          <div class="alert success">
+            <strong>💰 Cost:</strong> $5/month for staging + $5/month for production = <strong>$10/month total</strong><br>
+            Or use 1 machine for staging (auto-stop) to save money: <strong>~$5/month total</strong>
+          </div>
+        </div>
+
+        <div class="option-box">
+          <h3>Option 2: Render Staging + Fly.io Production</h3>
+          <p><strong>Free staging on Render, paid production on Fly.io</strong></p>
+
+          <div class="pros-cons">
+            <div class="pros">
+              <strong>✅ Pros:</strong>
+              <ul>
+                <li>Staging is FREE</li>
+                <li>Production on reliable Fly.io</li>
+                <li>Save money (~$5/month total)</li>
+              </ul>
+            </div>
+            <div class="cons">
+              <strong>❌ Cons:</strong>
+              <ul>
+                <li><strong>Currently broken</strong> (dependency issues)</li>
+                <li>Different platforms (harder to debug)</li>
+                <li>Render free tier spins down (slow)</li>
+                <li>Need to maintain 2 different configs</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="alert warning">
+            <strong>⚠️ Problem:</strong> Your Windows machine can't build <code>better-sqlite3</code>, so we can't generate a proper <code>package-lock.json</code> for Render. This is blocking deployment.
+          </div>
+
+          <h4>To Make This Work:</h4>
+          <p>You need to either:</p>
+          <ul>
+            <li>Install Visual Studio Build Tools on Windows (2GB download, complex)</li>
+            <li>Use a Linux machine to generate package-lock.json</li>
+            <li>Remove SQLite and use only Supabase</li>
+          </ul>
+        </div>
+
+        <div class="option-box">
+          <h3>Option 3: Keep Render on Old Working Version</h3>
+          <p><strong>Rollback Render to commit 61d3e89 (working), use Fly.io for new Supabase work</strong></p>
+
+          <div class="pros-cons">
+            <div class="pros">
+              <strong>✅ Pros:</strong>
+              <ul>
+                <li>Render works right now</li>
+                <li>Free staging environment</li>
+                <li>Can test old features there</li>
+              </ul>
+            </div>
+            <div class="cons">
+              <strong>❌ Cons:</strong>
+              <ul>
+                <li>Staging has OLD code (no Supabase)</li>
+                <li>Can't test new features in staging</li>
+                <li>Two different codebases</li>
+              </ul>
+            </div>
+          </div>
+
+          <h4>How to Rollback Render:</h4>
+          <div class="code-box">
+# In Render dashboard → Events
+# Click on deployment "61d3e89: Fix: Remove instruction text..."
+# Click "Rollback" button
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>🎯 My Recommendation: Option 1 (Fly.io for Both)</h2>
+
+        <div class="alert info">
+          <strong>Why this is best:</strong><br>
+          • Consistent environment (no platform-specific bugs)<br>
+          • Actually works right now (no debugging needed)<br>
+          • Simple workflow: same commands for both<br>
+          • Worth $10/month for peace of mind
+        </div>
+
+        <h3>Complete Setup for Option 1:</h3>
+
+        <h4>1. Fix the Package Dependencies Issue</h4>
+        <p>First, we need to actually add Supabase to package.json properly. The issue is your Windows machine, so let's work around it:</p>
+
+        <div class="code-box">
+# Option A: Just don't use Supabase on this branch yet
+# Deploy the current working version without Supabase
+git checkout main
+flyctl deploy --app wayzo-staging --config fly.staging.toml
+flyctl deploy --app wayzo
+
+# Option B: Remove SQLite, use only Supabase (cleaner)
+# Edit backend/package.json - remove better-sqlite3
+# This removes the Windows build issue entirely
+        </div>
+
+        <h4>2. Set Up Environment Variables</h4>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Variable</th>
+              <th>Staging Value</th>
+              <th>Production Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>PUBLIC_BASE_URL</td>
+              <td>https://wayzo-staging.fly.dev</td>
+              <td>https://wayzo.online</td>
+            </tr>
+            <tr>
+              <td>NODE_ENV</td>
+              <td>staging</td>
+              <td>production</td>
+            </tr>
+            <tr>
+              <td>SUPABASE_URL</td>
+              <td colspan="2">[Same for both - from Supabase dashboard]</td>
+            </tr>
+            <tr>
+              <td>SUPABASE_ANON_KEY</td>
+              <td colspan="2">[Same for both - from Supabase dashboard]</td>
+            </tr>
+            <tr>
+              <td>SUPABASE_SERVICE_ROLE_KEY</td>
+              <td colspan="2">[Same for both - from Supabase dashboard]</td>
+            </tr>
+            <tr>
+              <td>RESEND_API_KEY</td>
+              <td colspan="2">[Same for both - from Resend dashboard]</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4>3. Deploy Workflow</h4>
+
+        <div class="code-box">
+<span class="highlight"># Development</span>
+# Work on your dev branch
+git checkout fix-links-v68
+
+# Make changes, commit
+git add .
+git commit -m "Feature: ..."
+git push
+
+<span class="highlight"># Deploy to Staging (TEST FIRST)</span>
+flyctl deploy --app wayzo-staging --config fly.staging.toml
+
+# Test at: https://wayzo-staging.fly.dev
+
+<span class="highlight"># If staging works, deploy to Production</span>
+git checkout main
+git merge fix-links-v68
+git push
+
+flyctl deploy --app wayzo
+
+# Live at: https://wayzo.online
+        </div>
+
+        <h4>4. Cost Optimization</h4>
+
+        <p>To reduce costs on staging:</p>
+
+        <div class="code-box">
+# Edit fly.staging.toml
+[http_service]
+  auto_stop_machines = true  # Auto-stop when idle
+  auto_start_machines = true # Auto-start on request
+  min_machines_running = 0   # Can go to 0 machines
+        </div>
+
+        <p>This makes staging FREE when not in use (cold starts take 10-20 seconds)</p>
+      </div>
+
+      <div class="section">
+        <h2>📋 Quick Decision Matrix</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>If you want...</th>
+              <th>Choose...</th>
+              <th>Cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>✅ Everything working NOW</td>
+              <td><strong>Option 1: Fly.io for both</strong></td>
+              <td>$5-10/month</td>
+            </tr>
+            <tr>
+              <td>💰 Completely free staging</td>
+              <td>Option 2: Render + Fly.io</td>
+              <td>$5/month (but currently broken)</td>
+            </tr>
+            <tr>
+              <td>🏃 Quick temporary solution</td>
+              <td>Option 3: Rollback Render</td>
+              <td>$5/month (but can't test new features)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section">
+        <h2>🚀 Next Steps (Option 1)</h2>
+
+        <ol class="step-list">
+          <li>
+            <strong>Tell me: Do you want to proceed with Option 1?</strong>
+            <p>I'll set up both Fly.io apps properly</p>
+          </li>
+          <li>
+            <strong>I'll fix the dependency issues</strong>
+            <p>By either removing SQLite or working around Windows build</p>
+          </li>
+          <li>
+            <strong>Deploy to staging first</strong>
+            <p>Test everything at wayzo-staging.fly.dev</p>
+          </li>
+          <li>
+            <strong>Deploy to production</strong>
+            <p>Once you approve, push to wayzo.online</p>
+          </li>
+        </ol>
+      </div>
+
+      <div class="alert success" style="margin-top: 40px;">
+        <h3 style="margin-bottom: 12px;">💡 My Strong Recommendation</h3>
+        <p><strong>Use Option 1 (Fly.io for both)</strong></p>
+        <p>Reasons:</p>
+        <ul style="margin-top: 8px;">
+          <li>✅ Will work immediately (no more debugging)</li>
+          <li>✅ Consistent environments</li>
+          <li>✅ $10/month is worth your time saved</li>
+          <li>✅ You can optimize costs later once it's working</li>
+        </ul>
+        <p style="margin-top: 16px;"><strong>Let me know and I'll get it set up in the next 10 minutes!</strong></p>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

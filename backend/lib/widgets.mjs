@@ -1,24 +1,5 @@
 import { JSDOM } from 'jsdom';
 
-// Date formatting helper for widget parameters
-function formatDateForWidget(dateStr) {
-  if (!dateStr) return null;
-  try {
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return null;
-
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-
-    // Return in DD/MM/YYYY format (common for travel widgets)
-    return `${day}/${month}/${year}`;
-  } catch (e) {
-    console.warn('Failed to format date for widget:', dateStr, e);
-    return null;
-  }
-}
-
 // Historical weather data (10-year averages) for major destinations
 const HISTORICAL_WEATHER = {
   'Jerusalem': {
@@ -174,11 +155,15 @@ const AFFILIATE_WIDGETS = {
   airport_transfers: {
     name: "Airport Transfers",
     description: "Book reliable airport pickup and drop-off",
-    scriptGenerator: (startDate, endDate, destination) => {
-      // Travelpayouts widgets don't support date parameters directly in URL
-      // They initialize via JavaScript after the page loads
-      // We keep the static implementation for now
-      return `<div data-airport-widget="transfer" id="airport-widget"></div>
+    script: (destination = '', startDate = null, endDate = null, travelers = 2) => {
+      const dest = destination.split(',')[0].trim(); // Extract city name
+      const arrivalDate = startDate ? new Date(startDate).toISOString().split('T')[0] : '';
+
+      // Build data attributes for pre-filling
+      const dataAttrs = arrivalDate ?
+        `data-destination="${dest}" data-arrival-date="${arrivalDate}" data-passengers="${travelers}"` : '';
+
+      return `<div data-airport-widget="transfer" id="airport-widget" ${dataAttrs}></div>
 <script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&show_header=true&campaign_id=627&promo_id=8951" charset="utf-8"></script>`;
     },
     category: "transport",
@@ -199,39 +184,56 @@ const AFFILIATE_WIDGETS = {
   car_rentals: {
     name: "Car Rentals",
     description: "Rent a car for your trip",
-    scriptGenerator: (startDate, endDate, destination) => {
-      // Note: Travelpayouts car rental widget doesn't appear to support date parameters
-      // in the script URL. Widget initializes interactively after page load.
-      // Keeping static implementation for backward compatibility.
-      return `<div data-car-widget="rental" id="car-widget"></div>
+    script: (destination = '', startDate = null, endDate = null, travelers = 2) => {
+      const dest = destination.split(',')[0].trim(); // Extract city name
+      const pickupDate = startDate ? new Date(startDate).toISOString().split('T')[0] : '';
+      const dropoffDate = endDate ? new Date(endDate).toISOString().split('T')[0] : '';
+
+      // Build data attributes for pre-filling
+      const dataAttrs = pickupDate && dropoffDate ?
+        `data-pickup-date="${pickupDate}" data-dropoff-date="${dropoffDate}" data-destination="${dest}"` : '';
+
+      return `<div data-car-widget="rental" id="car-widget" ${dataAttrs}></div>
 <script async src="https://tpwdgt.com/content?trs=455192&shmarker=634822&locale=en&border_radius=5&plain=true&show_logo=true&color_background=%23ffca28&color_button=%2355a539&color_text=%23000000&color_input_text=%23000000&color_button_text=%23ffffff&promo_id=4480&campaign_id=10" charset="utf-8"></script>`;
     },
     category: "transport",
     placement: "budget_breakdown"
   },
-  
+
   // Flight Search - for Budget Breakdown
   flight_search: {
     name: "Flight Search",
     description: "Find the best flight deals",
-    scriptGenerator: (startDate, endDate, destination) => {
-      // Note: Travelpayouts flight search widget doesn't support date parameters
-      // in the script URL. The widget is interactive and users can select dates.
-      // Keeping static implementation for backward compatibility.
-      return `<div data-flight-widget="search" id="flight-widget"></div>
+    script: (destination = '', startDate = null, endDate = null, travelers = 2, origin = '') => {
+      const dest = destination.split(',')[0].trim(); // Extract city name
+      const departDate = startDate ? new Date(startDate).toISOString().split('T')[0] : '';
+      const returnDate = endDate ? new Date(endDate).toISOString().split('T')[0] : '';
+
+      // Build data attributes for pre-filling
+      const dataAttrs = departDate && returnDate ?
+        `data-destination="${dest}" data-origin="${origin}" data-depart-date="${departDate}" data-return-date="${returnDate}" data-passengers="${travelers}"` : '';
+
+      return `<div data-flight-widget="search" id="flight-widget" ${dataAttrs}></div>
 <script async src="https://tpwdgt.com/content?currency=usd&trs=455192&shmarker=634822&show_hotels=true&locale=en&searchUrl=www.aviasales.com%2Fsearch&primary_override=%2332a8dd&color_button=%2355a539&color_icons=%2332a8dd&dark=%23262626&light=%23FFFFFF&secondary=%23FFFFFF&special=%23C4C4C4&color_focused=%2332a8dd&border_radius=5&plain=false&promo_id=7879&campaign_id=100" charset="utf-8"></script>`;
     },
     category: "flights",
     placement: "budget_breakdown"
   },
-  
+
   // Hotel Booking - for Budget Breakdown
   hotel_booking: {
     name: "Hotel Booking",
     description: "Book your accommodation",
-    scriptGenerator: (startDate, endDate, destination) => {
-      // Note: Travelpayouts hotel widget doesn't support date parameters in URL
-      return `<div data-hotel-widget="search" id="hotel-widget"></div>
+    script: (destination = '', startDate = null, endDate = null, travelers = 2) => {
+      const dest = destination.split(',')[0].trim(); // Extract city name
+      const checkinDate = startDate ? new Date(startDate).toISOString().split('T')[0] : '';
+      const checkoutDate = endDate ? new Date(endDate).toISOString().split('T')[0] : '';
+
+      // Build data attributes for pre-filling
+      const dataAttrs = checkinDate && checkoutDate ?
+        `data-destination="${dest}" data-checkin="${checkinDate}" data-checkout="${checkoutDate}" data-guests="${travelers}"` : '';
+
+      return `<div data-hotel-widget="search" id="hotel-widget" ${dataAttrs}></div>
 <script async src="https://tpwdgt.com/content?currency=usd&trs=455192&shmarker=634822&show_hotels=true&locale=en&powered_by=false&searchUrl=www.aviasales.com%2Fsearch&primary_override=%2332a8dd&color_button=%2355a539&color_icons=%2332a8dd&secondary=%23FFFFFF&dark=%23262626&light=%23FFFFFF&special=%23C4C4C4&color_focused=%2332a8dd&border_radius=5&plain=false&promo_id=7873&campaign_id=101" charset="utf-8"></script>`;
     },
     category: "accommodation",
@@ -278,7 +280,13 @@ function getWidgetsForDestination(destination, tripType, interests = []) {
 // JSDOM-based widget injection with precise placement
 async function injectWidgetsIntoSections(html, widgets, destination = '', startDate = null, endDate = null, budgetData = null) {
   if (!widgets || widgets.length === 0) return html;
-  
+
+  // Extract traveler count and origin from budgetData
+  const adults = budgetData?.adults || 2;
+  const children = budgetData?.children || 0;
+  const totalTravelers = adults + children;
+  const origin = budgetData?.origin || ''; // Origin city if available
+
   try {
     const dom = new JSDOM(html);
     const doc = dom.window.document;
@@ -455,21 +463,27 @@ async function injectWidgetsIntoSections(html, widgets, destination = '', startD
       }
     }
 
-    // 3. Add Flight, Hotel, Car, Airport Transfer widgets to Budget Breakdown section
-    const budgetH2 = Array.from(doc.querySelectorAll('h2')).find(h => 
+    // 3. Add Flight, Hotel, Car, Airport Transfer widgets between Emergency Info and Disclaimer
+    const emergencyH2 = Array.from(doc.querySelectorAll('h2')).find(h =>
+      h.textContent.includes("Emergency Info") || h.textContent.includes("🚨")
+    );
+
+    // Also check if budgetH2 exists for the budget table logic below
+    const budgetH2 = Array.from(doc.querySelectorAll('h2')).find(h =>
       h.textContent.includes("Budget Breakdown") || h.textContent.includes("💰")
     );
-    if (budgetH2) {
+
+    if (emergencyH2) {
       const budgetWidgets = widgets.filter(w => w.placement === "budget_breakdown");
-      
+
       budgetWidgets.forEach(widget => {
         const widgetDiv = doc.createElement('div');
         widgetDiv.className = 'section-widget';
         widgetDiv.setAttribute('data-category', widget.category);
 
-        // Use scriptGenerator if available, otherwise fall back to static script
-        const widgetScript = widget.scriptGenerator
-          ? widget.scriptGenerator(startDate, endDate, destination)
+        // Generate widget script with trip parameters
+        const widgetScript = typeof widget.script === 'function'
+          ? widget.script(destination, startDate, endDate, totalTravelers, origin)
           : widget.script;
 
         widgetDiv.innerHTML = `
@@ -481,16 +495,16 @@ async function injectWidgetsIntoSections(html, widgets, destination = '', startD
             ${widgetScript}
           </div>
         `;
-        
-        // Insert after Budget Breakdown section content
-        let nextH2 = budgetH2.nextElementSibling;
+
+        // Insert after Emergency Info section content (before next H2 which should be Disclaimer)
+        let nextH2 = emergencyH2.nextElementSibling;
         while (nextH2 && nextH2.tagName !== 'H2') {
           nextH2 = nextH2.nextElementSibling;
         }
-        
+
         if (nextH2) {
           nextH2.parentNode.insertBefore(widgetDiv, nextH2);
-          widgetsInjected["Budget Breakdown"]++;
+          widgetsInjected["Emergency Info"]++;
         }
       });
     }
@@ -822,14 +836,63 @@ function processLinks(html, destination = '') {
     doc.querySelectorAll('a[href*="booking.com"]').forEach(a => a.setAttribute('href', '#hotel-widget'));
     doc.querySelectorAll('a[href*="rentalcars.com"]').forEach(a => a.setAttribute('href', '#car-widget'));
     doc.querySelectorAll('a[href*="airport"]').forEach(a => a.setAttribute('href', '#airport-widget'));
+
+    // FIX GetYourGuide links: extract activity name from context and update query
     doc.querySelectorAll('a[href*="getyourguide.com"]').forEach(a => {
       const href = a.getAttribute('href');
       try {
         const url = new URL(href);
-        // Only add partner_id if it's not already present
+
+        // Check if this is a generic destination search that needs fixing
+        const currentQuery = url.searchParams.get('q') || '';
+        const isGenericSearch = currentQuery === destination ||
+                               currentQuery === destination.split(',')[0].trim() ||
+                               currentQuery.includes(destination.split(',')[0].trim() + ',');
+
+        if (isGenericSearch) {
+          // Try to extract specific activity name from surrounding context
+          const parentLI = a.closest('li');
+          const parentP = a.closest('p');
+          const context = parentLI || parentP;
+
+          if (context) {
+            const contextText = context.textContent || '';
+            // Extract activity name - typically appears before the link
+            // Look for patterns like "Krimml Waterfalls (optional day trip)" or "Visit XYZ"
+            const lines = contextText.split('\n').map(l => l.trim()).filter(Boolean);
+
+            for (const line of lines) {
+              // Skip lines that are just the link text itself
+              if (line === a.textContent.trim()) continue;
+
+              // Look for activity names in lines before/after the link
+              // Remove common prefixes and extract the core activity name
+              const cleanLine = line
+                .replace(/^[•\-\*]\s*/, '') // Remove bullet points
+                .replace(/\(.*?\)/g, '') // Remove parentheticals
+                .replace(/[📍🎫🎭🏛️⛪🌉🏰🎪🎨🖼️🎬].*$/g, '') // Remove emoji and text after
+                .replace(/Duration:.*$/gi, '')
+                .replace(/Address:.*$/gi, '')
+                .replace(/Entry fee:.*$/gi, '')
+                .replace(/Hours:.*$/gi, '')
+                .trim();
+
+              // If we found a meaningful activity name (more than 5 chars, not too long)
+              if (cleanLine.length > 5 && cleanLine.length < 100 && !cleanLine.toLowerCase().includes('book')) {
+                // Update the search query with specific activity + destination
+                url.searchParams.set('q', cleanLine + ' ' + destination);
+                console.log(`🔧 Fixed GetYourGuide link: "${currentQuery}" → "${cleanLine} ${destination}"`);
+                break;
+              }
+            }
+          }
+        }
+
+        // Ensure partner_id is present
         if (!url.searchParams.has('partner_id')) {
           url.searchParams.set('partner_id', 'PUHVJ53');
         }
+
         a.setAttribute('href', url.toString());
         a.setAttribute('target', '_blank');
       } catch (e) {
@@ -846,15 +909,10 @@ function processLinks(html, destination = '') {
 }
 
 // Generate widget HTML with section-specific placement
-function generateWidgetHTML(widgets, placement = 'inline', startDate = null, endDate = null, destination = '') {
+function generateWidgetHTML(widgets, placement = 'inline') {
   if (!widgets || widgets.length === 0) return '';
-
+  
   const widgetHTML = widgets.map(widget => {
-    // Use scriptGenerator if available, otherwise fall back to static script
-    const widgetScript = widget.scriptGenerator
-      ? widget.scriptGenerator(startDate, endDate, destination)
-      : widget.script;
-
     return `
     <div class="affiliate-widget" data-category="${widget.category}" data-placement="${widget.placement}">
       <div class="widget-header">
@@ -862,7 +920,7 @@ function generateWidgetHTML(widgets, placement = 'inline', startDate = null, end
         <p>${widget.description}</p>
       </div>
       <div class="widget-content">
-        ${widgetScript}
+        ${widget.script}
       </div>
     </div>
   `;
@@ -879,7 +937,7 @@ function generateWidgetHTML(widgets, placement = 'inline', startDate = null, end
 }
 
 // Generate section-specific widget HTML
-function generateSectionWidgets(section, widgets, startDate = null, endDate = null, destination = '') {
+function generateSectionWidgets(section, widgets) {
   const relevantWidgets = widgets.filter(widget => {
     switch(section) {
       case 'transportation':
@@ -895,27 +953,20 @@ function generateSectionWidgets(section, widgets, startDate = null, endDate = nu
         return true;
     }
   });
-
+  
   if (relevantWidgets.length === 0) return '';
-
-  const widgetHTML = relevantWidgets.map(widget => {
-    // Use scriptGenerator if available, otherwise fall back to static script
-    const widgetScript = widget.scriptGenerator
-      ? widget.scriptGenerator(startDate, endDate, destination)
-      : widget.script;
-
-    return `
+  
+  const widgetHTML = relevantWidgets.map(widget => `
     <div class="section-widget" data-category="${widget.category}">
       <div class="widget-header">
         <h4>${widget.name}</h4>
         <p>${widget.description}</p>
       </div>
       <div class="widget-content">
-        ${widgetScript}
+        ${widget.script}
       </div>
     </div>
-  `;
-  }).join('');
+  `).join('');
   
   return `
     <div class="section-widgets">

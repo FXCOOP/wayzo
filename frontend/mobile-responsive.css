@@ -1,0 +1,530 @@
+/**
+ * Mobile Responsive Enhancements for Wayzo
+ * Adds comprehensive mobile support without breaking existing styles
+ * Breakpoints: 768px (tablet), 480px (mobile)
+ */
+
+/* ============================================
+   MOBILE-FIRST BASE IMPROVEMENTS
+   ============================================ */
+
+/* Ensure viewport is properly set */
+html {
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}
+
+/* Smooth scrolling on mobile */
+body {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Better touch targets for mobile */
+a, button, input, select, textarea {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ============================================
+   TABLET & MOBILE (max-width: 768px)
+   ============================================ */
+
+@media (max-width: 768px) {
+
+  /* TRIP REPORT - Make tables scrollable */
+  .trip-report table,
+  #preview table,
+  .content.trip-report table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .trip-report table,
+  #preview table {
+    font-size: 14px;
+  }
+
+  .trip-report th,
+  .trip-report td,
+  #preview th,
+  #preview td {
+    padding: 8px 6px;
+    white-space: nowrap;
+  }
+
+  /* TRIP REPORT - Responsive headings */
+  .trip-report h1,
+  #preview h1,
+  .content.trip-report h1 {
+    font-size: 28px !important;
+    line-height: 1.3;
+    margin-bottom: 16px;
+  }
+
+  .trip-report h2,
+  #preview h2,
+  .content.trip-report h2 {
+    font-size: 22px !important;
+    line-height: 1.4;
+    margin-top: 24px;
+    margin-bottom: 12px;
+  }
+
+  .trip-report h3,
+  #preview h3,
+  .content.trip-report h3 {
+    font-size: 18px !important;
+    line-height: 1.4;
+    margin-top: 20px;
+    margin-bottom: 10px;
+  }
+
+  .trip-report h4,
+  #preview h4,
+  .content.trip-report h4 {
+    font-size: 16px !important;
+    line-height: 1.4;
+  }
+
+  /* TRIP REPORT - Better paragraph spacing */
+  .trip-report p,
+  #preview p,
+  .content.trip-report p {
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
+
+  /* TRIP REPORT - Lists */
+  .trip-report ul,
+  .trip-report ol,
+  #preview ul,
+  #preview ol {
+    padding-left: 20px;
+    margin-bottom: 16px;
+  }
+
+  .trip-report li,
+  #preview li {
+    margin-bottom: 8px;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* TRIP OVERVIEW - Mobile friendly grid */
+  .trip-overview {
+    padding: 20px 16px;
+  }
+
+  .overview-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+
+  .overview-item {
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  /* BUDGET BREAKDOWN - Responsive table */
+  .budget-table {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* DAILY ITINERARY - Better mobile layout */
+  .day-section {
+    padding: 16px 12px;
+    margin-bottom: 16px;
+  }
+
+  .time-block {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
+  .time-block h3,
+  .time-block h4 {
+    font-size: 16px !important;
+  }
+
+  /* BOOKING WIDGETS - Stack on mobile */
+  .booking-widgets {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .widget-container {
+    width: 100% !important;
+    max-width: 100%;
+  }
+
+  /* BUTTONS - Full width on mobile */
+  .action-buttons {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .action-buttons button,
+  .action-buttons a {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* FORM - Better mobile inputs */
+  #tripForm input,
+  #tripForm select,
+  #tripForm textarea {
+    font-size: 16px; /* Prevents iOS zoom */
+    width: 100%;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .form-group {
+    width: 100% !important;
+    margin-bottom: 16px;
+  }
+
+  /* NAVIGATION - Mobile friendly */
+  nav {
+    padding: 12px 16px;
+  }
+
+  nav ul {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  nav li {
+    width: 100%;
+  }
+
+  nav a {
+    display: block;
+    padding: 12px 16px;
+  }
+
+  /* HEADER - Responsive */
+  header {
+    padding: 16px;
+  }
+
+  .header-content {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+
+  /* DASHBOARD - Mobile cards */
+  .dashboard-stats {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .stat-card {
+    padding: 16px 12px;
+  }
+
+  .stat-number {
+    font-size: 24px;
+  }
+
+  /* PLAN CARDS - Full width on mobile */
+  .plans-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+  }
+
+  .plan-card {
+    padding: 16px;
+  }
+
+  /* MODALS - Full screen on mobile */
+  .modal-content {
+    width: 95%;
+    max-width: 95%;
+    margin: 10px;
+    padding: 20px 16px;
+  }
+
+  /* IMAGES - Responsive */
+  .trip-report img,
+  #preview img,
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* CONTAINERS - Remove excessive padding */
+  .container {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  /* FOOTER - Stack on mobile */
+  footer {
+    padding: 24px 16px;
+  }
+
+  .footer-content {
+    flex-direction: column;
+    gap: 20px;
+    text-align: center;
+  }
+
+  .footer-column {
+    width: 100%;
+  }
+}
+
+/* ============================================
+   MOBILE ONLY (max-width: 480px)
+   ============================================ */
+
+@media (max-width: 480px) {
+
+  /* Extra small mobile adjustments */
+
+  .trip-report h1,
+  #preview h1 {
+    font-size: 24px !important;
+  }
+
+  .trip-report h2,
+  #preview h2 {
+    font-size: 20px !important;
+  }
+
+  .trip-report h3,
+  #preview h3 {
+    font-size: 17px !important;
+  }
+
+  .trip-report p,
+  #preview p {
+    font-size: 14px;
+  }
+
+  /* Single column dashboard stats */
+  .dashboard-stats {
+    grid-template-columns: 1fr;
+  }
+
+  /* Smaller buttons */
+  button,
+  .btn {
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+
+  /* Compact forms */
+  input,
+  select,
+  textarea {
+    padding: 10px 12px;
+    font-size: 16px;
+  }
+
+  /* Smaller modals */
+  .modal-content {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    border-radius: 0;
+    min-height: 100vh;
+  }
+
+  /* Table font size */
+  .trip-report table,
+  #preview table {
+    font-size: 12px;
+  }
+
+  .trip-report th,
+  .trip-report td,
+  #preview th,
+  #preview td {
+    padding: 6px 4px;
+  }
+}
+
+/* ============================================
+   LANDSCAPE MOBILE (max-height: 500px)
+   ============================================ */
+
+@media (max-height: 500px) and (orientation: landscape) {
+
+  /* Compact header in landscape */
+  header {
+    padding: 8px 16px;
+  }
+
+  .header-content h1 {
+    font-size: 20px;
+  }
+
+  /* Reduce vertical spacing */
+  .trip-report h2,
+  #preview h2 {
+    margin-top: 16px;
+    margin-bottom: 8px;
+  }
+
+  section {
+    padding: 16px 16px;
+  }
+}
+
+/* ============================================
+   TOUCH IMPROVEMENTS
+   ============================================ */
+
+/* Better tap targets */
+@media (hover: none) and (pointer: coarse) {
+
+  a,
+  button,
+  .clickable {
+    min-height: 48px;
+    padding: 12px 16px;
+  }
+
+  /* Remove hover effects on touch devices */
+  a:hover,
+  button:hover,
+  .btn:hover {
+    transform: none;
+  }
+
+  /* Add active state instead */
+  a:active,
+  button:active,
+  .btn:active {
+    opacity: 0.7;
+    transform: scale(0.98);
+  }
+}
+
+/* ============================================
+   PRINT STYLES (Don't break printing)
+   ============================================ */
+
+@media print {
+
+  /* Hide navigation and controls when printing */
+  nav,
+  header,
+  footer,
+  .action-buttons,
+  .booking-widgets,
+  button {
+    display: none !important;
+  }
+
+  /* Full width for print */
+  .trip-report,
+  #preview,
+  .content {
+    max-width: 100%;
+    padding: 0;
+  }
+
+  /* Black text for printing */
+  * {
+    color: #000 !important;
+    background: #fff !important;
+  }
+
+  /* Page breaks */
+  h1, h2, h3 {
+    page-break-after: avoid;
+  }
+
+  img {
+    page-break-inside: avoid;
+  }
+}
+
+/* ============================================
+   ACCESSIBILITY IMPROVEMENTS
+   ============================================ */
+
+/* Focus styles for keyboard navigation */
+a:focus,
+button:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+/* Skip to content link */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #000;
+  color: #fff;
+  padding: 8px;
+  text-decoration: none;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* ============================================
+   HIGH DPI / RETINA DISPLAYS
+   ============================================ */
+
+@media (-webkit-min-device-pixel-ratio: 2),
+       (min-resolution: 192dpi) {
+
+  /* Sharper text rendering */
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* ============================================
+   DARK MODE SUPPORT (System preference)
+   ============================================ */
+
+@media (prefers-color-scheme: dark) {
+
+  /* Only apply if user prefers dark mode */
+  /* Keep this minimal to not break existing design */
+
+  body {
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+  }
+
+  .trip-report,
+  #preview,
+  .card,
+  .modal-content {
+    background-color: #2a2a2a;
+    color: #e0e0e0;
+  }
+
+  a {
+    color: #8b9eff;
+  }
+
+  button,
+  .btn {
+    background-color: #667eea;
+    color: #fff;
+  }
+}

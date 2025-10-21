@@ -32,14 +32,39 @@ export function linkifyTokens(markdown = '', dest = '') {
   console.log('Processing markdown for destination:', dest);
   console.log('Image function:', aff.image);
   console.log('Original markdown length:', markdown.length);
-  
+
   // Find all image tokens before processing
   const imageMatches = markdown.match(/!\[([^\]]*)\]\(image:([^)]+)\)/gi);
   console.log('Found image tokens:', imageMatches);
-  
-  const processed = (markdown || '')
-    // Maps - keep external link for Google Maps
-    .replace(/\[(Map)\]\(map:([^)]+)\)/gi,        (_m, _t, q) => `[Map](${aff.maps(q.trim())})`)
+
+  // CLEANUP: Remove AI mistakes before processing
+  let cleaned = (markdown || '')
+    // Remove visible anchor text that AI added by mistake
+    .replace(/\(#hotel-widget\)/g, '')
+    .replace(/\(#flight-widget\)/g, '')
+    .replace(/\(#car-widget\)/g, '')
+    .replace(/\(#gyg-widget\)/g, '')
+    // Remove URLs that AI added to booking tokens
+    .replace(/\[Book Entry Tickets\]\(https:\/\/www\.getyourguide\.com[^)]*\)/gi, '[Book Entry Tickets]')
+    .replace(/\[Buy Tickets\]\(https:\/\/www\.getyourguide\.com[^)]*\)/gi, '[Buy Tickets]')
+    .replace(/\[Book Experience\]\(https:\/\/www\.getyourguide\.com[^)]*\)/gi, '[Book Experience]')
+    // Remove internal instruction text that leaked
+    .replace(/CRITICAL FORMATTING REQUIREMENTS[^]*?(?=##|$)/gi, '')
+    .replace(/INTERNAL INSTRUCTIONS[^]*?(?=##|$)/gi, '')
+    // Remove "Restaurant Recommendations - Format..." instruction line
+    .replace(/Restaurant Recommendations - Format for EACH restaurant:\s*\n\s*\n/gi, '')
+    // Fix malformed Day 1 header (** ## Day -> ## Day)
+    .replace(/\*\*\s*##\s*(Day \d+)/gi, '## $1');
+
+  const processed = cleaned
+    // Maps - keep external link for Google Maps with specific location names
+    .replace(/\[(Map)\]\(map:([^)]+)\)/gi,        (_m, _t, q) => {
+      // Use the specific location from the token, don't just use dest
+      const specificLocation = q.trim();
+      return `[Map](${aff.maps(specificLocation)})`;
+    })
+    // Fix standalone [Map] without protocol (AI mistake) - use destination as fallback
+    .replace(/\[Map\](?!\()/gi, `[Map](${aff.maps(dest)})`)
 
     // Hotel/Accommodation links → Hotel Widget
     .replace(/\[(Book|Book Now|Book Hotel|Hotel)\]\(book:([^)]+)\)/gi,      (_m, _t, q) => `[Book Hotel](#hotel-widget)`)
@@ -51,9 +76,19 @@ export function linkifyTokens(markdown = '', dest = '') {
     .replace(/\[(Book|Book Now|Flights|Flight)\]\(flights:([^)]+)\)/gi,     (_m, _t, q) => `[Book Flights](#flight-widget)`)
 
     // Activity/Ticket links → GetYourGuide with partner ID (process tokens with colons first)
-    .replace(/\[(Tickets|Book Tickets|Book Entry Tickets|Buy Tickets|Book Experience|Book|Book Now|Activities)\]\(tickets:([^)]+)\)/gi, (_m, _t, q) => `[Book Tickets](https://www.getyourguide.com/s/?q=${encodeURIComponent(dest + ' ' + q.trim())}&partner_id=PUHVJ53)`)
-    .replace(/\[(Tickets|Book Tickets|Book Entry Tickets|Buy Tickets|Book Experience|Book|Book Now|Activities)\]\(activity:([^)]+)\)/gi,(_m, _t, q) => `[Book Tickets](https://www.getyourguide.com/s/?q=${encodeURIComponent(dest + ' ' + q.trim())}&partner_id=PUHVJ53)`)
-    .replace(/\[(Tickets|Book Tickets|Book Entry Tickets|Buy Tickets|Book Experience|Book|Book Now|Activities)\]\(activities:([^)]+)\)/gi,(_m, _t, q) => `[Book Tickets](https://www.getyourguide.com/s/?q=${encodeURIComponent(dest + ' ' + q.trim())}&partner_id=PUHVJ53)`)
+    // Use specific activity name FIRST, then add destination for better search results
+    .replace(/\[(Tickets|Book Tickets|Book Entry Tickets|Buy Tickets|Book Experience|Book|Book Now|Activities)\]\(tickets:([^)]+)\)/gi, (_m, _t, q) => {
+      const specificActivity = q.trim();
+      return `[Book Tickets](https://www.getyourguide.com/s/?q=${encodeURIComponent(specificActivity + ' ' + dest)}&partner_id=PUHVJ53)`;
+    })
+    .replace(/\[(Tickets|Book Tickets|Book Entry Tickets|Buy Tickets|Book Experience|Book|Book Now|Activities)\]\(activity:([^)]+)\)/gi,(_m, _t, q) => {
+      const specificActivity = q.trim();
+      return `[Book Tickets](https://www.getyourguide.com/s/?q=${encodeURIComponent(specificActivity + ' ' + dest)}&partner_id=PUHVJ53)`;
+    })
+    .replace(/\[(Tickets|Book Tickets|Book Entry Tickets|Buy Tickets|Book Experience|Book|Book Now|Activities)\]\(activities:([^)]+)\)/gi,(_m, _t, q) => {
+      const specificActivity = q.trim();
+      return `[Book Tickets](https://www.getyourguide.com/s/?q=${encodeURIComponent(specificActivity + ' ' + dest)}&partner_id=PUHVJ53)`;
+    })
 
     // Standalone attraction booking tokens (no parentheses) → GetYourGuide
     .replace(/\[Book Entry Tickets\]/gi, `[Book Entry Tickets](https://www.getyourguide.com/s/?q=${encodeURIComponent(dest)}&partner_id=PUHVJ53)`)

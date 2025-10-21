@@ -145,10 +145,13 @@
     data.duration = Number(data.duration || 5);
     data.currency = data.currency || 'USD';
 
-    // Handle multiple preferences checkboxes
-    const prefsCheckboxes = formData.getAll('prefs');
-    if (prefsCheckboxes && prefsCheckboxes.length > 0) {
-      data.prefs = prefsCheckboxes.join(', ');
+    // Handle multiple preferences from multi-select dropdown
+    const prefsSelect = document.getElementById('preferences');
+    if (prefsSelect) {
+      const selectedOptions = Array.from(prefsSelect.selectedOptions).map(opt => opt.value);
+      if (selectedOptions && selectedOptions.length > 0) {
+        data.prefs = selectedOptions.join(', ');
+      }
     }
 
     // Add autocomplete functionality for destination fields
@@ -547,8 +550,9 @@
     }
   };
 
-  // Save full plan to localStorage for "Get Back" functionality
-  const saveFullPlan = (planHtml, destination) => {
+  // Save full plan to localStorage and database
+  const saveFullPlan = async (planHtml, destination) => {
+    // Always save to localStorage first
     const planData = {
       html: planHtml,
       timestamp: new Date().toISOString(),
@@ -556,6 +560,189 @@
       type: 'full_plan'
     };
     localStorage.setItem('wayzo_last_full_plan', JSON.stringify(planData));
+    localStorage.setItem('wayzo_pending_plan_save', JSON.stringify(planData)); // For later save
+
+    // Check if user is authenticated
+    try {
+      if (window.supabaseClient) {
+        const { data: { session } } = await window.supabaseClient.auth.getSession();
+        const token = session?.access_token;
+
+        if (token) {
+          // User is signed in - save immediately
+          await savePlanToDatabase(planHtml, destination, token);
+        } else {
+          // User is NOT signed in - show optional save prompt
+          showSaveToDashboardPrompt();
+        }
+      } else {
+        // Supabase not available - show sign-in prompt
+        showSaveToDashboardPrompt();
+      }
+    } catch (e) {
+      console.warn('Could not check authentication:', e);
+    }
+  };
+
+  // Helper function to save plan to database
+  const savePlanToDatabase = async (planHtml, destination, token) => {
+    try {
+      const formData = readForm();
+      const response = await fetch('/api/user/plan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          params: {
+            destination: destination,
+            start: formData.start,
+            end: formData.end,
+            budget: formData.budget,
+            adults: formData.adults || 1,
+            children: formData.children || 0,
+            level: formData.level || 'mid',
+            prefs: formData.prefs || ''
+          },
+          html: planHtml,
+          markdown: '',
+          meta: {
+            title: `Trip to ${destination}`,
+            budgetLow: formData.budget
+          }
+        })
+      });
+
+      if (response.ok) {
+        const savedPlan = await response.json();
+        console.log('✅ Plan saved to database:', savedPlan.id);
+        localStorage.removeItem('wayzo_pending_plan_save'); // Clear pending
+        showNotification('✅ Plan saved to your dashboard!', 'success');
+        return savedPlan;
+      }
+    } catch (e) {
+      console.error('Failed to save plan to database:', e);
+      throw e;
+    }
+  };
+
+  // Show prompt to save plan to dashboard with beautiful modal
+  const showSaveToDashboardPrompt = () => {
+    // Don't show if already dismissed
+    if (localStorage.getItem('wayzo_save_prompt_dismissed')) return;
+
+    setTimeout(() => {
+      // Create beautiful save prompt modal
+      const modalHTML = `
+        <div id="savePlanModal" class="save-plan-modal" style="display: flex;">
+          <div class="save-plan-overlay" onclick="dismissSavePlanModal()"></div>
+          <div class="save-plan-content">
+            <button class="save-plan-close" onclick="dismissSavePlanModal()">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+
+            <div class="save-plan-icon">
+              <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                <circle cx="40" cy="40" r="38" fill="url(#saveGradient)" opacity="0.1"/>
+                <path d="M40 20v24m0 0l-8-8m8 8l8-8M26 52h28a4 4 0 004-4V28a4 4 0 00-4-4H26a4 4 0 00-4 4v20a4 4 0 004 4z"
+                      stroke="url(#saveGradient)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                <defs>
+                  <linearGradient id="saveGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#667eea"/>
+                    <stop offset="100%" style="stop-color:#764ba2"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+
+            <h2 class="save-plan-title">Save Your Perfect Trip Plan?</h2>
+            <p class="save-plan-subtitle">Don't lose this amazing itinerary! Sign in to unlock all benefits:</p>
+
+            <div class="save-plan-benefits">
+              <div class="benefit-item">
+                <div class="benefit-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+                <div class="benefit-text">
+                  <strong>Access Anywhere</strong>
+                  <span>View your plans from any device, anytime</span>
+                </div>
+              </div>
+
+              <div class="benefit-item">
+                <div class="benefit-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+                <div class="benefit-text">
+                  <strong>Download PDF</strong>
+                  <span>Get a beautiful PDF version to print or share</span>
+                </div>
+              </div>
+
+              <div class="benefit-item">
+                <div class="benefit-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+                <div class="benefit-text">
+                  <strong>Never Lose It</strong>
+                  <span>Your plan is safely stored in your dashboard</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="save-plan-actions">
+              <button class="btn-save-primary" onclick="acceptSavePlan()">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/>
+                </svg>
+                Sign In to Save
+              </button>
+              <button class="btn-save-secondary" onclick="dismissSavePlanModal()">
+                Continue Without Saving
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Add modal to page
+      const modalContainer = document.createElement('div');
+      modalContainer.innerHTML = modalHTML;
+      document.body.appendChild(modalContainer.firstElementChild);
+
+      // Add animation class after render
+      setTimeout(() => {
+        document.querySelector('.save-plan-content').classList.add('show');
+      }, 10);
+    }, 2000);
+  };
+
+  // Accept save plan - open auth modal
+  window.acceptSavePlan = () => {
+    dismissSavePlanModal();
+    showAuthModal();
+  };
+
+  // Dismiss save plan modal
+  window.dismissSavePlanModal = () => {
+    const modal = document.getElementById('savePlanModal');
+    if (modal) {
+      modal.querySelector('.save-plan-content').classList.remove('show');
+      setTimeout(() => {
+        modal.remove();
+        localStorage.setItem('wayzo_save_prompt_dismissed', 'true');
+      }, 300);
+    }
   };
 
   // Create professional trip overview wrapper
@@ -689,63 +876,252 @@
     const data = readForm();
     console.log('Generating full plan for:', data);
     
-    // Show cool loading animation for full plan
+    // Show beautiful full-screen loading animation
     hide(previewEl);
-    show(loadingEl);
-    
-    // Show cool trip planning animation
-    loadingEl.innerHTML = `
-      <div class="trip-planning-animation">
-        <div class="animation-container">
-          <div class="plane-flying">✈️</div>
-          <div class="hotel-building">🏨</div>
-          <div class="restaurant-icon">🍽️</div>
-          <div class="activity-icon">🎫</div>
-          <div class="loading-text">
-            <h3>🎯 Creating Your Amazing Trip Plan!</h3>
-            <p>Our AI is crafting the perfect itinerary for your ${data.destination} adventure...</p>
-            <div class="progress-bar">
-              <div class="progress-fill"></div>
-            </div>
-            <div class="loading-steps">
-              <span class="step active">📍 Planning routes</span>
-              <span class="step">🏨 Finding hotels</span>
-              <span class="step">🍽️ Selecting restaurants</span>
-              <span class="step">🎫 Booking activities</span>
-              <span class="step">💰 Calculating budget</span>
-              <span class="step">🖼️ Generating images</span>
-            </div>
+
+    // Create full-screen loading overlay
+    const fullScreenLoader = document.createElement('div');
+    fullScreenLoader.id = 'fullScreenLoader';
+    fullScreenLoader.className = 'fullscreen-loader';
+    fullScreenLoader.innerHTML = `
+      <div class="loader-background"></div>
+      <div class="loader-content">
+        <!-- Animated Globe -->
+        <div class="loader-globe">
+          <div class="globe-ring globe-ring-1"></div>
+          <div class="globe-ring globe-ring-2"></div>
+          <div class="globe-ring globe-ring-3"></div>
+          <div class="globe-core">
+            <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+              <circle cx="60" cy="60" r="58" stroke="url(#globeGradient)" stroke-width="2" opacity="0.3"/>
+              <path d="M60 10 Q80 30 60 50 Q40 70 60 90 Q80 70 60 50 Q40 30 60 10"
+                    stroke="url(#globeGradient)" stroke-width="2" fill="none" opacity="0.5"/>
+              <circle cx="60" cy="60" r="35" fill="url(#globeGradient)" opacity="0.1"/>
+              <text x="60" y="70" text-anchor="middle" font-size="48" fill="url(#globeGradient)">✈️</text>
+              <defs>
+                <linearGradient id="globeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#667eea"/>
+                  <stop offset="100%" style="stop-color:#764ba2"/>
+                </linearGradient>
+              </defs>
+            </svg>
           </div>
+        </div>
+
+        <!-- Main Title -->
+        <h2 class="loader-title">✨ Crafting Your Perfect Journey ✨</h2>
+        <p class="loader-subtitle">Our AI is creating a personalized itinerary for your ${data.destination} adventure...</p>
+
+        <!-- Inspirational Quote -->
+        <div class="loader-quote">
+          <div class="quote-icon">"</div>
+          <p class="quote-text" id="inspirationalQuote">The world is a book, and those who do not travel read only one page.</p>
+          <p class="quote-author" id="quoteAuthor">— Saint Augustine</p>
+        </div>
+
+        <!-- Progress Steps -->
+        <div class="loader-steps">
+          <div class="step-item step-active" id="step1">
+            <div class="step-icon">📍</div>
+            <span class="step-text">Planning routes</span>
+          </div>
+          <div class="step-item" id="step2">
+            <div class="step-icon">🏨</div>
+            <span class="step-text">Finding hotels</span>
+          </div>
+          <div class="step-item" id="step3">
+            <div class="step-icon">🍽️</div>
+            <span class="step-text">Selecting restaurants</span>
+          </div>
+          <div class="step-item" id="step4">
+            <div class="step-icon">🎫</div>
+            <span class="step-text">Booking activities</span>
+          </div>
+          <div class="step-item" id="step5">
+            <div class="step-icon">💰</div>
+            <span class="step-text">Calculating budget</span>
+          </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="loader-progress">
+          <div class="progress-track">
+            <div class="progress-fill" id="loaderProgressFill"></div>
+          </div>
+          <span class="progress-text" id="progressText">0%</span>
         </div>
       </div>
     `;
+
+    document.body.appendChild(fullScreenLoader);
+
+    // Animate progress and steps
+    const quotes = [
+      { text: "The world is a book, and those who do not travel read only one page.", author: "Saint Augustine" },
+      { text: "Travel is the only thing you buy that makes you richer.", author: "Anonymous" },
+      { text: "Adventure is worthwhile.", author: "Aesop" },
+      { text: "Life is either a daring adventure or nothing at all.", author: "Helen Keller" },
+      { text: "To travel is to live.", author: "Hans Christian Andersen" }
+    ];
+
+    let currentQuote = Math.floor(Math.random() * quotes.length);
+    const quoteEl = document.getElementById('inspirationalQuote');
+    const authorEl = document.getElementById('quoteAuthor');
+
+    // Change quote every 4 seconds
+    setInterval(() => {
+      currentQuote = (currentQuote + 1) % quotes.length;
+      quoteEl.style.opacity = '0';
+      authorEl.style.opacity = '0';
+      setTimeout(() => {
+        quoteEl.textContent = quotes[currentQuote].text;
+        authorEl.textContent = `— ${quotes[currentQuote].author}`;
+        quoteEl.style.opacity = '1';
+        authorEl.style.opacity = '1';
+      }, 300);
+    }, 4000);
+
+    // Animate steps - slower and more realistic
+    let currentStep = 1;
+    const stepInterval = setInterval(() => {
+      if (currentStep <= 5) {
+        document.getElementById(`step${currentStep}`)?.classList.add('step-active', 'step-completed');
+        currentStep++;
+        if (currentStep <= 5) {
+          document.getElementById(`step${currentStep}`)?.classList.add('step-active');
+        }
+      }
+    }, 3000); // Changed from 1500ms to 3000ms for more realistic timing
+
+    // Animate progress bar - more realistic with slower increments
+    let progress = 0;
+    const progressFill = document.getElementById('loaderProgressFill');
+    const progressText = document.getElementById('progressText');
+    const progressInterval = setInterval(() => {
+      // Slow down as we approach completion
+      const increment = progress < 30 ? Math.random() * 2 + 1 :
+                       progress < 60 ? Math.random() * 1.5 + 0.5 :
+                       progress < 80 ? Math.random() * 1 + 0.3 :
+                       Math.random() * 0.5 + 0.1;
+
+      progress += increment;
+      if (progress > 92) progress = 92; // Stop at 92% until completion
+      progressFill.style.width = `${progress}%`;
+      progressText.textContent = `${Math.floor(progress)}%`;
+    }, 400); // Changed from 200ms to 400ms for slower, more realistic progress
+
+    // Function to hide loader
+    window.hideFullScreenLoader = () => {
+      clearInterval(stepInterval);
+      clearInterval(progressInterval);
+      progressFill.style.width = '100%';
+      progressText.textContent = '100%';
+      setTimeout(() => {
+        fullScreenLoader.classList.add('fade-out');
+        setTimeout(() => {
+          fullScreenLoader.remove();
+        }, 500);
+      }, 300);
+    };
     
     try {
-      // Call plan API
-      const response = await fetch('/api/plan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      
-      const result = await response.json();
-      console.log('Full plan result:', result);
-      
-      // Check if user is a test user - bypass payment
+      // Check if user is authenticated with Supabase
+      let isAuthenticated = false;
+      let authToken = null;
+
+      if (window.supabaseClient) {
+        const { data: { session } } = await window.supabaseClient.auth.getSession();
+        authToken = session?.access_token;
+        isAuthenticated = !!authToken;
+      }
+
+      console.log('User authenticated:', isAuthenticated);
       console.log('Current user:', currentUser);
-      console.log('Is test user?', currentUser && currentUser.isTestUser);
-      console.log('User object details:', JSON.stringify(currentUser, null, 2));
-      
-      if (true) {
-        console.log('🎉 Free access enabled - bypassing payment!');
-        // Test user or staging - show full plan immediately without payment
+      console.log('Supabase session:', authToken ? 'EXISTS' : 'NONE');
+
+      // If user has localStorage auth but NO Supabase session, prompt them
+      if (!isAuthenticated && currentUser && currentUser.email) {
+        console.warn('⚠️ You are signed in with localStorage but NOT Supabase!');
+        console.warn('📧 Your email:', currentUser.email);
+        console.warn('👉 To save plans, please go to: /backoffice.html and sign in with Supabase');
+
+        showNotification(
+          `⚠️ To save your plans, please <a href="/backoffice.html" style="color: #fff; text-decoration: underline;">sign in with Supabase here</a>`,
+          'warning',
+          10000
+        );
+      }
+
+      // Call the appropriate plan API endpoint
+      let response, result;
+
+      if (isAuthenticated) {
+        // Authenticated user - use /api/user/plan (saves to database)
+        console.log('✅ Calling authenticated endpoint /api/user/plan');
+        response = await fetch('/api/user/plan', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            params: data,
+            html: '',  // Backend will generate this
+            markdown: '',
+            meta: {
+              title: `Trip to ${data.destination}`,
+              budgetLow: data.budget
+            }
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(`HTTP ${response.status}: ${errorData.error || 'Failed to save plan'}`);
+        }
+
+        result = await response.json();
+        console.log('✅ Plan saved to database:', result);
+
+        // Fetch the saved plan to get the HTML
+        const planResponse = await fetch(`/api/user/plan/${result.id}`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+
+        if (planResponse.ok) {
+          const planData = await planResponse.json();
+          result.html = planData.html || planData.markdown || '';
+        }
+
+      } else {
+        // Not authenticated - use public endpoint (doesn't save)
+        console.log('⚠️ User not authenticated - using public endpoint');
+        response = await fetch('/api/plan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        result = await response.json();
+      }
+
+      console.log('Full plan result:', result);
+
+      // Hide full-screen loader
+      if (window.hideFullScreenLoader) {
+        window.hideFullScreenLoader();
+      }
+
+      // For authenticated users or staging, show full plan immediately
+      if (isAuthenticated || window.location.hostname.includes('staging') || window.location.hostname.includes('localhost')) {
+        console.log('🎉 Showing full plan - user authenticated or staging environment');
+
         const tripOverview = createTripOverview(data, data.destination);
         previewEl.innerHTML = `
           <div class="test-user-notice">
             <h3>✨ Your Complete Travel Guide is Ready!</h3>
-            <p>Curated by Wayzo Travel Intelligence - Everything you need for an amazing trip.</p>
+            <p>${isAuthenticated ? 'Saved to your account - Access anytime from My Trips' : 'Sign in to save this plan to your dashboard'}</p>
           </div>
           ${tripOverview}
           <main class="content trip-report">
@@ -753,28 +1129,40 @@
           </main>
         `;
         setAffiliates(data.destination);
-        
+
         // Initialize image handling
         initializeImageHandling();
-        
+
         // Initialize widget rendering
         initializeWidgets();
-        
-        // Show all download buttons for test user
+
+        // Show all download buttons
         show(pdfBtn);
         show(icsBtn);
         show($('#excelBtn'));
         show($('#customizeBtn'));
         show($('#shareSection'));
         updateShareDestination();
-        
-        // Hide paywall for test user
+
+        // Hide paywall
         hide($('#purchaseActions'));
-        
-        // Save full plan for "Get Back" functionality
-        saveFullPlan(result.html, data.destination);
-        
-        showNotification('🧪 Test user: Full plan unlocked! All features available for testing.', 'info');
+
+        // Save full plan to localStorage for "Get Back" functionality
+        const planData = {
+          html: result.html,
+          timestamp: new Date().toISOString(),
+          destination: data.destination,
+          type: 'full_plan'
+        };
+        localStorage.setItem('wayzo_last_full_plan', JSON.stringify(planData));
+
+        // If not authenticated, save for later and show prompt
+        if (!isAuthenticated) {
+          localStorage.setItem('wayzo_pending_plan_save', JSON.stringify(planData));
+          showSaveToDashboardPrompt();
+        }
+
+        showNotification(isAuthenticated ? '✅ Plan saved to your dashboard!' : '🎉 Plan generated! Sign in to save it.', 'success');
       } else {
         // Regular user - show paywall
         previewEl.innerHTML = `
@@ -1234,15 +1622,299 @@
 
     // Initialize cookie consent
     initializeCookieConsent();
-    
+
     // Ensure login is visible
     ensureLoginVisible();
-    
+
+    // Initialize Supabase authentication listener
+    initializeSupabaseAuth();
+
     // Restore authentication state if user was previously signed in
     if (isAuthenticated && currentUser) {
       updateUIForAuthenticatedUser();
     }
   };
+
+  // Initialize Supabase and listen for auth changes
+  async function initializeSupabaseAuth() {
+    try {
+      // Use the supabaseClient initialized in index.backend.html
+      if (window.supabaseClient) {
+        window.supabase = window.supabaseClient;
+      }
+
+      // Check for existing session
+      if (window.supabase && window.supabase.auth) {
+        const { data: { session } } = await window.supabase.auth.getSession();
+
+        if (session) {
+          console.log('✅ User authenticated via Supabase:', session.user.email);
+          handleSuccessfulAuth(session);
+        }
+
+        // Listen for auth changes (magic link, OAuth redirects)
+        window.supabase.auth.onAuthStateChange((event, session) => {
+          console.log('🔄 Auth state changed:', event);
+
+          if (event === 'SIGNED_IN' && session) {
+            handleSuccessfulAuth(session);
+            hideAuthModal();
+            showNotification('✨ Successfully signed in!', 'success');
+            // Show Personal Cabinet after sign in
+            setTimeout(() => {
+              showPersonalCabinet();
+            }, 500);
+          } else if (event === 'SIGNED_OUT') {
+            handleSignOut();
+          }
+        });
+      }
+    } catch (error) {
+      console.error('❌ Supabase initialization error:', error);
+    }
+  }
+
+  // Handle successful authentication
+  function handleSuccessfulAuth(session) {
+    currentUser = {
+      id: session.user.id,
+      email: session.user.email,
+      name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
+      avatar: session.user.user_metadata?.avatar_url || '/frontend/assets/default-avatar.svg'
+    };
+
+    isAuthenticated = true;
+
+    // Store user info and session
+    localStorage.setItem('wayzo_authenticated', 'true');
+    localStorage.setItem('wayzo_user', JSON.stringify(currentUser));
+    localStorage.setItem('wayzo_supabase_token', session.access_token);
+
+    // Update UI
+    updateUIForAuthenticatedUser();
+
+    // Load user's plans if on the main page
+    if (window.location.pathname.includes('index') || window.location.pathname === '/') {
+      loadUserPlans();
+    }
+  }
+
+  // Handle sign out
+  async function handleSignOut() {
+    // Sign out from Supabase
+    if (window.supabaseClient) {
+      await window.supabaseClient.auth.signOut();
+    }
+
+    currentUser = null;
+    isAuthenticated = false;
+
+    localStorage.removeItem('wayzo_authenticated');
+    localStorage.removeItem('wayzo_user');
+    localStorage.removeItem('wayzo_supabase_token');
+
+    // Update UI - show login button, hide user menu
+    if (loginBtn) {
+      loginBtn.style.display = 'inline-flex';
+      loginBtn.style.visibility = 'visible';
+    }
+    if ($('#signOutBtn')) $('#signOutBtn').style.display = 'none';
+    if ($('#myTripsBtn')) $('#myTripsBtn').style.display = 'none';
+
+    // Hide user dropdown if visible
+    const userDropdown = $('#userDropdown');
+    if (userDropdown) userDropdown.classList.remove('active');
+
+    // Redirect to home
+    window.location.href = '/';
+
+    showNotification('Signed out successfully', 'info');
+  }
+
+  // Load user's travel plans
+  async function loadUserPlans() {
+    const plansGrid = $('#plansGrid');
+    if (!plansGrid) return;
+
+    // Show loading state
+    plansGrid.innerHTML = `
+      <div class="loading-plans" style="text-align: center; padding: 40px; color: #666;">
+        <i class="fas fa-spinner fa-spin" style="font-size: 24px; margin-bottom: 10px;"></i>
+        <p>Loading your plans...</p>
+      </div>
+    `;
+
+    try {
+      // Get fresh session from Supabase instead of localStorage
+      if (!window.supabaseClient) {
+        throw new Error('Supabase not initialized');
+      }
+
+      const { data: { session }, error: sessionError } = await window.supabaseClient.auth.getSession();
+
+      if (sessionError || !session) {
+        console.error('Session error:', sessionError);
+        throw new Error('No active session - please sign in again');
+      }
+
+      const token = session.access_token;
+
+      // Fetch user's plans from backend
+      const response = await fetch('/api/user/plans', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to load plans: ${response.status}`);
+      }
+
+      const plans = await response.json();
+
+      if (!plans || plans.length === 0) {
+        plansGrid.innerHTML = `
+          <div class="no-plans" style="text-align: center; padding: 60px 20px; color: #9ca3af;">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" style="margin: 0 auto 20px; opacity: 0.5;">
+              <path stroke="currentColor" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+            <h3 style="font-size: 20px; color: #374151; margin-bottom: 12px;">No plans yet</h3>
+            <p style="font-size: 16px; margin-bottom: 24px;">Start planning your first amazing trip!</p>
+            <button class="btn btn-primary" onclick="showPlanningForm()" style="padding: 14px 28px; font-size: 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 600;">
+              Create Your First Plan
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      // Update plan count
+      const planCount = $('#planCount');
+      if (planCount) planCount.textContent = plans.length;
+
+      // Display plans
+      plansGrid.innerHTML = plans.map(plan => `
+        <div class="plan-card" style="background: white; border-radius: 16px; padding: 24px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); transition: all 0.3s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 24px rgba(0, 0, 0, 0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0, 0, 0, 0.08)'">
+          <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+            <div>
+              <h3 style="font-size: 20px; font-weight: 700; color: #111827; margin: 0 0 8px 0;">${plan.destination || plan.destinations || plan.form_data?.destination || 'Your Trip'}</h3>
+              <p style="font-size: 14px; color: #6b7280; margin: 0;">${formatPlanDate(plan.created_at)}</p>
+            </div>
+            <span class="plan-status ${plan.status}" style="padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; ${plan.status === 'completed' ? 'background: #ecfdf5; color: #059669;' : 'background: #fef3c7; color: #d97706;'}">${plan.status === 'completed' ? '✓ Ready' : '⏳ Processing'}</span>
+          </div>
+          <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
+            ${plan.days ? `<div style="display: flex; align-items: center; gap: 6px; font-size: 14px; color: #6b7280;"><svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"/></svg>${plan.days} days</div>` : ''}
+            ${plan.budget ? `<div style="display: flex; align-items: center; gap: 6px; font-size: 14px; color: #6b7280;"><svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20"><path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z"/></svg>$${plan.budget}</div>` : ''}
+          </div>
+          <div style="display: flex; gap: 8px; margin-top: 16px;">
+            <button class="btn-action" onclick="event.stopPropagation(); viewPlan('${plan.id}')" style="width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 10px; font-size: 15px; font-weight: 700; color: white; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(102, 126, 234, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(102, 126, 234, 0.3)'">
+              View Plan →
+            </button>
+          </div>
+        </div>
+      `).join('');
+
+    } catch (error) {
+      console.error('❌ Error loading plans:', error);
+      plansGrid.innerHTML = `
+        <div class="error-state" style="text-align: center; padding: 40px; color: #ef4444;">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" style="margin: 0 auto 16px; color: #ef4444;">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+            <path d="M12 8v4m0 4h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <p style="font-size: 16px; margin-bottom: 20px;">Failed to load your plans</p>
+          <button class="btn" onclick="loadUserPlans()" style="padding: 12px 24px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+            Try Again
+          </button>
+        </div>
+      `;
+    }
+  }
+
+  function formatPlanDate(dateString) {
+    if (!dateString) return 'Recently created';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMs = now - date;
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  async function viewPlan(planId) {
+    try {
+      // Get fresh session from Supabase
+      if (!window.supabaseClient) {
+        showNotification('Please sign in to view your plan', 'error');
+        return;
+      }
+
+      const { data: { session }, error: sessionError } = await window.supabaseClient.auth.getSession();
+
+      if (sessionError || !session) {
+        showNotification('Please sign in to view your plan', 'error');
+        return;
+      }
+
+      const token = session.access_token;
+
+      // Fetch the plan HTML
+      const response = await fetch(`/api/plan/${planId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to load plan: ${response.status}`);
+      }
+
+      const planData = await response.json();
+
+      // Hide personal cabinet
+      const cabinet = $('#personalCabinet');
+      if (cabinet) cabinet.classList.add('hidden');
+
+      // Show the plan in the preview area
+      const previewEl = $('#preview');
+      if (previewEl) {
+        previewEl.innerHTML = `
+          <div class="plan-view-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+            <button onclick="showPersonalCabinet()" style="display: flex; align-items: center; gap: 8px; padding: 12px 20px; background: #f3f4f6; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; color: #374151; transition: all 0.2s;" onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"/></svg>
+              Back to My Plans
+            </button>
+            <button onclick="window.open('/api/plan/${planId}/pdf', '_blank')" style="display: flex; align-items: center; gap: 8px; padding: 12px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 8px; cursor: pointer; font-weight: 600; color: white; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z"/></svg>
+              Download PDF
+            </button>
+          </div>
+          <main class="content trip-report">
+            ${planData.html || planData.markdown || '<p>Plan not available</p>'}
+          </main>
+        `;
+
+        // Initialize features
+        initializeImageHandling();
+        initializeWidgets();
+
+        // Show preview
+        show(previewEl);
+      }
+    } catch (error) {
+      console.error('❌ Error loading plan:', error);
+      showNotification('Failed to load plan', 'error');
+    }
+  }
+
+  // Make it globally available
+  window.viewPlan = viewPlan;
 
   // Setup children ages functionality
   const setupChildrenAges = () => {
@@ -1377,6 +2049,20 @@
   window.toggleUserMenu = toggleUserMenu;
   window.signOut = signOut;
   window.showDashboard = showDashboard;
+  // Make functions globally accessible from HTML
+  window.handleMagicLinkAuth = handleMagicLinkAuth;
+  window.handleGoogleSignIn = handleGoogleSignIn;
+  window.resetAuthModal = resetAuthModal;
+  window.hideAuthModal = hideAuthModal;
+  window.showAuthModal = showAuthModal;
+  window.signOut = async function() {
+    if (window.supabase) {
+      await window.supabase.auth.signOut();
+    }
+    handleSignOut();
+  };
+
+  window.showCabinet = showDashboard; // Alias for My Trips button
   window.showMyPlans = showMyPlans;
   window.showReferrals = showReferrals;
   window.showBilling = showBilling;
@@ -1519,22 +2205,109 @@
   
   console.log('🔍 User initialization:', { isAuthenticated, currentUser });
 
+  // ==== Magic Link Authentication Functions ====
   function showAuthModal() {
     $('#authModal').classList.remove('hidden');
+    resetAuthModal();
   }
 
   function hideAuthModal() {
     $('#authModal').classList.add('hidden');
   }
 
+  function resetAuthModal() {
+    // Show main state, hide success state
+    $('#authMainState').classList.remove('hidden');
+    $('#authSuccessState').classList.add('hidden');
+
+    // Reset form
+    const form = $('#magicLinkForm');
+    if (form) form.reset();
+  }
+
+  async function handleMagicLinkAuth(event) {
+    event.preventDefault();
+
+    const email = $('#authEmail').value.trim();
+    if (!email) return;
+
+    const btn = $('#magicLinkBtn');
+    const btnText = btn.querySelector('.btn-text');
+    const btnLoading = btn.querySelector('.btn-loading');
+
+    // Show loading state
+    btnText.classList.add('hidden');
+    btnLoading.classList.remove('hidden');
+    btn.disabled = true;
+
+    try {
+      // Initialize Supabase if not already done
+      // Use the supabaseClient initialized in index.backend.html
+      if (window.supabaseClient && !window.supabase) {
+        window.supabase = window.supabaseClient;
+      }
+
+      if (!window.supabase || !window.supabase.auth) {
+        throw new Error('Supabase client not initialized');
+      }
+
+      // Send magic link using Supabase
+      const { data, error } = await window.supabase.auth.signInWithOtp({
+        email: email,
+        options: {
+          emailRedirectTo: window.location.origin + window.location.pathname
+        }
+      });
+
+      if (error) throw error;
+
+      console.log('✅ Magic link sent successfully');
+
+      // Show success state
+      $('#authMainState').classList.add('hidden');
+      $('#authSuccessState').classList.remove('hidden');
+      $('#sentToEmail').textContent = email;
+
+    } catch (error) {
+      console.error('❌ Magic link error:', error);
+      showNotification('Failed to send magic link. Please try again.', 'error');
+    } finally {
+      // Reset button state
+      btnText.classList.remove('hidden');
+      btnLoading.classList.add('hidden');
+      btn.disabled = false;
+    }
+  }
+
+  // Handle Google Sign-In
+  async function handleGoogleSignIn() {
+    try {
+      // Use the supabaseClient initialized in index.backend.html
+      if (window.supabaseClient && !window.supabase) {
+        window.supabase = window.supabaseClient;
+      }
+
+      if (!window.supabase || !window.supabase.auth) {
+        throw new Error('Supabase client not initialized');
+      }
+
+      const { data, error } = await window.supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + window.location.pathname
+        }
+      });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('❌ Google sign-in error:', error);
+      showNotification('Failed to sign in with Google. Please try again.', 'error');
+    }
+  }
+
   function switchAuthTab(tab) {
-    // Hide all tabs
-    $$('.auth-tab-content').forEach(content => content.classList.remove('active'));
-    $$('.auth-tab').forEach(tabBtn => tabBtn.classList.remove('active'));
-    
-    // Show selected tab
-    $(`#${tab}Tab`).classList.add('active');
-    event.target.classList.add('active');
+    // Keep for compatibility
+    console.log('Auth tab switch:', tab);
   }
 
   function handleManualSignIn(event) {
@@ -1667,7 +2440,11 @@
   }
 
   function updateUIForAuthenticatedUser() {
+    // Hide login button, show authenticated user elements
     if (loginBtn) loginBtn.classList.add('hidden');
+    if ($('#myTripsBtn')) $('#myTripsBtn').style.display = 'inline-block';
+    if ($('#signOutBtn')) $('#signOutBtn').style.display = 'inline-block';
+
     if ($('#userMenuBtn')) {
       $('#userMenuBtn').classList.remove('hidden');
       $('#userMenuAvatar').src = currentUser.avatar;
@@ -1675,21 +2452,43 @@
     if ($('#userName')) $('#userName').textContent = currentUser.name;
     if ($('#userEmail')) $('#userEmail').textContent = currentUser.email;
     if ($('#userAvatar')) $('#userAvatar').src = currentUser.avatar;
-    
+
     // Show admin button if user is admin
     const adminBtn = document.querySelector('.admin-only');
     if (adminBtn) {
       adminBtn.style.display = currentUser.isAdmin ? 'block' : 'none';
     }
-    
+
     // Test users get immediate access to all features
     if (isTestUser()) {
       unlockAllFeaturesForTestUser();
       showNotification('🎉 Test user signed in! All premium features are now unlocked for testing!', 'success');
     }
-    
+
+    // Check for pending plan to save
+    savePendingPlanIfExists();
+
     // Cabinet is now available but doesn't auto-open
     // User can access it via the user menu when they want to
+  }
+
+  // Save pending plan after user signs in
+  async function savePendingPlanIfExists() {
+    const pendingPlan = localStorage.getItem('wayzo_pending_plan_save');
+    if (!pendingPlan) return;
+
+    try {
+      const planData = JSON.parse(pendingPlan);
+      if (window.supabaseClient) {
+        const { data: { session } } = await window.supabaseClient.auth.getSession();
+        if (session?.access_token) {
+          await savePlanToDatabase(planData.html, planData.destination, session.access_token);
+          showNotification('✅ Your plan has been saved to your dashboard!', 'success');
+        }
+      }
+    } catch (e) {
+      console.error('Failed to save pending plan:', e);
+    }
   }
 
   function toggleUserMenu() {
@@ -1705,47 +2504,79 @@
     // Clear authentication from localStorage
     localStorage.removeItem('wayzo_authenticated');
     localStorage.removeItem('wayzo_user');
+
+    // Update UI - show login, hide authenticated elements
     if (loginBtn) loginBtn.classList.remove('hidden');
+    if ($('#myTripsBtn')) $('#myTripsBtn').style.display = 'none';
+    if ($('#signOutBtn')) $('#signOutBtn').style.display = 'none';
     if ($('#userMenuBtn')) $('#userMenuBtn').classList.add('hidden');
     if ($('#userMenu')) $('#userMenu').classList.add('hidden');
     if ($('#personalCabinet')) $('#personalCabinet').classList.add('hidden');
+
+    // Sign out from Supabase if available
+    if (window.supabase) {
+      window.supabase.auth.signOut();
+    }
+
     showNotification('Signed out successfully', 'info');
+    setTimeout(() => window.location.reload(), 500);
   }
 
   // Personal Cabinet Management
+  function showPersonalCabinet() {
+    showDashboard();
+    // Load plans
+    loadUserPlans();
+  }
+
+  // Make it globally available
+  window.showPersonalCabinet = showPersonalCabinet;
+
   function showDashboard() {
-    $('#personalCabinet').classList.remove('hidden');
-    switchCabinetTab('overview');
+    const cabinet = $('#personalCabinet');
+    if (cabinet) {
+      cabinet.classList.remove('hidden');
+      // Use the new dashboard view switcher if available
+      if (typeof window.switchDashboardView === 'function') {
+        window.switchDashboardView('plans');
+      }
+    }
   }
 
   function showMyPlans() {
-    $('#personalCabinet').classList.remove('hidden');
-    switchCabinetTab('plans');
+    showDashboard(); // Redirect to main dashboard
   }
 
   function showReferrals() {
-    $('#personalCabinet').classList.remove('hidden');
-    switchCabinetTab('referrals');
+    showDashboard(); // Referrals removed, show main dashboard
   }
 
   function showBilling() {
-    $('#personalCabinet').classList.remove('hidden');
-    switchCabinetTab('billing');
+    showDashboard(); // Billing removed, show main dashboard
   }
 
   function showProfile() {
-    $('#personalCabinet').classList.remove('hidden');
-    switchCabinetTab('profile');
+    const cabinet = $('#personalCabinet');
+    if (cabinet) {
+      cabinet.classList.remove('hidden');
+      // Use the new dashboard view switcher if available
+      if (typeof window.switchDashboardView === 'function') {
+        window.switchDashboardView('profile');
+      }
+    }
   }
 
   function switchCabinetTab(tab) {
-    // Hide all tabs
-    $$('.cabinet-tab').forEach(tabContent => tabContent.classList.remove('active'));
-    $$('.sidebar-item').forEach(item => item.classList.remove('active'));
-    
-    // Show selected tab
-    $(`#${tab}Tab`).classList.add('active');
-    event.target.classList.add('active');
+    // Legacy function - now uses new dashboard view switcher
+    if (typeof window.switchDashboardView === 'function') {
+      if (tab === 'overview') {
+        window.switchDashboardView('plans');
+      } else if (tab === 'profile') {
+        window.switchDashboardView('profile');
+      } else {
+        window.switchDashboardView('plans'); // Default to plans
+      }
+    }
   }
 
   function showPlanningForm() {
@@ -1830,45 +2661,91 @@
 
   // Language Management
   function changeLanguage(language) {
+    console.log('🌍 Changing language to:', language);
+
     // Use the translations from translations.js
-    if (window.WayzoTranslations && window.WayzoTranslations[language]) {
-      const translations = window.WayzoTranslations[language];
-      
-      // Update form labels
-      const labelMappings = [
-        { selector: 'span:contains("Traveling from (optional)")', key: 'travelingFrom' },
-        { selector: 'span:contains("Destination")', key: 'destination' },
-        { selector: 'span:contains("Budget")', key: 'budget' },
-        { selector: 'span:contains("Travelers")', key: 'travelers' },
-        { selector: 'span:contains("Generate preview")', key: 'generatePreview' },
-        { selector: 'span:contains("Generate full plan")', key: 'generateFullPlan' },
-        { selector: 'span:contains("Trip Type")', key: 'tripType' },
-        { selector: 'span:contains("Single Destination")', key: 'singleDestination' },
-        { selector: 'span:contains("Multi-Destination")', key: 'multiDestination' }
-      ];
-      
-      labelMappings.forEach(mapping => {
-        const elements = document.querySelectorAll(mapping.selector);
-        elements.forEach(el => {
-          if (el.textContent && translations[mapping.key]) {
-            el.textContent = translations[mapping.key];
-          }
-        });
-      });
-      
-      // Update button texts
-      const previewBtn = document.getElementById('previewBtn');
-      const fullPlanBtn = document.getElementById('fullPlanBtn');
-      if (previewBtn && translations.generatePreview) {
-        previewBtn.textContent = translations.generatePreview;
-      }
-      if (fullPlanBtn && translations.generateFullPlan) {
-        fullPlanBtn.textContent = translations.generateFullPlan;
-      }
+    if (!window.WayzoTranslations || !window.WayzoTranslations[language]) {
+      console.error('Translation not found for language:', language);
+      showNotification(`Translation not available for ${language}`, 'error');
+      return;
     }
-    
-    showNotification(`Language changed to ${language}`, 'success');
+
+    const t = window.WayzoTranslations[language];
+
+    // Update all elements with data-i18n attribute
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (t[key]) {
+        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') {
+          if (el.placeholder !== undefined) {
+            el.placeholder = t[key];
+          }
+        } else {
+          el.textContent = t[key];
+        }
+      }
+    });
+
+    // Update specific form elements by ID
+    const elementUpdates = {
+      'previewBtn': 'generatePreview',
+      'fullPlanBtn': 'generateFullPlan',
+      'paymentBtn': 'payNow',
+      'downloadPdfBtn': 'downloadPdf',
+      'downloadExcelBtn': 'downloadExcel',
+      'shareBtn': 'share',
+      'copyBtn': 'copyToClipboard'
+    };
+
+    Object.entries(elementUpdates).forEach(([id, key]) => {
+      const el = document.getElementById(id);
+      if (el && t[key]) {
+        if (el.tagName === 'BUTTON' || el.tagName === 'A') {
+          el.textContent = t[key];
+        }
+      }
+    });
+
+    // Update form labels that don't have data-i18n yet
+    const labels = document.querySelectorAll('label');
+    labels.forEach(label => {
+      const text = label.textContent.trim();
+      // Try to find matching translation
+      Object.entries(t).forEach(([key, value]) => {
+        if (label.querySelector('input, select, textarea') && !label.hasAttribute('data-i18n')) {
+          // Skip labels with nested inputs without data-i18n
+        }
+      });
+    });
+
+    // Store preference
     localStorage.setItem('wayzo_language', language);
+
+    // Update HTML lang attribute
+    document.documentElement.lang = language;
+
+    showNotification(t.languageChanged || `Language changed to ${language}`, 'success');
+    console.log('✅ Language changed successfully');
+  }
+
+  // Initialize language on page load
+  function initLanguage() {
+    const savedLanguage = localStorage.getItem('wayzo_language') || 'en';
+    const langSelect = document.getElementById('languageSelect');
+
+    if (langSelect) {
+      langSelect.value = savedLanguage;
+      // Don't call changeLanguage here to avoid notification on page load
+      // Just set the HTML lang attribute
+      document.documentElement.lang = savedLanguage;
+    }
+  }
+
+  // Call init on page load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initLanguage);
+  } else {
+    initLanguage();
   }
 
   // Download and Export Functions

@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wayzo Supabase Integration - Complete Implementation Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Arial, sans-serif;
+            line-height: 1.6;
+            color: #1f2937;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 20px;
+            opacity: 0.95;
+        }
+
+        .status-bar {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 20px 40px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-bar.success {
+            background: #d1fae5;
+            border-left-color: #10b981;
+        }
+
+        .status-bar.error {
+            background: #fee2e2;
+            border-left-color: #ef4444;
+        }
+
+        .status-icon {
+            font-size: 32px;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 60px;
+        }
+
+        .section-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: #111827;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title .icon {
+            font-size: 36px;
+        }
+
+        .subsection {
+            margin-bottom: 40px;
+            padding-left: 20px;
+            border-left: 3px solid #e5e7eb;
+        }
+
+        .subsection-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #374151;
+        }
+
+        .diagram {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 24px 0;
+            border: 2px solid #e5e7eb;
+        }
+
+        .flow-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .flow-step {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 20px;
+            position: relative;
+        }
+
+        .flow-step::after {
+            content: '↓';
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            color: #667eea;
+        }
+
+        .flow-step:last-child::after {
+            display: none;
+        }
+
+        .flow-step-title {
+            font-weight: 700;
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: #667eea;
+        }
+
+        .flow-step-desc {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .code-block {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 16px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .code-block .comment {
+            color: #9ca3af;
+        }
+
+        .code-block .keyword {
+            color: #c084fc;
+        }
+
+        .code-block .string {
+            color: #86efac;
+        }
+
+        .code-block .function {
+            color: #60a5fa;
+        }
+
+        .checklist {
+            list-style: none;
+            margin: 16px 0;
+        }
+
+        .checklist li {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #f9fafb;
+            border-radius: 6px;
+            border-left: 4px solid #d1d5db;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .checklist li.done {
+            border-left-color: #10b981;
+            background: #d1fae5;
+        }
+
+        .checklist li.pending {
+            border-left-color: #f59e0b;
+            background: #fef3c7;
+        }
+
+        .checklist li.missing {
+            border-left-color: #ef4444;
+            background: #fee2e2;
+        }
+
+        .checkbox {
+            font-size: 20px;
+        }
+
+        .architecture-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 24px 0;
+        }
+
+        .arch-card {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 24px;
+            transition: all 0.3s;
+        }
+
+        .arch-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .arch-card-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .arch-card-icon {
+            font-size: 28px;
+        }
+
+        .arch-card-desc {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .tech-badge {
+            background: #e0e7ff;
+            color: #4c1d95;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .file-tree {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .file-tree .folder {
+            color: #60a5fa;
+            font-weight: 600;
+        }
+
+        .file-tree .file {
+            color: #86efac;
+        }
+
+        .file-tree .new {
+            color: #fbbf24;
+            font-weight: 700;
+        }
+
+        .file-tree .indent {
+            display: inline-block;
+            width: 20px;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 40px;
+            margin: 24px 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: #e5e7eb;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -32px;
+            top: 5px;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #667eea;
+            border: 3px solid white;
+            box-shadow: 0 0 0 3px #667eea;
+        }
+
+        .timeline-item.completed::before {
+            background: #10b981;
+            box-shadow: 0 0 0 3px #10b981;
+        }
+
+        .timeline-item.pending::before {
+            background: #f59e0b;
+            box-shadow: 0 0 0 3px #f59e0b;
+        }
+
+        .timeline-content {
+            background: #f9fafb;
+            padding: 16px 20px;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+
+        .timeline-title {
+            font-weight: 700;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .timeline-desc {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .alert {
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin: 16px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .alert-warning {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            border-left: 4px solid #10b981;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            border-left: 4px solid #ef4444;
+        }
+
+        .alert-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .api-endpoint {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            margin: 12px 0;
+            overflow: hidden;
+        }
+
+        .api-method {
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #f9fafb;
+        }
+
+        .method-badge {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 12px;
+        }
+
+        .method-post {
+            background: #86efac;
+            color: #14532d;
+        }
+
+        .method-get {
+            background: #93c5fd;
+            color: #1e3a8a;
+        }
+
+        .api-path {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+        }
+
+        .api-desc {
+            padding: 16px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .navigation {
+            position: sticky;
+            top: 20px;
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 40px;
+        }
+
+        .nav-title {
+            font-weight: 700;
+            font-size: 18px;
+            margin-bottom: 16px;
+        }
+
+        .nav-list {
+            list-style: none;
+        }
+
+        .nav-list li {
+            margin-bottom: 8px;
+        }
+
+        .nav-list a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .nav-list a:hover {
+            color: #5568d3;
+            padding-left: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        th {
+            background: #f9fafb;
+            font-weight: 700;
+            color: #374151;
+        }
+
+        tr:hover {
+            background: #f9fafb;
+        }
+
+        .footer {
+            background: #1f2937;
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .footer p {
+            opacity: 0.8;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .navigation {
+                display: none;
+            }
+
+            .btn {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🚀 Wayzo Supabase Integration</h1>
+            <p>Complete Visual Implementation Guide</p>
+        </div>
+
+        <!-- Current Status -->
+        <div class="status-bar error">
+            <span class="status-icon">⚠️</span>
+            <div>
+                <strong>Current Status: NOT IMPLEMENTED</strong>
+                <p style="margin-top: 4px; opacity: 0.9;">Supabase, Resend, and Fly.io are configured, but backend integration is missing.</p>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+
+            <!-- Navigation -->
+            <div class="navigation">
+                <div class="nav-title">📑 Table of Contents</div>
+                <ul class="nav-list">
+                    <li><a href="#overview">System Overview</a></li>
+                    <li><a href="#current-status">Current Status</a></li>
+                    <li><a href="#architecture">Architecture Diagram</a></li>
+                    <li><a href="#user-flow">User Flow</a></li>
+                    <li><a href="#implementation">Implementation Steps</a></li>
+                    <li><a href="#files">File Structure</a></li>
+                    <li><a href="#api">API Endpoints</a></li>
+                    <li><a href="#database">Database Schema</a></li>
+                    <li><a href="#testing">Testing Guide</a></li>
+                </ul>
+            </div>
+
+            <!-- System Overview -->
+            <section id="overview" class="section">
+                <h2 class="section-title">
+                    <span class="icon">🎯</span>
+                    System Overview
+                </h2>
+
+                <p style="font-size: 18px; margin-bottom: 24px;">
+                    Wayzo is an AI-powered trip planning application. After this implementation, users will be able to:
+                </p>
+
+                <ul class="checklist">
+                    <li class="pending">
+                        <span class="checkbox">📝</span>
+                        <strong>Sign up/Sign in</strong> with email (magic link via Supabase Auth)
+                    </li>
+                    <li class="pending">
+                        <span class="checkbox">✨</span>
+                        <strong>Generate personalized trip plans</strong> using AI (OpenAI)
+                    </li>
+                    <li class="pending">
+                        <span class="checkbox">💾</span>
+                        <strong>Save plans to their account</strong> (persistent storage in Supabase)
+                    </li>
+                    <li class="pending">
+                        <span class="checkbox">📧</span>
+                        <strong>Receive email notifications</strong> when plans are ready (Resend)
+                    </li>
+                    <li class="pending">
+                        <span class="checkbox">📱</span>
+                        <strong>View all saved plans</strong> in a personal dashboard (backoffice)
+                    </li>
+                    <li class="pending">
+                        <span class="checkbox">📄</span>
+                        <strong>Download plans as PDF</strong> (Puppeteer + Supabase Storage)
+                    </li>
+                </ul>
+
+                <div class="architecture-grid">
+                    <div class="arch-card">
+                        <div class="arch-card-title">
+                            <span class="arch-card-icon">🗄️</span>
+                            Supabase
+                        </div>
+                        <div class="arch-card-desc">
+                            PostgreSQL database + Authentication + Storage for user plans and PDFs
+                        </div>
+                        <div class="tech-stack">
+                            <span class="tech-badge">Auth</span>
+                            <span class="tech-badge">Database</span>
+                            <span class="tech-badge">Storage</span>
+                        </div>
+                    </div>
+
+                    <div class="arch-card">
+                        <div class="arch-card-title">
+                            <span class="arch-card-icon">✈️</span>
+                            Fly.io
+                        </div>
+                        <div class="arch-card-desc">
+                            Hosting platform running Express backend 24/7 with global CDN
+                        </div>
+                        <div class="tech-stack">
+                            <span class="tech-badge">Docker</span>
+                            <span class="tech-badge">Node.js</span>
+                            <span class="tech-badge">Always-On</span>
+                        </div>
+                    </div>
+
+                    <div class="arch-card">
+                        <div class="arch-card-title">
+                            <span class="arch-card-icon">📧</span>
+                            Resend
+                        </div>
+                        <div class="arch-card-desc">
+                            Modern email API for sending transactional emails (plan notifications)
+                        </div>
+                        <div class="tech-stack">
+                            <span class="tech-badge">Email</span>
+                            <span class="tech-badge">Analytics</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Current Status -->
+            <section id="current-status" class="section">
+                <h2 class="section-title">
+                    <span class="icon">📊</span>
+                    Current Implementation Status
+                </h2>
+
+                <div class="subsection">
+                    <h3 class="subsection-title">✅ What's Already Set Up</h3>
+                    <ul class="checklist">
+                        <li class="done">
+                            <span class="checkbox">✅</span>
+                            <strong>Fly.io Deployment:</strong> App running at https://wayzo.fly.dev
+                        </li>
+                        <li class="done">
+                            <span class="checkbox">✅</span>
+                            <strong>Supabase Project:</strong> wayzo-prod with 2 tables created
+                        </li>
+                        <li class="done">
+                            <span class="checkbox">✅</span>
+                            <strong>Resend Account:</strong> Connected and ready to send emails
+                        </li>
+                        <li class="done">
+                            <span class="checkbox">✅</span>
+                            <strong>Express Backend:</strong> Server running on port 8080
+                        </li>
+                        <li class="done">
+                            <span class="checkbox">✅</span>
+                            <strong>OpenAI Integration:</strong> AI generation working
+                        </li>
+                        <li class="done">
+                            <span class="checkbox">✅</span>
+                            <strong>Frontend Dashboard:</strong> Basic UI already exists
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="subsection">
+                    <h3 class="subsection-title">❌ What's Missing (CRITICAL)</h3>
+                    <ul class="checklist">
+                        <li class="missing">
+                            <span class="checkbox">❌</span>
+                            <strong>Supabase Backend Integration:</strong> No @supabase/supabase-js package installed
+                        </li>
+                        <li class="missing">
+                            <span class="checkbox">❌</span>
+                            <strong>Auth Middleware:</strong> No JWT token validation (backend/lib/auth.mjs missing)
+                        </li>
+                        <li class="missing">
+                            <span class="checkbox">❌</span>
+                            <strong>API Routes:</strong> Missing /api/plans, /api/plan endpoints
+                        </li>
+                        <li class="missing">
+                            <span class="checkbox">❌</span>
+                            <strong>Email Helper:</strong> No Resend integration code (backend/lib/email.mjs missing)
+                        </li>
+                        <li class="missing">
+                            <span class="checkbox">❌</span>
+                            <strong>Backoffice Page:</strong> frontend/backoffice.html doesn't exist
+                        </li>
+                        <li class="missing">
+                            <span class="checkbox">❌</span>
+                            <strong>Frontend Auth:</strong> No Supabase client in frontend
+                        </li>
+                        <li class="missing">
+                            <span class="checkbox">❌</span>
+                            <strong>Environment Variables:</strong> Fly.io secrets not set
+                        </li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Architecture Diagram -->
+            <section id="architecture" class="section">
+                <h2 class="section-title">
+                    <span class="icon">🏗️</span>
+                    System Architecture
+                </h2>
+
+                <div class="diagram">
+                    <h3 style="text-align: center; margin-bottom: 30px; font-size: 24px;">Data Flow Diagram</h3>
+
+                    <div class="flow-chart">
+                        <div class="flow-step">
+                            <div class="flow-step-title">1️⃣ User Opens Wayzo.fly.dev</div>
+                            <div class="flow-step-desc">User visits the main application → Frontend loads from Fly.io CDN</div>
+                        </div>
+
+                        <div class="flow-step">
+                            <div class="flow-step-title">2️⃣ User Clicks "Generate Plan"</div>
+                            <div class="flow-step-desc">Frontend checks authentication status via Supabase client</div>
+                        </div>
+
+                        <div class="flow-step" style="background: #fef3c7; border-color: #f59e0b;">
+                            <div class="flow-step-title" style="color: #92400e;">🔐 Auth Check</div>
+                            <div class="flow-step-desc" style="color: #78350f;">
+                                <strong>If NOT logged in:</strong> Redirect to /backoffice.html → Show sign-in form → Send magic link via Supabase Auth<br>
+                                <strong>If logged in:</strong> Proceed to step 3
+                            </div>
+                        </div>
+
+                        <div class="flow-step">
+                            <div class="flow-step-title">3️⃣ Submit Form Data</div>
+                            <div class="flow-step-desc">
+                                POST /api/plan with Authorization: Bearer {JWT_TOKEN}<br>
+                                Body: { destination, dates, travelers, budget, style }
+                            </div>
+                        </div>
+
+                        <div class="flow-step" style="background: #dbeafe; border-color: #3b82f6;">
+                            <div class="flow-step-title" style="color: #1e40af;">🤖 Backend Processing</div>
+                            <div class="flow-step-desc" style="color: #1e3a8a;">
+                                1. Validate JWT token (requireUser middleware)<br>
+                                2. Generate AI itinerary (OpenAI API)<br>
+                                3. Save to Supabase database (plans table)<br>
+                                4. Send email notification (Resend)<br>
+                                5. Return plan ID
+                            </div>
+                        </div>
+
+                        <div class="flow-step">
+                            <div class="flow-step-title">4️⃣ Redirect to Backoffice</div>
+                            <div class="flow-step-desc">User redirected to /backoffice.html#plan={ID} to view the generated plan</div>
+                        </div>
+
+                        <div class="flow-step" style="background: #d1fae5; border-color: #10b981;">
+                            <div class="flow-step-title" style="color: #065f46;">✅ Plan Ready</div>
+                            <div class="flow-step-desc" style="color: #064e3b;">
+                                User sees full itinerary + Download PDF button + Email notification sent
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- User Flow -->
+            <section id="user-flow" class="section">
+                <h2 class="section-title">
+                    <span class="icon">👤</span>
+                    Complete User Flow
+                </h2>
+
+                <div class="diagram">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div>
+                            <h4 style="margin-bottom: 16px; font-size: 18px; color: #667eea;">🆕 New User Journey</h4>
+                            <ol style="line-height: 2; color: #4b5563;">
+                                <li>Visit wayzo.fly.dev</li>
+                                <li>Fill out trip form (destination, dates, etc.)</li>
+                                <li>Click "Generate My Plan"</li>
+                                <li>⚠️ Redirect to sign-in page</li>
+                                <li>Enter email → Receive magic link</li>
+                                <li>Click link → Authenticated ✅</li>
+                                <li>Automatically generate plan</li>
+                                <li>View plan in backoffice</li>
+                                <li>Receive email: "Your plan is ready!"</li>
+                            </ol>
+                        </div>
+
+                        <div>
+                            <h4 style="margin-bottom: 16px; font-size: 18px; color: #667eea;">🔄 Returning User Journey</h4>
+                            <ol style="line-height: 2; color: #4b5563;">
+                                <li>Visit wayzo.fly.dev (already logged in)</li>
+                                <li>Fill out new trip form</li>
+                                <li>Click "Generate My Plan"</li>
+                                <li>✅ Already authenticated → Direct to API</li>
+                                <li>Plan generated and saved</li>
+                                <li>View in backoffice</li>
+                                <li><strong>OR</strong> visit /backoffice.html anytime</li>
+                                <li>See list of ALL saved plans</li>
+                                <li>Click any plan to view details</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Implementation Steps -->
+            <section id="implementation" class="section">
+                <h2 class="section-title">
+                    <span class="icon">⚙️</span>
+                    Implementation Timeline
+                </h2>
+
+                <div class="timeline">
+                    <div class="timeline-item pending">
+                        <div class="timeline-content">
+                            <div class="timeline-title">Phase 1: Install Dependencies (5 minutes)</div>
+                            <div class="timeline-desc">
+                                Run: <code>cd backend && npm install @supabase/supabase-js@^2.45.0 resend@^3.0.0</code>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item pending">
+                        <div class="timeline-content">
+                            <div class="timeline-title">Phase 2: Create Backend Modules (15 minutes)</div>
+                            <div class="timeline-desc">
+                                Create 3 new files: supabase.mjs, auth.mjs, email.mjs in backend/lib/
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item pending">
+                        <div class="timeline-content">
+                            <div class="timeline-title">Phase 3: Add API Routes (20 minutes)</div>
+                            <div class="timeline-desc">
+                                Modify backend/server.mjs to add 4 new authenticated endpoints
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item pending">
+                        <div class="timeline-content">
+                            <div class="timeline-title">Phase 4: Setup Supabase Database (10 minutes)</div>
+                            <div class="timeline-desc">
+                                Run SQL in Supabase console to create plans table + RLS policies + storage bucket
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item pending">
+                        <div class="timeline-content">
+                            <div class="timeline-title">Phase 5: Create Frontend Backoffice (30 minutes)</div>
+                            <div class="timeline-desc">
+                                Create frontend/backoffice.html with Supabase auth + plans list
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item pending">
+                        <div class="timeline-content">
+                            <div class="timeline-title">Phase 6: Integrate Auth in Main App (15 minutes)</div>
+                            <div class="timeline-desc">
+                                Add Supabase client to frontend/app.js + protect "Generate Plan" button
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item pending">
+                        <div class="timeline-content">
+                            <div class="timeline-title">Phase 7: Configure Environment Variables (5 minutes)</div>
+                            <div class="timeline-desc">
+                                Set 5 secrets in Fly.io: SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, RESEND_API_KEY, PUBLIC_BASE_URL
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item pending">
+                        <div class="timeline-content">
+                            <div class="timeline-title">Phase 8: Deploy & Test (10 minutes)</div>
+                            <div class="timeline-desc">
+                                Deploy to Fly.io, test sign-in flow, generate plan, verify email, check backoffice
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <span class="alert-icon">⏱️</span>
+                    <div>
+                        <strong>Total Implementation Time: ~2 hours</strong>
+                        <p>Includes coding, testing, debugging, and deployment. Most time is copy-paste with minor adjustments.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- File Structure -->
+            <section id="files" class="section">
+                <h2 class="section-title">
+                    <span class="icon">📁</span>
+                    File Structure Changes
+                </h2>
+
+                <div class="subsection">
+                    <h3 class="subsection-title">New Files to Create (4 files)</h3>
+                    <div class="file-tree">
+backend/
+  lib/
+    <span class="new">📄 supabase.mjs</span>          <span class="comment"># Supabase admin & public clients</span>
+    <span class="new">📄 auth.mjs</span>              <span class="comment"># requireUser middleware (JWT validation)</span>
+    <span class="new">📄 email.mjs</span>             <span class="comment"># sendPlanReadyEmail() function</span>
+
+frontend/
+  <span class="new">📄 backoffice.html</span>         <span class="comment"># User dashboard with auth + plans list</span>
+                    </div>
+                </div>
+
+                <div class="subsection">
+                    <h3 class="subsection-title">Files to Modify (5 files)</h3>
+                    <div class="file-tree">
+backend/
+  <span class="file">📝 package.json</span>           <span class="comment"># Add 2 dependencies</span>
+  <span class="file">📝 .env</span>                   <span class="comment"># Add 5 environment variables</span>
+  <span class="file">📝 server.mjs</span>             <span class="comment"># Import modules + add 4 API routes</span>
+
+frontend/
+  <span class="file">📝 index.backend.html</span>     <span class="comment"># Add Supabase CDN script</span>
+  <span class="file">📝 app.js</span>                 <span class="comment"># Add Supabase client + auth check</span>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning">
+                    <span class="alert-icon">⚠️</span>
+                    <div>
+                        <strong>Important:</strong> All code is provided in the SUPABASE_IMPLEMENTATION_PLAN.md document. You can copy-paste directly!
+                    </div>
+                </div>
+            </section>
+
+            <!-- API Endpoints -->
+            <section id="api" class="section">
+                <h2 class="section-title">
+                    <span class="icon">🔌</span>
+                    API Endpoints
+                </h2>
+
+                <p style="margin-bottom: 24px; color: #6b7280;">
+                    All endpoints require <code>Authorization: Bearer {JWT_TOKEN}</code> header (except OPTIONS)
+                </p>
+
+                <div class="api-endpoint">
+                    <div class="api-method">
+                        <span class="method-badge method-post">POST</span>
+                        <span class="api-path">/api/plan</span>
+                    </div>
+                    <div class="api-desc">
+                        <strong>Create new plan for authenticated user</strong><br>
+                        Body: <code>{ params: {...}, planJson: {...}, planHtml: "...", meta: {...} }</code><br>
+                        Returns: <code>{ ok: true, id: "uuid" }</code>
+                    </div>
+                </div>
+
+                <div class="api-endpoint">
+                    <div class="api-method">
+                        <span class="method-badge method-get">GET</span>
+                        <span class="api-path">/api/plans</span>
+                    </div>
+                    <div class="api-desc">
+                        <strong>List all plans for authenticated user</strong><br>
+                        Returns: <code>[{ id, title, destination, start_date, end_date, created_at, pdf_path, ... }]</code>
+                    </div>
+                </div>
+
+                <div class="api-endpoint">
+                    <div class="api-method">
+                        <span class="method-badge method-get">GET</span>
+                        <span class="api-path">/api/plan/:id</span>
+                    </div>
+                    <div class="api-desc">
+                        <strong>Get single plan by ID (owner only)</strong><br>
+                        Returns: <code>{ id, user_id, title, content, html, params, ... }</code>
+                    </div>
+                </div>
+
+                <div class="api-endpoint">
+                    <div class="api-method">
+                        <span class="method-badge method-get">GET</span>
+                        <span class="api-path">/api/plan/:id/pdf</span>
+                    </div>
+                    <div class="api-desc">
+                        <strong>Get signed PDF URL (60 seconds expiry)</strong><br>
+                        Returns: <code>{ url: "https://supabase.co/storage/v1/object/sign/..." }</code>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Database Schema -->
+            <section id="database" class="section">
+                <h2 class="section-title">
+                    <span class="icon">🗄️</span>
+                    Database Schema
+                </h2>
+
+                <div class="subsection">
+                    <h3 class="subsection-title">Plans Table</h3>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Column</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>id</code></td>
+                                <td>UUID</td>
+                                <td>Primary key (auto-generated)</td>
+                            </tr>
+                            <tr>
+                                <td><code>user_id</code></td>
+                                <td>UUID</td>
+                                <td>Foreign key to auth.users (Supabase Auth)</td>
+                            </tr>
+                            <tr>
+                                <td><code>title</code></td>
+                                <td>TEXT</td>
+                                <td>Plan title (e.g., "Trip to Paris")</td>
+                            </tr>
+                            <tr>
+                                <td><code>destination</code></td>
+                                <td>TEXT</td>
+                                <td>Main destination</td>
+                            </tr>
+                            <tr>
+                                <td><code>start_date</code></td>
+                                <td>DATE</td>
+                                <td>Trip start date</td>
+                            </tr>
+                            <tr>
+                                <td><code>end_date</code></td>
+                                <td>DATE</td>
+                                <td>Trip end date</td>
+                            </tr>
+                            <tr>
+                                <td><code>budget_low</code></td>
+                                <td>NUMERIC</td>
+                                <td>Minimum budget</td>
+                            </tr>
+                            <tr>
+                                <td><code>budget_high</code></td>
+                                <td>NUMERIC</td>
+                                <td>Maximum budget</td>
+                            </tr>
+                            <tr>
+                                <td><code>travelers</code></td>
+                                <td>INTEGER</td>
+                                <td>Number of travelers</td>
+                            </tr>
+                            <tr>
+                                <td><code>style</code></td>
+                                <td>TEXT</td>
+                                <td>Trip style (budget, luxury, etc.)</td>
+                            </tr>
+                            <tr>
+                                <td><code>params</code></td>
+                                <td>JSONB</td>
+                                <td>Original form parameters</td>
+                            </tr>
+                            <tr>
+                                <td><code>content</code></td>
+                                <td>JSONB</td>
+                                <td>Structured plan JSON</td>
+                            </tr>
+                            <tr>
+                                <td><code>html</code></td>
+                                <td>TEXT</td>
+                                <td>Rendered HTML of the plan</td>
+                            </tr>
+                            <tr>
+                                <td><code>pdf_path</code></td>
+                                <td>TEXT</td>
+                                <td>Path to PDF in Supabase Storage</td>
+                            </tr>
+                            <tr>
+                                <td><code>created_at</code></td>
+                                <td>TIMESTAMPTZ</td>
+                                <td>Creation timestamp</td>
+                            </tr>
+                            <tr>
+                                <td><code>updated_at</code></td>
+                                <td>TIMESTAMPTZ</td>
+                                <td>Last update timestamp</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="subsection">
+                    <h3 class="subsection-title">Row Level Security (RLS) Policies</h3>
+
+                    <ul class="checklist">
+                        <li class="pending">
+                            <span class="checkbox">🔒</span>
+                            <strong>SELECT:</strong> Users can only view their own plans (<code>auth.uid() = user_id</code>)
+                        </li>
+                        <li class="pending">
+                            <span class="checkbox">🔒</span>
+                            <strong>INSERT:</strong> Users can only create plans for themselves
+                        </li>
+                        <li class="pending">
+                            <span class="checkbox">🔒</span>
+                            <strong>UPDATE:</strong> Users can only update their own plans
+                        </li>
+                        <li class="pending">
+                            <span class="checkbox">🔒</span>
+                            <strong>DELETE:</strong> Users can only delete their own plans
+                        </li>
+                    </ul>
+
+                    <div class="alert alert-success">
+                        <span class="alert-icon">🛡️</span>
+                        <div>
+                            <strong>Security:</strong> RLS ensures data isolation. Even if frontend is compromised, users can't access other users' data.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="subsection">
+                    <h3 class="subsection-title">Storage Bucket: plans</h3>
+
+                    <p style="margin-bottom: 16px;">
+                        PDF files stored at: <code>plans/{user_id}/{plan_id}.pdf</code>
+                    </p>
+
+                    <div class="code-block">
+<span class="comment">-- Storage policy: Users can upload PDFs for their own plans</span>
+<span class="keyword">CREATE POLICY</span> <span class="string">"Users can upload own plan PDFs"</span>
+  <span class="keyword">ON</span> storage.objects <span class="keyword">FOR INSERT</span>
+  <span class="keyword">WITH CHECK</span> (
+    bucket_id = <span class="string">'plans'</span>
+    <span class="keyword">AND</span> (storage.foldername(name))[1] = auth.uid()::<span class="keyword">text</span>
+  );
+                    </div>
+                </div>
+            </section>
+
+            <!-- Testing Guide -->
+            <section id="testing" class="section">
+                <h2 class="section-title">
+                    <span class="icon">🧪</span>
+                    Testing & Verification
+                </h2>
+
+                <div class="subsection">
+                    <h3 class="subsection-title">Step 1: Environment Setup</h3>
+
+                    <div class="code-block">
+<span class="comment"># Get your Supabase credentials from:</span>
+<span class="comment"># https://supabase.com/dashboard/project/YOUR_PROJECT/settings/api</span>
+
+<span class="comment"># Get your Resend API key from:</span>
+<span class="comment"># https://resend.com/api-keys</span>
+
+<span class="comment"># Set Fly.io secrets:</span>
+flyctl secrets set SUPABASE_URL=<span class="string">"https://xxxxx.supabase.co"</span> -a wayzo
+flyctl secrets set SUPABASE_ANON_KEY=<span class="string">"eyJhbGc..."</span> -a wayzo
+flyctl secrets set SUPABASE_SERVICE_ROLE_KEY=<span class="string">"eyJhbGc..."</span> -a wayzo
+flyctl secrets set RESEND_API_KEY=<span class="string">"re_xxxxx"</span> -a wayzo
+flyctl secrets set PUBLIC_BASE_URL=<span class="string">"https://wayzo.fly.dev"</span> -a wayzo
+                    </div>
+                </div>
+
+                <div class="subsection">
+                    <h3 class="subsection-title">Step 2: Deploy</h3>
+
+                    <div class="code-block">
+<span class="comment"># Deploy to Fly.io</span>
+flyctl deploy -a wayzo --remote-only --no-cache
+
+<span class="comment"># Watch logs in real-time</span>
+flyctl logs -a wayzo -f
+                    </div>
+                </div>
+
+                <div class="subsection">
+                    <h3 class="subsection-title">Step 3: Manual Testing</h3>
+
+                    <ol style="line-height: 2; color: #4b5563;">
+                        <li><strong>Test Sign-In:</strong>
+                            <ul style="margin-left: 24px; margin-top: 8px;">
+                                <li>Go to https://wayzo.fly.dev/backoffice.html</li>
+                                <li>Enter your email</li>
+                                <li>Click "Sign In with Email"</li>
+                                <li>Check your inbox for magic link</li>
+                                <li>Click link → Should redirect back and show "My Trip Plans"</li>
+                            </ul>
+                        </li>
+
+                        <li><strong>Test Plan Creation:</strong>
+                            <ul style="margin-left: 24px; margin-top: 8px;">
+                                <li>Go to https://wayzo.fly.dev/</li>
+                                <li>Fill out trip form</li>
+                                <li>Click "Generate Plan"</li>
+                                <li>Should save and redirect to backoffice</li>
+                                <li>Check email for "Plan Ready" notification</li>
+                            </ul>
+                        </li>
+
+                        <li><strong>Test Backoffice:</strong>
+                            <ul style="margin-left: 24px; margin-top: 8px;">
+                                <li>Go to https://wayzo.fly.dev/backoffice.html</li>
+                                <li>Should see list of all your plans</li>
+                                <li>Click "View Plan" on any plan</li>
+                                <li>Should display full itinerary</li>
+                            </ul>
+                        </li>
+                    </ol>
+                </div>
+
+                <div class="subsection">
+                    <h3 class="subsection-title">Step 4: API Testing with curl</h3>
+
+                    <div class="code-block">
+<span class="comment"># 1. Get access token from browser console (in backoffice.html):</span>
+(await supabase.auth.getSession()).data.session.access_token
+
+<span class="comment"># 2. Test create plan</span>
+curl -X POST https://wayzo.fly.dev/api/plan \
+  -H <span class="string">"Authorization: Bearer YOUR_TOKEN_HERE"</span> \
+  -H <span class="string">"Content-Type: application/json"</span> \
+  -d <span class="string">'{
+    "params": {
+      "destination": "Tokyo, Japan",
+      "startDate": "2025-11-01",
+      "endDate": "2025-11-10",
+      "travelers": 2,
+      "style": "luxury"
+    }
+  }'</span>
+
+<span class="comment"># Expected: {"ok":true,"id":"uuid-here"}</span>
+
+<span class="comment"># 3. Test list plans</span>
+curl https://wayzo.fly.dev/api/plans \
+  -H <span class="string">"Authorization: Bearer YOUR_TOKEN_HERE"</span>
+
+<span class="comment"># Expected: [{"id":"...","title":"...","destination":"Tokyo, Japan", ...}]</span>
+
+<span class="comment"># 4. Test get single plan</span>
+curl https://wayzo.fly.dev/api/plan/UUID_HERE \
+  -H <span class="string">"Authorization: Bearer YOUR_TOKEN_HERE"</span>
+
+<span class="comment"># Expected: {"id":"...","user_id":"...","html":"...", ...}</span>
+                    </div>
+                </div>
+
+                <div class="subsection">
+                    <h3 class="subsection-title">Troubleshooting</h3>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Problem</th>
+                                <th>Solution</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>401 Unauthorized</td>
+                                <td>Check Authorization header includes valid JWT token</td>
+                            </tr>
+                            <tr>
+                                <td>Insert failed</td>
+                                <td>Verify SUPABASE_SERVICE_ROLE_KEY is set correctly</td>
+                            </tr>
+                            <tr>
+                                <td>Email not sent</td>
+                                <td>Check RESEND_API_KEY is set + verify domain in Resend dashboard</td>
+                            </tr>
+                            <tr>
+                                <td>Plans not showing</td>
+                                <td>Open browser console → Check for API errors → Verify token</td>
+                            </tr>
+                            <tr>
+                                <td>Magic link not working</td>
+                                <td>Check redirect URL in Supabase Auth settings</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Next Steps -->
+            <section class="section">
+                <h2 class="section-title">
+                    <span class="icon">🚀</span>
+                    Ready to Implement?
+                </h2>
+
+                <p style="font-size: 18px; margin-bottom: 24px;">
+                    All the code you need is in the <strong>SUPABASE_IMPLEMENTATION_PLAN.md</strong> file. Follow it step-by-step or ask me to implement it for you!
+                </p>
+
+                <div style="display: flex; gap: 16px; margin-top: 32px;">
+                    <button class="btn" onclick="window.open('SUPABASE_IMPLEMENTATION_PLAN.md', '_blank')">
+                        📄 Open Implementation Plan
+                    </button>
+                    <button class="btn btn-secondary" onclick="alert('Ask Claude: Please implement the Supabase integration now!')">
+                        🤖 Ask Claude to Implement
+                    </button>
+                </div>
+
+                <div class="alert alert-info" style="margin-top: 32px;">
+                    <span class="alert-icon">💡</span>
+                    <div>
+                        <strong>Tip:</strong> You can implement this in phases. Start with Phase 1-3 (backend) to test API endpoints with curl, then add the frontend (Phase 4-6) once backend works.
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p><strong>Wayzo Implementation Guide</strong> | Generated on October 10, 2025</p>
+            <p style="margin-top: 8px;">For questions or issues, refer to SUPABASE_IMPLEMENTATION_PLAN.md</p>
+        </div>
+    </div>
+</body>
+</html>

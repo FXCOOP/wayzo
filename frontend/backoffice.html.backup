@@ -3,11 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
   <title>My Plans - Wayzo</title>
-  <link rel="stylesheet" href="/frontend/mobile-responsive.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * {
@@ -347,8 +343,8 @@
 
   <script>
     // IMPORTANT: Replace these with your actual Supabase credentials
-    const SUPABASE_URL = 'https://khrxfjekfzcvyjlzryyz.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtocnhmamVrZnpjdnlqbHpyeXl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4NzA3ODEsImV4cCI6MjA3NTQ0Njc4MX0.Uc4Nd9Wxt1TZNoq_nto0vYCdPAG1tI8alhx8ENSv8HA';
+    const SUPABASE_URL = 'YOUR_SUPABASE_URL_HERE';
+    const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY_HERE';
 
     let supabase;
     let currentUser = null;
@@ -358,7 +354,7 @@
       supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     } catch (e) {
       console.error('Failed to initialize Supabase:', e);
-      document.body.innerHTML = '<div class="auth-section"><h2>Configuration Error</h2><p>Please configure Supabase credentials in dashboard settings</p></div>';
+      document.body.innerHTML = '<div class="auth-section"><h2>Configuration Error</h2><p>Please configure Supabase credentials in backoffice.html</p></div>';
     }
 
     // Initialize app
@@ -439,7 +435,7 @@
         const { error } = await supabase.auth.signInWithOtp({
           email,
           options: {
-            emailRedirectTo: window.location.origin + '/dashboard'
+            emailRedirectTo: window.location.origin + '/backoffice.html'
           }
         });
 
@@ -578,12 +574,6 @@
               <button class="btn btn-ghost" onclick="window.print()">
                 🖨️ Print
               </button>
-              <button class="btn btn-ghost" onclick="sharePlan('${plan.id}')">
-                📤 Share Link
-              </button>
-              <button class="btn btn-ghost" onclick="downloadExcel('${plan.id}', '${escapeHtml(plan.destination || '')}')">
-                📊 Excel
-              </button>
             </div>
 
             <div class="plan-html">
@@ -621,59 +611,6 @@
         window.open(url, '_blank');
       } catch (e) {
         alert('PDF not available: ' + e.message);
-      }
-    }
-
-    function sharePlan(id) {
-      const shareUrl = `${window.location.origin}/dashboard#plan=${id}`;
-
-      if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(shareUrl).then(() => {
-          alert('✅ Plan link copied to clipboard!\n\n' + shareUrl);
-        }).catch(() => {
-          promptCopyLink(shareUrl);
-        });
-      } else {
-        promptCopyLink(shareUrl);
-      }
-    }
-
-    function promptCopyLink(url) {
-      const message = `📤 Share this link:\n\n${url}\n\nCopy this link to share your plan.`;
-      prompt(message, url);
-    }
-
-    async function downloadExcel(id, destination) {
-      try {
-        const token = (await supabase.auth.getSession()).data.session?.access_token;
-
-        const resp = await fetch(`/api/user/plan/${id}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-
-        if (!resp.ok) {
-          throw new Error('Plan not found');
-        }
-
-        const plan = await resp.json();
-
-        // Create a simple CSV export
-        let csv = 'Wayzo Trip Plan\n\n';
-        csv += `Destination:,${destination || plan.destination || 'N/A'}\n`;
-        csv += `Dates:,${plan.start_date || 'N/A'} to ${plan.end_date || 'N/A'}\n`;
-        csv += `Travelers:,${plan.travelers || 'N/A'}\n`;
-        csv += `Budget:,${plan.budget_low ? '$' + plan.budget_low : 'N/A'}\n\n`;
-
-        // Download CSV
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `wayzo-${destination || 'plan'}-export.csv`;
-        link.click();
-
-        alert('✅ Plan exported as CSV file!');
-      } catch (e) {
-        alert('Export failed: ' + e.message);
       }
     }
 

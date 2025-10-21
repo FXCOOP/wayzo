@@ -12,14 +12,25 @@ import { fileURLToPath } from 'url';
 import morgan from 'morgan';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
-import Database from 'better-sqlite3';
+// Make better-sqlite3 optional (not available on all platforms)
+let Database;
+try {
+  const module = await import('better-sqlite3');
+  Database = module.default;
+} catch (e) {
+  console.warn('⚠️ better-sqlite3 not available - SQLite features disabled');
+  console.warn('   Using Supabase for all data storage');
+}
 import { normalizeBudget, computeBudget } from './lib/budget.mjs';
 import { ensureDaySections } from './lib/expand-days.mjs';
 import { affiliatesFor, linkifyTokens } from './lib/links.mjs';
 import { buildIcs } from './lib/ics.mjs';
-import { getWidgetsForDestination, generateWidgetHTML, injectWidgetsIntoSections } from './lib/widgets.mjs';
+import { getWidgetsForDestination, generateWidgetHTML, injectWidgetsIntoSections, processLinks } from './lib/widgets.mjs';
 import { generateBookingRecommendations, WEATHER_IMPACT, CROWD_PATTERNS } from './lib/smart-booking.mjs';
-const VERSION = 'staging-v64';
+import { supabaseAdmin } from './lib/supabase.mjs';
+import { requireUser } from './lib/auth.mjs';
+import { sendPlanReadyEmail } from './lib/email.mjs';
+const VERSION = 'staging-v65';
 // Load .env locally only; on Render we rely on real env vars.
 if (process.env.NODE_ENV !== 'production') {
   try {
@@ -148,6 +159,16 @@ app.get('/admin', adminBasicAuth, (_req, res) => {
   const adminFile = path.join(FRONTEND, 'admin.html');
   if (fs.existsSync(adminFile)) return res.sendFile(adminFile);
   res.status(404).send('Admin UI not found');
+});
+
+// Backoffice route (Supabase authentication)
+app.get('/backoffice.html', (_req, res) => {
+  const backofficeFile = path.join(FRONTEND, 'backoffice.html');
+  if (fs.existsSync(backofficeFile)) {
+    console.log('Serving backoffice.html');
+    return res.sendFile(backofficeFile);
+  }
+  res.status(404).send('Backoffice not found');
 });
 
 // Dashboard routes
@@ -308,20 +329,34 @@ function removeImagesFromForbiddenSections(markdown, destination) {
 }
 
 /* DB */
-const db = new Database(path.join(ROOT, 'tripmaster.sqlite'));
-db.exec(`CREATE TABLE IF NOT EXISTS plans (id TEXT PRIMARY KEY, created_at TEXT NOT NULL, payload TEXT NOT NULL);`);
-db.exec(`CREATE TABLE IF NOT EXISTS events (id TEXT PRIMARY KEY, event_type TEXT NOT NULL, user_id TEXT, data TEXT, created_at TEXT NOT NULL);`);
-const savePlan = db.prepare('INSERT OR REPLACE INTO plans (id, created_at, payload) VALUES (?, ?, ?)');
-const getPlan = db.prepare('SELECT payload FROM plans WHERE id = ?');
+let db = null;
+let savePlan = null;
+let getPlan = null;
+
+if (Database) {
+  try {
+    db = new Database(path.join(ROOT, 'tripmaster.sqlite'));
+    db.exec(`CREATE TABLE IF NOT EXISTS plans (id TEXT PRIMARY KEY, created_at TEXT NOT NULL, payload TEXT NOT NULL);`);
+    db.exec(`CREATE TABLE IF NOT EXISTS events (id TEXT PRIMARY KEY, event_type TEXT NOT NULL, user_id TEXT, data TEXT, created_at TEXT NOT NULL);`);
+    savePlan = db.prepare('INSERT OR REPLACE INTO plans (id, created_at, payload) VALUES (?, ?, ?)');
+    getPlan = db.prepare('SELECT payload FROM plans WHERE id = ?');
+    console.log('✅ SQLite database initialized');
+  } catch (e) {
+    console.warn('⚠️ SQLite database failed to initialize:', e.message);
+    db = null;
+  }
+}
+
 const nowIso = () => new Date().toISOString();
 const uid = () => (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
 
 // Analytics tracking function
 const trackPlanGeneration = (payload) => {
+  if (!db) return; // Skip if SQLite not available
   try {
     const eventId = uid();
     db.prepare(`
-      INSERT INTO events (id, event_type, user_id, data, created_at) 
+      INSERT INTO events (id, event_type, user_id, data, created_at)
       VALUES (?, ?, ?, ?, ?)
     `).run(
       eventId,
@@ -502,164 +537,87 @@ Use these visual insights to personalize recommendations throughout the itinerar
 # ${destination} — ${start} → ${end}
 
 ## 🎯 Your Journey at a Glance
-Write a warm, personal welcome that makes the traveler excited about their upcoming adventure. Start with something like "Experience the magic of..." or "Your ${nDays}-day journey to..." Focus on what makes this destination special and what awaits them. Avoid AI-sounding language and make it feel like a knowledgeable friend is describing their trip.
+[Write 2-3 paragraphs describing the destination's magic and what makes this trip special]
 
 ## 💰 Budget Breakdown
 
-Create a beautiful, realistic budget breakdown for ${destination}. Research actual ${destination} prices for ${level} travel style. Format as:
-
-**💰 Total Budget Estimate: €X,XXX - €X,XXX**
+**💰 Total Budget Estimate: €[LOW] - €[HIGH]**
 *For ${adults + children} travelers • ${nDays} days*
+
+Generate realistic budget estimates based on ${level} style travel (budget/mid-range/luxury) for ${destination}.
+${budget ? `User budget: ${budget} ${currency}. Ensure breakdown fits within this range.` : 'Estimate typical costs.'}
 
 | Category | Amount Range | Notes |
 |----------|-------------|--------|
-| ✈️ **Flights** | €X - €X | Round-trip for ${adults + children} travelers |
-| 🏨 **Accommodation** | €X - €X | (${nDays} nights, €X-X per night) |
-| 🍽️ **Food & Dining** | €X - €X | (€X-X per person/day, local restaurants) |
-| 🎫 **Activities** | €X - €X | (Museums, tours, attractions) |
-| 🚌 **Transportation** | €X - €X | (Local transit, airport transfers) |
-| 🛍️ **Miscellaneous** | €X - €X | (Souvenirs, tips, emergency fund) |
+| ✈️ **Flights** | €XXX - €XXX | Round-trip for ${adults + children} travelers (realistic market prices) |
+| 🏨 **Accommodation** | €XXX - €XXX | ${nDays} nights (calculate: €XX-YY per night × ${nDays}) |
+| 🍽️ **Food & Dining** | €XXX - €XXX | Daily meals (calculate: €XX-YY per person per day × ${nDays} × ${adults + children}) |
+| 🎫 **Activities** | €XXX - €XXX | Museums, tours, attractions (based on destinations and ${level} level) |
+| 🚌 **Transportation** | €XXX - €XXX | Local transit (metro/bus passes for ${nDays} days) |
+| 🛍️ **Miscellaneous** | €XXX - €XXX | Souvenirs, tips (10-15% of total) |
 
-Use realistic ${destination} market prices for ${level} style travel. Make it clean, professional, and budget-appropriate.${destination.toLowerCase().includes('ski') || destination.toLowerCase().includes('bansko') || destination.toLowerCase().includes('alps') || professional_brief?.toLowerCase().includes('ski') ? ' Include equipment rental costs for ski gear, lessons, and lift passes.' : ''}
+Use real market prices for ${destination} in 2025. Total should be realistic and match ${level} travel style.
 
 ## 🗺️ Getting Around
-[transportation options, tips, getting from/to airport]
+[Describe how to get to/from airport and travel around the destination]
 
 ## 🏨 Where to Stay
-Recommend 3-4 excellent hotels in ${destination} for ${level} travelers with these details:
 
-**For EACH hotel include:**
-- Hotel name and type (e.g., "Hotel Goldener Adler - Historic boutique hotel")
-- Full address with postal code
-- Estimated rate: €X-€Y per night (total for ${nDays} nights: €XXX-€XXX)
-- **ALWAYS add ONLY: [Book Now]** (exactly like this, with square brackets, NO URL, NO anchor, NO extra text)
-- Why it's special: Location benefits, unique features, value proposition
-- Distance to main attractions
-
-**Example format:**
-**Hotel Central Innsbruck** (Traditional 3-star)
-- Address: Universitätsstraße 5, 6020 Innsbruck
-- Rate: €75-110/night (15 nights: €1,125-1,650 total)
+**[Hotel Name]** ([Type])
+- Address: [Full address with postal code]
+- Rate: €XX-€XX/night (${nDays} nights: €XXX-€XXX total)
 - [Book Now]
-- Perfect for: Walking distance to Old Town (5 min), great breakfast, family-run hospitality
+- Why it's special: [Brief description]
+- Distance to main attractions: [Walking time/transport info]
+
+Recommend 3-4 hotels matching ${level} style. Use realistic 2025 prices for ${destination}.
 
 ## 🎫 Must-See Attractions
 
-**CRITICAL: Booking Link Rules**
-1. Use ONLY these exact tokens (in square brackets):
-   - **[Book Entry Tickets]** for museums/attractions with entry fees
-   - **[Buy Tickets]** for tickets to events/shows
-   - **[Book Experience]** for tours/activities/experiences
+**[Attraction Name]**
+- Description: [What makes it special]
+- Address: [Full address]
+- Entry fee: [Price or "Free"]
+- Hours: [Opening hours]
+- [Book Entry Tickets](activity:[SPECIFIC NAME]) | [Map](map:[VENUE NAME, FULL ADDRESS])
 
-2. **NEVER add URLs or links yourself** - the system will automatically convert these tokens to working links
-3. **NEVER add "Booking:" labels** - just use the token directly
-
-**WRONG Examples:**
-- ❌ Booking: Book Entry Tickets(https://...)
-- ❌ [Book Entry Tickets](https://www.getyourguide.com...)
-- ❌ Book Entry Tickets (no brackets)
-
-**CORRECT Examples:**
-- ✅ [Book Entry Tickets]
-- ✅ [Buy Tickets]
-- ✅ [Book Experience]
-
-**For each attraction include:**
-- Attraction name and description
-- Address and location details
-- Entry fee or "Free"
-- Opening hours if relevant
-- Use ONLY the exact booking tokens above (with square brackets) for paid attractions
-- [Map] link for location
+[List 8-12 attractions in this format]
 
 ## 🍽️ Dining Guide
-**Restaurant Recommendations - Format for EACH restaurant:**
-- Restaurant name and cuisine type
-- Full address
-- Price range (€X-€Y per person)
-- Specialties and must-try dishes
-- **ONLY add [Map] link - NO reservation links**
 
-**Example format:**
-**Stiftskeller Innsbruck** (Traditional Tyrolean)
-- Address: Herzog-Friedrich-Straße 1, 6020 Innsbruck
-- Price: €18-€28 per person
-- Specialties: Wiener Schnitzel, Tiroler Gröstl, apple strudel
-- [Map]
+**[Restaurant Name]** ([Cuisine type])
+- Address: [Full address]
+- Price: €XX-€XX per person
+- Specialties: [Signature dishes]
+- [Map](map:[RESTAURANT NAME, FULL ADDRESS])
+
+[Provide 3-4 restaurants]
 
 ## 🎭 Daily Itineraries
 
-**INTERNAL INSTRUCTIONS (DO NOT OUTPUT THE TEXT BELOW - FOLLOW THE FORMAT ONLY):**
-
-You MUST follow this EXACT structure for each day. Do NOT include these instructions in your output - they are formatting guidelines only.
-
-**FORMAT TO FOLLOW:**
-
-## Day 1 - 2025-10-09
+## Day 1 - ${start}
 
 ### 🌅 MORNING (9:00-12:00)
-- Activity name with specific venue
-- Address: Full street address with postal code
-- Duration: X hours
-- [Booking Button] | [Map](map:venue+${destination})
-- Pro tip: Relevant advice
+- Arrival and hotel check-in
+- Address: [Full address]
+- Duration: [X hours]
+- [Book Now] | [Map](map:[Venue Name, Full Address])
+- Pro tip: [Helpful advice]
 
 ### 🌞 AFTERNOON (12:00-17:00)
-- Activity name with specific venue
-- Address: Full street address with postal code
-- Duration: X hours
-- [Booking Button] | [Map](map:venue+${destination})
-- Pro tip: Relevant advice
+- [Activity name]
+- [Activity details]
+- Address: [Full address]
+- Duration: [X hours]
+- [Book Entry Tickets](activity:[Activity Name]) | [Map](map:[Venue Name, Full Address])
+- Pro tip: [Helpful advice]
 
 ### 🌆 EVENING (17:00-21:00)
-- Dinner at [SPECIFIC RESTAURANT NAME] (cuisine type, €X-Y)
-- Address: Full street address with postal code
-- Duration: 2 hours
-- [Map](map:restaurant+${destination})
-- Pro tip: Relevant advice
-
-**MANDATORY RULES:**
-1. Use ### (H3 heading) for EVERY time block
-2. Include emoji AND time range: "### 🌅 MORNING (9:00-12:00)"
-3. ALWAYS use these exact emojis: 🌅 🌞 🌆
-4. ALWAYS include time ranges in parentheses
-5. For restaurants: ONLY use [Map] link - NO reservation buttons
-6. For attractions: Use [Book Entry Tickets], [Buy Tickets], or [Book Experience]
-7. For hotels: Use [Book Now]
-8. **Map links**: ALWAYS use format [Map](map:VenueName+${destination}) - the system will convert this to Google Maps URL
-9. **NEVER use**: [Map](https://www.google.com/maps...) - this will break the link processing
-
-**EXAMPLE OUTPUT (Follow this EXACTLY):**
-
-## Day 1 - 2025-10-15
-
-### 🌅 MORNING (9:00-12:00)
-- Arrival and hotel check-in at Hotel Innsbruck
-- Address: Innrain 3, 6020 Innsbruck
-- Duration: 2 hours
-- [Book Now] | [Map](map:Hotel Innsbruck+${destination})
-
-### 🌞 AFTERNOON (12:00-17:00)
-- Innsbruck Old Town walking tour
-- Visit Golden Roof, Hofburg Palace, St. James Cathedral
-- Address: Herzog-Friedrich-Straße, 6020 Innsbruck
-- Duration: 3 hours
-- [Book Entry Tickets] | [Map](map:Innsbruck Old Town+${destination})
-- Pro tip: Visit before 3 PM to avoid tour groups
-
-### 🌆 EVENING (17:00-21:00)
-- Dinner at Stiftskeller Restaurant (traditional Austrian, €20-35)
-- Address: Herzog-Friedrich-Straße 1, 6020 Innsbruck
-- Duration: 2 hours
-- [Map](map:Stiftskeller Innsbruck+${destination})
-- Evening stroll along Inn River promenade
-
-**MANDATORY BOOKING TOKEN RULES:**
-- For hotels: [Book Now]
-- For attractions: [Book Entry Tickets]
-- For restaurants: ONLY [Map] - NO booking buttons
-- NEVER add URLs or "Booking:" labels
-- The system will automatically convert these tokens to working links
+- Dinner at [Restaurant]
+- Address: [Full address]
+- Duration: [X hours]
+- [Map](map:[Restaurant Name, Full Address])
+- [Optional evening activity]
 
 
 ## 🧳 Don't Forget List
@@ -682,15 +640,7 @@ Must-have mobile apps for navigating ${destination} and enhancing your travel ex
 - **Important Local Numbers**: Destination-specific emergency services
 
 ## ⚠️ Disclaimer
-*Prices and availability subject to change. Verify details before booking.*
-
-CRITICAL INSTRUCTIONS:
-- DO NOT add AI disclaimers or meta-commentary like "This itinerary was generated by AI" or "Please verify information"
-- DO NOT add duplicate disclaimers after sections
-- The single disclaimer above is sufficient
-- Focus on providing practical, actionable travel information
-
-Generate the complete travel itinerary now using all the sections listed above.`;
+*Prices and availability subject to change. Verify details before booking.*`;
 
   // Trip context appended to system prompt (single prompt approach)
   const user = `Create an AMAZING trip plan for:
@@ -723,6 +673,13 @@ ${(() => {
     return 'No specific booking intelligence available for this destination.';
   }
 })()}
+
+**FORMATTING REQUIREMENTS:**
+- **Daily Itinerary Emojis**: For EVERY day, MUST use these exact emoji headers:
+  - 🌅 MORNING (time range)
+  - 🌞 AFTERNOON (time range)
+  - 🌆 EVENING (time range)
+- Generate ALL ${nDays} days using this consistent format
 
 **SPECIAL CONSIDERATIONS:**
 ${children > 0 ? `- **Family-Friendly Focus**: Include activities suitable for children, family-friendly accommodations, and consider child safety and entertainment
@@ -1211,10 +1168,14 @@ app.post('/api/plan', async (req, res) => {
     
     // Save plan to database with error handling
     try {
-      const planData = { id, type: 'plan', data: payload, markdown: markdownWithMap };
-      console.log('Saving plan:', { id, destination: payload.destination, length: markdownWithMap.length });
-      savePlan.run(id, nowIso(), JSON.stringify(planData));
-      console.log(`Plan saved with ID: ${id}`);
+      if (savePlan) {
+        const planData = { id, type: 'plan', data: payload, markdown: markdownWithMap };
+        console.log('Saving plan:', { id, destination: payload.destination, length: markdownWithMap.length });
+        savePlan.run(id, nowIso(), JSON.stringify(planData));
+        console.log(`Plan saved with ID: ${id}`);
+      } else {
+        console.warn('⚠️ SQLite not available - plan not saved locally');
+      }
     } catch (dbError) {
       console.error('Failed to save plan to database:', dbError);
       // Continue execution - don't fail the request if DB save fails
@@ -1280,45 +1241,68 @@ app.post('/api/plan.pdf', async (req, res) => {
       finalHTML = html; // Fallback to HTML without widgets
     }
 
+    // Read frontend CSS for consistent styling
+    const frontendCSS = fs.readFileSync(path.join(FRONTEND, 'style.css'), 'utf-8');
+
     const fullHtml = `<!doctype html><html><head>
       <meta charset="utf-8">
       <title>Wayzo Trip Plan - ${escapeHtml(payload.destination || '')}</title>
       <style>
+        /* Frontend styles for consistent look */
+        ${frontendCSS}
+      </style>
+      <style>
+        * {
+          box-sizing: border-box;
+        }
+
         body {
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
           -webkit-print-color-adjust: exact;
           print-color-adjust: exact;
-          line-height: 1.6;
-          color: #333;
+          line-height: 1.7;
+          color: #1a202c;
           max-width: 1200px;
           margin: 0 auto;
           padding: 20px;
+          background: #f7fafc;
         }
 
         h1 {
-          color: #2c5aa0;
-          font-size: 28px;
-          margin-bottom: 20px;
+          color: #2d3748;
+          font-size: 32px;
+          font-weight: 700;
+          margin-bottom: 24px;
           text-align: center;
-          border-bottom: 3px solid #2c5aa0;
-          padding-bottom: 15px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          padding-bottom: 16px;
+          border-bottom: 3px solid #667eea;
         }
 
         h2 {
-          color: #34495e;
-          font-size: 20px;
-          margin-top: 30px;
-          margin-bottom: 15px;
-          padding-left: 10px;
-          border-left: 4px solid #3498db;
+          color: #2d3748;
+          font-size: 24px;
+          font-weight: 600;
+          margin-top: 40px;
+          margin-bottom: 20px;
+          padding: 12px 16px;
+          background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+          border-left: 5px solid #667eea;
+          border-radius: 0 8px 8px 0;
           page-break-after: avoid;
         }
 
         h3 {
-          color: #2c3e50;
-          font-size: 16px;
-          margin-top: 20px;
-          margin-bottom: 10px;
+          color: #4a5568;
+          font-size: 18px;
+          font-weight: 600;
+          margin-top: 24px;
+          margin-bottom: 12px;
+          padding-left: 8px;
+          border-left: 3px solid #a0aec0;
           page-break-after: avoid;
         }
 
@@ -1478,13 +1462,65 @@ app.post('/api/plan.pdf', async (req, res) => {
         }
 
         a {
-          color: #3498db;
+          color: #667eea;
           text-decoration: none;
           font-weight: 500;
+          transition: all 0.3s ease;
         }
 
         a:hover {
-          text-decoration: underline;
+          color: #764ba2;
+          text-decoration: none;
+        }
+
+        /* Premium Button Styles */
+        a[href*="#hotel-widget"],
+        a[href*="#flight-widget"],
+        a[href*="#car-widget"],
+        a[href*="#airport-widget"],
+        a[href*="getyourguide.com"] {
+          display: inline-block;
+          padding: 10px 20px;
+          margin: 8px 4px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white !important;
+          border-radius: 8px;
+          font-weight: 600;
+          text-transform: uppercase;
+          font-size: 13px;
+          letter-spacing: 0.5px;
+          box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+          transition: all 0.3s ease;
+          text-decoration: none !important;
+        }
+
+        a[href*="#hotel-widget"]:hover,
+        a[href*="#flight-widget"]:hover,
+        a[href*="#car-widget"]:hover,
+        a[href*="#airport-widget"]:hover,
+        a[href*="getyourguide.com"]:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        /* Map Link Styling */
+        a[href*="google.com/maps"] {
+          display: inline-block;
+          padding: 6px 14px;
+          margin: 4px 0;
+          background: #f7fafc;
+          color: #4285f4 !important;
+          border: 2px solid #4285f4;
+          border-radius: 6px;
+          font-weight: 500;
+          font-size: 13px;
+          transition: all 0.2s ease;
+        }
+
+        a[href*="google.com/maps"]:hover {
+          background: #4285f4;
+          color: white !important;
+          transform: scale(1.05);
         }
 
         .day-section {
@@ -1505,15 +1541,252 @@ app.post('/api/plan.pdf', async (req, res) => {
           text-align: center;
         }
 
+        /* Mobile Responsive Design */
+        @media (max-width: 768px) {
+          body {
+            padding: 12px;
+            font-size: 15px;
+          }
+
+          h1 {
+            font-size: 24px;
+            margin-bottom: 16px;
+          }
+
+          h2 {
+            font-size: 20px;
+            margin-top: 28px;
+            margin-bottom: 14px;
+            padding: 10px 12px;
+          }
+
+          h3 {
+            font-size: 16px;
+            margin-top: 18px;
+          }
+
+          .trip-overview {
+            padding: 18px;
+            border-radius: 10px;
+          }
+
+          .overview-grid {
+            grid-template-columns: 1fr;
+            gap: 10px;
+          }
+
+          .overview-item {
+            padding: 12px;
+          }
+
+          a[href*="#hotel-widget"],
+          a[href*="#flight-widget"],
+          a[href*="#car-widget"],
+          a[href*="#airport-widget"],
+          a[href*="getyourguide.com"] {
+            display: block;
+            text-align: center;
+            margin: 8px 0;
+            padding: 12px 18px;
+            font-size: 12px;
+          }
+
+          a[href*="google.com/maps"] {
+            display: block;
+            text-align: center;
+            margin: 6px 0;
+          }
+
+          .section-widget {
+            padding: 16px;
+            margin: 16px 0;
+          }
+
+          table {
+            font-size: 13px;
+          }
+
+          th, td {
+            padding: 8px 10px;
+          }
+
+          .weather-table th,
+          .weather-table td {
+            padding: 10px 6px;
+            font-size: 12px;
+          }
+        }
+
+        /* Print Optimization */
         @media print {
-          body { font-size: 12px; }
-          h1 { font-size: 24px; }
-          h2 { font-size: 18px; }
-          h3 { font-size: 14px; }
-          .trip-overview { background: #2c5aa0 !important; }
-          .no-print { display: none; }
+          body {
+            background: white;
+            padding: 15px;
+            font-size: 11pt;
+            line-height: 1.5;
+          }
+
+          h1 {
+            font-size: 22pt;
+            color: #2d3748 !important;
+            -webkit-text-fill-color: #2d3748 !important;
+            page-break-after: avoid;
+          }
+
+          h2 {
+            font-size: 16pt;
+            background: #f7fafc !important;
+            color: #2d3748 !important;
+            page-break-after: avoid;
+          }
+
+          h3 {
+            font-size: 13pt;
+            page-break-after: avoid;
+          }
+
+          .trip-overview {
+            background: #667eea !important;
+            page-break-inside: avoid;
+          }
+
+          .day-section {
+            page-break-inside: avoid;
+          }
+
+          .section-widget {
+            page-break-inside: avoid;
+          }
+
+          a {
+            color: #667eea !important;
+            text-decoration: underline !important;
+          }
+
+          a[href*="#hotel-widget"],
+          a[href*="#flight-widget"],
+          a[href*="#car-widget"],
+          a[href*="#airport-widget"],
+          a[href*="getyourguide.com"] {
+            background: #667eea !important;
+            color: white !important;
+            box-shadow: none !important;
+            padding: 8px 14px;
+            margin: 4px 2px;
+            font-size: 10pt;
+          }
+
+          a[href*="google.com/maps"] {
+            border: 1px solid #4285f4 !important;
+            background: white !important;
+            padding: 4px 10px;
+            font-size: 10pt;
+          }
+
+          a[href]:after {
+            content: none !important;
+          }
+
+          .no-print,
+          .widget-content {
+            display: none !important;
+          }
+
+          .widget-header {
+            page-break-inside: avoid;
+          }
         }
       </style>
+      <script>
+        // Trip details for widget auto-fill
+        window.WAYZO_TRIP_DATA = {
+          destination: ${JSON.stringify((payload.destination || '').split(',')[0].trim())},
+          startDate: ${JSON.stringify(payload.start || '')},
+          endDate: ${JSON.stringify(payload.end || '')},
+          adults: ${payload.adults || 2},
+          children: ${payload.children || 0},
+          travelers: ${(payload.adults || 2) + (payload.children || 0)},
+          from: ${JSON.stringify(payload.from || '')}
+        };
+
+        // Auto-fill widgets when they load
+        document.addEventListener('DOMContentLoaded', function() {
+          // Wait for third-party widgets to load
+          setTimeout(function() {
+            // Try to fill flight widget
+            const flightWidget = document.querySelector('[data-flight-widget]');
+            if (flightWidget && window.WAYZO_TRIP_DATA.destination) {
+              try {
+                const destInput = flightWidget.querySelector('input[name*="destination"], input[placeholder*="destination" i], input[placeholder*="where" i]');
+                const originInput = flightWidget.querySelector('input[name*="origin"], input[placeholder*="from" i]');
+                const departInput = flightWidget.querySelector('input[name*="depart"], input[type="date"]:first-of-type');
+                const returnInput = flightWidget.querySelector('input[name*="return"], input[type="date"]:last-of-type');
+                const passengersInput = flightWidget.querySelector('input[name*="passenger"], select[name*="passenger"]');
+
+                if (destInput) destInput.value = window.WAYZO_TRIP_DATA.destination;
+                if (originInput && window.WAYZO_TRIP_DATA.from) originInput.value = window.WAYZO_TRIP_DATA.from;
+                if (departInput && window.WAYZO_TRIP_DATA.startDate) departInput.value = window.WAYZO_TRIP_DATA.startDate;
+                if (returnInput && window.WAYZO_TRIP_DATA.endDate) returnInput.value = window.WAYZO_TRIP_DATA.endDate;
+                if (passengersInput) passengersInput.value = window.WAYZO_TRIP_DATA.travelers;
+              } catch (e) {
+                console.log('Could not auto-fill flight widget:', e);
+              }
+            }
+
+            // Try to fill hotel widget
+            const hotelWidget = document.querySelector('[data-hotel-widget]');
+            if (hotelWidget && window.WAYZO_TRIP_DATA.destination) {
+              try {
+                const destInput = hotelWidget.querySelector('input[name*="destination"], input[placeholder*="where" i], input[placeholder*="city" i]');
+                const checkinInput = hotelWidget.querySelector('input[name*="checkin"], input[name*="check-in"], input[type="date"]:first-of-type');
+                const checkoutInput = hotelWidget.querySelector('input[name*="checkout"], input[name*="check-out"], input[type="date"]:last-of-type');
+                const guestsInput = hotelWidget.querySelector('input[name*="guest"], select[name*="guest"]');
+
+                if (destInput) destInput.value = window.WAYZO_TRIP_DATA.destination;
+                if (checkinInput && window.WAYZO_TRIP_DATA.startDate) checkinInput.value = window.WAYZO_TRIP_DATA.startDate;
+                if (checkoutInput && window.WAYZO_TRIP_DATA.endDate) checkoutInput.value = window.WAYZO_TRIP_DATA.endDate;
+                if (guestsInput) guestsInput.value = window.WAYZO_TRIP_DATA.travelers;
+              } catch (e) {
+                console.log('Could not auto-fill hotel widget:', e);
+              }
+            }
+
+            // Try to fill car rental widget
+            const carWidget = document.querySelector('[data-car-widget]');
+            if (carWidget && window.WAYZO_TRIP_DATA.destination) {
+              try {
+                const locationInput = carWidget.querySelector('input[name*="location"], input[name*="pickup"], input[placeholder*="where" i]');
+                const pickupInput = carWidget.querySelector('input[name*="pickup" i][type="date"], input[type="date"]:first-of-type');
+                const dropoffInput = carWidget.querySelector('input[name*="dropoff" i][type="date"], input[name*="return" i][type="date"], input[type="date"]:last-of-type');
+
+                if (locationInput) locationInput.value = window.WAYZO_TRIP_DATA.destination;
+                if (pickupInput && window.WAYZO_TRIP_DATA.startDate) pickupInput.value = window.WAYZO_TRIP_DATA.startDate;
+                if (dropoffInput && window.WAYZO_TRIP_DATA.endDate) dropoffInput.value = window.WAYZO_TRIP_DATA.endDate;
+              } catch (e) {
+                console.log('Could not auto-fill car widget:', e);
+              }
+            }
+
+            // Try to fill airport transfer widget
+            const airportWidget = document.querySelector('[data-airport-widget]');
+            if (airportWidget && window.WAYZO_TRIP_DATA.destination) {
+              try {
+                const destInput = airportWidget.querySelector('input[name*="destination"], input[placeholder*="where" i]');
+                const dateInput = airportWidget.querySelector('input[type="date"]');
+                const passengersInput = airportWidget.querySelector('input[name*="passenger"], select[name*="passenger"]');
+
+                if (destInput) destInput.value = window.WAYZO_TRIP_DATA.destination;
+                if (dateInput && window.WAYZO_TRIP_DATA.startDate) dateInput.value = window.WAYZO_TRIP_DATA.startDate;
+                if (passengersInput) passengersInput.value = window.WAYZO_TRIP_DATA.travelers;
+              } catch (e) {
+                console.log('Could not auto-fill airport transfer widget:', e);
+              }
+            }
+
+            console.log('Widget auto-fill attempted for:', window.WAYZO_TRIP_DATA.destination);
+          }, 2000); // Wait 2 seconds for widgets to fully load
+        });
+      </script>
     </head><body>
       <div class="trip-overview">
         <h1>🚀 ${escapeHtml(payload.destination || '')} Trip Plan</h1>
@@ -1627,8 +1900,252 @@ app.post('/api/track', (req, res) => {
     res.status(500).json({ error: 'Failed to track event' });
   }
 });
+
+// Get user's plans - requires authentication
+app.get('/api/user/plans', requireUser, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    console.log('📋 Fetching plans for user:', userId);
+
+    // Fetch plans from Supabase
+    const { data: plans, error } = await supabaseAdmin
+      .from('plans')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('❌ Supabase error fetching plans:', error);
+      throw error;
+    }
+
+    // Transform plans for frontend
+    const transformedPlans = (plans || []).map((plan, index) => {
+      const payload = typeof plan.payload === 'string' ? JSON.parse(plan.payload) : plan.payload;
+      const data = payload?.data || {};
+
+      // Try multiple sources for destination
+      const destination = plan.destination ||
+                         data.destination ||
+                         data.destinations ||
+                         payload?.destination ||
+                         'Unknown Destination';
+
+      // Debug log for first plan to see structure
+      if (index === 0 && plans.length > 0) {
+        console.log('🔍 Plan structure debug (first plan):');
+        console.log('  - plan.destination:', plan.destination);
+        console.log('  - data.destination:', data.destination);
+        console.log('  - data.destinations:', data.destinations);
+        console.log('  - payload.destination:', payload?.destination);
+        console.log('  - Full data keys:', Object.keys(data));
+      }
+
+      return {
+        id: plan.id,
+        destination: destination,
+        days: data.days || daysBetween(data.start, data.end) || null,
+        budget: data.budget || null,
+        currency: data.currency || 'USD',
+        status: plan.status || 'pending',
+        created_at: plan.created_at,
+        start_date: data.start,
+        end_date: data.end
+      };
+    });
+
+    console.log(`✅ Found ${transformedPlans.length} plans for user ${userId}`);
+    res.json(transformedPlans);
+  } catch (error) {
+    console.error('❌ Error fetching user plans:', error);
+    res.status(500).json({ error: 'Failed to fetch plans' });
+  }
+});
+
+// Get a specific plan HTML (authenticated)
+app.get('/api/plan/:id', requireUser, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    console.log(`📋 Fetching plan ${id} for user ${userId}`);
+
+    if (!supabaseAdmin) {
+      return res.status(503).json({ error: 'Supabase admin not configured' });
+    }
+
+    // Fetch the plan from Supabase
+    const { data: plan, error } = await supabaseAdmin
+      .from('plans')
+      .select('*')
+      .eq('id', id)
+      .eq('user_id', userId)
+      .single();
+
+    if (error || !plan) {
+      console.log(`❌ Plan not found: ${id}`);
+      return res.status(404).json({ error: 'Plan not found' });
+    }
+
+    console.log(`✅ Found plan: ${plan.id} - ${plan.destination || 'Unknown'}`);
+
+    // Parse the plan payload
+    const payload = typeof plan.payload === 'string' ? JSON.parse(plan.payload) : plan.payload;
+    const data = payload?.data || {};
+    const markdown = payload?.markdown || '';
+
+    // Convert markdown to HTML
+    const htmlBody = marked.parse(markdown);
+
+    // Read frontend CSS for consistent styling
+    const frontendCSS = fs.readFileSync(path.join(FRONTEND, 'style.css'), 'utf-8');
+
+    // Prepare plan metadata
+    const destination = plan.destination || data.destination || 'Your Trip';
+    const style = data.level === "luxury" ? "Luxury" : data.level === "budget" ? "Budget" : "Mid-range";
+    const traveler = travelerLabel(data.adults || 0, data.children || 0);
+    const currency = data.currency || 'USD';
+    const base = `${req.protocol}://${req.get('host')}`;
+    const pdfUrl = `${base}/api/plan/${id}/pdf`;
+    const icsUrl = `${base}/api/plan/${id}/ics`;
+
+    // Generate full HTML with frontend styling
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wayzo Trip Plan - ${escapeHtml(destination)}</title>
+    <style>
+        /* Frontend styles for consistent look */
+        ${frontendCSS}
+    </style>
+    <style>
+        /* Print-specific overrides */
+        @media print {
+            .print-actions {
+                display: none !important;
+            }
+        }
+
+        /* Plan view header */
+        .plan-view-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .plan-view-header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            -webkit-text-fill-color: white;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+
+        .plan-view-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .plan-view-actions button {
+            padding: 8px 16px;
+            border: 1px solid rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .plan-view-actions button:hover {
+            background: rgba(255,255,255,0.25);
+        }
+
+        /* Trip report styling */
+        .trip-report {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 768px) {
+            .plan-view-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .plan-view-actions {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .plan-view-actions button {
+                flex: 1;
+                min-width: 120px;
+            }
+
+            .trip-report {
+                padding: 20px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="plan-view-header print-actions">
+        <h1>${escapeHtml(destination)}</h1>
+        <div class="plan-view-actions">
+            <button onclick="window.print()">🖨️ Print</button>
+            <button onclick="window.location.href='${pdfUrl}'">📥 Download PDF</button>
+            <button onclick="window.location.href='${icsUrl}'">📅 Add to Calendar</button>
+            <button onclick="window.history.back()">🔙 Back</button>
+        </div>
+    </div>
+
+    <div class="trip-report">
+        ${htmlBody}
+    </div>
+
+    <script>
+        // Handle print button
+        function printPlan() {
+            window.print();
+        }
+    </script>
+</body>
+</html>`;
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+
+  } catch (error) {
+    console.error('❌ Error fetching plan:', error);
+    res.status(500).json({ error: 'Failed to fetch plan' });
+  }
+});
+
 app.get('/api/plan/:id/pdf', (req, res) => {
-  const { id } = req.params;
+  const { id} = req.params;
+
+  if (!getPlan) {
+    return res.status(503).json({ error: 'SQLite not available - use Supabase API endpoint instead' });
+  }
+
   const row = getPlan.get(id);
   if (!row) {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -1649,55 +2166,154 @@ app.get('/api/plan/:id/pdf', (req, res) => {
   const pdfUrl = `${base}/api/plan/${id}/pdf`;
   const icsUrl = `${base}/api/plan/${id}/ics`;
   const shareX = `https://twitter.com/intent/tweet?text=${encodeURIComponent(`My ${d.destination} plan by Wayzo`)}&url=${encodeURIComponent(pdfUrl)}`;
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Wayzo Trip Report</title>
-<style>
-  :root{--ink:#0f172a; --muted:#475569; --brand:#6366f1; --bg:#ffffff; --accent:#eef2ff; --border:#e2e8f0;}
-  body{font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--ink);margin:24px;background:var(--bg)}
-  header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid var(--border);flex-wrap:wrap}
-  .logo{display:flex;gap:10px;align-items:center}
-  .badge{width:28px;height:28px;border-radius:8px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:700}
-  .pill{border:1px solid var(--border);background:var(--accent);padding:.25rem .6rem;border-radius:999px;font-size:12px}
-  .summary{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 10px 0}
-  .summary .chip{border:1px solid var(--border);background:#fff;border-radius:999px;padding:.25rem .6rem;font-size:12px}
-  .actions{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 14px}
-  .actions a{color:#0f172a;text-decoration:none;border-bottom:1px dotted rgba(2,6,23,.25)}
-  .facts{background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px;margin:8px 0}
-  img{max-width:100%;height:auto;border-radius:10px}
-  table{border-collapse:collapse;width:100%}
-  th,td{border:1px solid var(--border);padding:.45rem .55rem;text-align:left}
-  thead th{background:var(--accent)}
-  footer{margin-top:24px;color:var(--muted);font-size:12px}
-  article{margin-top:16px}
-</style>
-</head><body>
-<header>
-  <div class="logo"><div class="badge">WZ</div><strong>Wayzo Trip Report</strong></div>
-  <div class="summary">
-    <span class="chip"><b>Destination:</b> ${escapeHtml(d.destination || 'Trip')}</span>
-    <span class="chip"><b>Travelers:</b> ${traveler}</span>
-    <span class="chip"><b>Style:</b> ${style}${d.prefs ? ` · ${escapeHtml(d.prefs)}` : ""}</span>
-    <span class="chip"><b>Budget:</b> ${normalizeBudget(d.budget, cur)} ${cur} (${pppd}/day/person)</span>
-    <span class="chip"><b>Season:</b> ${season}</span>
-  </div>
-</header>
-<div class="actions">
-  <a href="${icsUrl}">Add to Calendar (ICS)</a>
-  <a href="${shareX}" target="_blank" rel="noopener">Share</a>
-</div>
-<article>
-  ${htmlBody || '<p class="muted">No content.</p>'}
-</article>
-<footer>
-  <p>Generated by Wayzo — ${new Date().toLocaleString()}</p>
-</footer>
-</body></html>`;
+  const destination = d.destination || 'Trip';
+
+  // Read frontend CSS for consistent styling
+  const frontendCSS = fs.readFileSync(path.join(FRONTEND, 'style.css'), 'utf-8');
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wayzo Trip Plan - ${escapeHtml(destination)}</title>
+    <style>
+        /* Frontend styles for consistent look */
+        ${frontendCSS}
+    </style>
+    <style>
+        /* Print-specific styles */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background: white !important;
+            }
+            .trip-report {
+                box-shadow: none !important;
+                border: none !important;
+            }
+        }
+
+        /* Plan header styling */
+        .plan-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+
+        .plan-header h1 {
+            margin: 0 0 12px 0;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: white;
+            -webkit-text-fill-color: white;
+            background: none;
+            border: none;
+        }
+
+        .plan-summary {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        .plan-chip {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            color: white;
+        }
+
+        .plan-actions {
+            display: flex;
+            gap: 12px;
+            margin: 16px 0;
+            flex-wrap: wrap;
+        }
+
+        .plan-actions a {
+            color: #667eea;
+            text-decoration: none;
+            padding: 8px 16px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .plan-actions a:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        /* Trip report styling */
+        .trip-report {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 768px) {
+            .plan-header {
+                padding: 16px;
+            }
+
+            .plan-header h1 {
+                font-size: 1.5rem;
+            }
+
+            .trip-report {
+                padding: 20px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="plan-header">
+        <h1>🚀 ${escapeHtml(destination)}</h1>
+        <div class="plan-summary">
+            <span class="plan-chip"><strong>Travelers:</strong> ${traveler}</span>
+            <span class="plan-chip"><strong>Style:</strong> ${style}${d.prefs ? ` · ${escapeHtml(d.prefs)}` : ""}</span>
+            <span class="plan-chip"><strong>Budget:</strong> ${normalizeBudget(d.budget, cur)} ${cur} (${pppd}/day/person)</span>
+            <span class="plan-chip"><strong>Season:</strong> ${season}</span>
+        </div>
+    </div>
+
+    <div class="plan-actions no-print">
+        <a href="${icsUrl}">📅 Add to Calendar</a>
+        <a href="${shareX}" target="_blank" rel="noopener">🔗 Share on X</a>
+        <a href="javascript:window.print()">🖨️ Print</a>
+        <a href="javascript:window.close()">✖️ Close</a>
+    </div>
+
+    <div class="trip-report">
+        ${htmlBody || '<p style="color: #64748b;">No content available.</p>'}
+    </div>
+
+    <footer style="text-align: center; color: #64748b; font-size: 0.85rem; margin-top: 32px;">
+        <p>Generated by Wayzo — ${new Date().toLocaleString()}</p>
+    </footer>
+</body>
+</html>`;
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(html);
 });
 app.get('/api/plan/:id/ics', (_req, res) => {
   const { id } = req.params;
+
+  if (!getPlan) {
+    return res.status(503).json({ error: 'SQLite not available - use Supabase API endpoint instead' });
+  }
+
   const row = getPlan.get(id);
   if (!row) return res.status(404).json({ error: 'Plan not found' });
   const saved = JSON.parse(row.payload || '{}');
@@ -1716,6 +2332,207 @@ app.get('/api/plan/:id/ics', (_req, res) => {
   res.setHeader('Content-Disposition', `attachment; filename="wayzo-${id}.ics"`);
   res.send(ics);
 });
+
+// ========================================
+// SUPABASE-AUTHENTICATED ROUTES
+// ========================================
+
+// DUPLICATE ENDPOINT - Commented out (first endpoint at line 1898 is used)
+// List all plans for authenticated user
+/*
+app.get('/api/user/plans', requireUser, async (req, res) => {
+  try {
+    if (!supabaseAdmin) {
+      return res.status(503).json({ error: 'Supabase admin not configured' });
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('plans')
+      .select('id,title,destination,start_date,end_date,created_at,pdf_path,budget_low,budget_high,travelers')
+      .eq('user_id', req.user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('List plans error:', error);
+      return res.status(500).json({ error: 'Failed to list plans' });
+    }
+
+    console.log(`📋 Listed ${data?.length || 0} plans for user ${req.user.email}`);
+    res.json(data || []);
+  } catch (e) {
+    console.error('GET /api/user/plans error:', e);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+*/
+
+// Get single plan for authenticated user
+app.get('/api/user/plan/:id', requireUser, async (req, res) => {
+  try {
+    if (!supabaseAdmin) {
+      return res.status(503).json({ error: 'Supabase admin not configured' });
+    }
+
+    const { id } = req.params;
+    const { data, error } = await supabaseAdmin
+      .from('plans')
+      .select('*')
+      .eq('id', id)
+      .eq('user_id', req.user.id)
+      .single();
+
+    if (error || !data) {
+      console.error('Get plan error:', error);
+      return res.status(404).json({ error: 'Plan not found' });
+    }
+
+    // FIX: Reprocess links in existing HTML to fix generic GetYourGuide/map links
+    if (data.html && data.destination) {
+      try {
+        data.html = processLinks(data.html, data.destination);
+        console.log(`🔧 Reprocessed links for plan ${id} (destination: ${data.destination})`);
+      } catch (linkError) {
+        console.warn('Failed to reprocess links:', linkError);
+        // Continue with original HTML if reprocessing fails
+      }
+    }
+
+    console.log(`📄 Plan ${id} fetched for user ${req.user.email}`);
+    res.json(data);
+  } catch (e) {
+    console.error('GET /api/user/plan/:id error:', e);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Create/save plan for authenticated user (replaces public /api/plan)
+app.post('/api/user/plan', requireUser, async (req, res) => {
+  try {
+    if (!supabaseAdmin) {
+      return res.status(503).json({ error: 'Supabase admin not configured' });
+    }
+
+    const { params } = req.body || {};
+
+    if (!params || !params.destination) {
+      return res.status(400).json({ error: 'Missing required parameters' });
+    }
+
+    console.log(`📝 Generating plan for user ${req.user.email}, destination: ${params.destination}`);
+
+    // Normalize parameters (same as /api/plan)
+    const payload = { ...params };
+    payload.currency = payload.currency || 'USD';
+    payload.budget = normalizeBudget(payload.budget, payload.currency);
+    payload.mode = 'full'; // Full reports with 16384 tokens
+
+    // Generate plan using AI (same as /api/plan)
+    const planId = uid();
+    const markdown = await generatePlanWithAI(payload);
+    const processedMarkdown = linkifyTokens(markdown, payload.destination);
+    const cleanedMarkdown = removeImagesFromForbiddenSections(processedMarkdown, payload.destination);
+    const html = marked.parse(cleanedMarkdown);
+
+    // Add widgets
+    const widgets = getWidgetsForDestination(payload.destination, payload.level, []);
+    let finalHTML;
+    try {
+      finalHTML = await injectWidgetsIntoSections(html, widgets, payload.destination, payload.start, payload.end, payload);
+    } catch (widgetError) {
+      console.error('Widget injection failed:', widgetError);
+      finalHTML = html;
+    }
+
+    // Build insert payload
+    const insertPayload = {
+      user_id: req.user.id,
+      title: `Trip to ${params.destination}`,
+      destination: params.destination,
+      start_date: params.start || params.startDate || null,
+      end_date: params.end || params.endDate || null,
+      budget_low: params.budget || params.budgetMin || null,
+      budget_high: params.budgetMax || null,
+      travelers: params.adults || params.travelers || null,
+      style: params.level || params.style || null,
+      markdown: markdown,
+      html: finalHTML,
+      created_at: new Date().toISOString()
+    };
+
+    const { data: row, error } = await supabaseAdmin
+      .from('plans')
+      .insert(insertPayload)
+      .select('id')
+      .single();
+
+    if (error) {
+      console.error('Insert plan error:', error);
+      return res.status(500).json({ error: 'Failed to create plan', details: error.message });
+    }
+
+    console.log(`✅ Plan ${row.id} created and saved for user ${req.user.email}`);
+
+    // Send email notification
+    const planUrl = `${process.env.PUBLIC_BASE_URL || 'https://wayzo.online'}/backoffice.html#plan=${row.id}`;
+    await sendPlanReadyEmail(req.user.email, planUrl);
+
+    // Return plan data (same format as /api/plan)
+    const aff = affiliatesFor(payload.destination);
+    res.json({
+      ok: true,
+      id: row.id,
+      markdown,
+      html: finalHTML,
+      affiliates: aff,
+      version: VERSION
+    });
+  } catch (e) {
+    console.error('POST /api/user/plan error:', e);
+    res.status(500).json({ error: 'Failed to create plan', details: e.message });
+  }
+});
+
+// Get signed PDF URL for plan
+app.get('/api/user/plan/:id/pdf', requireUser, async (req, res) => {
+  try {
+    if (!supabaseAdmin) {
+      return res.status(503).json({ error: 'Supabase admin not configured' });
+    }
+
+    const { id } = req.params;
+
+    // Verify ownership
+    const { data: plan, error } = await supabaseAdmin
+      .from('plans')
+      .select('user_id,pdf_path')
+      .eq('id', id)
+      .single();
+
+    if (error || !plan || plan.user_id !== req.user.id) {
+      return res.status(404).json({ error: 'Plan not found' });
+    }
+
+    if (!plan.pdf_path) {
+      return res.status(404).json({ error: 'PDF not generated yet' });
+    }
+
+    // Create signed URL (60 seconds expiry)
+    const { data: signed, error: sErr } = await supabaseAdmin
+      .storage.from('plans')
+      .createSignedUrl(plan.pdf_path, 60);
+
+    if (sErr) {
+      console.error('PDF sign error:', sErr);
+      return res.status(500).json({ error: 'Failed to generate PDF URL' });
+    }
+
+    res.json({ url: signed.signedUrl });
+  } catch (e) {
+    console.error('GET /api/user/plan/:id/pdf error:', e);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Legal pages - must be defined before the catch-all route
 app.get('/privacy', (_req, res) => {
   const privacyFile = path.join(FRONTEND, 'privacy.html');
@@ -1879,8 +2696,8 @@ app.get('/api/location', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Wayzo backend running on :${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Wayzo backend running on 0.0.0.0:${PORT}`);
   console.log('Version:', VERSION);
   console.log('Index file:', INDEX);
   console.log('Frontend path:', FRONTEND);

@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wayzo Trip Report - Issues & Fix Strategy</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0d1117; color: #c9d1d9; line-height: 1.6; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        h1 { color: #58a6ff; margin-bottom: 10px; font-size: 2.5em; border-bottom: 3px solid #58a6ff; padding-bottom: 10px; }
+        h2 { color: #79c0ff; margin: 30px 0 15px; font-size: 1.8em; border-left: 4px solid #79c0ff; padding-left: 15px; }
+        h3 { color: #8b949e; margin: 20px 0 10px; font-size: 1.3em; }
+        .summary { background: #161b22; border-left: 4px solid #f85149; padding: 20px; margin: 20px 0; border-radius: 6px; }
+        .issue { background: #1c1215; border-left: 4px solid #f85149; padding: 15px; margin: 10px 0; border-radius: 6px; }
+        .issue-title { color: #f85149; font-weight: bold; font-size: 1.1em; margin-bottom: 10px; }
+        .current-behavior { background: #1c1612; padding: 10px; border-radius: 4px; margin: 10px 0; font-family: 'Courier New', monospace; font-size: 0.9em; }
+        .expected-behavior { background: #121c15; padding: 10px; border-radius: 4px; margin: 10px 0; font-family: 'Courier New', monospace; font-size: 0.9em; }
+        .fix { background: #18131c; padding: 15px; margin: 10px 0; border-radius: 6px; border-left: 4px solid #a371f7; }
+        .fix-title { color: #a371f7; font-weight: bold; margin-bottom: 10px; }
+        .strategy { background: #1c2128; padding: 25px; border-radius: 8px; margin: 20px 0; border: 2px solid #3fb950; }
+        .strategy h3 { color: #3fb950; margin-bottom: 15px; }
+        .step { background: #0d1117; padding: 15px; margin: 10px 0; border-radius: 6px; border-left: 4px solid #58a6ff; }
+        .step-number { display: inline-block; background: #58a6ff; color: #0d1117; width: 30px; height: 30px; border-radius: 50%; text-align: center; line-height: 30px; font-weight: bold; margin-right: 10px; }
+        .warning { background: #1c1612; border: 2px solid #ff6b00; padding: 15px; border-radius: 6px; margin: 15px 0; }
+        .warning-icon { color: #ff6b00; font-size: 1.2em; font-weight: bold; }
+        code { background: #21262d; padding: 2px 6px; border-radius: 3px; font-family: 'Courier New', monospace; color: #79c0ff; }
+        pre { background: #161b22; padding: 15px; border-radius: 6px; overflow-x: auto; margin: 10px 0; }
+        ul { margin-left: 20px; margin-top: 10px; }
+        li { margin: 5px 0; }
+        .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+        .comparison-column { background: #161b22; padding: 15px; border-radius: 6px; }
+        .good { border-left: 4px solid #3fb950; }
+        .bad { border-left: 4px solid #f85149; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #30363d; }
+        th { background: #161b22; color: #58a6ff; font-weight: bold; }
+        tr:hover { background: #161b22; }
+        .file-path { background: #21262d; padding: 2px 8px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 0.85em; color: #f0883e; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Wayzo Trip Report - Complete Fix Analysis</h1>
+        <p style="color: #8b949e; margin-bottom: 30px;">Based on current c6bb330 deployment + API output analysis + past week failures</p>
+
+        <div class="summary">
+            <h2 style="margin-top: 0; color: #f85149;">🎯 Executive Summary</h2>
+            <p><strong>Current Status:</strong> Trip reports are generating but multiple critical features are broken or missing:</p>
+            <ul>
+                <li>❌ Location auto-detection not working</li>
+                <li>❌ Hotel booking buttons not linking to widgets</li>
+                <li>❌ Attraction booking buttons not using GYG partner links</li>
+                <li>❌ Restaurant booking not linking to GYG</li>
+                <li>❌ Daily itinerary structure showing internal instructions to clients</li>
+                <li>❌ Missing time-of-day icons (morning/afternoon/evening)</li>
+                <li>❌ Printable version formatting issues</li>
+                <li>⚠️ AI generating extra unnecessary disclaimers</li>
+            </ul>
+        </div>
+
+        <h2>📊 Issue Breakdown</h2>
+
+        <div class="issue">
+            <div class="issue-title">Issue #1: Location Auto-Detection Not Working</div>
+            <p><strong>User Impact:</strong> Users have to manually type their origin city instead of automatic detection</p>
+            <div class="current-behavior">
+                <strong>❌ Current:</strong> Location detection field is empty, no automatic population
+            </div>
+            <div class="expected-behavior">
+                <strong>✅ Expected:</strong> Should automatically detect and populate user's location (e.g., "Tel Aviv, Israel")
+            </div>
+            <p><strong>Root Cause:</strong> Based on commit history, CORS issues with geolocation APIs (commits b5d63d3, c455b8a, c93fc67)</p>
+            <p><strong>Files Affected:</strong> <span class="file-path">frontend/app.js</span></p>
+        </div>
+
+        <div class="issue">
+            <div class="issue-title">Issue #2: Hotel Booking [Book Now] Buttons Not Working</div>
+            <p><strong>User Impact:</strong> Users click [Book Now] but it doesn't go to your hotel booking widget</p>
+            <div class="current-behavior">
+                <strong>❌ Current Output:</strong><br>
+                <code>[Book Now]</code> - Generic text link, no actual URL
+            </div>
+            <div class="expected-behavior">
+                <strong>✅ Expected Output:</strong><br>
+                Should link to your Booking.com affiliate widget with destination pre-filled
+            </div>
+            <p><strong>Root Cause:</strong> Widget link generation in backend not properly implemented</p>
+            <p><strong>Files Affected:</strong> <span class="file-path">backend/lib/widgets.mjs</span>, <span class="file-path">backend/server.mjs</span></p>
+        </div>
+
+        <div class="issue">
+            <div class="issue-title">Issue #3: Must-See Attractions [Book Tickets] Not Using GYG Partner Links</div>
+            <p><strong>User Impact:</strong> Missing affiliate revenue from attraction bookings</p>
+            <div class="current-behavior">
+                <strong>❌ Current Output:</strong><br>
+                <pre>Nordkette – Innsbruck skyline cable car
+[Book Tickets] [Check Hours]</pre>
+                Link goes to generic GYG search, not your partner ID PUHVJ53
+            </div>
+            <div class="expected-behavior">
+                <strong>✅ Expected Output:</strong><br>
+                <pre>Nordkette – Innsbruck skyline cable car
+[Book Tickets →]</pre>
+                Should redirect to:<br>
+                <code>https://www.getyourguide.com/s/?q=Innsbruck+Nordkette&partner_id=PUHVJ53</code>
+            </div>
+            <p><strong>API Shows:</strong> Links are being generated but not with actual hrefs in HTML buttons</p>
+            <p><strong>Files Affected:</strong> <span class="file-path">backend/lib/widgets.mjs</span></p>
+        </div>
+
+        <div class="issue">
+            <div class="issue-title">Issue #4: Restaurant Booking Buttons Not Linking to GYG</div>
+            <p><strong>User Impact:</strong> Restaurant bookings don't generate affiliate commissions</p>
+            <div class="current-behavior">
+                <strong>❌ Current Output:</strong><br>
+                <pre>Booking: [Reserve Table] [View Menu]</pre>
+                No actual clickable links
+            </div>
+            <div class="expected-behavior">
+                <strong>✅ Expected Output:</strong><br>
+                <code>[Reserve Table →]</code> should link to GYG restaurant/food experiences with your partner ID
+            </div>
+            <p><strong>Files Affected:</strong> <span class="file-path">backend/server.mjs</span> (AI prompt), <span class="file-path">backend/lib/widgets.mjs</span></p>
+        </div>
+
+        <div class="issue">
+            <div class="issue-title">Issue #5: Daily Itinerary Showing Internal Instructions</div>
+            <p><strong>User Impact:</strong> Unprofessional - users see backend formatting instructions</p>
+            <div class="current-behavior">
+                <strong>❌ Current Output:</strong><br>
+                <pre>🎭 Daily Itineraries
+Time-Blocked Daily Structure for Mobile-Friendly Format:
+
+Day Format: Day X - Date (YYYY-MM-DD)
+Time Blocks: MORNING (9:00-12:00), AFTERNOON (12:00-17:00), EVENING (17:00-21:00)
+For each block, you'll find:
+Activity Name (duration)
+Location/Address
+Booking Buttons (Museums/Attractions, Restaurants, Tours, Transport, Hotels)
+[Map] for each location...</pre>
+                This entire instruction block is visible to users!
+            </div>
+            <div class="expected-behavior">
+                <strong>✅ Expected Output:</strong><br>
+                Should jump straight to:
+                <pre>🎭 Daily Itineraries
+
+Day 1 - 2025-10-09
+🌅 MORNING (9:00-12:00)
+Arrival, Innsbruck Old Town stroll...</pre>
+            </div>
+            <p><strong>Root Cause:</strong> AI prompt in server.mjs includes the format instructions as content instead of system instructions</p>
+            <p><strong>Files Affected:</strong> <span class="file-path">backend/server.mjs</span> (AI prompt section)</p>
+        </div>
+
+        <div class="issue">
+            <div class="issue-title">Issue #6: Missing Time-of-Day Icons in Daily Itineraries</div>
+            <p><strong>User Impact:</strong> Less visually appealing, harder to scan</p>
+            <div class="current-behavior">
+                <strong>❌ Current Output:</strong><br>
+                <code>MORNING (9:00-12:00): Activity</code>
+            </div>
+            <div class="expected-behavior">
+                <strong>✅ Expected Output:</strong><br>
+                <code>🌅 MORNING (9:00-12:00): Activity</code><br>
+                <code>🌞 AFTERNOON (12:00-17:00): Activity</code><br>
+                <code>🌆 EVENING (17:00-21:00): Activity</code>
+            </div>
+            <p><strong>Files Affected:</strong> <span class="file-path">backend/server.mjs</span> (AI prompt)</p>
+        </div>
+
+        <div class="issue">
+            <div class="issue-title">Issue #7: Unnecessary Disclaimer at End of Daily Itineraries</div>
+            <p><strong>User Impact:</strong> Makes itinerary feel incomplete/unprofessional</p>
+            <div class="current-behavior">
+                <strong>❌ Current Output:</strong><br>
+                <pre>Note: The daily blocks above provide a structure; specifics such as exact museum hours,
+lift operations, and restaurant reservations will depend on the day's weather and seasonal
+closures. I can tailor each day with exact times and booking links once you confirm preferred
+bases (Innsbruck-only vs. multi-base)...</pre>
+            </div>
+            <div class="expected-behavior">
+                <strong>✅ Expected Output:</strong><br>
+                Remove this note entirely. Itinerary should end after Day 15.
+            </div>
+            <p><strong>Root Cause:</strong> AI is adding conversational disclaimers</p>
+            <p><strong>Files Affected:</strong> <span class="file-path">backend/server.mjs</span> (AI prompt)</p>
+        </div>
+
+        <div class="issue">
+            <div class="issue-title">Issue #8: Printable Version Formatting</div>
+            <p><strong>User Impact:</strong> PDF/Print version not optimized</p>
+            <p><strong>Current Status:</strong> Needs verification - widgets showing in printable version?</p>
+            <p><strong>Files Affected:</strong> <span class="file-path">frontend/printable.html</span> or inline styles</p>
+        </div>
+
+        <h2>🎯 What We Learned from Last Week's Failures</h2>
+
+        <div class="warning">
+            <p><span class="warning-icon">⚠️</span> <strong>Critical Lessons from 28 Failed Commits:</strong></p>
+            <ul>
+                <li><strong>Never fix multiple issues simultaneously</strong> - Commits c455b8a, c93fc67 tried to fix GPT API + budget + location all at once</li>
+                <li><strong>Don't add emergency workarounds</strong> - emergency-api-fix.js, debug-form.js created more problems</li>
+                <li><strong>Test locally before pushing</strong> - Many commits were "DEPLOY" triggers without local testing</li>
+                <li><strong>Don't modify AI prompts mid-crisis</strong> - GPT-5-nano experiments (commits 9c99326, d500428, d155c6d) caused chaos</li>
+                <li><strong>Keep test files out of production</strong> - 47 test files (commit cfc6c3f) bloated deployment</li>
+                <li><strong>One file at a time</strong> - When commits touched 3-4 files simultaneously, things broke</li>
+            </ul>
+        </div>
+
+        <h2>✅ Safe Fix Strategy</h2>
+
+        <div class="strategy">
+            <h3>Phase 1: Frontend Fixes Only (Low Risk)</h3>
+
+            <div class="step">
+                <span class="step-number">1</span>
+                <strong>Fix Location Auto-Detection</strong>
+                <p><strong>File:</strong> <span class="file-path">frontend/app.js</span></p>
+                <p><strong>Action:</strong> Fix geolocation API calls with working CORS-friendly service</p>
+                <p><strong>Test:</strong> Open form, verify location auto-populates</p>
+                <p><strong>Risk:</strong> 🟢 Low - isolated to form field</p>
+                <p><strong>Rollback:</strong> Easy - one file revert</p>
+            </div>
+
+            <div class="step">
+                <span class="step-number">2</span>
+                <strong>Test Frontend Change</strong>
+                <p>Deploy to staging, test location detection works</p>
+                <p><strong>Success Criteria:</strong> Location field shows user's city automatically</p>
+                <p><strong>If fails:</strong> Revert immediately, no other changes</p>
+            </div>
+        </div>
+
+        <div class="strategy">
+            <h3>Phase 2: Backend Widget Link Fixes (Medium Risk)</h3>
+
+            <div class="step">
+                <span class="step-number">3</span>
+                <strong>Fix Hotel [Book Now] Buttons</strong>
+                <p><strong>File:</strong> <span class="file-path">backend/lib/widgets.mjs</span></p>
+                <p><strong>Action:</strong> Update hotel widget function to return proper Booking.com affiliate links</p>
+                <p><strong>Current Function:</strong></p>
+                <pre>function getHotelWidget(destination) {
+  // Returns generic [Book Now] text
+}</pre>
+                <p><strong>Fixed Function:</strong></p>
+                <pre>function getHotelWidget(destination) {
+  const encodedDest = encodeURIComponent(destination);
+  const affiliateID = 'YOUR_BOOKING_AFFILIATE_ID';
+  return `https://www.booking.com/searchresults.html?ss=${encodedDest}&aid=${affiliateID}`;
+}</pre>
+                <p><strong>Test:</strong> Generate plan, click [Book Now], verify redirects to Booking.com</p>
+                <p><strong>Risk:</strong> 🟡 Medium - affects generated content</p>
+            </div>
+
+            <div class="step">
+                <span class="step-number">4</span>
+                <strong>Fix GYG Attraction Booking Links</strong>
+                <p><strong>File:</strong> <span class="file-path">backend/lib/widgets.mjs</span></p>
+                <p><strong>Action:</strong> Ensure GYG links include partner_id=PUHVJ53</p>
+                <p><strong>Function to fix:</strong></p>
+                <pre>function getAttractionLink(destination, attractionName) {
+  const query = encodeURIComponent(`${destination} ${attractionName}`);
+  return `https://www.getyourguide.com/s/?q=${query}&partner_id=PUHVJ53`;
+}</pre>
+                <p><strong>Test:</strong> Generate plan, click [Book Tickets], verify URL has PUHVJ53</p>
+                <p><strong>Risk:</strong> 🟡 Medium</p>
+            </div>
+
+            <div class="step">
+                <span class="step-number">5</span>
+                <strong>Test Backend Widget Changes</strong>
+                <p>Generate a test itinerary, verify ALL booking links work correctly</p>
+                <p><strong>Success Criteria:</strong></p>
+                <ul>
+                    <li>[Book Now] → Booking.com with affiliate ID</li>
+                    <li>[Book Tickets] → GetYourGuide with PUHVJ53</li>
+                    <li>[Reserve Table] → GetYourGuide food experiences</li>
+                </ul>
+                <p><strong>If fails:</strong> Revert widgets.mjs only</p>
+            </div>
+        </div>
+
+        <div class="strategy">
+            <h3>Phase 3: AI Prompt Fixes (Higher Risk)</h3>
+
+            <div class="step">
+                <span class="step-number">6</span>
+                <strong>Fix Daily Itinerary Format Instructions</strong>
+                <p><strong>File:</strong> <span class="file-path">backend/server.mjs</span></p>
+                <p><strong>Action:</strong> Move formatting instructions from content to system instructions</p>
+                <p><strong>Current (WRONG):</strong></p>
+                <pre>🎭 Daily Itineraries
+Time-Blocked Daily Structure for Mobile-Friendly Format:
+
+Day Format: Day X - Date (YYYY-MM-DD)
+Time Blocks: MORNING (9:00-12:00), AFTERNOON (12:00-17:00), EVENING (17:00-21:00)
+For each block, you'll find:
+Activity Name (duration)...
+
+Day 1 - 2025-10-09
+MORNING (9:00-12:00): Arrival...</pre>
+                <p><strong>Fixed (RIGHT):</strong></p>
+                <pre>🎭 Daily Itineraries
+
+Day 1 - 2025-10-09
+🌅 MORNING (9:00-12:00)
+Arrival, Innsbruck Old Town stroll...</pre>
+                <p><strong>Implementation:</strong> Update AI prompt to NOT include the structure description in output</p>
+            </div>
+
+            <div class="step">
+                <span class="step-number">7</span>
+                <strong>Add Time-of-Day Icons</strong>
+                <p><strong>File:</strong> <span class="file-path">backend/server.mjs</span></p>
+                <p><strong>Action:</strong> Update AI prompt to include icons:</p>
+                <pre>🌅 MORNING (9:00-12:00): [morning activities]
+🌞 AFTERNOON (12:00-17:00): [afternoon activities]
+🌆 EVENING (17:00-21:00): [evening activities]</pre>
+            </div>
+
+            <div class="step">
+                <span class="step-number">8</span>
+                <strong>Remove Unnecessary Disclaimers</strong>
+                <p><strong>File:</strong> <span class="file-path">backend/server.mjs</span></p>
+                <p><strong>Action:</strong> Add to AI prompt:</p>
+                <pre>"Do NOT add notes like 'I can tailor each day...' or
+'specifics may depend on...' at the end.
+Provide definitive recommendations only."</pre>
+            </div>
+
+            <div class="step">
+                <span class="step-number">9</span>
+                <strong>Test AI Prompt Changes (CRITICAL)</strong>
+                <p><strong>Test Process:</strong></p>
+                <ul>
+                    <li>Generate 3 different test itineraries (different destinations)</li>
+                    <li>Verify formatting is consistent</li>
+                    <li>Verify no internal instructions visible</li>
+                    <li>Verify icons appear correctly</li>
+                    <li>Verify no extra disclaimers at end</li>
+                </ul>
+                <p><strong>Risk:</strong> 🔴 High - AI prompt changes can have unexpected results</p>
+                <p><strong>If fails:</strong> Immediate revert of server.mjs</p>
+            </div>
+        </div>
+
+        <h2>📁 Files to Modify (In Order)</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Phase</th>
+                    <th>File</th>
+                    <th>Changes</th>
+                    <th>Risk Level</th>
+                    <th>Test Method</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td><span class="file-path">frontend/app.js</span></td>
+                    <td>Fix location auto-detection</td>
+                    <td>🟢 Low</td>
+                    <td>Open form, check location field</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td><span class="file-path">backend/lib/widgets.mjs</span></td>
+                    <td>Fix hotel + attraction booking links</td>
+                    <td>🟡 Medium</td>
+                    <td>Generate plan, click all [Book Now] buttons</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td><span class="file-path">backend/server.mjs</span></td>
+                    <td>Fix AI prompt formatting</td>
+                    <td>🔴 High</td>
+                    <td>Generate 3 test plans, verify output</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>🚫 What NOT to Do</h2>
+
+        <div class="warning">
+            <p><span class="warning-icon">🚨</span> <strong>Forbidden Actions (Based on Past Failures):</strong></p>
+            <ul>
+                <li>❌ Do NOT modify multiple files in one commit</li>
+                <li>❌ Do NOT add new npm packages (caused deployment issues before)</li>
+                <li>❌ Do NOT create emergency workaround files</li>
+                <li>❌ Do NOT change GPT model settings (caused 503 errors)</li>
+                <li>❌ Do NOT add debug scripts to production</li>
+                <li>❌ Do NOT commit untested changes</li>
+                <li>❌ Do NOT force deploy without local testing</li>
+            </ul>
+        </div>
+
+        <h2>✅ Success Criteria</h2>
+
+        <div class="strategy">
+            <h3>After all fixes, a trip report should have:</h3>
+            <ul>
+                <li>✅ Location field auto-populated with user's city</li>
+                <li>✅ [Book Now] buttons in hotel section → Booking.com with affiliate ID</li>
+                <li>✅ [Book Tickets] buttons in attractions → GetYourGuide with partner_id=PUHVJ53</li>
+                <li>✅ [Reserve Table] buttons → GetYourGuide food experiences</li>
+                <li>✅ Daily itineraries with 🌅 🌞 🌆 icons</li>
+                <li>✅ NO internal formatting instructions visible</li>
+                <li>✅ NO "I can tailor..." disclaimers at end</li>
+                <li>✅ Clean, professional printable version</li>
+            </ul>
+        </div>
+
+        <h2>🔄 Rollback Plan</h2>
+
+        <div class="step">
+            <strong>If ANY phase fails:</strong>
+            <pre>git checkout [file-that-broke]
+git commit -m "Revert [specific change]"
+git push origin fix-links-v68</pre>
+            <p>Do NOT try to fix the fix. Revert and analyze locally.</p>
+        </div>
+
+        <h2>📊 Comparison: API Output vs User Requirements</h2>
+
+        <div class="comparison">
+            <div class="comparison-column bad">
+                <h3>❌ Current API Output</h3>
+                <pre>[Book Now]
+[Book Tickets] [Check Hours]
+[Reserve Table] [View Menu]
+
+Time-Blocked Daily Structure for Mobile-Friendly Format:
+Day Format: Day X - Date (YYYY-MM-DD)...
+
+MORNING (9:00-12:00): Activity</pre>
+            </div>
+            <div class="comparison-column good">
+                <h3>✅ Required Output</h3>
+                <pre>&lt;a href="https://booking.com/..."&gt;Book Now →&lt;/a&gt;
+&lt;a href="https://getyourguide.com/...partner_id=PUHVJ53"&gt;Book Tickets →&lt;/a&gt;
+&lt;a href="https://getyourguide.com/..."&gt;Reserve Table →&lt;/a&gt;
+
+🎭 Daily Itineraries
+
+Day 1 - 2025-10-09
+🌅 MORNING (9:00-12:00)
+Activity details...</pre>
+            </div>
+        </div>
+
+        <h2>⏱️ Estimated Timeline</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Phase</th>
+                    <th>Task</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>Fix location detection (frontend/app.js)</td>
+                    <td>30 min coding + 15 min testing</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Fix widget links (backend/lib/widgets.mjs)</td>
+                    <td>45 min coding + 30 min testing</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>Fix AI prompts (backend/server.mjs)</td>
+                    <td>60 min coding + 45 min testing</td>
+                </tr>
+                <tr>
+                    <td colspan="2"><strong>Total Estimated Time</strong></td>
+                    <td><strong>3-4 hours</strong></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="warning" style="margin-top: 40px;">
+            <p><span class="warning-icon">🎯</span> <strong>Final Recommendation:</strong></p>
+            <p>Fix these issues ONE AT A TIME, testing after each change. Do NOT attempt to fix everything in one commit. The last week's failures were caused by trying to fix too much at once.</p>
+            <p><strong>Proceed with Phase 1 (location detection) first. Wait for approval before moving to Phase 2.</strong></p>
+        </div>
+    </div>
+</body>
+</html>

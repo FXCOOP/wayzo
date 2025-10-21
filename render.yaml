@@ -1,13 +1,22 @@
 services:
   - type: web
-    name: wayzo-trip-planner
+    name: wayzo-staging
     env: node
-    buildCommand: cd backend && npm install
-    startCommand: node backend/server.mjs
+    buildCommand: npm install --prefix backend
+    startCommand: cd backend && node server.mjs
     plan: free
     envVars:
       - key: NODE_ENV
-        value: production
+        value: staging
       - key: PORT
         value: 10000
-      # Force deployment trigger - staging 2025-10-06
+      - key: SUPABASE_URL
+        value: https://khrxfjekfzcvyjlzryyz.supabase.co
+      - key: SUPABASE_ANON_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtocnhmamVrZnpjdnlqbHpyeXl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4NzA3ODEsImV4cCI6MjA3NTQ0Njc4MX0.Uc4Nd9Wxt1TZNoq_nto0vYCdPAG1tI8alhx8ENSv8HA
+      - key: PUBLIC_BASE_URL
+        value: https://wayzo-staging.onrender.com
+      # Add these secrets manually in Render dashboard Environment tab:
+      # SUPABASE_SERVICE_ROLE_KEY - from Supabase dashboard
+      # RESEND_API_KEY - from Resend dashboard (optional for testing)
+      # Force deployment trigger - staging v1

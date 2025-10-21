@@ -15,13 +15,15 @@ QUALITY RULES
 - Sustainability (when asked): trains/public transit, city cards, local vendors.
 
 LINK RULES
-- Use SEARCH URLs only (no made-up affiliate params):
-  flights: https://www.kayak.com/flights?query={CITY}
-  hotels:  https://www.booking.com/searchresults.html?ss={CITY}
-  activities: https://www.getyourguide.com/s/?q={CITY}
-  (Wayzo injects affiliate parameters later.)
-- For each place, add a Google Maps search URL:
-  https://www.google.com/maps/search/?api=1&query={ENCODED_NAME_AND_CITY}
+- Use token format with specific location/activity names for better search results:
+  • Booking tokens: [Book Entry Tickets](activity:SPECIFIC_ACTIVITY_NAME)
+    Example: [Book Entry Tickets](activity:Krimml Waterfalls)
+    NOT: [Book Entry Tickets] (generic destination search)
+  • Map links: [Map](map:SPECIFIC_VENUE_NAME_AND_ADDRESS)
+    Example: [Map](map:Krimml Waterfalls, Krimml 1, 5730 Krimml)
+    NOT: [Map](map:Tyrol, Austria) (too generic)
+- Always include the SPECIFIC attraction/venue name in booking and map tokens
+- Wayzo will convert these tokens to proper URLs with affiliate parameters
 
 OUTPUT MODES (always return BOTH)
 1) HUMAN: a concise, elegant Markdown itinerary.

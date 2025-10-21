@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Run This SQL Now - Fix All Missing Columns</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .alert {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+
+        .alert h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .step {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 25px;
+            border-left: 5px solid #667eea;
+        }
+
+        .step h3 {
+            color: #2d3748;
+            font-size: 1.4em;
+            margin-bottom: 15px;
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 15px 0;
+            position: relative;
+        }
+
+        .code-block code {
+            color: #4ec9b0;
+        }
+
+        .copy-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .copy-button:hover {
+            background: #5568d3;
+        }
+
+        .copy-button.copied {
+            background: #28a745;
+        }
+
+        .success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        .success h4 {
+            color: #155724;
+            margin-bottom: 10px;
+        }
+
+        .check-icon {
+            color: #28a745;
+            font-size: 1.5em;
+            margin-right: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .number {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 35px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Complete Database Fix</h1>
+            <p>Add ALL Missing Columns to Plans Table</p>
+        </div>
+
+        <div class="content">
+            <div class="alert">
+                <h3>⚠️ Current Status</h3>
+                <p><strong>Good news:</strong> You added the <code>markdown</code> column successfully! ✅</p>
+                <p style="margin-top: 10px;"><strong>But:</strong> There might be OTHER missing columns causing the 500 error.</p>
+                <p style="margin-top: 10px;">Let's add ALL columns the backend needs in one go!</p>
+            </div>
+
+            <div class="step">
+                <h3><span class="number">1</span>Copy This Complete SQL Script</h3>
+                <p style="margin: 15px 0 20px 0;">This script adds ALL columns that the backend tries to save:</p>
+                <div class="code-block" id="sqlBlock">
+                    <button class="copy-button" onclick="copySQL()">Copy SQL</button>
+<pre style="margin: 0;">-- Complete Database Schema Fix for Wayzo Plans Table
+-- Run this entire script in Supabase SQL Editor
+
+-- Add all potentially missing columns to plans table
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS markdown TEXT;
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS html TEXT;
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS title TEXT;
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS destination TEXT;
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS start_date DATE;
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS end_date DATE;
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS budget_low NUMERIC;
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS budget_high NUMERIC;
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS travelers INTEGER;
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS style TEXT;
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+
+-- Verify all columns exist
+SELECT column_name, data_type, is_nullable
+FROM information_schema.columns
+WHERE table_name = 'plans'
+ORDER BY ordinal_position;</pre>
+                </div>
+            </div>
+
+            <div class="step">
+                <h3><span class="number">2</span>Run in Supabase SQL Editor</h3>
+                <ol style="margin-left: 25px; line-height: 2; margin-top: 15px;">
+                    <li>Go to <a href="https://supabase.com/dashboard/project/khrxfjekfzcvyjlzryyz/sql/new" target="_blank" style="color: #667eea;">Supabase SQL Editor</a></li>
+                    <li>Paste the SQL script above</li>
+                    <li>Click <strong>"RUN"</strong> button (or Ctrl+Enter)</li>
+                </ol>
+            </div>
+
+            <div class="step">
+                <h3><span class="number">3</span>Check The Results</h3>
+                <p style="margin: 15px 0;">After running, you should see a table showing ALL columns:</p>
+
+                <div class="success">
+                    <h4><span class="check-icon">✅</span>Expected Columns in Plans Table:</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Column Name</th>
+                                <th>Data Type</th>
+                                <th>Purpose</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>id</code></td>
+                                <td>uuid</td>
+                                <td>Primary key (auto-generated)</td>
+                            </tr>
+                            <tr>
+                                <td><code>user_id</code></td>
+                                <td>uuid</td>
+                                <td>Who created the plan</td>
+                            </tr>
+                            <tr>
+                                <td><code>title</code></td>
+                                <td>text</td>
+                                <td>Plan title (e.g., "Trip to Paris")</td>
+                            </tr>
+                            <tr>
+                                <td><code>destination</code></td>
+                                <td>text</td>
+                                <td>Where you're going</td>
+                            </tr>
+                            <tr>
+                                <td><code>start_date</code></td>
+                                <td>date</td>
+                                <td>Trip start date</td>
+                            </tr>
+                            <tr>
+                                <td><code>end_date</code></td>
+                                <td>date</td>
+                                <td>Trip end date</td>
+                            </tr>
+                            <tr>
+                                <td><code>budget_low</code></td>
+                                <td>numeric</td>
+                                <td>Minimum budget</td>
+                            </tr>
+                            <tr>
+                                <td><code>budget_high</code></td>
+                                <td>numeric</td>
+                                <td>Maximum budget</td>
+                            </tr>
+                            <tr>
+                                <td><code>travelers</code></td>
+                                <td>integer</td>
+                                <td>Number of people</td>
+                            </tr>
+                            <tr>
+                                <td><code>style</code></td>
+                                <td>text</td>
+                                <td>Travel style (luxury, budget, etc.)</td>
+                            </tr>
+                            <tr>
+                                <td><code>markdown</code></td>
+                                <td>text</td>
+                                <td>Plan content in Markdown format</td>
+                            </tr>
+                            <tr>
+                                <td><code>html</code></td>
+                                <td>text</td>
+                                <td>Plan content in HTML format</td>
+                            </tr>
+                            <tr>
+                                <td><code>created_at</code></td>
+                                <td>timestamptz</td>
+                                <td>When plan was created</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="step">
+                <h3><span class="number">4</span>Test Plan Generation Again</h3>
+                <ol style="margin-left: 25px; line-height: 2; margin-top: 15px;">
+                    <li>Go to <a href="https://wayzo-staging.onrender.com" target="_blank" style="color: #667eea;">wayzo-staging.onrender.com</a></li>
+                    <li>Make sure you're signed in (check browser console for "User authenticated: true")</li>
+                    <li>Fill out the form and generate a test plan</li>
+                    <li>Open browser console (F12) and look for:
+                        <div class="code-block" style="margin-top: 10px;">
+✅ Calling authenticated endpoint /api/user/plan
+Response: { "ok": true, "id": "...", "markdown": "...", "html": "..." }
+                        </div>
+                    </li>
+                    <li><strong>NO 500 error this time!</strong> 🎉</li>
+                </ol>
+            </div>
+
+            <div class="step">
+                <h3><span class="number">5</span>Verify Plan Saved in Backoffice</h3>
+                <ol style="margin-left: 25px; line-height: 2; margin-top: 15px;">
+                    <li>Go to <a href="https://wayzo-staging.onrender.com/backoffice.html" target="_blank" style="color: #667eea;">backoffice.html</a></li>
+                    <li>You should see your plan listed under "Your Travel Plans"</li>
+                    <li>Click "View Plan" to see the full itinerary</li>
+                    <li>Click "Download PDF" to get the PDF version</li>
+                </ol>
+            </div>
+
+            <div class="alert" style="background: #d1ecf1; border-left-color: #0c5460; margin-top: 40px;">
+                <h3 style="color: #0c5460;">📋 If Still Getting 500 Error</h3>
+                <p style="color: #0c5460; margin-top: 10px;">After running the SQL script, if you STILL get a 500 error:</p>
+                <ol style="margin-left: 25px; line-height: 1.8; margin-top: 10px; color: #0c5460;">
+                    <li>Check <strong>Render logs</strong> for the exact error message</li>
+                    <li>Take a screenshot of:
+                        <ul style="margin-left: 20px; margin-top: 5px;">
+                            <li>Supabase SQL query results (showing all columns)</li>
+                            <li>Browser console (showing the 500 error)</li>
+                            <li>Render logs (showing the server error)</li>
+                        </ul>
+                    </li>
+                    <li>Share those screenshots and we'll fix the next issue!</li>
+                </ol>
+            </div>
+
+            <div class="success" style="margin-top: 40px;">
+                <h4>🎯 What This Fixes:</h4>
+                <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                    <li>✅ Ensures <strong>ALL</strong> required columns exist in the database</li>
+                    <li>✅ Uses <code>IF NOT EXISTS</code> so it's safe to run multiple times</li>
+                    <li>✅ Matches exactly what the backend code tries to insert</li>
+                    <li>✅ Includes verification query to confirm all columns are there</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function copySQL() {
+            const sqlText = `-- Complete Database Schema Fix for Wayzo Plans Table
+-- Run this entire script in Supabase SQL Editor
+
+-- Add all potentially missing columns to plans table
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS markdown TEXT;
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS html TEXT;
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS title TEXT;
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS destination TEXT;
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS start_date DATE;
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS end_date DATE;
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS budget_low NUMERIC;
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS budget_high NUMERIC;
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS travelers INTEGER;
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS style TEXT;
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+
+-- Verify all columns exist
+SELECT column_name, data_type, is_nullable
+FROM information_schema.columns
+WHERE table_name = 'plans'
+ORDER BY ordinal_position;`;
+
+            navigator.clipboard.writeText(sqlText).then(() => {
+                const button = document.querySelector('.copy-button');
+                button.textContent = '✅ Copied!';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.textContent = 'Copy SQL';
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
