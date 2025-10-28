@@ -1653,21 +1653,26 @@
         }
 
         // Listen for auth changes (magic link, OAuth redirects)
-        window.supabase.auth.onAuthStateChange((event, session) => {
-          console.log('🔄 Auth state changed:', event);
+        // Prevent duplicate listeners
+        if (!window._authListenerRegistered) {
+          window._authListenerRegistered = true;
 
-          if (event === 'SIGNED_IN' && session) {
-            handleSuccessfulAuth(session);
-            hideAuthModal();
-            showNotification('✨ Successfully signed in!', 'success');
-            // Show Personal Cabinet after sign in
-            setTimeout(() => {
-              showPersonalCabinet();
-            }, 500);
-          } else if (event === 'SIGNED_OUT') {
-            handleSignOut();
-          }
-        });
+          window.supabase.auth.onAuthStateChange((event, session) => {
+            console.log('🔄 Auth state changed:', event);
+
+            if (event === 'SIGNED_IN' && session) {
+              handleSuccessfulAuth(session);
+              hideAuthModal();
+              showNotification('✨ Successfully signed in!', 'success');
+              // Show Personal Cabinet after sign in
+              setTimeout(() => {
+                showPersonalCabinet();
+              }, 500);
+            } else if (event === 'SIGNED_OUT') {
+              handleSignOut();
+            }
+          });
+        }
       }
     } catch (error) {
       console.error('❌ Supabase initialization error:', error);
