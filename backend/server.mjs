@@ -1938,9 +1938,13 @@ app.get('/api/user/plans', requireUser, async (req, res) => {
         console.log('🔍 Plan structure debug (first plan):');
         console.log('  - plan.destination:', plan.destination);
         console.log('  - data.destination:', data.destination);
-        console.log('  - data.destinations:', data.destinations);
-        console.log('  - payload.destination:', payload?.destination);
+        console.log('  - data.start:', data.start);
+        console.log('  - data.end:', data.end);
+        console.log('  - data.days:', data.days);
+        console.log('  - data.budget:', data.budget);
+        console.log('  - Calculated days:', daysBetween(data.start, data.end));
         console.log('  - Full data keys:', Object.keys(data));
+        console.log('  - Full data:', JSON.stringify(data, null, 2));
       }
 
       return {
