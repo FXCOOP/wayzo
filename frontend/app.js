@@ -871,8 +871,15 @@
 
   // Full plan generation
   fullPlanBtn.addEventListener('click', async () => {
-    // Free access: no sign-in required for full plan
-    
+    // Prevent duplicate submissions
+    if (fullPlanBtn.disabled || window._generatingPlan) {
+      console.log('⏭️ Plan generation already in progress, skipping');
+      return;
+    }
+
+    window._generatingPlan = true;
+    fullPlanBtn.disabled = true;
+
     const data = readForm();
     console.log('Generating full plan for:', data);
     
@@ -1122,6 +1129,7 @@
           <div class="test-user-notice">
             <h3>✨ Your Complete Travel Guide is Ready!</h3>
             <p>${isAuthenticated ? 'Saved to your account - Access anytime from My Trips' : 'Sign in to save this plan to your dashboard'}</p>
+            ${isAuthenticated ? '<button class="btn" onclick="showPersonalCabinet()" style="margin-top: 12px; padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;"><i class="fas fa-arrow-left"></i> Back to My Plans</button>' : ''}
           </div>
           ${tripOverview}
           <main class="content trip-report">
@@ -1160,6 +1168,20 @@
         if (!isAuthenticated) {
           localStorage.setItem('wayzo_pending_plan_save', JSON.stringify(planData));
           showSaveToDashboardPrompt();
+        } else {
+          // Mark that plans need refresh - this will be picked up when user navigates to cabinet
+          window._plansNeedRefresh = true;
+
+          // Also refresh immediately if cabinet is visible
+          if ($('#personalCabinet') && !$('#personalCabinet').classList.contains('hidden')) {
+            console.log('📋 Refreshing plans list after save (cabinet visible)');
+            setTimeout(() => {
+              if (typeof loadUserPlans === 'function') {
+                loadUserPlans();
+                window._plansNeedRefresh = false;
+              }
+            }, 1500);
+          }
         }
 
         showNotification(isAuthenticated ? '✅ Plan saved to your dashboard!' : '🎉 Plan generated! Sign in to save it.', 'success');
@@ -1225,6 +1247,10 @@
         </div>
       `;
       show(previewEl);
+    } finally {
+      // Reset generation flag and button state
+      window._generatingPlan = false;
+      fullPlanBtn.disabled = false;
     }
   });
 
@@ -1657,8 +1683,19 @@
         if (!window._authListenerRegistered) {
           window._authListenerRegistered = true;
 
+          // Track last auth event to prevent duplicates
+          let lastAuthEvent = { event: null, timestamp: 0 };
+
           window.supabase.auth.onAuthStateChange((event, session) => {
             console.log('🔄 Auth state changed:', event);
+
+            // Debounce rapid auth state changes (within 1 second)
+            const now = Date.now();
+            if (lastAuthEvent.event === event && (now - lastAuthEvent.timestamp) < 1000) {
+              console.log('⏭️ Skipping duplicate auth event:', event);
+              return;
+            }
+            lastAuthEvent = { event, timestamp: now };
 
             if (event === 'SIGNED_IN' && session) {
               handleSuccessfulAuth(session);
@@ -2224,6 +2261,18 @@
     const email = $('#authEmail').value.trim();
     if (!email) return;
 
+    // Check rate limiting (max 1 request per 60 seconds per email)
+    const rateLimitKey = `wayzo_magic_link_${email}`;
+    const lastSent = localStorage.getItem(rateLimitKey);
+    if (lastSent) {
+      const timeSince = Date.now() - parseInt(lastSent);
+      if (timeSince < 60000) { // 60 seconds
+        const waitTime = Math.ceil((60000 - timeSince) / 1000);
+        showNotification(`Please wait ${waitTime} seconds before requesting another magic link`, 'error');
+        return;
+      }
+    }
+
     const btn = $('#magicLinkBtn');
     const btnText = btn.querySelector('.btn-text');
     const btnLoading = btn.querySelector('.btn-loading');
@@ -2252,7 +2301,16 @@
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        // Handle specific rate limit error
+        if (error.message && error.message.includes('rate limit')) {
+          throw new Error('Too many requests. Please wait a minute before trying again.');
+        }
+        throw error;
+      }
+
+      // Store timestamp for rate limiting
+      localStorage.setItem(rateLimitKey, Date.now().toString());
 
       console.log('✅ Magic link sent successfully');
 
@@ -2263,7 +2321,8 @@
 
     } catch (error) {
       console.error('❌ Magic link error:', error);
-      showNotification('Failed to send magic link. Please try again.', 'error');
+      const errorMessage = error.message || 'Failed to send magic link. Please try again.';
+      showNotification(errorMessage, 'error');
     } finally {
       // Reset button state
       btnText.classList.remove('hidden');
@@ -2528,11 +2587,27 @@
   function showDashboard() {
     const cabinet = $('#personalCabinet');
     if (cabinet) {
+      // Hide main planning form
+      const planningSection = $('#planning');
+      if (planningSection) {
+        planningSection.style.display = 'none';
+      }
+
+      // Show cabinet
       cabinet.classList.remove('hidden');
+
       // Use the new dashboard view switcher if available
       if (typeof window.switchDashboardView === 'function') {
         window.switchDashboardView('plans');
       }
+
+      // Always load user plans when showing dashboard
+      // Add a small delay if plans were just created to ensure backend has saved
+      const delay = window._plansNeedRefresh ? 500 : 0;
+      setTimeout(() => {
+        loadUserPlans();
+        window._plansNeedRefresh = false;
+      }, delay);
     }
   }
 
@@ -2573,7 +2648,16 @@
   }
 
   function showPlanningForm() {
-    $('#personalCabinet').classList.add('hidden');
+    const cabinet = $('#personalCabinet');
+    if (cabinet) {
+      cabinet.classList.add('hidden');
+    }
+
+    // Show main planning form
+    const planningSection = $('#planning');
+    if (planningSection) {
+      planningSection.style.display = 'block';
+    }
   }
 
   function updateProfile(event) {
@@ -3867,6 +3951,18 @@
     localStorage.removeItem('wayzo_user');
     updateUIForAuthenticatedUser();
     showNotification('Test user cleared. Please sign up manually.', 'info');
+  };
+
+  // Global function to clear magic link rate limits (for staging/testing)
+  window.clearRateLimits = () => {
+    console.log('🧹 Clearing magic link rate limits');
+    const keys = Object.keys(localStorage);
+    keys.forEach(key => {
+      if (key.startsWith('wayzo_magic_link_')) {
+        localStorage.removeItem(key);
+      }
+    });
+    showNotification('✅ Rate limits cleared! You can now request a new magic link.', 'success');
   };
 
   // Enhanced checklist functionality with widget integration
