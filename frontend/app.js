@@ -1890,6 +1890,14 @@
   }
 
   async function viewPlan(planId) {
+    // Prevent duplicate calls
+    if (window._loadingPlan) {
+      console.log('⏭️ Plan already loading, skipping duplicate request');
+      return;
+    }
+
+    window._loadingPlan = true;
+
     try {
       // Get fresh session from Supabase
       if (!window.supabaseClient) {
@@ -1926,9 +1934,18 @@
       // Show the plan in the preview area
       const previewEl = $('#preview');
       if (previewEl) {
+        // Add "Back to Cabinet" button at the top
+        const backButtonHtml = `
+          <div style="margin-bottom: 20px;">
+            <button class="btn" onclick="showPersonalCabinet()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
+              <i class="fas fa-arrow-left"></i> Back to My Plans
+            </button>
+          </div>
+        `;
+
         // Backend already provides complete HTML with header and trip-report
-        // Just use it directly to avoid duplication
-        previewEl.innerHTML = planData.html || planData.markdown || '<p>Plan not available</p>';
+        // Add back button before the plan content
+        previewEl.innerHTML = backButtonHtml + (planData.html || planData.markdown || '<p>Plan not available</p>');
 
         // Initialize features
         initializeImageHandling();
@@ -1940,6 +1957,9 @@
     } catch (error) {
       console.error('❌ Error loading plan:', error);
       showNotification('Failed to load plan', 'error');
+    } finally {
+      // Reset loading flag
+      window._loadingPlan = false;
     }
   }
 
