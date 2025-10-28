@@ -2613,8 +2613,15 @@
         planningSection.style.display = 'none';
       }
 
+      // Hide preview section (where plan details are shown)
+      const previewSection = $('#preview');
+      if (previewSection) {
+        previewSection.style.display = 'none';
+      }
+
       // Show cabinet
       cabinet.classList.remove('hidden');
+      cabinet.style.display = 'block';
 
       // Use the new dashboard view switcher if available
       if (typeof window.switchDashboardView === 'function') {
