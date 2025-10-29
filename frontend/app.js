@@ -789,14 +789,27 @@
   // Form submission handler
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    // Prevent duplicate submissions
+    if (window._submittingForm) {
+      console.log('⏭️ Form already submitting, skipping duplicate');
+      return;
+    }
+
+    window._submittingForm = true;
+
     // Free access: no sign-in required for preview
-    
+
     // Test users get enhanced preview with all features
     const isTestUser = currentUser && currentUser.isTestUser;
-    
+
     const data = readForm();
     console.log('Form data:', data);
-    
+
+    // Disable form submit button
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
+
     // Show loading
     hide(previewEl);
     show(loadingEl);
@@ -855,7 +868,7 @@
       
       // Track successful preview generation
       trackEvent('preview_generated', { destination: data.destination, budget: data.budget });
-      
+
     } catch (error) {
       console.error('Preview generation failed:', error);
       hide(loadingEl);
@@ -866,6 +879,11 @@
         </div>
       `;
       show(previewEl);
+    } finally {
+      // Reset submission flag and re-enable button
+      window._submittingForm = false;
+      const submitBtn = form.querySelector('button[type="submit"]');
+      if (submitBtn) submitBtn.disabled = false;
     }
   });
 
