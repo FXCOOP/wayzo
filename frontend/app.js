@@ -588,7 +588,7 @@
   const savePlanToDatabase = async (planHtml, destination, token) => {
     try {
       const formData = readForm();
-      const response = await fetch('/api/user/plan', {
+      const response = await fetch('/api/user/plan/save', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -620,6 +620,10 @@
         localStorage.removeItem('wayzo_pending_plan_save'); // Clear pending
         showNotification('✅ Plan saved to your dashboard!', 'success');
         return savedPlan;
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('❌ Failed to save plan:', errorData);
+        throw new Error(errorData.error || 'Failed to save plan');
       }
     } catch (e) {
       console.error('Failed to save plan to database:', e);

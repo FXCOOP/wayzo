@@ -1921,50 +1921,65 @@ app.get('/api/user/plans', requireUser, async (req, res) => {
       throw error;
     }
 
-    // Transform plans for frontend
+    console.log(`📊 Raw plans from DB: ${plans?.length || 0} plans`);
+    if (plans && plans.length > 0) {
+      console.log('🔍 First plan fields:', Object.keys(plans[0]));
+    }
+
+    // Transform plans for frontend - handle both old (payload) and new (direct fields) structures
     const transformedPlans = (plans || []).map((plan, index) => {
-      const payload = typeof plan.payload === 'string' ? JSON.parse(plan.payload) : plan.payload;
-      const data = payload?.data || {};
+      // New structure: fields directly on plan object
+      let destination = plan.destination;
+      let startDate = plan.start_date;
+      let endDate = plan.end_date;
+      let budget = plan.budget_low;
+      let currency = 'USD';
+      let status = 'completed'; // Plans saved via /api/user/plan/save are completed
 
-      // Try multiple sources for destination
-      const destination = plan.destination ||
-                         data.destination ||
-                         data.destinations ||
-                         payload?.destination ||
-                         'Unknown Destination';
+      // Old structure: check payload field if new structure fields are missing
+      if (!destination && plan.payload) {
+        const payload = typeof plan.payload === 'string' ? JSON.parse(plan.payload) : plan.payload;
+        const data = payload?.data || {};
+        destination = data.destination || data.destinations || payload?.destination;
+        startDate = data.start;
+        endDate = data.end;
+        budget = data.budget;
+        currency = data.currency || 'USD';
+        status = plan.status || 'pending';
+      }
 
-      // Debug log for first plan to see structure
-      if (index === 0 && plans.length > 0) {
-        console.log('🔍 Plan structure debug (first plan):');
-        console.log('  - plan.destination:', plan.destination);
-        console.log('  - data.destination:', data.destination);
-        console.log('  - data.start:', data.start);
-        console.log('  - data.end:', data.end);
-        console.log('  - data.days:', data.days);
-        console.log('  - data.budget:', data.budget);
-        console.log('  - Calculated days:', daysBetween(data.start, data.end));
-        console.log('  - Full data keys:', Object.keys(data));
-        console.log('  - Full data:', JSON.stringify(data, null, 2));
+      // Calculate days if we have start and end dates
+      const days = startDate && endDate ? daysBetween(startDate, endDate) : null;
+
+      // Debug log for first plan
+      if (index === 0) {
+        console.log('🔍 First plan transformation:');
+        console.log('  - destination:', destination);
+        console.log('  - start_date:', startDate);
+        console.log('  - end_date:', endDate);
+        console.log('  - days:', days);
+        console.log('  - budget:', budget);
+        console.log('  - status:', status);
       }
 
       return {
         id: plan.id,
-        destination: destination,
-        days: data.days || daysBetween(data.start, data.end) || null,
-        budget: data.budget || null,
-        currency: data.currency || 'USD',
-        status: plan.status || 'pending',
+        destination: destination || 'Unknown Destination',
+        days: days,
+        budget: budget,
+        currency: currency,
+        status: status,
         created_at: plan.created_at,
-        start_date: data.start,
-        end_date: data.end
+        start_date: startDate,
+        end_date: endDate
       };
     });
 
-    console.log(`✅ Found ${transformedPlans.length} plans for user ${userId}`);
+    console.log(`✅ Returning ${transformedPlans.length} plans for user ${userId}`);
     res.json(transformedPlans);
   } catch (error) {
     console.error('❌ Error fetching user plans:', error);
-    res.status(500).json({ error: 'Failed to fetch plans' });
+    res.status(500).json({ error: 'Failed to fetch plans', details: error.message });
   }
 });
 
@@ -1995,16 +2010,43 @@ app.get('/api/plan/:id', requireUser, async (req, res) => {
 
     console.log(`✅ Found plan: ${plan.id} - ${plan.destination || 'Unknown'}`);
 
-    // Parse the plan payload
-    const payload = typeof plan.payload === 'string' ? JSON.parse(plan.payload) : plan.payload;
-    const data = payload?.data || {};
-    const markdown = payload?.markdown || '';
+    // Handle both old (payload) and new (direct fields) plan structures
+    let markdown = '';
+    let htmlBody = '';
+    let destination = '';
+    let data = {};
 
-    // Convert markdown to HTML
-    const htmlBody = marked.parse(markdown);
+    if (plan.html && plan.markdown !== undefined) {
+      // New structure: html and markdown stored directly
+      markdown = plan.markdown || '';
+      htmlBody = plan.html || '';
+      destination = plan.destination || 'Your Trip';
+
+      // Reconstruct data object from plan fields
+      data = {
+        destination: plan.destination,
+        start: plan.start_date,
+        end: plan.end_date,
+        budget: plan.budget_low,
+        budgetMax: plan.budget_high,
+        adults: plan.travelers,
+        level: plan.style,
+        currency: 'USD'
+      };
+    } else if (plan.payload) {
+      // Old structure: data in payload field
+      const payload = typeof plan.payload === 'string' ? JSON.parse(plan.payload) : plan.payload;
+      data = payload?.data || {};
+      markdown = payload?.markdown || '';
+      htmlBody = marked.parse(markdown);
+      destination = plan.destination || data.destination || 'Your Trip';
+    } else {
+      // Fallback
+      destination = plan.destination || 'Your Trip';
+      htmlBody = '<p>Plan content not available</p>';
+    }
 
     // Prepare plan metadata
-    const destination = plan.destination || data.destination || 'Your Trip';
     const style = data.level === "luxury" ? "Luxury" : data.level === "budget" ? "Budget" : "Mid-range";
     const traveler = travelerLabel(data.adults || 0, data.children || 0);
     const currency = data.currency || 'USD';
@@ -2012,27 +2054,31 @@ app.get('/api/plan/:id', requireUser, async (req, res) => {
     const pdfUrl = `${base}/api/plan/${id}/pdf`;
     const icsUrl = `${base}/api/plan/${id}/ics`;
 
-    // Generate HTML body for embedding in the app
-    const htmlContent = `
-      <div class="plan-view-header">
-        <h1>${escapeHtml(destination)}</h1>
-        <div class="plan-view-actions">
-          <button onclick="window.print()">🖨️ Print</button>
-          <button onclick="window.location.href='${pdfUrl}'">📥 Download PDF</button>
-          <button onclick="window.location.href='${icsUrl}'">📅 Add to Calendar</button>
-          <button onclick="showPersonalCabinet()">🔙 Back to Cabinet</button>
+    // For new structure, htmlBody already contains the complete HTML with trip-report wrapper
+    // For old structure, we need to wrap it
+    let finalHtml = htmlBody;
+    if (!htmlBody.includes('trip-report')) {
+      finalHtml = `
+        <div class="plan-view-header">
+          <h1>${escapeHtml(destination)}</h1>
+          <div class="plan-view-actions">
+            <button onclick="window.print()">🖨️ Print</button>
+            <button onclick="window.location.href='${pdfUrl}'">📥 Download PDF</button>
+            <button onclick="window.location.href='${icsUrl}'">📅 Add to Calendar</button>
+            <button onclick="showPersonalCabinet()">🔙 Back to Cabinet</button>
+          </div>
         </div>
-      </div>
-      <div class="trip-report">
-        ${htmlBody}
-      </div>
-    `;
+        <div class="trip-report">
+          ${htmlBody}
+        </div>
+      `;
+    }
 
     // Return JSON response for the frontend
     res.json({
       id: plan.id,
       destination: destination,
-      html: htmlContent,
+      html: finalHtml,
       markdown: markdown,
       style: style,
       traveler: traveler,
@@ -2396,6 +2442,70 @@ app.post('/api/user/plan', requireUser, async (req, res) => {
   } catch (e) {
     console.error('POST /api/user/plan error:', e);
     res.status(500).json({ error: 'Failed to create plan', details: e.message });
+  }
+});
+
+// Save existing plan to database (doesn't regenerate)
+app.post('/api/user/plan/save', requireUser, async (req, res) => {
+  try {
+    if (!supabaseAdmin) {
+      return res.status(503).json({ error: 'Supabase admin not configured' });
+    }
+
+    const { params, html, markdown, meta } = req.body || {};
+
+    if (!params || !params.destination || !html) {
+      return res.status(400).json({ error: 'Missing required parameters (destination, html)' });
+    }
+
+    console.log(`💾 Saving existing plan for user ${req.user.email}, destination: ${params.destination}`);
+
+    // Generate unique ID for this plan
+    const planId = uid();
+
+    // Build insert payload
+    const insertPayload = {
+      id: planId,
+      user_id: req.user.id,
+      title: meta?.title || `Trip to ${params.destination}`,
+      destination: params.destination,
+      start_date: params.start || params.startDate || null,
+      end_date: params.end || params.endDate || null,
+      budget_low: params.budget || params.budgetMin || meta?.budgetLow || null,
+      budget_high: params.budgetMax || null,
+      travelers: params.adults || params.travelers || null,
+      style: params.level || params.style || null,
+      markdown: markdown || '',
+      html: html,
+      created_at: new Date().toISOString()
+    };
+
+    const { data: row, error } = await supabaseAdmin
+      .from('plans')
+      .insert(insertPayload)
+      .select('id')
+      .single();
+
+    if (error) {
+      console.error('Insert plan error:', error);
+      return res.status(500).json({ error: 'Failed to save plan', details: error.message });
+    }
+
+    console.log(`✅ Plan ${row.id} saved for user ${req.user.email}`);
+
+    // Send email notification
+    const planUrl = `${process.env.PUBLIC_BASE_URL || 'https://wayzo.online'}/backoffice.html#plan=${row.id}`;
+    await sendPlanReadyEmail(req.user.email, planUrl);
+
+    // Return plan data
+    res.json({
+      ok: true,
+      id: row.id,
+      message: 'Plan saved successfully'
+    });
+  } catch (e) {
+    console.error('POST /api/user/plan/save error:', e);
+    res.status(500).json({ error: 'Failed to save plan', details: e.message });
   }
 });
 
