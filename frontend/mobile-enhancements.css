@@ -1,0 +1,578 @@
+/* ====================================================================
+   MOBILE UI/UX ENHANCEMENTS - Comprehensive Mobile Optimization
+   ==================================================================== */
+
+/* ===== MOBILE FORM IMPROVEMENTS ===== */
+@media (max-width: 768px) {
+  /* Better form container */
+  .form {
+    padding: 16px;
+  }
+
+  .field {
+    margin-bottom: 20px;
+  }
+
+  /* Larger touch-friendly inputs */
+  .field input,
+  .field select,
+  .field textarea {
+    font-size: 16px !important; /* Prevents iOS zoom */
+    padding: 14px 16px !important;
+    min-height: 48px;
+    border-radius: 12px;
+  }
+
+  .field textarea {
+    min-height: 120px;
+  }
+
+  /* Better label visibility */
+  .field label,
+  .field span {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  /* Touch-friendly buttons */
+  .btn,
+  button {
+    min-height: 48px;
+    padding: 14px 24px !important;
+    font-size: 16px !important;
+    border-radius: 12px;
+    font-weight: 600;
+    touch-action: manipulation; /* Faster tap response */
+  }
+
+  /* Primary action buttons - make them stand out */
+  .btn-primary,
+  button[type="submit"],
+  #generateBtn,
+  #generateFullPlanBtn {
+    min-height: 56px !important;
+    font-size: 18px !important;
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+  }
+
+  /* Better button groups on mobile */
+  .actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 24px;
+  }
+
+  .actions .btn {
+    width: 100%;
+  }
+}
+
+/* ===== MOBILE HEADER & NAVIGATION ===== */
+@media (max-width: 768px) {
+  .topbar {
+    padding: 12px 16px;
+  }
+
+  .topbar-inner {
+    padding: 8px 0;
+  }
+
+  /* Logo sizing */
+  .logo {
+    font-size: 20px;
+  }
+
+  /* Better language selector */
+  .language-selector select {
+    font-size: 14px;
+    padding: 8px 12px;
+    border-radius: 8px;
+  }
+
+  /* User menu button */
+  .user-menu-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .user-menu-btn img {
+    width: 36px !important;
+    height: 36px !important;
+  }
+}
+
+/* ===== MOBILE PERSONAL CABINET ===== */
+@media (max-width: 768px) {
+  /* Cabinet header */
+  .cabinet-header {
+    padding: 16px 20px;
+    flex-wrap: wrap;
+  }
+
+  .cabinet-header h2 {
+    font-size: 22px;
+    flex: 1;
+  }
+
+  .cabinet-header .btn-close {
+    width: 36px;
+    height: 36px;
+    font-size: 24px;
+  }
+
+  /* Cabinet content */
+  .cabinet-content {
+    padding: 20px 16px;
+  }
+
+  /* Dashboard navigation */
+  .dashboard-nav {
+    gap: 8px !important;
+    padding-bottom: 8px !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .dashboard-nav::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
+  }
+
+  .dashboard-nav button {
+    padding: 10px 16px !important;
+    font-size: 14px !important;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Stats cards */
+  .overview-stats {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .stat-card {
+    padding: 20px;
+  }
+
+  /* Plan cards grid */
+  .plans-list {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .plan-card {
+    padding: 20px;
+  }
+
+  /* Plan card titles */
+  .plan-card h3 {
+    font-size: 18px !important;
+  }
+
+  /* Plan card buttons */
+  .plan-card button {
+    padding: 12px !important;
+    font-size: 14px !important;
+  }
+}
+
+/* ===== MOBILE TRIP REPORT ===== */
+@media (max-width: 768px) {
+  .trip-report {
+    padding: 16px !important;
+    margin: 0 !important;
+  }
+
+  /* Trip report header */
+  .trip-report h1 {
+    font-size: 24px !important;
+    line-height: 1.3 !important;
+    margin-bottom: 16px !important;
+  }
+
+  .trip-report h2 {
+    font-size: 20px !important;
+    margin-top: 32px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .trip-report h3 {
+    font-size: 18px !important;
+    margin-top: 24px !important;
+    margin-bottom: 12px !important;
+  }
+
+  /* Better paragraph spacing */
+  .trip-report p {
+    font-size: 16px !important;
+    line-height: 1.6 !important;
+    margin-bottom: 16px !important;
+  }
+
+  /* Lists */
+  .trip-report ul,
+  .trip-report ol {
+    padding-left: 24px;
+    margin-bottom: 16px;
+  }
+
+  .trip-report li {
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 8px;
+  }
+
+  /* Action buttons in trip report */
+  .plan-view-header {
+    padding: 12px !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  .plan-view-header button {
+    width: 100% !important;
+    padding: 12px 20px !important;
+    font-size: 14px !important;
+    justify-content: center !important;
+  }
+
+  /* Booking buttons */
+  .trip-report a[href*="getyourguide"],
+  .trip-report a[href*="#hotel-widget"],
+  .trip-report a[href*="#flight-widget"] {
+    display: block !important;
+    width: 100% !important;
+    padding: 14px 20px !important;
+    font-size: 15px !important;
+    margin: 12px 0 !important;
+    text-align: center !important;
+    border-radius: 12px !important;
+  }
+
+  /* Weather cards */
+  .weather-day {
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+
+  /* Budget cards */
+  .budget-card {
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+}
+
+/* ===== MOBILE PREVIEW & TEASER ===== */
+@media (max-width: 768px) {
+  #preview {
+    padding: 16px !important;
+    margin: 0 !important;
+  }
+
+  .preview-teaser {
+    padding: 24px 20px !important;
+    margin: 16px 0 !important;
+  }
+
+  .preview-teaser h3 {
+    font-size: 20px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .preview-stats {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+  }
+
+  .stat {
+    padding: 14px;
+    font-size: 14px;
+  }
+}
+
+/* ===== MOBILE MODAL DIALOGS ===== */
+@media (max-width: 768px) {
+  .auth-modal-overlay {
+    padding: 0;
+  }
+
+  .auth-modal-content {
+    margin: 0;
+    min-height: 100vh;
+    border-radius: 0;
+    max-width: 100%;
+  }
+
+  .auth-header {
+    padding: 20px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .auth-header h3 {
+    font-size: 20px;
+  }
+
+  .btn-close {
+    width: 36px;
+    height: 36px;
+    font-size: 24px;
+  }
+
+  /* Auth form inputs */
+  .auth-modal-content input {
+    font-size: 16px !important;
+    padding: 14px !important;
+    min-height: 48px;
+  }
+
+  .auth-modal-content .btn {
+    min-height: 50px;
+    font-size: 16px;
+  }
+}
+
+/* ===== MOBILE LOADING STATES ===== */
+@media (max-width: 768px) {
+  .loader-title {
+    font-size: 24px !important;
+  }
+
+  .loader-subtitle {
+    font-size: 15px !important;
+  }
+
+  .loader-steps {
+    gap: 10px !important;
+  }
+
+  .step-item {
+    padding: 12px 16px !important;
+  }
+
+  .step-text {
+    font-size: 13px !important;
+  }
+}
+
+/* ===== MOBILE FOOTER ===== */
+@media (max-width: 768px) {
+  .footer {
+    padding: 40px 20px 20px;
+  }
+
+  .footer-content {
+    grid-template-columns: 1fr !important;
+    gap: 32px;
+  }
+
+  .footer-section {
+    text-align: center;
+  }
+
+  .footer-brand {
+    justify-content: center;
+  }
+
+  .footer-social {
+    justify-content: center !important;
+  }
+
+  .footer-links {
+    align-items: center;
+  }
+
+  .footer-bottom {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+}
+
+/* ===== MOBILE UTILITIES ===== */
+@media (max-width: 768px) {
+  /* Hide on mobile */
+  .hide-mobile {
+    display: none !important;
+  }
+
+  /* Show only on mobile */
+  .show-mobile {
+    display: block !important;
+  }
+
+  /* Better spacing */
+  .mobile-spacing {
+    margin: 20px 0;
+  }
+
+  /* Full width on mobile */
+  .mobile-full-width {
+    width: 100% !important;
+  }
+
+  /* Better container padding */
+  .container,
+  main {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  /* Remove horizontal overflow */
+  body {
+    overflow-x: hidden;
+  }
+
+  /* Smooth scrolling */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ===== EXTRA SMALL SCREENS (< 480px) ===== */
+@media (max-width: 480px) {
+  /* Even larger touch targets */
+  .btn,
+  button {
+    min-height: 50px;
+    font-size: 15px !important;
+  }
+
+  .btn-primary,
+  #generateBtn,
+  #generateFullPlanBtn {
+    min-height: 58px !important;
+    font-size: 17px !important;
+  }
+
+  /* Smaller headings */
+  h1 {
+    font-size: 26px !important;
+  }
+
+  h2 {
+    font-size: 22px !important;
+  }
+
+  h3 {
+    font-size: 18px !important;
+  }
+
+  /* Compact form fields */
+  .field {
+    margin-bottom: 16px;
+  }
+
+  .field input,
+  .field select,
+  .field textarea {
+    padding: 12px 14px !important;
+  }
+
+  /* Single column stats */
+  .preview-stats {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Compact cabinet header */
+  .cabinet-header {
+    padding: 12px 16px;
+  }
+
+  .cabinet-header h2 {
+    font-size: 20px;
+  }
+}
+
+/* ===== LANDSCAPE MODE ON MOBILE ===== */
+@media (max-height: 500px) and (orientation: landscape) {
+  /* Compact header */
+  .topbar {
+    padding: 8px 16px;
+  }
+
+  /* Reduce vertical spacing */
+  .field {
+    margin-bottom: 12px;
+  }
+
+  /* Smaller buttons */
+  .btn,
+  button {
+    min-height: 40px;
+    padding: 10px 20px !important;
+  }
+
+  /* Compact cabinet */
+  .cabinet-header {
+    padding: 12px 20px;
+  }
+
+  .cabinet-content {
+    padding: 16px 20px;
+  }
+}
+
+/* ===== MOBILE ANIMATIONS ===== */
+@media (max-width: 768px) {
+  /* Smooth transitions */
+  .btn,
+  button,
+  .plan-card,
+  .stat-card,
+  input,
+  select,
+  textarea {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Tap feedback */
+  .btn:active,
+  button:active {
+    transform: scale(0.98);
+  }
+
+  /* Slide in animations */
+  .plan-card,
+  .stat-card {
+    animation: slideInUp 0.4s ease-out;
+  }
+
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/* ===== SAFE AREA INSETS (for notched devices) ===== */
+@supports (padding: max(0px)) {
+  @media (max-width: 768px) {
+    .topbar {
+      padding-left: max(16px, env(safe-area-inset-left));
+      padding-right: max(16px, env(safe-area-inset-right));
+      padding-top: max(12px, env(safe-area-inset-top));
+    }
+
+    .cabinet-content {
+      padding-left: max(16px, env(safe-area-inset-left));
+      padding-right: max(16px, env(safe-area-inset-right));
+      padding-bottom: max(20px, env(safe-area-inset-bottom));
+    }
+
+    .footer {
+      padding-bottom: max(20px, env(safe-area-inset-bottom));
+    }
+  }
+}
