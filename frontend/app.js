@@ -1912,6 +1912,8 @@
   }
 
   async function viewPlan(planId) {
+    console.log('🔍 viewPlan called with ID:', planId);
+
     // Prevent duplicate calls
     if (window._loadingPlan) {
       console.log('⏭️ Plan already loading, skipping duplicate request');
@@ -1923,31 +1925,41 @@
     try {
       // Get fresh session from Supabase
       if (!window.supabaseClient) {
+        console.error('❌ Supabase client not initialized');
         showNotification('Please sign in to view your plan', 'error');
+        window._loadingPlan = false;
         return;
       }
 
+      console.log('✅ Supabase client exists, getting session...');
       const { data: { session }, error: sessionError } = await window.supabaseClient.auth.getSession();
 
       if (sessionError || !session) {
+        console.error('❌ Session error:', sessionError);
         showNotification('Please sign in to view your plan', 'error');
+        window._loadingPlan = false;
         return;
       }
 
       const token = session.access_token;
+      console.log('✅ Got session token, fetching plan from API...');
 
       // Fetch the plan HTML
+      console.log(`📡 Calling API: /api/plan/${planId}`);
       const response = await fetch(`/api/plan/${planId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
 
+      console.log('📡 API Response status:', response.status);
+
       if (!response.ok) {
         throw new Error(`Failed to load plan: ${response.status}`);
       }
 
       const planData = await response.json();
+      console.log('✅ Plan data received from API:', { id: planData.id, destination: planData.destination });
 
       // Hide personal cabinet
       const cabinet = $('#personalCabinet');
