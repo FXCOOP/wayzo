@@ -1834,7 +1834,20 @@
         throw new Error(`Failed to load plans: ${response.status}`);
       }
 
-      const plans = await response.json();
+      let plans = await response.json();
+
+      // Deduplicate plans by ID (keep only the first occurrence of each unique ID)
+      const seenIds = new Set();
+      plans = plans.filter(plan => {
+        if (seenIds.has(plan.id)) {
+          console.log('🗑️ Removing duplicate plan:', plan.id, plan.destination);
+          return false;
+        }
+        seenIds.add(plan.id);
+        return true;
+      });
+
+      console.log(`📊 After deduplication: ${plans.length} unique plans`);
 
       if (!plans || plans.length === 0) {
         plansGrid.innerHTML = `

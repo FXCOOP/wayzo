@@ -1926,8 +1926,23 @@ app.get('/api/user/plans', requireUser, async (req, res) => {
       console.log('🔍 First plan fields:', Object.keys(plans[0]));
     }
 
+    // Deduplicate plans by ID (in case database has duplicates)
+    const uniquePlans = [];
+    const seenIds = new Set();
+
+    for (const plan of plans || []) {
+      if (!seenIds.has(plan.id)) {
+        uniquePlans.push(plan);
+        seenIds.add(plan.id);
+      } else {
+        console.log('🗑️ Removing duplicate plan from DB:', plan.id, plan.destination);
+      }
+    }
+
+    console.log(`📊 After deduplication: ${uniquePlans.length} unique plans (removed ${(plans?.length || 0) - uniquePlans.length} duplicates)`);
+
     // Transform plans for frontend - handle both old (payload) and new (direct fields) structures
-    const transformedPlans = (plans || []).map((plan, index) => {
+    const transformedPlans = uniquePlans.map((plan, index) => {
       // New structure: fields directly on plan object
       let destination = plan.destination;
       let startDate = plan.start_date;
