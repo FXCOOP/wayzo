@@ -1084,7 +1084,7 @@
       // Call the appropriate plan API endpoint
       let response, result;
 
-      // Generate plan using /api/plan (now requires authentication to prevent API abuse)
+      // Generate plan using /api/plan
       console.log('📡 Generating plan using /api/plan...');
 
       // Build headers with authentication if available
@@ -1093,8 +1093,7 @@
         headers['Authorization'] = `Bearer ${authToken}`;
         console.log('✅ Including auth token in request');
       } else {
-        console.error('❌ No auth token available - plan generation requires authentication');
-        throw new Error('Please sign in to generate plans');
+        console.log('⚠️ No auth token - proceeding without authentication (staging mode)');
       }
 
       response = await fetch('/api/plan', {

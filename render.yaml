@@ -19,4 +19,4 @@ services:
       # Add these secrets manually in Render dashboard Environment tab:
       # SUPABASE_SERVICE_ROLE_KEY - from Supabase dashboard
       # RESEND_API_KEY - from Resend dashboard (optional for testing)
-      # Force deployment trigger - staging v2 - Plan saving fixes deployed
+      # Force deployment trigger - staging v3 - Optional auth for staging environment

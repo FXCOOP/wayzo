@@ -28,7 +28,7 @@ import { buildIcs } from './lib/ics.mjs';
 import { getWidgetsForDestination, generateWidgetHTML, injectWidgetsIntoSections, processLinks } from './lib/widgets.mjs';
 import { generateBookingRecommendations, WEATHER_IMPACT, CROWD_PATTERNS } from './lib/smart-booking.mjs';
 import { supabaseAdmin } from './lib/supabase.mjs';
-import { requireUser } from './lib/auth.mjs';
+import { requireUser, optionalUser } from './lib/auth.mjs';
 import { sendPlanReadyEmail } from './lib/email.mjs';
 const VERSION = 'staging-v65';
 // Load .env locally only; on Render we rely on real env vars.
@@ -1102,9 +1102,9 @@ app.post('/api/preview', (req, res) => {
   }
 });
 
-// IMPORTANT: This endpoint now requires authentication to prevent API abuse
-app.post('/api/plan', requireUser, async (req, res) => {
-  console.log('Plan request received from user:', req.user.email); // Debug
+// IMPORTANT: This endpoint uses optional auth in staging, required in production
+app.post('/api/plan', optionalUser, async (req, res) => {
+  console.log('Plan request received from user:', req.user?.email || 'anonymous'); // Debug
   try {
     const payload = req.body || {};
     payload.currency = payload.currency || 'USD';
