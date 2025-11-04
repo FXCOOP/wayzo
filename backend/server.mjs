@@ -1115,10 +1115,19 @@ app.post('/api/plan', optionalUser, async (req, res) => {
     
     // Process image tokens and other links in the MARKDOWN first
     const processedMarkdown = linkifyTokens(markdown, payload.destination);
-    
+
     // Post-process to remove images from forbidden sections
-    const cleanedMarkdown = removeImagesFromForbiddenSections(processedMarkdown, payload.destination);
-    
+    let cleanedMarkdown = removeImagesFromForbiddenSections(processedMarkdown, payload.destination);
+
+    // Remove internal AI instruction notes that sometimes leak into output
+    // These are yellow warning boxes that show internal formatting instructions
+    cleanedMarkdown = cleanedMarkdown
+      .replace(/^>?\s*⚠️?\s*Note:.*?emoji headers.*$/gmi, '')
+      .replace(/^>?\s*💡?\s*Note:.*?emoji headers.*$/gmi, '')
+      .replace(/^(?:>|\*\*)?.*?Note:\s*Each day uses.*?emoji.*?required.*$/gmi, '')
+      .replace(/\n\s*\n\s*\n/g, '\n\n') // Clean up excessive newlines
+      .trim();
+
     // Then convert to HTML
     const html = marked.parse(cleanedMarkdown);
     

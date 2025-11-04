@@ -2660,9 +2660,8 @@
 
   // Personal Cabinet Management
   function showPersonalCabinet() {
+    // showDashboard() already calls loadUserPlans(), so we don't need to call it twice
     showDashboard();
-    // Load plans
-    loadUserPlans();
   }
 
   // Make it globally available
