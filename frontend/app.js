@@ -1084,55 +1084,62 @@
       // Call the appropriate plan API endpoint
       let response, result;
 
-      if (isAuthenticated) {
-        // Authenticated user - use /api/user/plan (saves to database)
-        console.log('✅ Calling authenticated endpoint /api/user/plan');
-        response = await fetch('/api/user/plan', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`
-          },
-          body: JSON.stringify({
-            params: data,
-            html: '',  // Backend will generate this
-            markdown: '',
-            meta: {
-              title: `Trip to ${data.destination}`,
-              budgetLow: data.budget
-            }
-          })
-        });
+      // ALWAYS generate plan using public endpoint first (no authentication needed)
+      console.log('📡 Generating plan using public endpoint /api/plan...');
+      response = await fetch('/api/plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(`HTTP ${response.status}: ${errorData.error || 'Failed to save plan'}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
+      result = await response.json();
+      console.log('✅ Plan generated:', result.id);
+
+      // If user is authenticated, save the plan to their account
+      if (isAuthenticated && authToken) {
+        console.log('💾 Saving plan to database for authenticated user...');
+
+        try {
+          const saveResponse = await fetch('/api/user/plan/save', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+              params: data,
+              html: result.html || '',
+              markdown: result.markdown || '',
+              meta: {
+                title: `Trip to ${data.destination}`,
+                budgetLow: data.budget
+              }
+            })
+          });
+
+          if (saveResponse.ok) {
+            const savedPlan = await saveResponse.json();
+            console.log('✅ Plan saved to database:', savedPlan.id);
+            showNotification('✅ Plan saved to your dashboard!', 'success');
+
+            // Mark that plans need refresh
+            window._plansNeedRefresh = true;
+          } else {
+            const errorData = await saveResponse.json().catch(() => ({}));
+            console.error('❌ Failed to save plan:', errorData);
+            showNotification('⚠️ Plan generated but not saved. Sign in to save it.', 'warning');
+          }
+        } catch (saveError) {
+          console.error('❌ Error saving plan:', saveError);
+          showNotification('⚠️ Plan generated but not saved. Sign in to save it.', 'warning');
         }
-
-        result = await response.json();
-        console.log('✅ Plan saved to database:', result);
-
-        // Fetch the saved plan to get the HTML
-        const planResponse = await fetch(`/api/user/plan/${result.id}`, {
-          headers: { 'Authorization': `Bearer ${authToken}` }
-        });
-
-        if (planResponse.ok) {
-          const planData = await planResponse.json();
-          result.html = planData.html || planData.markdown || '';
-        }
-
       } else {
-        // Not authenticated - use public endpoint (doesn't save)
-        console.log('⚠️ User not authenticated - using public endpoint');
-        response = await fetch('/api/plan', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
-
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        result = await response.json();
+        console.log('ℹ️ User not authenticated - plan generated but not saved');
       }
 
       console.log('Full plan result:', result);
