@@ -2626,6 +2626,43 @@
   // Make it globally available
   window.showPersonalCabinet = showPersonalCabinet;
 
+  // Clear localStorage cache function (for debugging/fresh start)
+  function clearAppCache() {
+    const confirm = window.confirm('⚠️ This will clear all cached data including saved plans and authentication. Continue?');
+    if (confirm) {
+      // Clear all wayzo-related localStorage
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('wayzo_') || key.includes('supabase'))) {
+          keysToRemove.push(key);
+        }
+      }
+
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+
+      console.log('🧹 Cleared cache:', keysToRemove);
+      showNotification('✅ Cache cleared! Refreshing page...', 'success');
+
+      // Reload page after short delay
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    }
+  }
+
+  // Make it globally available for debugging
+  window.clearAppCache = clearAppCache;
+
+  // Add keyboard shortcut for clearing cache: Ctrl+Shift+C (or Cmd+Shift+C on Mac)
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') {
+      e.preventDefault();
+      console.log('🔑 Keyboard shortcut triggered: Clear cache');
+      clearAppCache();
+    }
+  });
+
   function showDashboard() {
     const cabinet = $('#personalCabinet');
     if (cabinet) {
