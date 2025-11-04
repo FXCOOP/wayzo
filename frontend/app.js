@@ -1084,11 +1084,22 @@
       // Call the appropriate plan API endpoint
       let response, result;
 
-      // ALWAYS generate plan using public endpoint first (no authentication needed)
-      console.log('📡 Generating plan using public endpoint /api/plan...');
+      // Generate plan using /api/plan (now requires authentication to prevent API abuse)
+      console.log('📡 Generating plan using /api/plan...');
+
+      // Build headers with authentication if available
+      const headers = { 'Content-Type': 'application/json' };
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+        console.log('✅ Including auth token in request');
+      } else {
+        console.error('❌ No auth token available - plan generation requires authentication');
+        throw new Error('Please sign in to generate plans');
+      }
+
       response = await fetch('/api/plan', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: headers,
         body: JSON.stringify(data)
       });
 

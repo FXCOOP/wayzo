@@ -1102,8 +1102,9 @@ app.post('/api/preview', (req, res) => {
   }
 });
 
-app.post('/api/plan', async (req, res) => {
-  console.log('Plan request received:', req.body); // Debug
+// IMPORTANT: This endpoint now requires authentication to prevent API abuse
+app.post('/api/plan', requireUser, async (req, res) => {
+  console.log('Plan request received from user:', req.user.email); // Debug
   try {
     const payload = req.body || {};
     payload.currency = payload.currency || 'USD';
