@@ -2473,31 +2473,33 @@ fieldset.field .chip {
 }
 
 .cabinet-content {
-  flex: 1;
-  overflow-y: auto !important;
+  flex: 1 1 0%;
+  overflow-y: scroll !important;
   overflow-x: hidden;
-  padding: 32px 40px 80px 40px;
-  background: #f8f9fb;
-  scroll-behavior: smooth;
-  min-height: 0;
+  padding: 32px 40px 100px 40px;
+  background: linear-gradient(to bottom, #f9fafb 0%, #f3f4f6 100%);
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+  height: 0;
 }
 
 /* Custom scrollbar for Personal Cabinet */
 .cabinet-content::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 .cabinet-content::-webkit-scrollbar-track {
-  background: transparent;
+  background: #f3f4f6;
+  border-radius: 4px;
 }
 
 .cabinet-content::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 3px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  border-radius: 4px;
 }
 
 .cabinet-content::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+  background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
 }
 
 .cabinet-sidebar {
@@ -2550,11 +2552,9 @@ fieldset.field .chip {
 }
 
 .cabinet-main {
-  flex: 1 1 auto;
   max-width: 1400px;
   margin: 0 auto;
   width: 100%;
-  min-height: min-content;
 }
 
 .cabinet-tab {
@@ -2563,6 +2563,18 @@ fieldset.field .chip {
 
 .cabinet-tab.active {
   display: block;
+}
+
+.dashboard-view {
+  display: none;
+}
+
+.dashboard-view.active {
+  display: block;
+}
+
+.recent-plans {
+  margin-bottom: 40px;
 }
 
 /* Professional Dashboard Navigation */
