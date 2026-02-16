@@ -194,6 +194,19 @@ async def list_tools() -> list[Tool]:
                 "required": ["object_type", "name", "label", "field_type"]
             }
         ),
+        Tool(
+            name="mark_target_accounts",
+            description="Scan all scored contacts, find their companies, and mark companies with Tier 1 (Hot) or Tier 2 (Warm) contacts as HubSpot Target Accounts. Also sets the ALS2 Company Tier property.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "min_tier": {
+                        "type": "integer",
+                        "description": "Minimum tier to qualify as target account (1=Hot only, 2=Hot+Warm). Default: 2"
+                    }
+                }
+            }
+        ),
     ]
 
 
@@ -530,6 +543,103 @@ async def _create_hubspot_property(object_type: str, name: str, label: str, fiel
         return {"error": f"Failed: {resp.status_code} - {resp.text}"}
 
 
+async def _mark_target_accounts(min_tier: int = 2) -> dict:
+    """Scan contacts, find companies, mark high-tier ones as Target Accounts."""
+    headers = {"Authorization": f"Bearer {HUBSPOT_TOKEN}", "Content-Type": "application/json"}
+    results = {"target_accounts": [], "skipped": [], "errors": []}
+
+    # Tier values that qualify
+    qualifying_tiers = ["tier_1_hot"]
+    if min_tier >= 2:
+        qualifying_tiers.append("tier_2_warm")
+
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        # Step 1: Get all contacts with ALS2 scores
+        resp = await client.post(
+            "https://api.hubapi.com/crm/v3/objects/contacts/search",
+            headers=headers,
+            json={
+                "filterGroups": [{"filters": [{"propertyName": "als2_total_score", "operator": "HAS_PROPERTY"}]}],
+                "properties": ["firstname", "lastname", "email", "company", "als2_total_score", "als2_lead_tier", "associatedcompanyid"],
+                "limit": 100
+            }
+        )
+
+        if resp.status_code != 200:
+            return {"error": f"Contact search failed: {resp.status_code}"}
+
+        contacts = resp.json().get("results", [])
+
+        # Step 2: For each contact, find their company and determine tier
+        company_scores = {}  # company_id -> {best_tier, best_score, contacts}
+
+        for contact in contacts:
+            props = contact.get("properties", {})
+            score = int(float(props.get("als2_total_score", "0") or "0"))
+            tier = props.get("als2_lead_tier", "") or _determine_tier(score)["tier"]
+            contact_name = f"{props.get('firstname', '')} {props.get('lastname', '')}".strip()
+            company_name = props.get("company", "")
+
+            # Get associated company via associations API
+            cid = contact["id"]
+            assoc_resp = await client.get(
+                f"https://api.hubapi.com/crm/v3/objects/contacts/{cid}/associations/companies",
+                headers=headers
+            )
+
+            if assoc_resp.status_code == 200:
+                assoc_data = assoc_resp.json().get("results", [])
+                for assoc in assoc_data:
+                    comp_id = assoc.get("id") or assoc.get("toObjectId")
+                    if comp_id:
+                        if comp_id not in company_scores:
+                            company_scores[comp_id] = {"best_score": 0, "best_tier": "tier_4_cold", "contacts": [], "company_name": company_name}
+                        if score > company_scores[comp_id]["best_score"]:
+                            company_scores[comp_id]["best_score"] = score
+                            company_scores[comp_id]["best_tier"] = tier
+                        company_scores[comp_id]["contacts"].append({"name": contact_name, "score": score, "tier": tier})
+
+        # Step 3: Update qualifying companies as Target Accounts
+        for comp_id, data in company_scores.items():
+            is_target = data["best_tier"] in qualifying_tiers
+            tier_label = _determine_tier(data["best_score"])["label"]
+
+            # Map tier to company tier value
+            tier_value_map = {"tier_1_hot": "tier_1_hot", "tier_2_warm": "tier_2_warm", "tier_3_cool": "tier_3_cool", "tier_4_cold": "tier_4_cold"}
+            company_tier = tier_value_map.get(data["best_tier"], "tier_4_cold")
+
+            update_props = {"als2_company_tier": company_tier}
+            if is_target:
+                update_props["hs_target_account"] = "true"
+
+            update_resp = await client.patch(
+                f"https://api.hubapi.com/crm/v3/objects/companies/{comp_id}",
+                headers=headers,
+                json={"properties": update_props}
+            )
+
+            company_name = data.get("company_name", comp_id)
+            if update_resp.status_code == 200:
+                if is_target:
+                    results["target_accounts"].append({
+                        "company_id": comp_id,
+                        "company": company_name,
+                        "tier": tier_label,
+                        "best_score": data["best_score"],
+                        "contacts": len(data["contacts"])
+                    })
+                else:
+                    results["skipped"].append(f"{company_name} ({tier_label}, score: {data['best_score']})")
+            else:
+                results["errors"].append(f"{company_name}: {update_resp.text[:100]}")
+
+    return {
+        "success": True,
+        "summary": f"Marked {len(results['target_accounts'])} Target Accounts, Skipped {len(results['skipped'])}, Errors {len(results['errors'])}",
+        **results
+    }
+
+
 async def _create_task(contact_id: str, subject: str, body: str = "") -> dict:
     """Create task in HubSpot."""
     async with httpx.AsyncClient() as client:
@@ -598,6 +708,10 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
                 arguments["field_type"],
                 arguments.get("options"),
                 arguments.get("group_name", "als2_scoring")
+            )
+        elif name == "mark_target_accounts":
+            result = await _mark_target_accounts(
+                arguments.get("min_tier", 2)
             )
         else:
             result = {"error": f"Unknown tool: {name}"}
