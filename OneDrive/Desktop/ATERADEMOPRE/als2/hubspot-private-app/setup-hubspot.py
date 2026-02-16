@@ -245,8 +245,8 @@ def create_active_list():
                             "property": lst["filters"][0]["propertyName"],
                             "operation": {
                                 "operationType": "ENUMERATION",
-                                "operator": "IS_EQUAL_TO",
-                                "value": lst["filters"][0]["value"]
+                                "operator": "IS_ANY_OF",
+                                "values": [lst["filters"][0]["value"]]
                             }
                         }]
                     }],

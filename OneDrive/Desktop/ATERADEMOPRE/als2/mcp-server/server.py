@@ -437,8 +437,8 @@ async def _setup_hubspot_properties(include_tiers: bool = True) -> dict:
                                     "property": "als2_lead_tier",
                                     "operation": {
                                         "operationType": "ENUMERATION",
-                                        "operator": "IS_EQUAL_TO",
-                                        "value": lst["value"]
+                                        "operator": "IS_ANY_OF",
+                                        "values": [lst["value"]]
                                     }
                                 }]
                             }],
