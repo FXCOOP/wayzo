@@ -548,10 +548,17 @@ async def _mark_target_accounts(min_tier: int = 2) -> dict:
     headers = {"Authorization": f"Bearer {HUBSPOT_TOKEN}", "Content-Type": "application/json"}
     results = {"target_accounts": [], "skipped": [], "errors": []}
 
-    # Tier values that qualify
+    # Tier values that qualify and their HubSpot target account values
     qualifying_tiers = ["tier_1_hot"]
     if min_tier >= 2:
         qualifying_tiers.append("tier_2_warm")
+
+    # HubSpot hs_target_account uses tier_1/tier_2/tier_3 values (not true/false)
+    tier_to_target = {
+        "tier_1_hot": "tier_1",
+        "tier_2_warm": "tier_2",
+        "tier_3_cool": "tier_3",
+    }
 
     async with httpx.AsyncClient(timeout=30.0) as client:
         # Step 1: Get all contacts with ALS2 scores
@@ -608,9 +615,10 @@ async def _mark_target_accounts(min_tier: int = 2) -> dict:
             tier_value_map = {"tier_1_hot": "tier_1_hot", "tier_2_warm": "tier_2_warm", "tier_3_cool": "tier_3_cool", "tier_4_cold": "tier_4_cold"}
             company_tier = tier_value_map.get(data["best_tier"], "tier_4_cold")
 
-            update_props = {"als2_company_tier": company_tier}
+            update_props = {}
             if is_target:
-                update_props["hs_target_account"] = "true"
+                target_value = tier_to_target.get(data["best_tier"], "tier_3")
+                update_props["hs_target_account"] = target_value
 
             update_resp = await client.patch(
                 f"https://api.hubapi.com/crm/v3/objects/companies/{comp_id}",
