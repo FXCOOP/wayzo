@@ -428,9 +428,21 @@ async def _setup_hubspot_properties(include_tiers: bool = True) -> dict:
                         "objectTypeId": "0-1",
                         "processingType": "DYNAMIC",
                         "filterBranch": {
-                            "filterBranchType": "AND",
-                            "filters": [{"filterType": "PROPERTY", "property": "als2_lead_tier",
-                                         "operation": {"operationType": "STRING", "operator": "IS_EQUAL_TO", "value": lst["value"]}}]
+                            "filterBranchType": "OR",
+                            "filterBranches": [{
+                                "filterBranchType": "AND",
+                                "filterBranches": [],
+                                "filters": [{
+                                    "filterType": "PROPERTY",
+                                    "property": "als2_lead_tier",
+                                    "operation": {
+                                        "operationType": "ENUMERATION",
+                                        "operator": "IS_EQUAL_TO",
+                                        "value": lst["value"]
+                                    }
+                                }]
+                            }],
+                            "filters": []
                         }
                     }
                 )

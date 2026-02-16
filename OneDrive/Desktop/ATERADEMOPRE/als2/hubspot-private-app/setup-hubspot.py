@@ -236,16 +236,21 @@ def create_active_list():
                 "objectTypeId": "0-1",  # Contacts
                 "processingType": "DYNAMIC",
                 "filterBranch": {
-                    "filterBranchType": "AND",
-                    "filters": [{
-                        "filterType": "PROPERTY",
-                        "property": lst["filters"][0]["propertyName"],
-                        "operation": {
-                            "operationType": "STRING",
-                            "operator": "IS_EQUAL_TO",
-                            "value": lst["filters"][0]["value"]
-                        }
-                    }]
+                    "filterBranchType": "OR",
+                    "filterBranches": [{
+                        "filterBranchType": "AND",
+                        "filterBranches": [],
+                        "filters": [{
+                            "filterType": "PROPERTY",
+                            "property": lst["filters"][0]["propertyName"],
+                            "operation": {
+                                "operationType": "ENUMERATION",
+                                "operator": "IS_EQUAL_TO",
+                                "value": lst["filters"][0]["value"]
+                            }
+                        }]
+                    }],
+                    "filters": []
                 }
             }
         )
